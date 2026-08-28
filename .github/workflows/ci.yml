@@ -41,7 +41,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://klinik:klinik@localhost:5432/klinik_test?schema=public
-      REDIS_HOST: localhost
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
       REDIS_PASSWORD: ci-redis-password
 

@@ -218,6 +218,7 @@ describe('authorisation', () => {
       // Redis being down must not lock everyone out.
       expect(await permissions.has(user.id, Role.NURSE, 'patients.read')).toBe(true);
     });
+
   });
 
   describe('patient scoping', () => {

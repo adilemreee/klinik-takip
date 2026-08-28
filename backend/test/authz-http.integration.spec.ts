@@ -76,8 +76,12 @@ describe('permissions over HTTP', () => {
     auth = app.get(AuthService);
 
     // The permission cache is shared with the running Redis; clear anything
-    // left by an earlier run so these assertions read the database.
-    await app.get(RedisService).client.flushdb();
+    // left by an earlier run so these assertions read the database. The wait is
+    // required because the offline queue is disabled: a command issued before
+    // the socket is ready fails rather than being buffered.
+    const redis = app.get(RedisService);
+    await redis.waitUntilReady();
+    await redis.client.flushdb();
   });
 
   afterAll(async () => {

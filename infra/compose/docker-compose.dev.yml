@@ -35,5 +35,39 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: devaccess
+      MINIO_ROOT_PASSWORD: devsecret123
+    ports:
+      - "127.0.0.1:59000:9000"
+      - "127.0.0.1:59001:9001"
+    volumes:
+      - devminio:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Creates the private buckets the file service expects, then exits.
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio: {condition: service_healthy}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        mc alias set local http://minio:9000 devaccess devsecret123
+        mc mb --ignore-existing local/klinik-documents
+        mc mb --ignore-existing local/klinik-photos
+        mc anonymous set none local/klinik-documents
+        mc anonymous set none local/klinik-photos
+
 volumes:
   devdata:
+  devminio:

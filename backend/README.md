@@ -6,7 +6,7 @@ points: `dist/main.js` (HTTP API) and `dist/worker.js` (BullMQ queue worker).
 ## Yerelde Çalıştırma
 
 ```bash
-npm run dev:deps          # yerel postgres (55432) + redis (56379)
+npm run dev:deps          # yerel postgres (55432) + redis (56379) + minio (59000)
 npm install
 npx prisma generate
 npx prisma migrate deploy

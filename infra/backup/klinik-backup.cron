@@ -1,0 +1,14 @@
+# Klinik Takip — yedekleme görevleri
+# Kurulum: cp klinik-backup.cron /etc/cron.d/klinik-backup && chmod 644 /etc/cron.d/klinik-backup
+#
+# Saatler mevcut işlerle çakışmayacak şekilde seçildi: sevgiliapp 00:00'da
+# yedekleniyor, backrest planları da gece çalışıyor.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Günlük yedek — 02:20
+20 2 * * * root /opt/klinik/backup.sh >> /var/log/klinik-backup.log 2>&1
+
+# Haftalık geri yükleme testi — Pazar 04:40
+40 4 * * 0 root /opt/klinik/restore-test.sh >> /var/log/klinik-restore-test.log 2>&1

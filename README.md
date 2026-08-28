@@ -52,7 +52,7 @@ cp .env.example .env
 Backend hazır — bkz. [backend/README.md](backend/README.md).
 iOS ve Android iskeletleri T2.1 ve T2.2'de kurulacaktır.
 
-Dağıtım prosedürü: [docs/DAGITIM.md](docs/DAGITIM.md)
+Dağıtım prosedürü: [docs/DAGITIM.md](docs/DAGITIM.md) · Yedekleme: [docs/YEDEKLEME.md](docs/YEDEKLEME.md)
 
 > ⚠️ **Bu depo herkese açıktır.** Sunucu adresleri, gerçek hostname'ler, servis
 > envanteri ve bilinen açıklar bilinçli olarak buraya **yazılmaz**; bunlar yerel
@@ -72,7 +72,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 
 | Faz | Durum |
 |---|---|
-| Faz 0 — Temel Kurulum | 🔄 devam ediyor (T0.1–T0.6 ✅) |
+| Faz 0 — Temel Kurulum | ✅ **tamamlandı** (T0.1–T0.7) |
 | Faz 1 — Kimlik ve Çekirdek Veri | ⬜ |
 | Faz 2 — Mobil İskeletler | ⬜ |
 | Faz 3 — Klinik Modüller | ⬜ |

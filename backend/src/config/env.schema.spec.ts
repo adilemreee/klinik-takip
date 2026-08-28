@@ -11,6 +11,7 @@ const valid = {
   S3_BUCKET_PHOTOS: 'klinik-photos',
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   JWT_REFRESH_SECRET: 'b'.repeat(32),
+  ENCRYPTION_KEY: Buffer.alloc(32, 9).toString('base64'),
 };
 
 describe('validateEnv', () => {

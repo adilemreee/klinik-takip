@@ -59,6 +59,27 @@ Bu, entegrasyon testlerinde **veritabanı sahibi kimliğiyle** doğrulanıyor.
 
 Zamanlayıcı ve bildirim dağıtıcısı yalnızca `PENDING` satırlara bakıyor; indekse yalnız onları koymak taramayı ucuzlatıyor.
 
+## ⚠️ Prisma Migration Tuzağı — Üretilen SQL Mutlaka Okunur
+
+Trigram ve HNSW indeksleri Prisma'nın şema dilinde ifade edilemediği için elle
+yazılmış bir migration'da oluşturuluyor. **Prisma bunları "sapma" (drift) sayar ve
+sonraki her `migrate dev` çalışmasında düşürmeyi önerir:**
+
+```sql
+-- prisma migrate dev bunu KENDILIGINDEN uretir:
+DROP INDEX "patients_first_name_trgm_idx";
+DROP INDEX "protocol_chunks_embedding_idx";
+```
+
+Bu gerçekten yaşandı: 2026-08-28'de `totp_replay_protection` migration'ı üretildiğinde
+dört özel indeksi düşürdü ve gözden kaçtı.
+
+**Kural: `migrate dev --create-only` ile üretilen her SQL, uygulanmadan önce baştan
+sona okunur ve sahte `DROP` ifadeleri silinir.**
+
+Güvenlik ağı: `test/database.integration.spec.ts` bu indekslerin varlığını kontrol
+ediyor ve CI'da çalışıyor — yukarıdaki olay staging'e ulaşmadan bu testlerde yakalandı.
+
 ## Migration ve Geri Alma
 
 ```bash

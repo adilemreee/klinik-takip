@@ -1,9 +1,35 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
   "rootDir": ".",
   "testRegex": ".*\\.integration\\.spec\\.ts$",
-  "transform": { "^.+\\.ts$": "ts-jest" },
+  "transform": {
+    "^.+\\.[tj]s$": [
+      "ts-jest",
+      {
+        "tsconfig": {
+          "allowJs": true
+        }
+      }
+    ]
+  },
   "testEnvironment": "node",
-  "setupFiles": ["<rootDir>/test/setup-env.ts"],
-  "testTimeout": 30000
+  "setupFiles": [
+    "<rootDir>/test/setup-env.ts"
+  ],
+  "testTimeout": 30000,
+  "testEnvironmentOptions": {
+    "customExportConditions": [
+      "require",
+      "node",
+      "default"
+    ]
+  },
+  "transformIgnorePatterns": [
+    "/node_modules/(?!(otplib|@otplib|@scure|@noble)/)",
+    "\\.pnp\\.[^\\/]+$"
+  ]
 }

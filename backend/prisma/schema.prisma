@@ -58,6 +58,11 @@ model User {
   totpSecret    String?   @map("totp_secret")
   totpEnabledAt DateTime? @map("totp_enabled_at") @db.Timestamptz
 
+  /// Time step of the last accepted TOTP code. A new code must come from a
+  /// strictly later step, so a code seen over someone's shoulder cannot be
+  /// replayed inside its remaining window.
+  totpLastStep Int? @map("totp_last_step")
+
   locale String     @default("tr")
   status UserStatus @default(INVITED)
 

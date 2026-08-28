@@ -14,6 +14,11 @@
 - [ ] i18n anahtarları eklenmiş (TR + EN minimum)
 - [ ] Loglama ve metrik eklenmiş
 
+## Migration (varsa)
+
+- [ ] Üretilen SQL baştan sona okundu; sahte `DROP INDEX` / `DROP TRIGGER` ifadeleri temizlendi
+- [ ] Yıkıcı bir değişiklikse deploy öncesi elle yedek planı var
+
 ## Güvenlik
 
 - [ ] Repoya hiçbir sır (key, şifre, token, .p8, service account) girmedi

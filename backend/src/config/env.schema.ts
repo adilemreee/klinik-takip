@@ -62,6 +62,19 @@ export const envSchema = z.object({
   JWT_REFRESH_TTL: z.string().default('30d'),
   TOTP_ISSUER: z.string().default('Klinik Takip'),
 
+  /**
+   * AES-256 key for column-level encryption of the few fields that must stay
+   * unreadable in a database dump (spec section 8). Base64 of exactly 32 bytes:
+   *   openssl rand -base64 32
+   */
+  ENCRYPTION_KEY: z.string().min(44),
+
+  /** Account lockout after repeated failed logins (spec section 2). */
+  LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+  LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
+  INVITATION_TTL_HOURS: z.coerce.number().int().positive().default(72),
+  INVITATION_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+
   // --- Optional integrations (wired up in later phases) --------------------
   AI_PROVIDER: optional(z.enum(['anthropic', 'openai'])),
   AI_API_KEY: optional(z.string().min(1)),

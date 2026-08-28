@@ -2,10 +2,13 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Public } from '../auth/decorators/public.decorator';
 import { DependencyHealthIndicator } from './dependency.health';
 
 // Probes are polled by Docker and the monitoring stack; rate limiting them
 // would turn a busy minute into a false "unhealthy" signal.
+// Docker and Prometheus poll these without credentials.
+@Public()
 @SkipThrottle()
 @ApiTags('health')
 @Controller('health')

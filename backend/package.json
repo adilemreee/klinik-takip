@@ -23,16 +23,20 @@
     "prisma:migrate": "prisma migrate deploy",
     "prisma:dev": "prisma migrate dev",
     "seed": "prisma db seed",
-    "test:integration": "jest --config jest.integration.json --runInBand"
+    "test:integration": "jest --config jest.integration.json --runInBand",
+    "bootstrap:admin": "ts-node prisma/bootstrap-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^12.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.0.0",
     "@nestjs/terminus": "^11.0.0",
     "@nestjs/throttler": "^6.4.0",
+    "@node-rs/argon2": "^2.1.0",
     "@prisma/client": "^6.2.0",
     "@prometheus-io/client": "^0.16.1",
     "@sentry/node": "^10.71.0",
@@ -43,6 +47,9 @@
     "ioredis": "^5.4.2",
     "minio": "^8.0.4",
     "nestjs-pino": "^4.6.1",
+    "otplib": "^13.5.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
     "pino-loki": "^3.0.0",
@@ -58,6 +65,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.5",
+    "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^9.1.0",
@@ -82,7 +90,14 @@
     "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.ts$": "ts-jest"
+      "^.+\\.[tj]s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "allowJs": true
+          }
+        }
+      ]
     },
     "collectCoverageFrom": [
       "src/**/*.ts",
@@ -101,12 +116,23 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "\\.integration\\.spec\\.ts$"
+    ],
+    "testEnvironmentOptions": {
+      "customExportConditions": [
+        "require",
+        "node",
+        "default"
+      ]
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(otplib|@otplib|@scure|@noble)/)",
+      "\\.pnp\\.[^\\/]+$"
     ]
   },
   "overrides": {
     "deepmerge-ts": "^8.0.2"
   },
   "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts"
   }
 }

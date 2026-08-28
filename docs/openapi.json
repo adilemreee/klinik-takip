@@ -2606,6 +2606,11 @@
             "type": "string",
             "format": "date-time"
           },
+          "version": {
+            "type": "number",
+            "description": "Send this back as expectedVersion when editing. A mismatch means someone else changed the record and the write is refused (spec M15).",
+            "example": 1
+          },
           "deletedAt": {
             "type": "string",
             "format": "date-time",
@@ -2629,6 +2634,7 @@
           "assignedDoctorId",
           "createdAt",
           "updatedAt",
+          "version",
           "deletedAt"
         ]
       },
@@ -2697,6 +2703,10 @@
           },
           "assignedDoctorId": {
             "type": "string"
+          },
+          "expectedVersion": {
+            "type": "number",
+            "description": "Version the client read; a mismatch is refused"
           }
         }
       },
@@ -2732,6 +2742,10 @@
           },
           "notes": {
             "type": "string"
+          },
+          "expectedVersion": {
+            "type": "number",
+            "description": "Version the client read; a mismatch is refused"
           }
         }
       },

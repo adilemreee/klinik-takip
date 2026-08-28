@@ -27,6 +27,9 @@ rootProject.name = "klinik"
 // client is a Swift package rather than an Xcode project.
 include(":core:network")
 
+// Offline queue and synchronisation (spec M15).
+include(":core:sync")
+
 // Sign-in and onboarding. The flow model holds no Android types, so the branch
 // only staff without a second factor ever reach is testable without a device.
 include(":feature:auth")

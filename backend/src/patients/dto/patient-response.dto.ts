@@ -48,6 +48,14 @@ export class PatientDto {
   updatedAt!: Date;
 
   @ApiProperty({
+    description:
+      'Send this back as expectedVersion when editing. A mismatch means someone ' +
+      'else changed the record and the write is refused (spec M15).',
+    example: 1,
+  })
+  version!: number;
+
+  @ApiProperty({
     type: String,
     format: 'date-time',
     nullable: true,

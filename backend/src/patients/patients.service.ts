@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '../auth/decorators/current-user.decorato
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
 import { generateMrn } from './mrn';
+import { VersionConflictException } from './version-conflict';
 import {
   AssignStaffDto,
   CreatePatientDto,
@@ -192,16 +193,28 @@ export class PatientsService {
     return { items, nextCursor: hasMore ? (items[items.length - 1]?.id ?? null) : null };
   }
 
+  /**
+   * @param expectedVersion the version the caller read. Omitted by clients that
+   * are editing something they just fetched online; supplied by the offline
+   * queue, which may be replaying an edit made hours ago.
+   */
   async update(
     user: AuthenticatedUser,
     id: string,
     dto: UpdatePatientDto,
     context: RequestContext = {},
+    expectedVersion?: number,
   ): Promise<Patient> {
     await this.access.assertCanAccess(user, id);
 
     return this.prisma.$transaction(async (tx) => {
       const before = await tx.patient.findUniqueOrThrow({ where: { id } });
+
+      if (expectedVersion !== undefined && before.version !== expectedVersion) {
+        // Refused rather than merged. Two people editing the same allergy list
+        // is not something an algorithm should settle (spec M15).
+        throw new VersionConflictException('patients', expectedVersion, before.version, before);
+      }
 
       const patient = await tx.patient.update({
         where: { id },
@@ -210,6 +223,7 @@ export class PatientsService {
           firstName: dto.firstName?.trim(),
           lastName: dto.lastName?.trim(),
           country: dto.country?.toUpperCase(),
+          version: { increment: 1 },
         },
       });
 
@@ -234,16 +248,26 @@ export class PatientsService {
     id: string,
     dto: MedicalProfileDto,
     context: RequestContext = {},
+    expectedVersion?: number,
   ): Promise<void> {
     await this.access.assertCanAccess(user, id);
 
     await this.prisma.$transaction(async (tx) => {
       const before = await tx.medicalProfile.findUnique({ where: { patientId: id } });
 
+      if (expectedVersion !== undefined && before && before.version !== expectedVersion) {
+        throw new VersionConflictException(
+          'medical_profiles',
+          expectedVersion,
+          before.version,
+          before,
+        );
+      }
+
       const profile = await tx.medicalProfile.upsert({
         where: { patientId: id },
         create: { patientId: id, ...dto },
-        update: dto,
+        update: { ...dto, version: { increment: 1 } },
       });
 
       await this.audit.recordInTransaction(tx, {

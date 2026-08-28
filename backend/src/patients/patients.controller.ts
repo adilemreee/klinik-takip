@@ -104,7 +104,11 @@ export class PatientsController {
     @Body() dto: UpdatePatientDto,
     @Req() request: Request,
   ): Promise<Patient> {
-    return this.patients.update(user, id, dto, this.context(request));
+    // The version travels in the body rather than a header so it survives
+    // every generated client and shows up in the schema.
+    const { expectedVersion, ...changes } = dto;
+
+    return this.patients.update(user, id, changes, this.context(request), expectedVersion);
   }
 
   @Put(':id/medical-profile')
@@ -119,7 +123,15 @@ export class PatientsController {
     @Body() dto: MedicalProfileDto,
     @Req() request: Request,
   ): Promise<void> {
-    await this.patients.upsertMedicalProfile(user, id, dto, this.context(request));
+    const { expectedVersion, ...changes } = dto;
+
+    await this.patients.upsertMedicalProfile(
+      user,
+      id,
+      changes,
+      this.context(request),
+      expectedVersion,
+    );
   }
 
   @Get(':id/assignments')

@@ -127,6 +127,18 @@ export class UpdatePatientDto {
   @IsOptional()
   @IsUUID()
   assignedDoctorId?: string;
+
+  /**
+   * The version the client read. Sent by the offline queue, which may be
+   * replaying an edit made hours ago; omitted when editing something just
+   * fetched. A mismatch is refused rather than merged (spec M15).
+   */
+  @ApiPropertyOptional({ description: 'Version the client read; a mismatch is refused' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  expectedVersion?: number;
 }
 
 export class MedicalProfileDto {
@@ -169,6 +181,18 @@ export class MedicalProfileDto {
   @IsString()
   @MaxLength(4000)
   notes?: string;
+
+  /**
+   * The version the client read. Sent by the offline queue, which may be
+   * replaying an edit made hours ago; omitted when editing something just
+   * fetched. A mismatch is refused rather than merged (spec M15).
+   */
+  @ApiPropertyOptional({ description: 'Version the client read; a mismatch is refused' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  expectedVersion?: number;
 }
 
 export class SearchPatientsDto {

@@ -645,7 +645,7 @@
             "description": "Update demographics and status",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"\",\n  \"birthDate\": \"1990-01-01\",\n  \"sex\": \"FEMALE\",\n  \"country\": \"\",\n  \"city\": \"\",\n  \"preferredLanguage\": \"\",\n  \"status\": \"LEAD\",\n  \"assignedDoctorId\": \"\"\n}",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"\",\n  \"birthDate\": \"1990-01-01\",\n  \"sex\": \"FEMALE\",\n  \"country\": \"\",\n  \"city\": \"\",\n  \"preferredLanguage\": \"\",\n  \"status\": \"LEAD\",\n  \"assignedDoctorId\": \"\",\n  \"expectedVersion\": 0\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -708,7 +708,7 @@
             "description": "Allergies, chronic conditions, smoking and alcohol",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bloodType\": \"\",\n  \"allergies\": [\n    \"\"\n  ],\n  \"chronicConditions\": [\n    \"\"\n  ],\n  \"currentMedications\": [\n    \"\"\n  ],\n  \"smoking\": false,\n  \"alcohol\": false,\n  \"notes\": \"\"\n}",
+              "raw": "{\n  \"bloodType\": \"\",\n  \"allergies\": [\n    \"\"\n  ],\n  \"chronicConditions\": [\n    \"\"\n  ],\n  \"currentMedications\": [\n    \"\"\n  ],\n  \"smoking\": false,\n  \"alcohol\": false,\n  \"notes\": \"\",\n  \"expectedVersion\": 0\n}",
               "options": {
                 "raw": {
                   "language": "json"

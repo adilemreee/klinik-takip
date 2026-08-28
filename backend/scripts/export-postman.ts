@@ -65,6 +65,15 @@ function deref(schema: Schema | undefined, depth = 0): Schema | undefined {
   return deref(spec.components?.schemas?.[name], depth + 1);
 }
 
+/** Query and path values are scalars; anything structured has no place in a URL. */
+function scalarExample(schema: Schema | undefined): string {
+  const value = example(schema);
+
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? String(value)
+    : '';
+}
+
 /** A minimal, representative body so a request is runnable after pasting a token. */
 function example(schema: Schema | undefined, depth = 0): unknown {
   const resolved = deref(schema);
@@ -132,7 +141,7 @@ for (const [path, operations] of Object.entries(spec.paths)) {
       .filter((p) => p.in === 'query')
       .map((p) => ({
         key: p.name,
-        value: p.required ? String(example(p.schema) ?? '') : '',
+        value: p.required ? scalarExample(p.schema) : '',
         description: p.description,
         // Optional parameters are present but disabled, so they are discoverable
         // without being sent by accident.

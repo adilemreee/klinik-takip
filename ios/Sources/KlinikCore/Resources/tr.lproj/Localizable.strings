@@ -50,3 +50,22 @@
 "patient.search" = "Hasta ara";
 "patient.searchHint" = "Ad, soyad veya dosya numarası";
 "patient.empty" = "Henüz hasta yok.";
+
+/* Ana ekran (Şartname §7: en fazla 5 birincil eylem) */
+"home.title" = "Merhaba";
+"home.action.messages" = "Mesaj";
+"home.action.uploadDocument" = "Belge Yükle";
+"home.action.medications" = "İlaçlarım";
+"home.action.addPhoto" = "Fotoğraf Ekle";
+"home.action.emergency" = "Acil Durum";
+"home.nextAppointment" = "Yaklaşan kontrol";
+"home.noPatientFile" = "Hesabınız henüz bir dosyaya bağlanmamış. Kliniğinizle görüşün.";
+
+/* Acil durum (Şartname M8) */
+"emergency.confirmTitle" = "Acil durum bildirilsin mi?";
+"emergency.confirmHint" = "Onaylarsanız klinik hemen haberdar edilir.";
+"emergency.confirmAction" = "Evet, bildir";
+"emergency.sending" = "Bildiriliyor…";
+"emergency.sent" = "Klinik haberdar edildi. Sizi arayacaklar.";
+"emergency.notSentRetry" = "Bildirim kliniğe ULAŞMADI. Tekrar deneyin; acilse bulunduğunuz ülkenin acil numarasını arayın.";
+"emergency.callLocalNumber" = "Acil numarayı ara";

@@ -139,6 +139,7 @@ describe('the published API contract', () => {
         'audit',
         'auth',
         'health',
+        'me',
         'patients',
       ]);
     });

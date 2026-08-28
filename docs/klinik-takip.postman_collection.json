@@ -812,6 +812,29 @@
           }
         }
       ]
+    },
+    {
+      "name": "me",
+      "item": [
+        {
+          "name": "Everything the patient home screen needs, in one call",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "summary"
+              ]
+            },
+            "description": "Everything the patient home screen needs, in one call"
+          }
+        }
+      ]
     }
   ]
 }

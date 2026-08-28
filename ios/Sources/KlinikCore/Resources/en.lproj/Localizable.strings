@@ -50,3 +50,22 @@
 "patient.search" = "Search patients";
 "patient.searchHint" = "Name, surname or file number";
 "patient.empty" = "No patients yet.";
+
+/* Home screen (spec section 7: at most 5 primary actions) */
+"home.title" = "Hello";
+"home.action.messages" = "Messages";
+"home.action.uploadDocument" = "Upload document";
+"home.action.medications" = "My medication";
+"home.action.addPhoto" = "Add photo";
+"home.action.emergency" = "Emergency";
+"home.nextAppointment" = "Next check-up";
+"home.noPatientFile" = "Your account is not linked to a file yet. Please contact your clinic.";
+
+/* Emergency (spec M8) */
+"emergency.confirmTitle" = "Send an emergency alert?";
+"emergency.confirmHint" = "If you confirm, the clinic is notified immediately.";
+"emergency.confirmAction" = "Yes, notify them";
+"emergency.sending" = "Sending…";
+"emergency.sent" = "The clinic has been notified. They will call you.";
+"emergency.notSentRetry" = "The alert did NOT reach the clinic. Try again; if this is urgent, call your country's emergency number.";
+"emergency.callLocalNumber" = "Call emergency number";

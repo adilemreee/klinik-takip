@@ -1876,6 +1876,73 @@
           "patients"
         ]
       }
+    },
+    "/me/summary": {
+      "get": {
+        "operationId": "MeController_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientHomeSummaryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Everything the patient home screen needs, in one call",
+        "tags": [
+          "me"
+        ]
+      }
     }
   },
   "info": {
@@ -1892,6 +1959,10 @@
     {
       "name": "patients",
       "description": "Patient files, search and staff assignment"
+    },
+    {
+      "name": "me",
+      "description": "What a patient — or their consented caregiver — sees about themselves"
     },
     {
       "name": "audit",
@@ -2745,6 +2816,101 @@
         "required": [
           "staffId",
           "role"
+        ]
+      },
+      "HomePatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string",
+            "example": "2026-K7RMPX"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "example": "tr"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "firstName",
+          "lastName",
+          "preferredLanguage",
+          "status"
+        ]
+      },
+      "NextAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string"
+          },
+          "location": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "scheduledAt",
+          "type",
+          "location"
+        ]
+      },
+      "PatientHomeSummaryDto": {
+        "type": "object",
+        "properties": {
+          "patient": {
+            "$ref": "#/components/schemas/HomePatientDto"
+          },
+          "nextAppointment": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextAppointmentDto"
+              }
+            ]
+          },
+          "medicationsDueToday": {
+            "type": "number",
+            "description": "Doses scheduled for today that are still waiting"
+          },
+          "unreadMessages": {
+            "type": "number"
+          },
+          "missingDocuments": {
+            "type": "number",
+            "description": "Mandatory pre-op documents not yet uploaded (spec M17)"
+          }
+        },
+        "required": [
+          "patient",
+          "nextAppointment",
+          "medicationsDueToday",
+          "unreadMessages",
+          "missingDocuments"
         ]
       }
     }

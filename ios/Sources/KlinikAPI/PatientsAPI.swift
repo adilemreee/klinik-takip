@@ -76,3 +76,49 @@ public struct PatientsAPI: Sendable {
         try await client.send(Endpoint(method: .get, path: "patients/\(id)"), as: Patient.self)
     }
 }
+
+// MARK: - Patient-facing
+
+public struct NextAppointment: Decodable, Sendable, Equatable {
+    public let id: String
+    public let scheduledAt: Date
+    public let type: String
+    public let location: String?
+}
+
+/// Everything the patient home screen needs, in one call.
+public struct PatientHomeSummary: Decodable, Sendable, Equatable {
+    public struct HomePatient: Decodable, Sendable, Equatable {
+        public let id: String
+        public let mrn: String
+        public let firstName: String
+        public let lastName: String
+        public let preferredLanguage: String
+        public let status: String
+
+        public var fullName: String { "\(firstName) \(lastName)" }
+    }
+
+    public let patient: HomePatient
+    public let nextAppointment: NextAppointment?
+    /// Doses scheduled for today that are still waiting.
+    public let medicationsDueToday: Int
+    public let unreadMessages: Int
+    /// Mandatory pre-op documents not yet uploaded (spec M17).
+    public let missingDocuments: Int
+}
+
+public struct MeAPI: Sendable {
+    private let client: APIClient
+
+    public init(client: APIClient) {
+        self.client = client
+    }
+
+    public func summary() async throws -> PatientHomeSummary {
+        try await client.send(
+            Endpoint(method: .get, path: "me/summary"),
+            as: PatientHomeSummary.self
+        )
+    }
+}

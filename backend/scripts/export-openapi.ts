@@ -54,6 +54,7 @@ async function main(): Promise<void> {
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'bearer')
     .addTag('auth', 'Sign-in, sessions, two-factor enrolment and invitations')
     .addTag('patients', 'Patient files, search and staff assignment')
+    .addTag('me', 'What a patient — or their consented caregiver — sees about themselves')
     .addTag('audit', 'Append-only access trail and anomaly detection')
     .addTag('health', 'Liveness and readiness probes')
     .build();

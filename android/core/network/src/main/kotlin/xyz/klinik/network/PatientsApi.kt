@@ -58,3 +58,52 @@ class PatientsApi(
         runCatching { json.decodeFromString<T>(body) }
             .getOrElse { throw ApiError.Decoding(it.message ?: "unreadable response") }
 }
+
+// MARK: - Patient-facing
+
+@Serializable
+data class NextAppointment(
+    val id: String,
+    val scheduledAt: String,
+    val type: String,
+    val location: String? = null,
+)
+
+@Serializable
+data class HomePatient(
+    val id: String,
+    val mrn: String,
+    val firstName: String,
+    val lastName: String,
+    val preferredLanguage: String,
+    val status: String,
+) {
+    val fullName: String get() = "$firstName $lastName"
+}
+
+/** Everything the patient home screen needs, in one call. */
+@Serializable
+data class PatientHomeSummary(
+    val patient: HomePatient,
+    val nextAppointment: NextAppointment? = null,
+    /** Doses scheduled for today that are still waiting. */
+    val medicationsDueToday: Int,
+    val unreadMessages: Int,
+    /** Mandatory pre-op documents not yet uploaded (spec M17). */
+    val missingDocuments: Int,
+)
+
+class MeApi(
+    private val client: ApiClient,
+    private val json: Json = ApiClient.defaultJson,
+) {
+    suspend fun summary(): PatientHomeSummary =
+        runCatching {
+            json.decodeFromString<PatientHomeSummary>(
+                client.send(Endpoint(HttpMethod.GET, "me/summary")),
+            )
+        }.getOrElse {
+            if (it is ApiError) throw it
+            throw ApiError.Decoding(it.message ?: "unreadable response")
+        }
+}

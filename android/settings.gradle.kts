@@ -34,6 +34,9 @@ include(":feature:auth")
 // The staff-side patient list and file.
 include(":feature:patients")
 
+// The patient's own home screen.
+include(":feature:home")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -46,6 +49,7 @@ if (androidSdkAvailable) {
     include(":core:design")
     include(":feature:auth-ui")
     include(":feature:patients-ui")
+    include(":feature:home-ui")
 } else {
     logger.lifecycle("Android SDK not found — building JVM modules only (:core:network).")
 }

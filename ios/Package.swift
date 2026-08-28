@@ -16,6 +16,7 @@ let package = Package(
         .library(name: "KlinikAPI", targets: ["KlinikAPI"]),
         .library(name: "KlinikAuthFeature", targets: ["KlinikAuthFeature"]),
         .library(name: "KlinikPatientsFeature", targets: ["KlinikPatientsFeature"]),
+        .library(name: "KlinikHomeFeature", targets: ["KlinikHomeFeature"]),
     ],
     targets: [
         // Generated from design/tokens.json, shared with Android (spec 3.2).
@@ -36,7 +37,11 @@ let package = Package(
         .target(name: "KlinikPatientsFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
 
         .testTarget(name: "KlinikAuthFeatureTests", dependencies: ["KlinikAuthFeature", "KlinikCore"]),
+        // The patient's own home screen.
+        .target(name: "KlinikHomeFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
+
         .testTarget(name: "KlinikPatientsFeatureTests", dependencies: ["KlinikPatientsFeature", "KlinikCore"]),
+        .testTarget(name: "KlinikHomeFeatureTests", dependencies: ["KlinikHomeFeature", "KlinikCore"]),
         .testTarget(name: "KlinikDesignTests", dependencies: ["KlinikDesign"]),
         .testTarget(name: "KlinikCoreTests", dependencies: ["KlinikCore"]),
         .testTarget(name: "KlinikAPITests", dependencies: ["KlinikAPI", "KlinikCore"]),

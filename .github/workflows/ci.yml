@@ -101,7 +101,7 @@ jobs:
       # This repository is public and the project handles health data. A leaked
       # key must fail the build, not be discovered later.
       - name: Scan for committed secrets
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

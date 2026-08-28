@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "xyz.klinik.design"
-    compileSdk = 36
+    // The current Compose libraries require 37; the compile SDK is independent
+    // of minSdk, so this does not narrow the devices the app runs on.
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26

@@ -37,6 +37,7 @@
 "error.server" = "Something went wrong. Please try again shortly.";
 "error.notFound" = "Record not found.";
 "error.forbidden" = "You do not have permission for this.";
+"error.sessionExpired" = "Your session has ended. Please sign in again.";
 
 /* Sessions */
 "sessions.title" = "My devices";

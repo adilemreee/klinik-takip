@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import xyz.klinik.network.ApiError
 import xyz.klinik.network.AuthApi
 import xyz.klinik.network.AuthErrorCode
+import xyz.klinik.network.messageKey
 import xyz.klinik.network.LoginRequest
 import xyz.klinik.network.LoginResponse
 import xyz.klinik.network.SessionManager
@@ -177,21 +178,7 @@ class AuthFlowModel(
 
     private fun handle(error: Throwable) {
         val apiError = error as? ApiError
-        val key = when (apiError) {
-            is ApiError.Offline -> "error.offline"
-            is ApiError.TimedOut -> "error.timedOut"
-            is ApiError.NotFound -> "error.notFound"
-            is ApiError.Forbidden -> "error.forbidden"
-            is ApiError.Auth -> when (apiError.code) {
-                AuthErrorCode.INVALID_CREDENTIALS -> "auth.error.invalidCredentials"
-                AuthErrorCode.ACCOUNT_LOCKED -> "auth.error.accountLocked"
-                AuthErrorCode.ACCOUNT_INACTIVE -> "auth.error.accountInactive"
-                AuthErrorCode.PASSWORD_TOO_WEAK -> "auth.error.passwordTooWeak"
-                else -> "auth.error.mfaInvalid"
-            }
-            is ApiError.Unauthorized -> "auth.error.invalidCredentials"
-            else -> "error.server"
-        }
+        val key = apiError?.messageKey() ?: "error.server"
 
         // A locked account is not a typo; the screen says something else.
         val locked = apiError is ApiError.Auth && apiError.code == AuthErrorCode.ACCOUNT_LOCKED

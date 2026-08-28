@@ -39,7 +39,11 @@ public enum L10n {
         case .auth(let code, _):
             return string(key(for: code))
         case .unauthorized:
-            return string("auth.error.invalidCredentials")
+            // Outside the sign-in screen a 401 means the session ended, not
+            // that a password was mistyped. Telling a nurse mid-shift that her
+            // password is wrong sends her to change something that is fine.
+            // Wrong credentials arrive as .auth(.invalidCredentials, _).
+            return string("error.sessionExpired")
         case .validation(let body):
             // Validation text comes from the server, which localises by
             // Accept-Language; showing it beats a generic message.

@@ -31,6 +31,9 @@ include(":core:network")
 // only staff without a second factor ever reach is testable without a device.
 include(":feature:auth")
 
+// The staff-side patient list and file.
+include(":feature:patients")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -42,6 +45,7 @@ val androidSdkAvailable = System.getenv("ANDROID_HOME") != null ||
 if (androidSdkAvailable) {
     include(":core:design")
     include(":feature:auth-ui")
+    include(":feature:patients-ui")
 } else {
     logger.lifecycle("Android SDK not found — building JVM modules only (:core:network).")
 }

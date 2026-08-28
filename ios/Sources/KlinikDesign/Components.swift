@@ -248,3 +248,81 @@ extension FieldKeyboard {
     }
 }
 #endif
+
+/// A search box. Separate from `LabelledField` because a search box is
+/// self-explanatory from its icon, where a form field is not.
+public struct SearchField: View {
+    @Environment(\.colorScheme) private var scheme
+
+    @Binding private var text: String
+    private let placeholder: String
+
+    public init(text: Binding<String>, placeholder: String) {
+        self._text = text
+        self.placeholder = placeholder
+    }
+
+    public var body: some View {
+        HStack(spacing: Tokens.Spacing.sm) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+        }
+        .padding(Tokens.Spacing.md)
+        .frame(minHeight: Tokens.minimumTouchTarget)
+        .background(Tokens.Palette.surface.resolve(for: scheme))
+        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+        .accessibilityLabel(placeholder)
+    }
+}
+
+/// Empty and error states share a shape: an icon, an explanation, and — when
+/// the situation is retryable — one action. Spec section 7 asks for both to be
+/// designed rather than left as a blank screen.
+public struct MessageState: View {
+    @Environment(\.colorScheme) private var scheme
+
+    private let icon: String
+    private let text: String
+    private let retryTitle: String?
+    private let retry: (() async -> Void)?
+
+    /// The retry title is supplied by the caller: the design system has no
+    /// business knowing which language the app speaks.
+    public init(
+        icon: String,
+        text: String,
+        retryTitle: String? = nil,
+        retry: (() async -> Void)? = nil
+    ) {
+        self.icon = icon
+        self.text = text
+        self.retryTitle = retryTitle
+        self.retry = retry
+    }
+
+    public var body: some View {
+        VStack(spacing: Tokens.Spacing.lg) {
+            Image(systemName: icon)
+                .font(.system(size: 40))
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+            Text(text)
+                .font(Tokens.Typography.bodyRelative)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+            if let retry, let retryTitle {
+                Button(retryTitle) {
+                    Task { await retry() }
+                }
+                .frame(minHeight: Tokens.minimumTouchTarget)
+            }
+        }
+        .padding(Tokens.Spacing.xxl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+}

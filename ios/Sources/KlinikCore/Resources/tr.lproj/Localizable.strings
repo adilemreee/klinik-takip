@@ -37,6 +37,7 @@
 "error.server" = "Bir sorun oluştu. Birazdan tekrar deneyin.";
 "error.notFound" = "Kayıt bulunamadı.";
 "error.forbidden" = "Bu işlem için yetkiniz yok.";
+"error.sessionExpired" = "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.";
 
 /* Oturumlar */
 "sessions.title" = "Cihazlarım";

@@ -29,6 +29,7 @@
     <string name="error_not_found">Record not found.</string>
     <string name="error_offline">No internet connection.</string>
     <string name="error_server">Something went wrong. Please try again shortly.</string>
+    <string name="error_session_expired">Your session has ended. Please sign in again.</string>
     <string name="error_timed_out">The server did not respond.</string>
     <string name="patient_empty">No patients yet.</string>
     <string name="patient_file_number">File no.</string>

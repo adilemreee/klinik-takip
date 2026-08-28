@@ -15,6 +15,7 @@ let package = Package(
         .library(name: "KlinikCore", targets: ["KlinikCore"]),
         .library(name: "KlinikAPI", targets: ["KlinikAPI"]),
         .library(name: "KlinikAuthFeature", targets: ["KlinikAuthFeature"]),
+        .library(name: "KlinikPatientsFeature", targets: ["KlinikPatientsFeature"]),
     ],
     targets: [
         // Generated from design/tokens.json, shared with Android (spec 3.2).
@@ -31,7 +32,11 @@ let package = Package(
         // deliberately free of SwiftUI state so it can be tested directly.
         .target(name: "KlinikAuthFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
 
+        // The staff-side patient list and file.
+        .target(name: "KlinikPatientsFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
+
         .testTarget(name: "KlinikAuthFeatureTests", dependencies: ["KlinikAuthFeature", "KlinikCore"]),
+        .testTarget(name: "KlinikPatientsFeatureTests", dependencies: ["KlinikPatientsFeature", "KlinikCore"]),
         .testTarget(name: "KlinikDesignTests", dependencies: ["KlinikDesign"]),
         .testTarget(name: "KlinikCoreTests", dependencies: ["KlinikCore"]),
         .testTarget(name: "KlinikAPITests", dependencies: ["KlinikAPI", "KlinikCore"]),

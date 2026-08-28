@@ -106,6 +106,9 @@ services:
       dockerfile: Dockerfile
     image: klinik-api:${IMAGE_TAG:-local}
     env_file: [.env]
+    # Joins observability so Prometheus can reach the metrics port. The data
+    # stores stay on `internal` only.
+    networks: [internal, observability]
     environment:
       # Port INSIDE the container. API_PORT in .env is the host-side mapping
       # below and is deliberately not what the process binds to.
@@ -130,6 +133,7 @@ services:
     image: klinik-api:${IMAGE_TAG:-local}
     command: ["node", "dist/worker.js"]
     env_file: [.env]
+    networks: [internal, observability]
     environment:
       PORT: 3000
     depends_on:
@@ -148,3 +152,9 @@ networks:
     ipam:
       config:
         - subnet: ${DOCKER_SUBNET}
+
+  # Shared with the observability stack. Created once, out of band:
+  #   docker network create --subnet 172.26.0.0/16 klinik-observability
+  observability:
+    external: true
+    name: klinik-observability

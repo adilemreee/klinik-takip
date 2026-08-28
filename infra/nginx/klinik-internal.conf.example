@@ -80,3 +80,28 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
+
+# --- GlitchTip (error tracking UI) ------------------------------------------
+# Only the UI is exposed here. The applications submit errors over the internal
+# docker network, so ingestion never needs a host port at all.
+server {
+    listen ${VPN_ADDR}:8129;
+    server_name _;
+
+    allow ${VPN_CIDR};
+    allow 172.16.0.0/12;
+    allow 127.0.0.1;
+    deny all;
+
+    client_max_body_size 20M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8129;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_read_timeout 120s;
+    }
+}

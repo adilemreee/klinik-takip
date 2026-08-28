@@ -4,10 +4,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { InfraModule } from './infra/infra.module';
+import { ObservabilityModule } from './observability/observability.module';
 
 @Module({
   imports: [
     AppConfigModule,
+    ObservabilityModule,
     InfraModule,
     // Application-level rate limiting. Cloudflare handles edge WAF and volumetric
     // limits; this protects specific endpoints (login, OTP) from abuse that gets

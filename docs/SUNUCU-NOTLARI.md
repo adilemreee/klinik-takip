@@ -56,7 +56,24 @@ trafik **cloudflared tunnel** ile gelir ve nginx'e hiç uğramaz. Dolayısıyla:
 > durumda **veri işleyendir** ve bir DPA (veri işleme sözleşmesi) gerekir. Faz 7 (T7.3)
 > kapsamında ele alınacak.
 
-### 5. Docker ve fail2ban kurulmaz — mevcut
+### 5. Sentry yerine GlitchTip; log ajanı yok
+
+**Sentry değil GlitchTip.** Self-hosted Sentry 8–16 GB RAM ister — bu sunucuda
+paylaşılan kaynakla mümkün değil. Sentry'nin bulut planı ise hasta bağlamı taşıyan
+stack trace'leri, aramızda sözleşme olmayan bir işleyene gönderirdi. GlitchTip Sentry
+protokolünü konuşur (SDK aynen `@sentry/node`), ~640 MB ile çalışır ve veri sunucudan
+çıkmaz. İleride gerçek Sentry'ye geçilirse kod değişmez, yalnız DSN değişir.
+
+**Log ajanı (Promtail/Alloy) kurulmadı.** Konteyner loglarını toplayan ajanlar docker
+soketine erişim ister; bu, host üzerinde root yetkisine eşdeğerdir ve bu sunucuda
+parola kasası dahil 21 servis çalışıyor. Bunun yerine uygulama loglarını **kendisi**
+Loki'ye gönderiyor (`pino-loki`). Ajan yok, soket yok, ayrıcalık artışı yok.
+
+**Metrikler API portunda sunulmaz.** API tünel üzerinden internete açık ve tünel her
+yolu iletiyor; `/metrics` orada olsaydı herkese açık olurdu. Metrikler konteyner içinde
+ayrı bir portta (9464) sunulur, host'a hiç yayınlanmaz.
+
+### 6. Docker ve fail2ban kurulmaz — mevcut
 Docker 29.1.3, Compose 2.40, fail2ban aktif. Kurulum adımları gereksizdir.
 
 ## Bu Projeye Ayrılan İzole Alan

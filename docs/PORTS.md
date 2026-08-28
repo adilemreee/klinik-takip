@@ -25,7 +25,7 @@ tahsis edilmiştir (boş olduğu tek tek doğrulandı).
 | 8126 | ortak | Grafana | **varsayılan 3000 dolu** (host'ta node) |
 | 8127 | ortak | Prometheus | **varsayılan 9090 dolu** (bazel-remote) |
 | 8128 | ortak | Loki | |
-| 8129 | — | rezerv | |
+| 8129 | ortak | GlitchTip (hata izleme UI) | Sentry protokolü, self-hosted |
 
 ## Dışarıya Açılış
 
@@ -53,10 +53,19 @@ korunur — sunucudaki mevcut servislerin izlediği desenin aynısı.
 |---|---|
 | PostgreSQL 16 | yalnız docker ağı (`postgres:5432`) |
 | Redis 7 | yalnız docker ağı (`redis:6379`) |
-| Worker (BullMQ) | port dinlemez |
+| Worker (BullMQ) | yalnız docker ağı (metrik portu `9464`) |
+| API metrik ucu | yalnız docker ağı (`9464`) — **API portunda değil** |
+| GlitchTip postgres / redis | yalnız docker ağı |
 
 > Host'ta zaten 6379'da bir redis ve 5432'de konteyner postgres'ler vardır.
 > Bizimkiler **ayrı konteynerlerdir**, mevcutlarla paylaşılmaz — sağlık verisi izole kalır.
+
+## Metrik Ucu Neden Ayrı Portta?
+
+API, tünel üzerinden internete açıktır ve tünel **her yolu** iletir. `/metrics`
+API portunda sunulsaydı herkese açık olurdu. Bu yüzden metrikler konteyner içinde
+**9464**'te ayrı bir dinleyicide sunulur; bu port host'a hiç yayınlanmaz, yalnız
+`klinik-observability` docker ağından Prometheus tarafından okunur.
 
 ## Docker Ağı
 
@@ -64,6 +73,13 @@ korunur — sunucudaki mevcut servislerin izlediği desenin aynısı.
 |---|---|
 | production | `172.24.0.0/16` |
 | staging | `172.25.0.0/16` |
+| observability (paylaşılan) | `172.26.0.0/16` |
+
+`klinik-observability` ağı **external**'dır, bir kez elle oluşturulur:
+
+```bash
+docker network create --subnet 172.26.0.0/16 klinik-observability
+```
 
 172.17–172.23 mevcut stack'ler tarafından kullanılmaktadır. Yeni ağ eklemeden önce:
 

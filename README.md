@@ -29,6 +29,7 @@ docs/       şartname, sunucu notları, port tahsisi, katkı kuralları
 | API | REST (OpenAPI 3.1) + WebSocket |
 | iOS | Swift, SwiftUI, Swift Concurrency, GRDB, APNs, Vision, HealthKit |
 | Android | Kotlin, Compose, Coroutines/Flow, Room, FCM, ML Kit, Health Connect |
+| Gözlemlenebilirlik | Prometheus, Grafana, Loki, **GlitchTip** (self-hosted, Sentry protokolü) |
 | Public giriş | **Mevcut cloudflared tunnel** (Caddy değil — bkz. SUNUCU-NOTLARI) |
 | Dahili uçlar | Mevcut nginx, VPN'e kapalı |
 
@@ -71,7 +72,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 
 | Faz | Durum |
 |---|---|
-| Faz 0 — Temel Kurulum | 🔄 devam ediyor (T0.1–T0.5 ✅) |
+| Faz 0 — Temel Kurulum | 🔄 devam ediyor (T0.1–T0.6 ✅) |
 | Faz 1 — Kimlik ve Çekirdek Veri | ⬜ |
 | Faz 2 — Mobil İskeletler | ⬜ |
 | Faz 3 — Klinik Modüller | ⬜ |

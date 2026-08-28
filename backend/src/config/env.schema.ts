@@ -28,6 +28,13 @@ export const envSchema = z.object({
    */
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   API_PUBLIC_URL: optional(z.string().url()),
+
+  /**
+   * Prometheus scrape port. Served on a SEPARATE listener from the API, which
+   * is publicly reachable through the tunnel — see metrics.server.ts.
+   */
+  METRICS_PORT: z.coerce.number().int().min(1).max(65535).default(9464),
+  SERVICE_NAME: z.string().default('klinik-api'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   // --- Database ------------------------------------------------------------
@@ -60,7 +67,15 @@ export const envSchema = z.object({
   AI_API_KEY: optional(z.string().min(1)),
   AI_MODEL: optional(z.string().min(1)),
   AI_MONTHLY_BUDGET_USD: optional(z.coerce.number().positive()),
+  // Points at the self-hosted GlitchTip, not sentry.io.
   SENTRY_DSN: optional(z.string().url()),
+
+  /**
+   * Loki push endpoint. When unset, logs go to stdout only (docker json-file).
+   * The app ships its own logs rather than running a collector agent — an
+   * agent would need the docker socket, which is root on the host.
+   */
+  LOKI_URL: optional(z.string().url()),
 });
 
 export type Env = z.infer<typeof envSchema>;

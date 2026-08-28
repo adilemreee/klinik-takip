@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { Env } from './config/env.schema';
 
 /**
@@ -13,6 +14,10 @@ import { Env } from './config/env.schema';
  * only ever constructed in main.ts, which nothing exercised.
  */
 export function configureApp(app: INestApplication, config: ConfigService<Env, true>): void {
+  // Replace Nest's default logger with the redacting structured one so nothing
+  // bypasses the scrubbing rules in logging.config.ts.
+  app.useLogger(app.get(PinoLogger));
+
   app.use(helmet());
   app.enableShutdownHooks();
 

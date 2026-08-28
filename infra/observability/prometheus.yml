@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    host: klinik
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # The API and worker expose metrics on a DEDICATED port (9464) that is not
+  # published to the host and never reaches the public tunnel. Targets are
+  # addressed by container name: both compose projects define a service called
+  # 'api', so the service-name alias would be ambiguous on the shared network.
+  - job_name: klinik-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['klinik-staging-api-1:9464']
+        labels: {env: staging, component: api}
+      # Re-enable when the production stack is deployed. A target that is
+      # permanently down trains everyone to ignore red.
+      # - targets: ['klinik-prod-api-1:9464']
+      #   labels: {env: production, component: api}
+
+  - job_name: klinik-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['klinik-staging-worker-1:9464']
+        labels: {env: staging, component: worker}
+      # - targets: ['klinik-prod-worker-1:9464']
+      #   labels: {env: production, component: worker}

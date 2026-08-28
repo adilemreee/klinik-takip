@@ -30,18 +30,27 @@ public struct Endpoint: Sendable {
     /// refresh, and refreshing to call refresh is a loop.
     public let requiresAuthentication: Bool
 
+    /// A specific bearer token to send instead of the session's.
+    ///
+    /// Two-factor enrolment is reached with the scoped setup token, which is a
+    /// bearer credential but not a session: there is nothing to refresh, and a
+    /// 401 on it means the five minutes elapsed, not that a session expired.
+    public let bearerOverride: String?
+
     public init(
         method: HTTPMethod,
         path: String,
         query: [String: String] = [:],
         body: Data? = nil,
-        requiresAuthentication: Bool = true
+        requiresAuthentication: Bool = true,
+        bearerOverride: String? = nil
     ) {
         self.method = method
         self.path = path
         self.query = query
         self.body = body
         self.requiresAuthentication = requiresAuthentication
+        self.bearerOverride = bearerOverride
     }
 }
 
@@ -86,7 +95,9 @@ public actor APIClient {
     private func perform(_ endpoint: Endpoint, retryAfterRefresh: Bool) async throws -> HTTPResponse {
         var token: String?
 
-        if endpoint.requiresAuthentication {
+        if let override = endpoint.bearerOverride {
+            token = override
+        } else if endpoint.requiresAuthentication {
             token = try await session.validAccessToken()
         }
 
@@ -101,7 +112,10 @@ public actor APIClient {
         //
         // The token that failed is handed back, so a request that queued behind
         // another one's refresh does not trigger a second, pointless refresh.
-        if response.status == 401, endpoint.requiresAuthentication, retryAfterRefresh, let token {
+        // An overridden bearer is not a session, so a 401 on it is final: there
+        // is nothing to refresh into.
+        if response.status == 401, endpoint.requiresAuthentication, endpoint.bearerOverride == nil,
+           retryAfterRefresh, let token {
             _ = try await session.refreshAfterUnauthorized(usedAccessToken: token)
             return try await perform(endpoint, retryAfterRefresh: false)
         }

@@ -106,6 +106,26 @@ public struct AuthAPI: Sendable {
         )
     }
 
+    /// Starts enrolment. Reached with the scoped setup token when the account
+    /// has no second factor yet, or with a session token when a patient opts in.
+    public func beginTotpEnrolment(setupToken: String? = nil) async throws -> TotpSetup {
+        try await client.send(
+            Endpoint(method: .post, path: "auth/2fa/setup", bearerOverride: setupToken),
+            as: TotpSetup.self
+        )
+    }
+
+    public func confirmTotpEnrolment(code: String, setupToken: String? = nil) async throws {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "auth/2fa/confirm",
+                body: try JSONEncoder.klinik.encode(["code": code]),
+                bearerOverride: setupToken
+            )
+        )
+    }
+
     public func sessions() async throws -> [DeviceSession] {
         try await client.send(Endpoint(method: .get, path: "auth/sessions"), as: [DeviceSession].self)
     }

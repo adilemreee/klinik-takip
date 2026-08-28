@@ -14,6 +14,7 @@ let package = Package(
         .library(name: "KlinikDesign", targets: ["KlinikDesign"]),
         .library(name: "KlinikCore", targets: ["KlinikCore"]),
         .library(name: "KlinikAPI", targets: ["KlinikAPI"]),
+        .library(name: "KlinikAuthFeature", targets: ["KlinikAuthFeature"]),
     ],
     targets: [
         // Generated from design/tokens.json, shared with Android (spec 3.2).
@@ -26,6 +27,11 @@ let package = Package(
         // Networking against the published OpenAPI contract.
         .target(name: "KlinikAPI", dependencies: ["KlinikCore"]),
 
+        // Sign-in and onboarding: the flow model and its screens. The model is
+        // deliberately free of SwiftUI state so it can be tested directly.
+        .target(name: "KlinikAuthFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
+
+        .testTarget(name: "KlinikAuthFeatureTests", dependencies: ["KlinikAuthFeature", "KlinikCore"]),
         .testTarget(name: "KlinikDesignTests", dependencies: ["KlinikDesign"]),
         .testTarget(name: "KlinikCoreTests", dependencies: ["KlinikCore"]),
         .testTarget(name: "KlinikAPITests", dependencies: ["KlinikAPI", "KlinikCore"]),

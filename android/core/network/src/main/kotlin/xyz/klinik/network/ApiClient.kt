@@ -21,6 +21,14 @@ data class Endpoint(
      * to call refresh, which is a loop.
      */
     val requiresAuthentication: Boolean = true,
+    /**
+     * A specific bearer token to send instead of the session's.
+     *
+     * Two-factor enrolment is reached with the scoped setup token, which is a
+     * bearer credential but not a session: there is nothing to refresh, and a
+     * 401 on it means the five minutes elapsed rather than a session expiring.
+     */
+    val bearerOverride: String? = null,
 )
 
 /**
@@ -38,7 +46,8 @@ class ApiClient(
     suspend fun send(endpoint: Endpoint): String = perform(endpoint, retryAfterRefresh = true).body
 
     private suspend fun perform(endpoint: Endpoint, retryAfterRefresh: Boolean): HttpResponse {
-        val token = if (endpoint.requiresAuthentication) session.validAccessToken() else null
+        val token = endpoint.bearerOverride
+            ?: if (endpoint.requiresAuthentication) session.validAccessToken() else null
         val response = transport.send(buildRequest(endpoint, token))
 
         if (response.status in 200..299) {
@@ -50,7 +59,11 @@ class ApiClient(
         //
         // The token that failed is handed back, so a request that queued behind
         // another one's refresh does not trigger a second, pointless refresh.
-        if (response.status == 401 && endpoint.requiresAuthentication && retryAfterRefresh && token != null) {
+        // An overridden bearer is not a session, so a 401 on it is final:
+        // there is nothing to refresh into.
+        if (response.status == 401 && endpoint.requiresAuthentication &&
+            endpoint.bearerOverride == null && retryAfterRefresh && token != null
+        ) {
             session.refreshAfterUnauthorized(token)
             return perform(endpoint, retryAfterRefresh = false)
         }

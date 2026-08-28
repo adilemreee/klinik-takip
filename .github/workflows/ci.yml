@@ -154,7 +154,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       # Builds only — nothing is pushed to a registry from CI.
       - name: Build API image

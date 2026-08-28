@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Pin the root so the emitted layout is dist/main.js, not dist/src/main.js.
+    // Without this, including test/ in the type-check config silently shifts the
+    // whole output tree and the container cannot find its entry point.
+    "rootDir": "./src"
+  },
+  "exclude": ["node_modules", "dist", "coverage", "test", "**/*.spec.ts"]
+}

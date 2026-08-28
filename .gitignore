@@ -1,0 +1,79 @@
+# ==============================================================
+# Secrets — NEVER commit. See docs/GUVENLIK-NOTLARI.md
+# ==============================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+# APNs auth key
+*.p8
+*.jks
+*.keystore
+*.mobileprovision
+# FCM
+google-services.json
+GoogleService-Info.plist
+secrets/
+id_rsa*
+id_ed25519*
+
+# ==============================================================
+# Node / NestJS (backend)
+# ==============================================================
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.npm/
+.pnpm-store/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Prisma
+backend/prisma/*.db
+backend/prisma/migrations/**/*.sql.bak
+
+# ==============================================================
+# iOS / Xcode
+# ==============================================================
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+build/
+Pods/
+*.ipa
+*.dSYM.zip
+*.dSYM
+.swiftpm/
+
+# ==============================================================
+# Android / Gradle
+# ==============================================================
+.gradle/
+local.properties
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+android/app/release/
+
+# ==============================================================
+# Tooling / OS
+# ==============================================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.swp
+.claude/settings.local.json
+
+# Local operational notes — server inventory, real hostnames, known gaps
+docs/OPERASYON-LOCAL.md

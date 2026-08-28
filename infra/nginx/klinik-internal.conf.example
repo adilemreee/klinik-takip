@@ -1,0 +1,82 @@
+# Internal-only endpoints: MinIO console, Grafana, Prometheus.
+# Reachable ONLY over the WireGuard VPN — never from the public internet.
+#
+# Follows the house pattern already used by this host (see /etc/nginx/
+# sites-enabled/metabase): bind to the WireGuard address, allow-list the VPN
+# and docker ranges, deny everything else.
+#
+# Install:
+#   cp klinik-internal.conf /etc/nginx/sites-available/klinik-internal
+#   ln -s /etc/nginx/sites-available/klinik-internal /etc/nginx/sites-enabled/
+#   nginx -t && systemctl reload nginx
+#
+# NEVER edit an existing site file. This adds a new one alongside them.
+#
+# Replace ${VPN_ADDR} with the host's VPN interface address and the allow-listed
+# ranges below with your own before installing. The real values are kept out of
+# this repository on purpose.
+
+# --- MinIO console (production) -------------------------------------------
+server {
+    listen ${VPN_ADDR}:8122;
+    server_name _;
+
+    allow ${VPN_CIDR};       # VPN peers
+    allow 172.16.0.0/12;     # docker bridges
+    allow 127.0.0.1;
+    deny all;
+
+    client_max_body_size 50M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8122;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 300s;
+    }
+}
+
+# --- Grafana ---------------------------------------------------------------
+server {
+    listen ${VPN_ADDR}:8126;
+    server_name _;
+
+    allow ${VPN_CIDR};
+    allow 172.16.0.0/12;
+    allow 127.0.0.1;
+    deny all;
+
+    location / {
+        proxy_pass http://127.0.0.1:8126;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;   # live tail / websockets
+        proxy_set_header Connection $connection_upgrade;
+    }
+}
+
+# --- Prometheus ------------------------------------------------------------
+server {
+    listen ${VPN_ADDR}:8127;
+    server_name _;
+
+    allow ${VPN_CIDR};
+    allow 172.16.0.0/12;
+    allow 127.0.0.1;
+    deny all;
+
+    location / {
+        proxy_pass http://127.0.0.1:8127;
+        proxy_set_header Host            $host;
+        proxy_set_header X-Real-IP       $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}

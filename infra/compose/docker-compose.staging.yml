@@ -1,0 +1,41 @@
+# Staging overlay. Same topology as production at roughly half the resources,
+# with its own project name, volumes, subnet and ports so the two environments
+# can never reach each other's data.
+#   docker compose -f docker-compose.base.yml -f docker-compose.staging.yml up -d
+
+services:
+  postgres:
+    deploy:
+      resources:
+        limits: {cpus: "0.75", memory: 1G}
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=50
+      -c log_min_duration_statement=200
+
+  redis:
+    deploy:
+      resources:
+        limits: {cpus: "0.25", memory: 256M}
+
+  minio:
+    deploy:
+      resources:
+        limits: {cpus: "0.5", memory: 512M}
+
+  api:
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: debug
+    deploy:
+      resources:
+        limits: {cpus: "0.75", memory: 768M}
+
+  worker:
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: debug
+    deploy:
+      resources:
+        limits: {cpus: "0.75", memory: 768M}

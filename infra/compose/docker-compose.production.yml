@@ -1,0 +1,45 @@
+# Production overlay.
+#   docker compose -f docker-compose.base.yml -f docker-compose.production.yml up -d
+# Host budget: the server also runs ~21 unrelated containers. Limits below keep
+# this stack from starving them. See docs/SUNUCU-NOTLARI.md.
+
+services:
+  postgres:
+    restart: always
+    deploy:
+      resources:
+        limits: {cpus: "1.5", memory: 3G}
+    command: >
+      postgres
+      -c shared_buffers=768MB
+      -c effective_cache_size=2GB
+      -c max_connections=120
+      -c log_min_duration_statement=500
+
+  redis:
+    restart: always
+    deploy:
+      resources:
+        limits: {cpus: "0.5", memory: 768M}
+
+  minio:
+    restart: always
+    deploy:
+      resources:
+        limits: {cpus: "1.0", memory: 1G}
+
+  api:
+    restart: always
+    environment:
+      NODE_ENV: production
+    deploy:
+      resources:
+        limits: {cpus: "1.5", memory: 1G}
+
+  worker:
+    restart: always
+    environment:
+      NODE_ENV: production
+    deploy:
+      resources:
+        limits: {cpus: "1.5", memory: 1G}

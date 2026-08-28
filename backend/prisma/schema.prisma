@@ -1,0 +1,14 @@
+// Data model lands in T1.1. This skeleton exists so the Prisma client can be
+// generated and the readiness probe can reach the database.
+generator client {
+  provider        = "prisma-client-js"
+  // Required to declare `extensions` on the datasource below, so extension
+  // state is managed by migrations instead of drifting between environments.
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto, pg_trgm, vector]
+}

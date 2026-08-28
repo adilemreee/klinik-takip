@@ -1,6 +1,7 @@
 plugins {
+    // AGP 9 has Kotlin support built in; applying org.jetbrains.kotlin.android
+    // alongside it is an error rather than a redundancy.
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -20,10 +21,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-}
-
-kotlin {
-    jvmToolchain(17)
 }
 
 dependencies {

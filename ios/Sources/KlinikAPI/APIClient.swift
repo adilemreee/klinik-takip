@@ -98,8 +98,11 @@ public actor APIClient {
 
         // One retry, and only for a 401 on an authenticated request. Retrying
         // more would spend refresh tokens the backend treats as single-use.
-        if response.status == 401, endpoint.requiresAuthentication, retryAfterRefresh {
-            _ = try await session.refreshAfterUnauthorized()
+        //
+        // The token that failed is handed back, so a request that queued behind
+        // another one's refresh does not trigger a second, pointless refresh.
+        if response.status == 401, endpoint.requiresAuthentication, retryAfterRefresh, let token {
+            _ = try await session.refreshAfterUnauthorized(usedAccessToken: token)
             return try await perform(endpoint, retryAfterRefresh: false)
         }
 

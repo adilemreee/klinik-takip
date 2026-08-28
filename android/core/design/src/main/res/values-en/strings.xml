@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
+     Regenerate with: node design/scripts/generate-strings.mjs -->
+<resources>
+    <string name="auth_error_account_inactive">Your account is not active. Please contact your clinic.</string>
+    <string name="auth_error_account_locked">Too many attempts. Try again in a little while.</string>
+    <string name="auth_error_invalid_credentials">E-mail or password is incorrect.</string>
+    <string name="auth_error_mfa_invalid">That code is not right. Wait for the next one and try again.</string>
+    <string name="auth_error_password_too_weak">That password is not strong enough.</string>
+    <string name="auth_forgot_password">I forgot my password</string>
+    <string name="auth_identifier">E-mail or phone</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_two_factor_hint">Enter the 6-digit code from your app.</string>
+    <string name="auth_two_factor_setup_hint">Connect an authenticator app to protect your account.</string>
+    <string name="auth_two_factor_setup_title">Two-step verification</string>
+    <string name="auth_two_factor_title">Verification code</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
+    <string name="common_done">Done</string>
+    <string name="common_loading">Loading…</string>
+    <string name="common_retry">Try again</string>
+    <string name="common_save">Save</string>
+    <string name="connection_offline">You are offline</string>
+    <string name="connection_offline_detail">This will continue where it left off once you are back online.</string>
+    <string name="connection_syncing">Syncing…</string>
+    <string name="connection_up_to_date">Up to date</string>
+    <string name="error_forbidden">You do not have permission for this.</string>
+    <string name="error_not_found">Record not found.</string>
+    <string name="error_offline">No internet connection.</string>
+    <string name="error_server">Something went wrong. Please try again shortly.</string>
+    <string name="error_timed_out">The server did not respond.</string>
+    <string name="patient_empty">No patients yet.</string>
+    <string name="patient_file_number">File no.</string>
+    <string name="patient_search">Search patients</string>
+    <string name="patient_search_hint">Name, surname or file number</string>
+    <string name="sessions_current">This device</string>
+    <string name="sessions_sign_out">Sign out</string>
+    <string name="sessions_sign_out_everywhere">Sign out everywhere</string>
+    <string name="sessions_title">My devices</string>
+</resources>

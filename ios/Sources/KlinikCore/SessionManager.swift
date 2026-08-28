@@ -75,9 +75,19 @@ public actor SessionManager {
 
     /// Called after a 401 on a request that carried a token we believed valid —
     /// the server may have revoked the session, or the clock may have drifted.
-    public func refreshAfterUnauthorized() async throws -> String {
+    ///
+    /// Takes the token the failed request actually used. Several requests in
+    /// flight all receive 401 carrying the same stale token, and each
+    /// refreshing in turn would spend a single-use token for nothing. Comparing
+    /// against what is held tells a caller whether someone has already fixed
+    /// the problem it is reacting to.
+    public func refreshAfterUnauthorized(usedAccessToken: String) async throws -> String {
         guard let current = tokens else {
             throw APIError.unauthorized(ErrorResponse(statusCode: 401, message: "Not signed in"))
+        }
+
+        if current.accessToken != usedAccessToken {
+            return current.accessToken
         }
 
         return try await performRefresh(from: current).accessToken

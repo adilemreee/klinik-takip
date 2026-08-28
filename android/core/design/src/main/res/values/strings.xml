@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
+     Regenerate with: node design/scripts/generate-strings.mjs -->
+<resources>
+    <string name="auth_error_account_inactive">Hesabınız aktif değil. Kliniğinizle görüşün.</string>
+    <string name="auth_error_account_locked">Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.</string>
+    <string name="auth_error_invalid_credentials">E-posta veya parola hatalı.</string>
+    <string name="auth_error_mfa_invalid">Kod doğru değil. Yeni kodu bekleyip tekrar deneyin.</string>
+    <string name="auth_error_password_too_weak">Parola yeterince güçlü değil.</string>
+    <string name="auth_forgot_password">Parolamı unuttum</string>
+    <string name="auth_identifier">E-posta veya telefon</string>
+    <string name="auth_password">Parola</string>
+    <string name="auth_sign_in">Giriş yap</string>
+    <string name="auth_two_factor_hint">Uygulamanızdaki 6 haneli kodu girin.</string>
+    <string name="auth_two_factor_setup_hint">Hesabınızı korumak için bir doğrulama uygulaması bağlayın.</string>
+    <string name="auth_two_factor_setup_title">İki adımlı doğrulama</string>
+    <string name="auth_two_factor_title">Doğrulama kodu</string>
+    <string name="common_cancel">Vazgeç</string>
+    <string name="common_close">Kapat</string>
+    <string name="common_done">Tamam</string>
+    <string name="common_loading">Yükleniyor…</string>
+    <string name="common_retry">Tekrar dene</string>
+    <string name="common_save">Kaydet</string>
+    <string name="connection_offline">Çevrimdışısınız</string>
+    <string name="connection_offline_detail">Bağlantı gelince kaldığınız yerden devam edecek.</string>
+    <string name="connection_syncing">Eşitleniyor…</string>
+    <string name="connection_up_to_date">Güncel</string>
+    <string name="error_forbidden">Bu işlem için yetkiniz yok.</string>
+    <string name="error_not_found">Kayıt bulunamadı.</string>
+    <string name="error_offline">İnternet bağlantısı yok.</string>
+    <string name="error_server">Bir sorun oluştu. Birazdan tekrar deneyin.</string>
+    <string name="error_timed_out">Sunucu yanıt vermedi.</string>
+    <string name="patient_empty">Henüz hasta yok.</string>
+    <string name="patient_file_number">Dosya no</string>
+    <string name="patient_search">Hasta ara</string>
+    <string name="patient_search_hint">Ad, soyad veya dosya numarası</string>
+    <string name="sessions_current">Bu cihaz</string>
+    <string name="sessions_sign_out">Çıkış yap</string>
+    <string name="sessions_sign_out_everywhere">Tüm cihazlardan çık</string>
+    <string name="sessions_title">Cihazlarım</string>
+</resources>

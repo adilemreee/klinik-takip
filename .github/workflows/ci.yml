@@ -188,15 +188,28 @@ jobs:
       - name: Check colour contrast
         run: node design/scripts/check-contrast.mjs
 
-      # Both clients generate from design/tokens.json. Sharing a document each
-      # platform then transcribes by hand is not sharing — they drift in a
+      # A string present in one language or on one platform and missing
+      # elsewhere shows up as English mid-sentence in a Turkish screen, or as a
+      # raw key in front of a patient.
+      - name: Check string catalogues agree
+        run: node design/scripts/check-strings.mjs
+
+      # Both clients generate from the shared sources. Sharing a document each
+      # platform then transcribes by hand is not sharing — they drift within a
       # release. Regenerating and diffing is what makes it true.
-      - name: Check generated tokens are up to date
+      - name: Check generated sources are up to date
         run: |
           node design/scripts/generate-tokens.mjs
-          if ! git diff --quiet -- ios/ android/; then
-            echo "::error::Design tokens are out of date. Run 'node design/scripts/generate-tokens.mjs' and commit."
-            git --no-pager diff --stat -- ios/ android/
+          node design/scripts/generate-strings.mjs
+          # Scoped to the generated files, so the check says exactly what it
+          # means rather than reacting to anything else under ios/ or android/.
+          GENERATED="ios/Sources/KlinikDesign/Tokens.generated.swift \
+            android/core/design/src/main/kotlin/xyz/klinik/design/Tokens.generated.kt \
+            android/core/design/src/main/res/values/strings.xml \
+            android/core/design/src/main/res/values-en/strings.xml"
+          if ! git diff --quiet -- $GENERATED; then
+            echo "::error::Generated sources are out of date. Run the scripts in design/scripts and commit."
+            git --no-pager diff --stat -- $GENERATED
             exit 1
           fi
 
@@ -220,6 +233,34 @@ jobs:
 
       - name: Test
         run: swift test
+
+  android:
+    name: Android — build and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Present on the runner, so the Compose modules that settings.gradle.kts
+      # skips locally are built here. Nothing is silently left unverified.
+      - name: Confirm the Android SDK is available
+        run: test -n "$ANDROID_HOME" && echo "ANDROID_HOME=$ANDROID_HOME"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        run: ./gradlew assemble
+
+      - name: Test
+        run: ./gradlew test
 
   security:
     name: Security — secrets and dependencies

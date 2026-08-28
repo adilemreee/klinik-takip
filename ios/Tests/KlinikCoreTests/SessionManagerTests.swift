@@ -83,6 +83,34 @@ final class SessionManagerTests: XCTestCase {
         XCTAssertEqual(Set(results).count, 1, "Every caller must receive the same token")
     }
 
+    /// Requests already in flight all come back 401 carrying the same stale
+    /// token. Each refreshing in turn would spend a single-use token for
+    /// nothing, so only the first does.
+    func testConcurrentReactionsToTheSame401ProduceOneRefresh() async throws {
+        let refresher = CountingRefresher(outcome: .success(tokens(expiresIn: 900)))
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: refresher)
+        let stale = tokens(expiresIn: 900)
+        try await session.signIn(with: stale)
+
+        let results = try await withThrowingTaskGroup(of: String.self) { group in
+            for _ in 0..<10 {
+                group.addTask {
+                    try await session.refreshAfterUnauthorized(usedAccessToken: stale.accessToken)
+                }
+            }
+
+            var tokens: [String] = []
+            for try await token in group {
+                tokens.append(token)
+            }
+            return tokens
+        }
+
+        let count = await refresher.count()
+        XCTAssertEqual(count, 1)
+        XCTAssertEqual(Set(results).count, 1)
+    }
+
     func testAFailedRefreshEndsTheSession() async throws {
         let refresher = CountingRefresher(
             outcome: .failure(.unauthorized(ErrorResponse(statusCode: 401, message: "reused")))

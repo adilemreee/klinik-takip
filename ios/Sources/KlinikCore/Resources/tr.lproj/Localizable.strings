@@ -69,3 +69,38 @@
 "emergency.sent" = "Klinik haberdar edildi. Sizi arayacaklar.";
 "emergency.notSentRetry" = "Bildirim kliniğe ULAŞMADI. Tekrar deneyin; acilse bulunduğunuz ülkenin acil numarasını arayın.";
 "emergency.callLocalNumber" = "Acil numarayı ara";
+
+/* Ölçümler ve VKİ (Şartname M2) */
+"measurement.add" = "Ölçüm ekle";
+"measurement.type" = "Ölçüm türü";
+"measurement.series" = "Gösterilen eğri";
+"measurement.weight" = "Kilo";
+"measurement.bmi" = "VKİ";
+"measurement.target" = "Hedef";
+"measurement.latest" = "Son ölçüm";
+"measurement.date" = "Tarih";
+"measurement.note" = "Not (isteğe bağlı)";
+"measurement.systolic" = "Büyük tansiyon";
+"measurement.diastolic" = "Küçük tansiyon";
+"measurement.empty" = "Henüz ölçüm yok. İlk kilonuzu ekleyince eğri çizilmeye başlar.";
+"measurement.noHeight" = "VKİ için boy gerekiyor. Boy eklendiğinde eğri kendiliğinden çizilir.";
+
+"measurement.type.WEIGHT" = "Kilo";
+"measurement.type.HEIGHT" = "Boy";
+"measurement.type.BLOOD_PRESSURE" = "Tansiyon";
+"measurement.type.PULSE" = "Nabız";
+"measurement.type.TEMPERATURE" = "Ateş";
+"measurement.type.SPO2" = "Oksijen (SpO2)";
+"measurement.type.GLUCOSE" = "Kan şekeri";
+"measurement.type.WAIST" = "Bel çevresi";
+
+"measurement.source.PATIENT" = "Hasta girdi";
+"measurement.source.NURSE" = "Klinikte ölçüldü";
+"measurement.source.DEVICE" = "Cihazdan geldi";
+
+"bmi.category.UNDERWEIGHT" = "Zayıf";
+"bmi.category.NORMAL" = "Normal";
+"bmi.category.OVERWEIGHT" = "Fazla kilolu";
+"bmi.category.OBESE_I" = "Obezite (1. derece)";
+"bmi.category.OBESE_II" = "Obezite (2. derece)";
+"bmi.category.OBESE_III" = "Obezite (3. derece)";

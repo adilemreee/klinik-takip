@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthzModule } from './authz/authz.module';
 import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
+import { MeasurementsModule } from './measurements/measurements.module';
 import { MeModule } from './me/me.module';
 import { PatientsModule } from './patients/patients.module';
 import { AppConfigModule } from './config/config.module';
@@ -28,6 +29,7 @@ import { ObservabilityModule } from './observability/observability.module';
     FilesModule,
     PatientsModule,
     MeModule,
+    MeasurementsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

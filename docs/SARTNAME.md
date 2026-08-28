@@ -424,7 +424,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [ ] T2.6 Offline katmanı: yerel DB + outbox + senkronizasyon
 
 ### FAZ 3 — Klinik Modüller
-- [ ] T3.1 Ölçümler ve VKİ + grafikler
+- [x] T3.1 Ölçümler ve VKİ + grafikler
 - [ ] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi
 - [ ] T3.3 OCR worker + lab sonucu yapılandırma + doktor onay ekranı
 - [ ] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı

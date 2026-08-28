@@ -116,6 +116,28 @@ export class AuditService {
       return value.toISOString();
     }
 
+    /**
+     * Decimal columns — weights, doses, money — reach here as Prisma.Decimal,
+     * which the JSON protocol refuses to serialize, failing the whole
+     * transaction and with it the change being audited.
+     *
+     * Kept as a string rather than a number: 10.3 decimal digits do not all
+     * survive a double, and an audit record that rounds the value it is
+     * attesting to is worse than one that reads a little awkwardly.
+     */
+    if (Prisma.Decimal.isDecimal(value)) {
+      return value.toString();
+    }
+
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+
+    /** Ciphertext and file bytes: record the size, never the contents. */
+    if (Buffer.isBuffer(value) || value instanceof Uint8Array) {
+      return `[${value.length} bytes]`;
+    }
+
     if (typeof value === 'object') {
       const result: Record<string, unknown> = {};
 

@@ -16,6 +16,9 @@ public enum FieldKeyboard: Sendable {
     case `default`
     case emailAddress
     case numberPad
+    /// Digits plus a separator. A weight of 72.4 cannot be typed on a number
+    /// pad, and a field that silently refuses the separator reads as broken.
+    case decimal
 }
 
 /// The page frame every auth screen shares: a title, optional explanation, and
@@ -244,6 +247,7 @@ extension FieldKeyboard {
         case .default: return .default
         case .emailAddress: return .emailAddress
         case .numberPad: return .numberPad
+        case .decimal: return .decimalPad
         }
     }
 }

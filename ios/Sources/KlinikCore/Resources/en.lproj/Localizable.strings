@@ -69,3 +69,38 @@
 "emergency.sent" = "The clinic has been notified. They will call you.";
 "emergency.notSentRetry" = "The alert did NOT reach the clinic. Try again; if this is urgent, call your country's emergency number.";
 "emergency.callLocalNumber" = "Call emergency number";
+
+/* Measurements and BMI (spec M2) */
+"measurement.add" = "Add a reading";
+"measurement.type" = "Reading type";
+"measurement.series" = "Curve shown";
+"measurement.weight" = "Weight";
+"measurement.bmi" = "BMI";
+"measurement.target" = "Goal";
+"measurement.latest" = "Latest";
+"measurement.date" = "Date";
+"measurement.note" = "Note (optional)";
+"measurement.systolic" = "Systolic";
+"measurement.diastolic" = "Diastolic";
+"measurement.empty" = "No readings yet. The curve starts once you add your first weight.";
+"measurement.noHeight" = "BMI needs a height. The curve appears on its own once one is recorded.";
+
+"measurement.type.WEIGHT" = "Weight";
+"measurement.type.HEIGHT" = "Height";
+"measurement.type.BLOOD_PRESSURE" = "Blood pressure";
+"measurement.type.PULSE" = "Pulse";
+"measurement.type.TEMPERATURE" = "Temperature";
+"measurement.type.SPO2" = "Oxygen (SpO2)";
+"measurement.type.GLUCOSE" = "Blood glucose";
+"measurement.type.WAIST" = "Waist";
+
+"measurement.source.PATIENT" = "Entered by patient";
+"measurement.source.NURSE" = "Measured at the clinic";
+"measurement.source.DEVICE" = "From a device";
+
+"bmi.category.UNDERWEIGHT" = "Underweight";
+"bmi.category.NORMAL" = "Normal";
+"bmi.category.OVERWEIGHT" = "Overweight";
+"bmi.category.OBESE_I" = "Obesity (class I)";
+"bmi.category.OBESE_II" = "Obesity (class II)";
+"bmi.category.OBESE_III" = "Obesity (class III)";

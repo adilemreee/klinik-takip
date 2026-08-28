@@ -833,6 +833,251 @@
             },
             "description": "Everything the patient home screen needs, in one call"
           }
+        },
+        {
+          "name": "Record one of your own readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/measurements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "measurements"
+              ]
+            },
+            "description": "Record one of your own readings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"WEIGHT\",\n  \"value\": 0,\n  \"secondaryValue\": 0,\n  \"unit\": \"\",\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Your most recent reading of each type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/measurements/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "measurements",
+                "latest"
+              ]
+            },
+            "description": "Your most recent reading of each type"
+          }
+        },
+        {
+          "name": "Your weight curve, BMI curve and goal line",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/measurements/chart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "measurements",
+                "chart"
+              ]
+            },
+            "description": "Your weight curve, BMI curve and goal line"
+          }
+        },
+        {
+          "name": "One of your reading types over time",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/measurements/:type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "measurements",
+                ":type"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "type",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "One of your reading types over time"
+          }
+        }
+      ]
+    },
+    {
+      "name": "measurements",
+      "item": [
+        {
+          "name": "Record a reading; implausible values are refused",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/measurements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "measurements"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Record a reading; implausible values are refused",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"WEIGHT\",\n  \"value\": 0,\n  \"secondaryValue\": 0,\n  \"unit\": \"\",\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\",\n  \"note\": \"\",\n  \"source\": \"PATIENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "The most recent reading of each type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/measurements/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "measurements",
+                "latest"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "The most recent reading of each type"
+          }
+        },
+        {
+          "name": "Weight curve, BMI curve and goal line in one read",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/measurements/chart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "measurements",
+                "chart"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Weight curve, BMI curve and goal line in one read"
+          }
+        },
+        {
+          "name": "One reading type over time, oldest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/measurements/:type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "measurements",
+                ":type"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "key": "type",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "One reading type over time, oldest first"
+          }
         }
       ]
     }

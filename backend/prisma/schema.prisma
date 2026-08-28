@@ -351,6 +351,11 @@ model MedicalProfile {
   smoking Boolean?
   alcohol Boolean?
 
+  /// The weight the patient is working towards — the target line on the weight
+  /// and BMI charts (spec M2). Null means no goal has been set, which the
+  /// charts draw as no line rather than as zero.
+  targetWeightKg Decimal? @map("target_weight_kg") @db.Decimal(10, 3)
+
   notes     String?
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -1943,6 +1943,657 @@
           "me"
         ]
       }
+    },
+    "/patients/{id}/measurements": {
+      "post": {
+        "operationId": "MeasurementsController_record",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffRecordMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a reading; implausible values are refused",
+        "tags": [
+          "measurements"
+        ]
+      }
+    },
+    "/patients/{id}/measurements/latest": {
+      "get": {
+        "operationId": "MeasurementsController_latest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesPointDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The most recent reading of each type",
+        "tags": [
+          "measurements"
+        ]
+      }
+    },
+    "/patients/{id}/measurements/chart": {
+      "get": {
+        "operationId": "MeasurementsController_chart",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyChartDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Weight curve, BMI curve and goal line in one read",
+        "tags": [
+          "measurements"
+        ]
+      }
+    },
+    "/patients/{id}/measurements/{type}": {
+      "get": {
+        "operationId": "MeasurementsController_series",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeriesPointDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One reading type over time, oldest first",
+        "tags": [
+          "measurements"
+        ]
+      }
+    },
+    "/me/measurements": {
+      "post": {
+        "operationId": "MyMeasurementsController_record",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordMeasurementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record one of your own readings",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/measurements/latest": {
+      "get": {
+        "operationId": "MyMeasurementsController_latest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesPointDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your most recent reading of each type",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/measurements/chart": {
+      "get": {
+        "operationId": "MyMeasurementsController_chart",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyChartDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your weight curve, BMI curve and goal line",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/measurements/{type}": {
+      "get": {
+        "operationId": "MyMeasurementsController_series",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeriesPointDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One of your reading types over time",
+        "tags": [
+          "me"
+        ]
+      }
     }
   },
   "info": {
@@ -2925,6 +3576,236 @@
           "medicationsDueToday",
           "unreadMessages",
           "missingDocuments"
+        ]
+      },
+      "StaffRecordMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "WEIGHT",
+              "HEIGHT",
+              "BMI",
+              "BLOOD_PRESSURE",
+              "PULSE",
+              "TEMPERATURE",
+              "SPO2",
+              "GLUCOSE",
+              "WAIST"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Systolic, for blood pressure"
+          },
+          "secondaryValue": {
+            "type": "number",
+            "description": "Diastolic; only blood pressure uses it"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Defaults to the unit the type is stored in"
+          },
+          "measuredAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Defaults to now; set it when entering an older reading"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "PATIENT",
+              "NURSE",
+              "DEVICE"
+            ],
+            "description": "Device readings are kept distinguishable from entered ones (spec M20)"
+          }
+        },
+        "required": [
+          "type",
+          "value",
+          "source"
+        ]
+      },
+      "MeasurementDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "value",
+          "measuredAt"
+        ]
+      },
+      "SeriesPointDto": {
+        "type": "object",
+        "properties": {
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "number"
+          },
+          "secondaryValue": {
+            "type": "object",
+            "nullable": true,
+            "description": "Diastolic, for blood pressure"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "PATIENT",
+              "NURSE",
+              "DEVICE"
+            ]
+          }
+        },
+        "required": [
+          "measuredAt",
+          "value",
+          "secondaryValue",
+          "unit",
+          "source"
+        ]
+      },
+      "BmiPointDto": {
+        "type": "object",
+        "properties": {
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bmi": {
+            "type": "number",
+            "example": 22.9
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "UNDERWEIGHT",
+              "NORMAL",
+              "OVERWEIGHT",
+              "OBESE_I",
+              "OBESE_II",
+              "OBESE_III"
+            ]
+          },
+          "weightKg": {
+            "type": "number",
+            "description": "The weight this point was computed from"
+          },
+          "heightCm": {
+            "type": "number",
+            "description": "The height in effect when that weight was taken"
+          }
+        },
+        "required": [
+          "measuredAt",
+          "bmi",
+          "category",
+          "weightKg",
+          "heightCm"
+        ]
+      },
+      "BodyChartDto": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeriesPointDto"
+            }
+          },
+          "bmi": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BmiPointDto"
+            }
+          },
+          "targetWeightKg": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null when no goal has been set"
+          },
+          "targetBmi": {
+            "type": "object",
+            "nullable": true,
+            "description": "The same goal on the BMI axis"
+          }
+        },
+        "required": [
+          "weight",
+          "bmi",
+          "targetWeightKg",
+          "targetBmi"
+        ]
+      },
+      "RecordMeasurementDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "WEIGHT",
+              "HEIGHT",
+              "BMI",
+              "BLOOD_PRESSURE",
+              "PULSE",
+              "TEMPERATURE",
+              "SPO2",
+              "GLUCOSE",
+              "WAIST"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Systolic, for blood pressure"
+          },
+          "secondaryValue": {
+            "type": "number",
+            "description": "Diastolic; only blood pressure uses it"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Defaults to the unit the type is stored in"
+          },
+          "measuredAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Defaults to now; set it when entering an older reading"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "type",
+          "value"
         ]
       }
     }

@@ -17,6 +17,7 @@ let package = Package(
         .library(name: "KlinikAuthFeature", targets: ["KlinikAuthFeature"]),
         .library(name: "KlinikPatientsFeature", targets: ["KlinikPatientsFeature"]),
         .library(name: "KlinikHomeFeature", targets: ["KlinikHomeFeature"]),
+        .library(name: "KlinikMeasurementsFeature", targets: ["KlinikMeasurementsFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
     ],
     targets: [
@@ -41,7 +42,17 @@ let package = Package(
         // The patient's own home screen.
         .target(name: "KlinikHomeFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
 
+        // Body measurements and the charts drawn from them (spec M2).
+        .target(
+            name: "KlinikMeasurementsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .testTarget(name: "KlinikPatientsFeatureTests", dependencies: ["KlinikPatientsFeature", "KlinikCore"]),
+        .testTarget(
+            name: "KlinikMeasurementsFeatureTests",
+            dependencies: ["KlinikMeasurementsFeature", "KlinikCore"]
+        ),
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 

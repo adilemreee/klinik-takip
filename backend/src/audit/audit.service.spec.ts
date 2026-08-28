@@ -1,4 +1,4 @@
-import { AuditAction, Role } from '@prisma/client';
+import { AuditAction, Prisma, Role } from '@prisma/client';
 import { AuditService } from './audit.service';
 import { PrismaService } from '../infra/prisma.service';
 
@@ -83,6 +83,31 @@ describe('AuditService redaction', () => {
     const output = await write({ signedAt: new Date('2026-01-02T03:04:05.000Z') });
 
     expect(output).toContain('2026-01-02T03:04:05.000Z');
+  });
+
+  /**
+   * Weights, doses and money are Decimal columns. Prisma's JSON protocol
+   * refuses to serialize a Decimal, which took down the whole transaction —
+   * and with it the change being audited — rather than just the audit row.
+   */
+  it('serialises a decimal without losing digits', async () => {
+    const output = await write({ weightKg: new Prisma.Decimal('72.375') });
+
+    expect(output).toContain('72.375');
+    expect(output).not.toContain('constructor');
+  });
+
+  it('records the size of a byte payload, never its contents', async () => {
+    const output = await write({ ciphertext: Buffer.from('secret-bytes') });
+
+    expect(output).toContain('[12 bytes]');
+    expect(output).not.toContain('secret-bytes');
+  });
+
+  it('serialises a bigint', async () => {
+    const output = await write({ sizeBytes: 9007199254740993n });
+
+    expect(output).toContain('9007199254740993');
   });
 
   /**

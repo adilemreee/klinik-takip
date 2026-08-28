@@ -6,10 +6,27 @@ points: `dist/main.js` (HTTP API) and `dist/worker.js` (BullMQ queue worker).
 ## Yerelde Çalıştırma
 
 ```bash
+npm run dev:deps          # yerel postgres (55432) + redis (56379)
 npm install
-cp ../infra/compose/env.staging.example .env   # değerleri doldurun
 npx prisma generate
+npx prisma migrate deploy
+npm run seed              # izin matrisi
 npm run dev
+```
+
+`.env` dosyanız (repoya girmez) en azından şunları içermeli:
+
+```
+DATABASE_URL=postgresql://klinik:klinik@localhost:55432/klinik?schema=public
+REDIS_HOST=127.0.0.1
+REDIS_PORT=56379
+REDIS_PASSWORD=devpass
+```
+
+Entegrasyon testleri gerçek PostgreSQL ve Redis ister:
+
+```bash
+npm run test:integration
 ```
 
 ## Komutlar
@@ -20,6 +37,9 @@ npm run dev
 | `npm run dev:worker` | Worker, watch modunda |
 | `npm run build` | `dist/` üretir |
 | `npm test` | Unit testler |
+| `npm run test:integration` | Gerçek PostgreSQL + Redis ile entegrasyon testleri |
+| `npm run dev:deps` | Yerel bağımlılıkları başlatır |
+| `npm run bootstrap:admin` | İlk SUPER_ADMIN (bir kez) |
 | `npm run lint` | ESLint (type-aware) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run prisma:dev` | Geliştirme migration'ı üretir |

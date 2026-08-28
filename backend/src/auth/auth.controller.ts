@@ -26,6 +26,7 @@ import {
   RefreshDto,
   TotpCodeDto,
 } from './dto/auth.dto';
+import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
 import { CreatedInvitation, InvitationService } from './invitation.service';
 import { DeviceContext, IssuedTokens, TokenService } from './token.service';
 
@@ -159,11 +160,9 @@ export class AuthController {
     await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword);
   }
 
-  /**
-   * Invitation creation is permission-checked in T1.3; for now it requires a
-   * staff session. The code is returned once, for the notification worker.
-   */
+  /** The code is returned once, for the notification worker to deliver. */
   @ApiBearerAuth()
+  @RequirePermissions('staff.manage')
   @Post('invitations')
   @ApiOperation({ summary: 'Invite a staff member or a patient' })
   async invite(

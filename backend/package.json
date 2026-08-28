@@ -24,7 +24,9 @@
     "prisma:dev": "prisma migrate dev",
     "seed": "prisma db seed",
     "test:integration": "jest --config jest.integration.json --runInBand",
-    "bootstrap:admin": "ts-node prisma/bootstrap-admin.ts"
+    "bootstrap:admin": "ts-node prisma/bootstrap-admin.ts",
+    "dev:deps": "docker compose -f ../infra/compose/docker-compose.dev.yml up -d",
+    "dev:deps:down": "docker compose -f ../infra/compose/docker-compose.dev.yml down"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

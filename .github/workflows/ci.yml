@@ -41,6 +41,9 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://klinik:klinik@localhost:5432/klinik_test?schema=public
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ci-redis-password
 
     steps:
       - uses: actions/checkout@v5
@@ -50,6 +53,20 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
+
+      # Started as a step rather than a service container so it can require a
+      # password: the application refuses to connect to an unauthenticated
+      # Redis, and weakening that for CI would stop testing what ships.
+      - name: Start Redis
+        run: |
+          docker run -d --name ci-redis -p 6379:6379 redis:7-alpine \
+            redis-server --requirepass ci-redis-password
+          for i in $(seq 1 20); do
+            docker exec ci-redis redis-cli -a ci-redis-password ping >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "Redis did not become ready" >&2
+          exit 1
 
       - name: Install dependencies
         run: npm ci

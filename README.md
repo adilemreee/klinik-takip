@@ -1,5 +1,7 @@
 # Klinik Takip Platformu
 
+[![CI](https://github.com/adilemreee/klinik-takip/actions/workflows/ci.yml/badge.svg)](https://github.com/adilemreee/klinik-takip/actions/workflows/ci.yml)
+
 Ameliyat öncesi–sonrası süreci uçtan uca yöneten, sağlık turizmi senaryosuna uygun
 doktor–hasta takip platformu. Native iOS + native Android istemciler ve kendi
 sunucumuzda çalışan bir backend.
@@ -51,6 +53,11 @@ iOS ve Android iskeletleri T2.1 ve T2.2'de kurulacaktır.
 
 Dağıtım prosedürü: [docs/DAGITIM.md](docs/DAGITIM.md)
 
+> ⚠️ **Bu depo herkese açıktır.** Sunucu adresleri, gerçek hostname'ler, servis
+> envanteri ve bilinen açıklar bilinçli olarak buraya **yazılmaz**; bunlar yerel
+> `docs/OPERASYON-LOCAL.md` dosyasındadır (`.gitignore`'da). Dokümanlardaki
+> `<production-hostname>` gibi yer tutucular bu yüzdendir.
+
 ## Kurallar
 
 - Sırlar asla repoya girmez (§8). Bkz. [docs/KATKI-KURALLARI.md](docs/KATKI-KURALLARI.md)
@@ -64,7 +71,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 
 | Faz | Durum |
 |---|---|
-| Faz 0 — Temel Kurulum | 🔄 devam ediyor (T0.1 ✅, T0.2 ✅, T0.3 ✅, T0.4 ✅) |
+| Faz 0 — Temel Kurulum | 🔄 devam ediyor (T0.1–T0.5 ✅) |
 | Faz 1 — Kimlik ve Çekirdek Veri | ⬜ |
 | Faz 2 — Mobil İskeletler | ⬜ |
 | Faz 3 — Klinik Modüller | ⬜ |

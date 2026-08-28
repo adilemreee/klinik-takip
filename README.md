@@ -52,7 +52,7 @@ cp .env.example .env
 Backend hazır — bkz. [backend/README.md](backend/README.md).
 iOS ve Android iskeletleri T2.1 ve T2.2'de kurulacaktır.
 
-Veri modeli: [docs/VERI-MODELI.md](docs/VERI-MODELI.md) · Kimlik doğrulama: [docs/KIMLIK-DOGRULAMA.md](docs/KIMLIK-DOGRULAMA.md) · Yetkilendirme: [docs/YETKILENDIRME.md](docs/YETKILENDIRME.md) · Denetim: [docs/DENETIM-GUNLUGU.md](docs/DENETIM-GUNLUGU.md) · Dosyalar: [docs/DOSYA-SERVISI.md](docs/DOSYA-SERVISI.md) · Dağıtım: [docs/DAGITIM.md](docs/DAGITIM.md) · Yedekleme: [docs/YEDEKLEME.md](docs/YEDEKLEME.md)
+Veri modeli: [docs/VERI-MODELI.md](docs/VERI-MODELI.md) · Kimlik doğrulama: [docs/KIMLIK-DOGRULAMA.md](docs/KIMLIK-DOGRULAMA.md) · Yetkilendirme: [docs/YETKILENDIRME.md](docs/YETKILENDIRME.md) · Denetim: [docs/DENETIM-GUNLUGU.md](docs/DENETIM-GUNLUGU.md) · Dosyalar: [docs/DOSYA-SERVISI.md](docs/DOSYA-SERVISI.md) · Hasta kayıtları: [docs/HASTA-KAYITLARI.md](docs/HASTA-KAYITLARI.md) · Dağıtım: [docs/DAGITIM.md](docs/DAGITIM.md) · Yedekleme: [docs/YEDEKLEME.md](docs/YEDEKLEME.md)
 
 > ⚠️ **Bu depo herkese açıktır.** Sunucu adresleri, gerçek hostname'ler, servis
 > envanteri ve bilinen açıklar bilinçli olarak buraya **yazılmaz**; bunlar yerel
@@ -73,7 +73,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz | Durum |
 |---|---|
 | Faz 0 — Temel Kurulum | ✅ **tamamlandı** (T0.1–T0.7) |
-| Faz 1 — Kimlik ve Çekirdek Veri | 🔄 devam ediyor (T1.1–T1.5 ✅) |
+| Faz 1 — Kimlik ve Çekirdek Veri | 🔄 devam ediyor (T1.1–T1.6 ✅) |
 | Faz 2 — Mobil İskeletler | ⬜ |
 | Faz 3 — Klinik Modüller | ⬜ |
 | Faz 4 — İletişim ve Bildirim | ⬜ |

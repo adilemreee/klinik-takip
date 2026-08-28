@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthzModule } from './authz/authz.module';
 import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
+import { PatientsModule } from './patients/patients.module';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { InfraModule } from './infra/infra.module';
@@ -24,6 +25,7 @@ import { ObservabilityModule } from './observability/observability.module';
     AuthzModule,
     AuditModule,
     FilesModule,
+    PatientsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

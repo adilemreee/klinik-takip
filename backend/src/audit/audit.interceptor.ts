@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuditAction } from '@prisma/client';
-import { Observable, tap } from 'rxjs';
+import { Observable, concatMap } from 'rxjs';
 import type { RequestWithUser } from '../auth/decorators/current-user.decorator';
 import { AUDIT_KEY, AuditMetadata } from './decorators/audit.decorator';
 import { AuditService } from './audit.service';
@@ -33,27 +33,32 @@ export class AuditInterceptor implements NestInterceptor {
 
     const request = context.switchToHttp().getRequest<RequestWithUser>();
 
+    // concatMap, not tap: the response waits for the audit write. Fire and
+    // forget would mean an entry that may or may not exist — lost if the
+    // process stops in the moment after the response — and a trail that is only
+    // probably complete is not a trail. The write is a single indexed insert,
+    // and audit.record swallows its own failures, so this cannot fail the read.
     return next.handle().pipe(
-      tap({
-        next: () => {
-          const params = request.params as Record<string, string | undefined>;
+      concatMap(async (value: unknown): Promise<unknown> => {
+        const params = request.params as Record<string, string | undefined>;
 
-          void this.audit.record({
-            actorId: request.user?.id,
-            actorRole: request.user?.role,
-            action: metadata.action ?? AuditAction.READ,
-            entityType: metadata.entityType,
-            entityId: metadata.entityIdParam ? params[metadata.entityIdParam] : undefined,
-            patientId: metadata.patientIdParam
-              ? params[metadata.patientIdParam]
-              : metadata.entityType === 'patients' && metadata.entityIdParam
-                ? params[metadata.entityIdParam]
-                : undefined,
-            ipAddress: request.ip,
-            userAgent: request.headers['user-agent'],
-            requestId: typeof request.id === 'string' ? request.id : undefined,
-          });
-        },
+        await this.audit.record({
+          actorId: request.user?.id,
+          actorRole: request.user?.role,
+          action: metadata.action ?? AuditAction.READ,
+          entityType: metadata.entityType,
+          entityId: metadata.entityIdParam ? params[metadata.entityIdParam] : undefined,
+          patientId: metadata.patientIdParam
+            ? params[metadata.patientIdParam]
+            : metadata.entityType === 'patients' && metadata.entityIdParam
+              ? params[metadata.entityIdParam]
+              : undefined,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+          requestId: typeof request.id === 'string' ? request.id : undefined,
+        });
+
+        return value;
       }),
     );
   }

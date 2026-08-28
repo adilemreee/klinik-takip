@@ -1,0 +1,154 @@
+import Foundation
+import KlinikCore
+
+public struct APIConfiguration: Sendable {
+    public let baseURL: URL
+    /// Sent as `Accept-Language`, so the backend can localise what it returns.
+    public let preferredLanguage: String
+
+    public init(baseURL: URL, preferredLanguage: String = "tr") {
+        self.baseURL = baseURL
+        self.preferredLanguage = preferredLanguage
+    }
+}
+
+public enum HTTPMethod: String, Sendable {
+    case get = "GET"
+    case post = "POST"
+    case patch = "PATCH"
+    case put = "PUT"
+    case delete = "DELETE"
+}
+
+public struct Endpoint: Sendable {
+    public let method: HTTPMethod
+    public let path: String
+    public let query: [String: String]
+    public let body: Data?
+    /// Endpoints that must not carry a token — sign-in, refresh, invitation
+    /// redemption. Attaching an expired token to these would trigger a pointless
+    /// refresh, and refreshing to call refresh is a loop.
+    public let requiresAuthentication: Bool
+
+    public init(
+        method: HTTPMethod,
+        path: String,
+        query: [String: String] = [:],
+        body: Data? = nil,
+        requiresAuthentication: Bool = true
+    ) {
+        self.method = method
+        self.path = path
+        self.query = query
+        self.body = body
+        self.requiresAuthentication = requiresAuthentication
+    }
+}
+
+/// The networking layer.
+///
+/// Responsibilities kept deliberately narrow: build the request, attach a valid
+/// token, map failures to `APIError`, and retry exactly once after a 401.
+public actor APIClient {
+    private let configuration: APIConfiguration
+    private let transport: HTTPTransport
+    private let session: SessionManager
+
+    public init(configuration: APIConfiguration, transport: HTTPTransport, session: SessionManager) {
+        self.configuration = configuration
+        self.transport = transport
+        self.session = session
+    }
+
+    public func send<Response: Decodable & Sendable>(
+        _ endpoint: Endpoint,
+        as type: Response.Type
+    ) async throws -> Response {
+        let data = try await sendRaw(endpoint)
+
+        do {
+            return try JSONDecoder.klinik.decode(Response.self, from: data)
+        } catch {
+            throw APIError.decoding(String(describing: error))
+        }
+    }
+
+    /// For the endpoints that answer 204.
+    public func send(_ endpoint: Endpoint) async throws {
+        _ = try await sendRaw(endpoint)
+    }
+
+    private func sendRaw(_ endpoint: Endpoint) async throws -> Data {
+        let response = try await perform(endpoint, retryAfterRefresh: true)
+        return response.body
+    }
+
+    private func perform(_ endpoint: Endpoint, retryAfterRefresh: Bool) async throws -> HTTPResponse {
+        var token: String?
+
+        if endpoint.requiresAuthentication {
+            token = try await session.validAccessToken()
+        }
+
+        let response = try await transport.send(try buildRequest(endpoint, token: token))
+
+        if (200...299).contains(response.status) {
+            return response
+        }
+
+        // One retry, and only for a 401 on an authenticated request. Retrying
+        // more would spend refresh tokens the backend treats as single-use.
+        if response.status == 401, endpoint.requiresAuthentication, retryAfterRefresh {
+            _ = try await session.refreshAfterUnauthorized()
+            return try await perform(endpoint, retryAfterRefresh: false)
+        }
+
+        throw mapFailure(response)
+    }
+
+    private func buildRequest(_ endpoint: Endpoint, token: String?) throws -> URLRequest {
+        guard var components = URLComponents(
+            url: configuration.baseURL.appendingPathComponent(endpoint.path),
+            resolvingAgainstBaseURL: false
+        ) else {
+            throw APIError.unknown(status: 0)
+        }
+
+        if !endpoint.query.isEmpty {
+            // Sorted so a request is reproducible — which matters for caching,
+            // for logs, and for tests.
+            components.queryItems = endpoint.query
+                .sorted { $0.key < $1.key }
+                .map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+
+        guard let url = components.url else {
+            throw APIError.unknown(status: 0)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = endpoint.method.rawValue
+        request.httpBody = endpoint.body
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(configuration.preferredLanguage, forHTTPHeaderField: "Accept-Language")
+
+        if endpoint.body != nil {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+
+        if let token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        return request
+    }
+
+    private func mapFailure(_ response: HTTPResponse) -> APIError {
+        let body = (try? JSONDecoder.klinik.decode(ErrorResponse.self, from: response.body))
+            ?? ErrorResponse(statusCode: response.status, message: "")
+
+        let retryAfter = response.headers["retry-after"].flatMap(TimeInterval.init)
+
+        return APIError.from(status: response.status, body: body, retryAfter: retryAfter)
+    }
+}

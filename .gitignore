@@ -41,6 +41,8 @@ backend/prisma/migrations/**/*.sql.bak
 # iOS / Xcode
 # ==============================================================
 DerivedData/
+.build/
+.swiftpm/configuration
 *.xcuserstate
 xcuserdata/
 *.xcscmblueprint

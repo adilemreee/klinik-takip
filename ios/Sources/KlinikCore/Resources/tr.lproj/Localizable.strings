@@ -1,0 +1,51 @@
+/* Klinik Takip — Türkçe. Anahtarlar iki dilde birebir aynı olmalıdır. */
+
+/* Genel */
+"common.retry" = "Tekrar dene";
+"common.cancel" = "Vazgeç";
+"common.done" = "Tamam";
+"common.close" = "Kapat";
+"common.save" = "Kaydet";
+"common.loading" = "Yükleniyor…";
+
+/* Bağlantı durumu (Şartname M15) */
+"connection.offline" = "Çevrimdışısınız";
+"connection.syncing" = "Eşitleniyor…";
+"connection.upToDate" = "Güncel";
+"connection.offlineDetail" = "Bağlantı gelince kaldığınız yerden devam edecek.";
+
+/* Giriş */
+"auth.signIn" = "Giriş yap";
+"auth.identifier" = "E-posta veya telefon";
+"auth.password" = "Parola";
+"auth.forgotPassword" = "Parolamı unuttum";
+"auth.twoFactorTitle" = "Doğrulama kodu";
+"auth.twoFactorHint" = "Uygulamanızdaki 6 haneli kodu girin.";
+"auth.twoFactorSetupTitle" = "İki adımlı doğrulama";
+"auth.twoFactorSetupHint" = "Hesabınızı korumak için bir doğrulama uygulaması bağlayın.";
+
+/* Giriş hataları — sunucudan gelen kodlara karşılık gelir */
+"auth.error.invalidCredentials" = "E-posta veya parola hatalı.";
+"auth.error.accountLocked" = "Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.";
+"auth.error.accountInactive" = "Hesabınız aktif değil. Kliniğinizle görüşün.";
+"auth.error.mfaInvalid" = "Kod doğru değil. Yeni kodu bekleyip tekrar deneyin.";
+"auth.error.passwordTooWeak" = "Parola yeterince güçlü değil.";
+
+/* Ağ hataları */
+"error.offline" = "İnternet bağlantısı yok.";
+"error.timedOut" = "Sunucu yanıt vermedi.";
+"error.server" = "Bir sorun oluştu. Birazdan tekrar deneyin.";
+"error.notFound" = "Kayıt bulunamadı.";
+"error.forbidden" = "Bu işlem için yetkiniz yok.";
+
+/* Oturumlar */
+"sessions.title" = "Cihazlarım";
+"sessions.current" = "Bu cihaz";
+"sessions.signOut" = "Çıkış yap";
+"sessions.signOutEverywhere" = "Tüm cihazlardan çık";
+
+/* Hasta */
+"patient.fileNumber" = "Dosya no";
+"patient.search" = "Hasta ara";
+"patient.searchHint" = "Ad, soyad veya dosya numarası";
+"patient.empty" = "Henüz hasta yok.";

@@ -173,6 +173,54 @@ jobs:
           echo "image user: $user"
           [ "$user" = "node" ]
 
+  design:
+    name: Design tokens — contrast and drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # Computes the WCAG ratios rather than trusting that a palette which looks
+      # accessible is accessible (spec section 7).
+      - name: Check colour contrast
+        run: node design/scripts/check-contrast.mjs
+
+      # Both clients generate from design/tokens.json. Sharing a document each
+      # platform then transcribes by hand is not sharing — they drift in a
+      # release. Regenerating and diffing is what makes it true.
+      - name: Check generated tokens are up to date
+        run: |
+          node design/scripts/generate-tokens.mjs
+          if ! git diff --quiet -- ios/ android/; then
+            echo "::error::Design tokens are out of date. Run 'node design/scripts/generate-tokens.mjs' and commit."
+            git --no-pager diff --stat -- ios/ android/
+            exit 1
+          fi
+
+  ios:
+    name: iOS — build and test
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Show toolchain
+        run: swift --version
+
+      # The client is a Swift package precisely so this runs headlessly; an
+      # Xcode project would need a simulator to prove the same things.
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
   security:
     name: Security — secrets and dependencies
     runs-on: ubuntu-latest

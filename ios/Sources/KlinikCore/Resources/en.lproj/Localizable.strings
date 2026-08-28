@@ -1,0 +1,51 @@
+/* Klinik Takip — English. Keys must match the Turkish file exactly. */
+
+/* Common */
+"common.retry" = "Try again";
+"common.cancel" = "Cancel";
+"common.done" = "Done";
+"common.close" = "Close";
+"common.save" = "Save";
+"common.loading" = "Loading…";
+
+/* Connection state (spec M15) */
+"connection.offline" = "You are offline";
+"connection.syncing" = "Syncing…";
+"connection.upToDate" = "Up to date";
+"connection.offlineDetail" = "This will continue where it left off once you are back online.";
+
+/* Sign in */
+"auth.signIn" = "Sign in";
+"auth.identifier" = "E-mail or phone";
+"auth.password" = "Password";
+"auth.forgotPassword" = "I forgot my password";
+"auth.twoFactorTitle" = "Verification code";
+"auth.twoFactorHint" = "Enter the 6-digit code from your app.";
+"auth.twoFactorSetupTitle" = "Two-step verification";
+"auth.twoFactorSetupHint" = "Connect an authenticator app to protect your account.";
+
+/* Sign-in errors — mirror the codes the server returns */
+"auth.error.invalidCredentials" = "E-mail or password is incorrect.";
+"auth.error.accountLocked" = "Too many attempts. Try again in a little while.";
+"auth.error.accountInactive" = "Your account is not active. Please contact your clinic.";
+"auth.error.mfaInvalid" = "That code is not right. Wait for the next one and try again.";
+"auth.error.passwordTooWeak" = "That password is not strong enough.";
+
+/* Network errors */
+"error.offline" = "No internet connection.";
+"error.timedOut" = "The server did not respond.";
+"error.server" = "Something went wrong. Please try again shortly.";
+"error.notFound" = "Record not found.";
+"error.forbidden" = "You do not have permission for this.";
+
+/* Sessions */
+"sessions.title" = "My devices";
+"sessions.current" = "This device";
+"sessions.signOut" = "Sign out";
+"sessions.signOutEverywhere" = "Sign out everywhere";
+
+/* Patient */
+"patient.fileNumber" = "File no.";
+"patient.search" = "Search patients";
+"patient.searchHint" = "Name, surname or file number";
+"patient.empty" = "No patients yet.";

@@ -10,6 +10,9 @@ import { peekStream } from './stream-head';
 
 export type FileBucket = 'documents' | 'photos';
 
+/** Used when the configured lifetime is missing or unusable. */
+const DEFAULT_TTL_SECONDS = 300;
+
 export interface UploadOptions {
   bucket: FileBucket;
   /** Types the caller is willing to accept, checked against the sniffed type. */
@@ -91,8 +94,7 @@ export class FileService {
       throw new BadRequestException('Invalid object key');
     }
 
-    const maxTtl = this.config.get('S3_SIGNED_URL_TTL_SECONDS', { infer: true });
-    const ttl = Math.min(options.expiresIn ?? maxTtl, maxTtl);
+    const ttl = this.resolveTtl(options.expiresIn);
     const filename = options.filename ?? key.split('/').pop() ?? 'file';
 
     const stat = await this.stat(bucket, key);
@@ -143,6 +145,26 @@ export class FileService {
 
     await this.storage.client.removeObject(this.bucketName(bucket), key);
     this.logger.warn(`Permanently removed ${bucket}/${key}`);
+  }
+
+  /**
+   * Resolves the signed-URL lifetime, defensively.
+   *
+   * The validated config always supplies a number, but a misconfiguration must
+   * not be able to widen this: an unparsable value would make Math.min return
+   * NaN, and a NaN expiry produces a URL that lives for days rather than
+   * minutes — the exact opposite of the property this setting exists to
+   * guarantee. Anything unusable falls back to the safe default.
+   */
+  private resolveTtl(requested?: number): number {
+    const configured = Number(this.config.get('S3_SIGNED_URL_TTL_SECONDS', { infer: true }));
+    const cap = Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_TTL_SECONDS;
+
+    if (requested === undefined || !Number.isFinite(requested) || requested <= 0) {
+      return cap;
+    }
+
+    return Math.min(requested, cap);
   }
 
   private bucketName(bucket: FileBucket): string {

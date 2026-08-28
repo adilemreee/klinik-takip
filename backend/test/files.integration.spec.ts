@@ -45,8 +45,14 @@ describe('file storage', () => {
   };
 
   beforeAll(async () => {
+    // Mirrors the validated config: Zod coerces the TTL to a number and
+    // applies its default, so the stub must not hand back a raw string or
+    // undefined and call it equivalent.
     const config = {
-      get: (key: string) => process.env[key] ?? undefined,
+      get: (key: string) =>
+        key === 'S3_SIGNED_URL_TTL_SECONDS'
+          ? Number(process.env[key] ?? 300)
+          : (process.env[key] ?? undefined),
     } as unknown as ConfigService<Env, true>;
 
     const moduleRef = await Test.createTestingModule({
@@ -191,6 +197,40 @@ describe('file storage', () => {
 
       expect(expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(max * 1000 + 2000);
     });
+
+    /**
+     * A misconfiguration must never widen the window. An unparsable TTL used to
+     * make Math.min return NaN, and a NaN expiry produces a URL that lives for
+     * days instead of minutes — the opposite of what this setting is for.
+     */
+    it.each([undefined, '', 'not-a-number', '0', '-5'])(
+      'falls back to the safe default when the configured TTL is %s',
+      async (configured) => {
+        const { key } = await upload(pdf(), documentOptions);
+        const previous = process.env.S3_SIGNED_URL_TTL_SECONDS;
+
+        if (configured === undefined) {
+          delete process.env.S3_SIGNED_URL_TTL_SECONDS;
+        } else {
+          process.env.S3_SIGNED_URL_TTL_SECONDS = configured;
+        }
+
+        try {
+          const { expiresAt } = await files.createDownloadUrl('documents', key);
+          const seconds = (expiresAt.getTime() - Date.now()) / 1000;
+
+          expect(Number.isFinite(seconds)).toBe(true);
+          expect(seconds).toBeGreaterThan(0);
+          expect(seconds).toBeLessThanOrEqual(300);
+        } finally {
+          if (previous === undefined) {
+            delete process.env.S3_SIGNED_URL_TTL_SECONDS;
+          } else {
+            process.env.S3_SIGNED_URL_TTL_SECONDS = previous;
+          }
+        }
+      },
+    );
 
     it('rejects a signature that has expired', async () => {
       const { key } = await upload(pdf(), documentOptions);

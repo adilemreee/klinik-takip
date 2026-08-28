@@ -49,6 +49,7 @@ jobs:
       S3_SECRET_KEY: cisecret123
       S3_BUCKET_DOCUMENTS: klinik-documents
       S3_BUCKET_PHOTOS: klinik-photos
+      S3_SIGNED_URL_TTL_SECONDS: 300
 
     steps:
       - uses: actions/checkout@v5

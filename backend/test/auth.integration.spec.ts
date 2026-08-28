@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import { PrismaClient, Role, UserStatus } from '@prisma/client';
 import { generateSync } from 'otplib';
+import { AuditService } from '../src/audit/audit.service';
 import { AuthService } from '../src/auth/auth.service';
 import { InvitationService } from '../src/auth/invitation.service';
 import { TokenService } from '../src/auth/token.service';
@@ -60,6 +61,7 @@ describe('authentication', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         AuthService,
+        AuditService,
         TokenService,
         TotpService,
         InvitationService,

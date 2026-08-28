@@ -6,7 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Role, User, UserStatus } from '@prisma/client';
+import { AuditAction, Role, User, UserStatus } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { Env } from '../config/env.schema';
 import { hashPassword, verifyPassword } from '../crypto/hashing';
 import { PrismaService } from '../infra/prisma.service';
@@ -57,6 +58,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly totp: TotpService,
     private readonly config: ConfigService<Env, true>,
+    private readonly audit: AuditService,
   ) {}
 
   async login(
@@ -69,15 +71,20 @@ export class AuthService {
 
     if (!user?.passwordHash) {
       await verifyPassword(DUMMY_DIGEST, password);
+      // No entityId: the account does not exist, and recording the attempted
+      // address would fill the trail with attacker-chosen strings.
+      await this.recordAuth(AuditAction.LOGIN_FAILED, undefined, device, 'unknown_account');
       throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
     }
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
+      await this.recordAuth(AuditAction.LOGIN_FAILED, user, device, 'locked');
       throw new UnauthorizedException(AuthError.ACCOUNT_LOCKED);
     }
 
     if (!(await verifyPassword(user.passwordHash, password))) {
       await this.registerFailedAttempt(user);
+      await this.recordAuth(AuditAction.LOGIN_FAILED, user, device, 'bad_password');
       throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
     }
 
@@ -102,6 +109,7 @@ export class AuthService {
 
       if (!result.valid) {
         await this.registerFailedAttempt(user);
+        await this.recordAuth(AuditAction.LOGIN_FAILED, user, device, 'bad_totp');
         throw new UnauthorizedException(AuthError.MFA_INVALID);
       }
 
@@ -124,6 +132,8 @@ export class AuthService {
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
+
+    await this.recordAuth(AuditAction.LOGIN, user, device);
 
     return { tokens: await this.tokens.issueForNewSession(user.id, user.role, device) };
   }
@@ -213,6 +223,15 @@ export class AuthService {
     // a suspected compromise, leaving other sessions alive defeats the point.
     const revoked = await this.tokens.revokeAllForUser(userId);
     this.logger.log(`Password changed for user ${userId}; revoked ${revoked} sessions`);
+
+    await this.audit.record({
+      actorId: userId,
+      actorRole: user.role,
+      action: AuditAction.UPDATE,
+      entityType: 'users',
+      entityId: userId,
+      after: { passwordChanged: true, sessionsRevoked: revoked },
+    });
   }
 
   async listSessions(userId: string, currentFamilyId: string): Promise<SessionSummary[]> {
@@ -229,6 +248,29 @@ export class AuthService {
       lastSeenAt: session.lastSeenAt,
       current: session.familyId === currentFamilyId,
     }));
+  }
+
+  /**
+   * Authentication events go to the audit trail (spec section 13). Failures are
+   * recorded with a reason so a brute-force attempt is distinguishable from a
+   * user fumbling their TOTP code.
+   */
+  private async recordAuth(
+    action: AuditAction,
+    user: User | undefined,
+    device: DeviceContext,
+    reason?: string,
+  ): Promise<void> {
+    await this.audit.record({
+      actorId: user?.id,
+      actorRole: user?.role,
+      action,
+      entityType: 'auth',
+      entityId: user?.id,
+      ipAddress: device.ipAddress,
+      userAgent: device.userAgent,
+      after: reason ? { reason } : undefined,
+    });
   }
 
   private async findByIdentifier(identifier: string): Promise<User | null> {

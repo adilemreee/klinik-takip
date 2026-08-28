@@ -7,7 +7,8 @@
 | [`openapi.json`](openapi.json) | Makine tarafından okunabilir sözleşme; mobil istemciler ağ katmanını bundan üretir |
 | [`klinik-takip.postman_collection.json`](klinik-takip.postman_collection.json) | Elle deneme için Postman koleksiyonu |
 
-Her ikisi de **üretilir, elle yazılmaz**:
+Her ikisi de **üretilir, elle yazılmaz** ve üretim deterministiktir — aynı koddan aynı bayt
+çıkar:
 
 ```bash
 cd backend && npm run api:export
@@ -56,6 +57,18 @@ openapi-generator generate -i docs/openapi.json -g kotlin -o android/generated
 
 Her iki istemci de **aynı dosyadan** üretilir (§3.2), böylece iki platform arasında
 sözleşme farkı oluşamaz.
+
+## Postman Dönüştürücüsü Neden Kendi Kodumuz?
+
+Hazır dönüştürücü (`openapi-to-postmanv2`) iki sebeple çıkarıldı:
+
+1. **Bir doküman çıktısı için 58 paket** getiriyordu — beşi bilinen açıklı
+   (js-yaml, yaml, uuid, postman-collection). Kendi CI güvenlik kapımız yakaladı.
+2. **Her çalıştırmada her öğeye yeni bir UUID basıyordu.** Bu, çıktının commit'lenip
+   sapma kontrolüne sokulmasını imkânsız kılıyordu — ki üretmenin bütün amacı buydu.
+
+Yerine yazılan dönüştürücü tek dosya, sıfır bağımlılık ve deterministik. Test, çıktıda
+hiçbir üretilmiş kimlik kalmadığını doğruluyor.
 
 ## Postman Koleksiyonu
 

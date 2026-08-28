@@ -112,6 +112,73 @@ describe('the published API contract', () => {
     );
   });
 
+  describe('the Postman collection derived from it', () => {
+    interface PostmanRequest {
+      name: string;
+      request: { method: string; url: { path: string[]; raw: string }; body?: unknown };
+    }
+    interface Collection {
+      info: { name: string; schema: string };
+      auth?: { type: string };
+      variable?: { key: string }[];
+      item: { name: string; item: PostmanRequest[] }[];
+    }
+
+    const collection = JSON.parse(
+      readFileSync(resolve(__dirname, '../../docs/klinik-takip.postman_collection.json'), 'utf8'),
+    ) as Collection;
+
+    const requests = collection.item.flatMap((folder) => folder.item);
+
+    it('covers every documented operation', () => {
+      expect(requests).toHaveLength(operations.length);
+    });
+
+    it('groups requests by tag', () => {
+      expect(collection.item.map((folder) => folder.name).sort()).toEqual([
+        'audit',
+        'auth',
+        'health',
+        'patients',
+      ]);
+    });
+
+    it('declares collection-level bearer auth and the two variables', () => {
+      expect(collection.auth?.type).toBe('bearer');
+      expect(collection.variable?.map((v) => v.key).sort()).toEqual(['accessToken', 'baseUrl']);
+    });
+
+    it('uses the baseUrl variable rather than a hard-coded host', () => {
+      for (const request of requests) {
+        expect(request.request.url.raw.startsWith('{{baseUrl}}/')).toBe(true);
+      }
+    });
+
+    /**
+     * Deterministic output is what makes the drift check possible: the published
+     * converter stamps a fresh UUID into every item, so its output could never
+     * be committed and compared.
+     */
+    it('contains no generated identifiers', () => {
+      const raw = readFileSync(
+        resolve(__dirname, '../../docs/klinik-takip.postman_collection.json'),
+        'utf8',
+      );
+
+      expect(raw).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/);
+      expect(raw).not.toContain('_postman_id');
+    });
+
+    it('sends a JSON body only where the contract defines one', () => {
+      const withBody = requests.filter((r) => r.request.body).length;
+      const documentedBodies = operations.filter(
+        (o) => (o.operation as { requestBody?: unknown }).requestBody,
+      ).length;
+
+      expect(withBody).toBe(documentedBodies);
+    });
+  });
+
   it('exposes cursor pagination rather than offsets', () => {
     const page = spec.components.schemas.PatientPageDto as { properties?: Record<string, unknown> };
 

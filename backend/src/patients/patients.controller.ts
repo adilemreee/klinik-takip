@@ -13,7 +13,20 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
+import {
+  AssignmentDto,
+  PatientDto,
+  PatientPageDto,
+} from './dto/patient-response.dto';
 import { AuditAction, Patient } from '@prisma/client';
 import type { Request } from 'express';
 import { Audit } from '../audit/decorators/audit.decorator';
@@ -42,6 +55,8 @@ export class PatientsController {
   @Post()
   @RequirePermissions('patients.write')
   @ApiOperation({ summary: 'Create a patient file; the file number is allocated here' })
+  @ApiCreatedResponse({ type: PatientDto })
+  @ApiStandardErrors({ notFound: false })
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreatePatientDto,
@@ -56,6 +71,8 @@ export class PatientsController {
   // (spec section 13).
   @Audit({ entityType: 'patients', action: AuditAction.READ })
   @ApiOperation({ summary: 'Search within the caller’s scope' })
+  @ApiOkResponse({ type: PatientPageDto })
+  @ApiStandardErrors({ notFound: false })
   async search(
     @CurrentUser() user: AuthenticatedUser,
     @Query() dto: SearchPatientsDto,
@@ -67,6 +84,8 @@ export class PatientsController {
   @RequirePermissions('patients.read')
   @Audit({ entityType: 'patients', action: AuditAction.READ, entityIdParam: 'id' })
   @ApiOperation({ summary: 'One patient file' })
+  @ApiOkResponse({ type: PatientDto })
+  @ApiStandardErrors()
   async findOne(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -77,6 +96,8 @@ export class PatientsController {
   @Patch(':id')
   @RequirePermissions('patients.write')
   @ApiOperation({ summary: 'Update demographics and status' })
+  @ApiOkResponse({ type: PatientDto })
+  @ApiStandardErrors()
   async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -90,6 +111,8 @@ export class PatientsController {
   @RequirePermissions('medical.write')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Allergies, chronic conditions, smoking and alcohol' })
+  @ApiNoContentResponse({ description: 'Stored' })
+  @ApiStandardErrors()
   async upsertMedicalProfile(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -103,6 +126,8 @@ export class PatientsController {
   @RequirePermissions('patients.read')
   @Audit({ entityType: 'patient_assignments', action: AuditAction.READ, patientIdParam: 'id' })
   @ApiOperation({ summary: 'Staff currently assigned to this patient' })
+  @ApiOkResponse({ type: [AssignmentDto] })
+  @ApiStandardErrors()
   async listAssignments(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -114,6 +139,8 @@ export class PatientsController {
   @RequirePermissions('patients.assign')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Assign a staff member — this decides who can see the file' })
+  @ApiNoContentResponse({ description: 'Assigned' })
+  @ApiStandardErrors()
   async assign(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -127,6 +154,8 @@ export class PatientsController {
   @RequirePermissions('patients.assign')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'End an assignment' })
+  @ApiNoContentResponse({ description: 'Assignment ended' })
+  @ApiStandardErrors()
   async unassign(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -140,6 +169,8 @@ export class PatientsController {
   @RequirePermissions('patients.delete')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Deactivate a file — soft delete; records are retained by law' })
+  @ApiNoContentResponse({ description: 'Deactivated' })
+  @ApiStandardErrors()
   async remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,

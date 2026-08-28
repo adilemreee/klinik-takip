@@ -121,6 +121,18 @@ jobs:
       - name: Integration tests
         run: npm run test:integration
 
+      # The mobile clients generate from docs/openapi.json, so it must not drift
+      # from the code. A contract both sides still believe while it has quietly
+      # stopped being true is worse than no contract.
+      - name: Check the API contract is up to date
+        run: |
+          npm run api:export
+          if ! git diff --quiet -- ../docs/openapi.json ../docs/klinik-takip.postman_collection.json; then
+            echo "::error::docs/openapi.json is out of date. Run 'npm run api:export' in backend/ and commit the result."
+            git --no-pager diff --stat -- ../docs/openapi.json ../docs/klinik-takip.postman_collection.json
+            exit 1
+          fi
+
       - name: Build
         run: npm run build
 

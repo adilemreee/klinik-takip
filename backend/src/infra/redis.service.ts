@@ -81,6 +81,19 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.client.quit();
+    // quit() sends a command, which rejects if the client never connected — and
+    // an unhandled rejection during shutdown turns a clean stop into a crash.
+    // Tear the socket down directly in that case.
+    if (this.client.status !== 'ready') {
+      this.client.disconnect();
+      return;
+    }
+
+    try {
+      await this.client.quit();
+    } catch (error) {
+      this.logger.warn(`Redis did not close cleanly: ${String(error)}`);
+      this.client.disconnect();
+    }
   }
 }

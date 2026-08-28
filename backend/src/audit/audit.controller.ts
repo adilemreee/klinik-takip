@@ -1,5 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
+import { AnomalyDto, AuditPageDto } from './dto/audit-response.dto';
 import { AuditAction, Prisma } from '@prisma/client';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
@@ -28,6 +30,8 @@ export class AuditController {
   @Get()
   @RequirePermissions('audit.read')
   @ApiOperation({ summary: 'Filterable audit trail (spec section 13)' })
+  @ApiOkResponse({ type: AuditPageDto })
+  @ApiStandardErrors({ notFound: false })
   async list(
     @Query() query: AuditQueryDto,
     @CurrentUser() user: AuthenticatedUser,
@@ -75,6 +79,8 @@ export class AuditController {
   @Get('anomalies')
   @RequirePermissions('audit.read')
   @ApiOperation({ summary: 'Suspicious access patterns in the given window' })
+  @ApiOkResponse({ type: [AnomalyDto] })
+  @ApiStandardErrors({ notFound: false })
   async detectAnomalies(
     @Query('hours') hours: string | undefined,
     @CurrentUser() user: AuthenticatedUser,

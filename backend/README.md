@@ -40,6 +40,7 @@ npm run test:integration
 | `npm run test:integration` | Gerçek PostgreSQL + Redis ile entegrasyon testleri |
 | `npm run dev:deps` | Yerel bağımlılıkları başlatır |
 | `npm run bootstrap:admin` | İlk SUPER_ADMIN (bir kez) |
+| `npm run api:export` | OpenAPI + Postman dosyalarını yeniden üretir |
 | `npm run lint` | ESLint (type-aware) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run prisma:dev` | Geliştirme migration'ı üretir |

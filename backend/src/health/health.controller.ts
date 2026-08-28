@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
+import { LivenessDto, ReadinessDto } from './dto/health-response.dto';
 import { HealthCheck, HealthCheckResult, HealthCheckService } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../auth/decorators/public.decorator';
@@ -24,6 +25,7 @@ export class HealthController {
    */
   @Get('live')
   @ApiOperation({ summary: 'Liveness probe' })
+  @ApiOkResponse({ type: LivenessDto })
   live(): { status: string; uptimeSeconds: number } {
     return { status: 'ok', uptimeSeconds: Math.floor(process.uptime()) };
   }
@@ -31,6 +33,8 @@ export class HealthController {
   /** Readiness: can this instance actually serve traffic right now? */
   @Get('ready')
   @ApiOperation({ summary: 'Readiness probe — database, redis and object storage' })
+  @ApiOkResponse({ type: ReadinessDto })
+  @ApiServiceUnavailableResponse({ description: 'One or more dependencies are down', type: ReadinessDto })
   @HealthCheck()
   ready(): Promise<HealthCheckResult> {
     return this.health.check([

@@ -10,7 +10,23 @@ import {
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
+import {
+  AcceptInvitationResponseDto,
+  InvitationDto,
+  LoginResponseDto,
+  SessionDto,
+  TokensDto,
+  TotpSetupDto,
+} from './dto/auth-response.dto';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService, SessionSummary } from './auth.service';
@@ -52,6 +68,8 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with password and, where enabled, a TOTP code' })
+  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiStandardErrors({ notFound: false })
   async login(@Body() dto: LoginDto, @Req() request: Request): Promise<LoginResponse> {
     const result = await this.auth.login(
       dto.identifier,
@@ -72,6 +90,8 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Exchange a refresh token; the old one is consumed' })
+  @ApiOkResponse({ type: TokensDto })
+  @ApiStandardErrors({ notFound: false })
   async refresh(@Body() dto: RefreshDto, @Req() request: Request): Promise<IssuedTokens> {
     return this.tokens.rotate(dto.refreshToken, this.deviceContext(request));
   }
@@ -80,6 +100,8 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Sign out this device' })
+  @ApiNoContentResponse({ description: 'Signed out' })
+  @ApiStandardErrors({ notFound: false })
   async logout(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.tokens.revokeFamily(user.familyId);
   }
@@ -88,6 +110,8 @@ export class AuthController {
   @Post('logout-all')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Sign out every device' })
+  @ApiNoContentResponse({ description: 'All sessions revoked' })
+  @ApiStandardErrors({ notFound: false })
   async logoutAll(@CurrentUser() user: AuthenticatedUser): Promise<void> {
     await this.tokens.revokeAllForUser(user.id);
   }
@@ -95,6 +119,8 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('sessions')
   @ApiOperation({ summary: 'List active devices (spec section 2)' })
+  @ApiOkResponse({ type: [SessionDto] })
+  @ApiStandardErrors({ notFound: false })
   async sessions(@CurrentUser() user: AuthenticatedUser): Promise<SessionSummary[]> {
     return this.auth.listSessions(user.id, user.familyId);
   }
@@ -103,6 +129,8 @@ export class AuthController {
   @Delete('sessions/:familyId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Revoke one device remotely' })
+  @ApiNoContentResponse({ description: 'Device signed out' })
+  @ApiStandardErrors({ notFound: false })
   async revokeSession(
     @CurrentUser() user: AuthenticatedUser,
     @Param('familyId') familyId: string,
@@ -122,6 +150,8 @@ export class AuthController {
   @AllowMfaSetup()
   @Post('2fa/setup')
   @ApiOperation({ summary: 'Begin TOTP enrolment; returns the secret and otpauth URI' })
+  @ApiCreatedResponse({ type: TotpSetupDto })
+  @ApiStandardErrors({ notFound: false })
   async setupTotp(@CurrentUser() user: AuthenticatedUser): Promise<{ secret: string; uri: string }> {
     return this.auth.beginTotpEnrolment(user.id);
   }
@@ -131,6 +161,8 @@ export class AuthController {
   @Post('2fa/confirm')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Confirm enrolment with a generated code' })
+  @ApiNoContentResponse({ description: 'Two-factor authentication enabled' })
+  @ApiStandardErrors({ notFound: false })
   async confirmTotp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TotpCodeDto,
@@ -142,6 +174,8 @@ export class AuthController {
   @Post('2fa/disable')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Disable TOTP — patients only; mandatory for staff' })
+  @ApiNoContentResponse({ description: 'Two-factor authentication disabled' })
+  @ApiStandardErrors({ notFound: false })
   async disableTotp(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: TotpCodeDto,
@@ -153,6 +187,8 @@ export class AuthController {
   @Post('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Change password; signs out every device' })
+  @ApiNoContentResponse({ description: 'Password changed; all sessions revoked' })
+  @ApiStandardErrors({ notFound: false })
   async changePassword(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ChangePasswordDto,
@@ -165,6 +201,8 @@ export class AuthController {
   @RequirePermissions('staff.manage')
   @Post('invitations')
   @ApiOperation({ summary: 'Invite a staff member or a patient' })
+  @ApiCreatedResponse({ type: InvitationDto })
+  @ApiStandardErrors({ notFound: false })
   async invite(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateInvitationDto,
@@ -176,6 +214,8 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('invitations/accept')
   @ApiOperation({ summary: 'Redeem an invitation code and set a password' })
+  @ApiCreatedResponse({ type: AcceptInvitationResponseDto })
+  @ApiStandardErrors({ notFound: false })
   async acceptInvitation(@Body() dto: AcceptInvitationDto): Promise<{ userId: string }> {
     if (!dto.identifier) {
       throw new UnauthorizedException(AuthError.INVITATION_INVALID);

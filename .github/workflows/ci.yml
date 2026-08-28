@@ -22,6 +22,26 @@ jobs:
       run:
         working-directory: backend
 
+    # A real PostgreSQL with pgvector. The guarantees that matter most here —
+    # the append-only audit log, the trigram and vector indexes, the role
+    # matrix — live in the database and cannot be proven against a mock.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: klinik
+          POSTGRES_PASSWORD: klinik
+          POSTGRES_DB: klinik_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U klinik"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://klinik:klinik@localhost:5432/klinik_test?schema=public
+
     steps:
       - uses: actions/checkout@v5
 
@@ -47,6 +67,17 @@ jobs:
 
       - name: Test
         run: npm run test:cov
+
+      # Applies every migration from scratch on an empty database, which is
+      # also the only routine check that the migration history still works.
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed the permission matrix
+        run: npm run seed
+
+      - name: Integration tests
+        run: npm run test:integration
 
       - name: Build
         run: npm run build

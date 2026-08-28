@@ -1,9 +1,21 @@
-// Data model lands in T1.1. This skeleton exists so the Prisma client can be
-// generated and the readiness probe can reach the database.
+// Klinik Takip — data model (spec section 5).
+//
+// Conventions used throughout:
+//
+//  * Primary keys are UUIDv7: non-enumerable (a sequential id would leak how
+//    many patients exist and let anyone walk the range) but still time-ordered,
+//    so they double as stable cursors and keep index locality.
+//  * Money and clinical measurements are Decimal, never Float. A rounding error
+//    in a dose or an invoice is not acceptable.
+//  * Every table that belongs to a patient indexes patient_id together with the
+//    column it is ordered by, because every screen asks "this patient, newest
+//    first" (spec section 9).
+//  * Deletion is soft (deleted_at) or anonymising (anonymized_at). Clinical
+//    records have legal retention periods; rows are not destroyed on request
+//    (spec section 8, KVKK).
+
 generator client {
   provider        = "prisma-client-js"
-  // Required to declare `extensions` on the datasource below, so extension
-  // state is managed by migrations instead of drifting between environments.
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -11,4 +23,1269 @@ datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
   extensions = [pgcrypto, pg_trgm, vector]
+}
+
+// ===========================================================================
+// Identity, roles and access  (spec section 2, M1)
+// ===========================================================================
+
+enum Role {
+  SUPER_ADMIN
+  DOCTOR
+  NURSE
+  COORDINATOR
+  FINANCE
+  PATIENT
+  CAREGIVER
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+model User {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  role         Role
+  email        String? @unique
+  phone        String? @unique
+  passwordHash String? @map("password_hash")
+
+  // TOTP is mandatory for staff, optional for patients (spec section 2).
+  // The secret is encrypted at the application layer before it lands here.
+  totpSecret    String?   @map("totp_secret")
+  totpEnabledAt DateTime? @map("totp_enabled_at") @db.Timestamptz
+
+  locale String     @default("tr")
+  status UserStatus @default(INVITED)
+
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  staffProfile    StaffProfile?
+  patient         Patient?
+  sessions        DeviceSession[]
+  permissions     UserPermission[]
+  sentInvitations Invitation[]     @relation("InvitedBy")
+  notifications   Notification[]
+  caregiverLinks  CaregiverLink[]  @relation("CaregiverUser")
+
+  @@index([role, status])
+  @@index([status, createdAt])
+  @@map("users")
+}
+
+/// Per-device refresh tokens. Listing and revoking sessions per device is a
+/// requirement (spec section 2); a single shared refresh token could not do it.
+model DeviceSession {
+  id     String @id @default(uuid(7)) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  /// Only the hash is stored. A leaked database must not yield usable tokens.
+  refreshTokenHash String @unique @map("refresh_token_hash")
+
+  /// Rotation family. Replaying a consumed token revokes the whole chain.
+  familyId   String  @map("family_id") @db.Uuid
+  deviceName String? @map("device_name")
+  platform   String?
+  ipAddress  String? @map("ip_address")
+  userAgent  String? @map("user_agent")
+
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("device_sessions")
+}
+
+/// Staff and patients are only ever created by invitation — there is no
+/// self-signup anywhere in this system (spec section 2).
+model Invitation {
+  id    String  @id @default(uuid(7)) @db.Uuid
+  email String?
+  phone String?
+  role  Role
+
+  /// Single-use code, stored hashed like any other credential.
+  codeHash String @map("code_hash")
+
+  invitedById String  @map("invited_by_id") @db.Uuid
+  patientId   String? @map("patient_id") @db.Uuid
+
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  invitedBy User     @relation("InvitedBy", fields: [invitedById], references: [id])
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([phone])
+  @@index([expiresAt, acceptedAt])
+  @@map("invitations")
+}
+
+/// Permissions live in the database, not in code (spec section 2), so the
+/// doctor can adjust the matrix without a deploy.
+model Permission {
+  code        String @id
+  description String
+  category    String
+
+  roles RolePermission[]
+  users UserPermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  role           Role
+  permissionCode String @map("permission_code")
+
+  permission Permission @relation(fields: [permissionCode], references: [code], onDelete: Cascade)
+
+  @@id([role, permissionCode])
+  @@map("role_permissions")
+}
+
+/// Per-user override on top of the role matrix. `granted = false` revokes a
+/// permission the role would otherwise carry.
+model UserPermission {
+  userId         String   @map("user_id") @db.Uuid
+  permissionCode String   @map("permission_code")
+  granted        Boolean  @default(true)
+  grantedById    String?  @map("granted_by_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionCode], references: [code], onDelete: Cascade)
+
+  @@id([userId, permissionCode])
+  @@map("user_permissions")
+}
+
+model StaffProfile {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  userId    String  @unique @map("user_id") @db.Uuid
+  firstName String  @map("first_name")
+  lastName  String  @map("last_name")
+  title     String?
+  specialty String?
+
+  /// Nurses see only assigned patients unless the doctor lifts the restriction
+  /// (spec section 2).
+  canSeeAllPatients Boolean @default(false) @map("can_see_all_patients")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments           PatientAssignment[]
+  patientsAsDoctor      Patient[]           @relation("AssignedDoctor")
+  appointments          Appointment[]
+  prescribedMedications Medication[]        @relation("Prescriber")
+
+  @@map("staff_profiles")
+}
+
+// ===========================================================================
+// Patient file  (spec section 5, M2)
+// ===========================================================================
+
+enum Sex {
+  FEMALE
+  MALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum PatientStatus {
+  LEAD
+  SCHEDULED
+  PRE_OP
+  POST_OP
+  FOLLOW_UP
+  DISCHARGED
+  INACTIVE
+}
+
+model Patient {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  /// Null until the patient accepts the invitation and activates an account.
+  /// The file exists first; the login comes later (spec section 2).
+  userId String? @unique @map("user_id") @db.Uuid
+
+  /// Human-facing file number, used in search and on printed reports.
+  mrn String @unique
+
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  birthDate DateTime @map("birth_date") @db.Date
+  sex       Sex
+
+  /// Health tourism: country drives discharge instructions, emergency numbers,
+  /// notification language and the analytics breakdown (spec sections 6, M11, M19).
+  country           String
+  city              String?
+  nationality       String?
+  preferredLanguage String  @default("tr") @map("preferred_language")
+
+  referralSource String?       @map("referral_source")
+  status         PatientStatus @default(LEAD)
+
+  assignedDoctorId String? @map("assigned_doctor_id") @db.Uuid
+  agencyId         String? @map("agency_id") @db.Uuid
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  /// Set when the legal retention period expires and identifying fields are
+  /// scrubbed, keeping the clinical record for statistics (spec section 8).
+  anonymizedAt DateTime? @map("anonymized_at") @db.Timestamptz
+
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assignedDoctor StaffProfile? @relation("AssignedDoctor", fields: [assignedDoctorId], references: [id], onDelete: SetNull)
+  agency         Agency?       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+
+  medicalProfile    MedicalProfile?
+  assignments       PatientAssignment[]
+  surgeries         Surgery[]
+  measurements      Measurement[]
+  documents         Document[]
+  labResults        LabResult[]
+  photos            Photo[]
+  conversations     Conversation[]
+  appointments      Appointment[]
+  followUpSchedules FollowUpSchedule[]
+  medications       Medication[]
+  aiReports         AiReport[]
+  financeRecords    FinanceRecord[]
+  consents          Consent[]
+  emergencyEvents   EmergencyEvent[]
+  promResponses     PromResponse[]
+  caregivers        CaregiverLink[]
+  invitations       Invitation[]
+
+  @@index([assignedDoctorId, status])
+  @@index([status, createdAt])
+  @@index([country])
+  @@index([agencyId])
+  @@index([lastName, firstName])
+  @@index([deletedAt])
+  @@map("patients")
+}
+
+/// A relative or proxy with limited access, granted by the patient and
+/// revocable (spec section 2). Common for elderly or non-native-speaking
+/// patients in the health tourism flow.
+model CaregiverLink {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  patientId       String    @map("patient_id") @db.Uuid
+  caregiverUserId String    @map("caregiver_user_id") @db.Uuid
+  relationship    String?
+  consentedAt     DateTime  @map("consented_at") @db.Timestamptz
+  revokedAt       DateTime? @map("revoked_at") @db.Timestamptz
+
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  caregiver User    @relation("CaregiverUser", fields: [caregiverUserId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, caregiverUserId])
+  @@index([caregiverUserId, revokedAt])
+  @@map("caregiver_links")
+}
+
+model PatientAssignment {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  patientId    String    @map("patient_id") @db.Uuid
+  staffId      String    @map("staff_id") @db.Uuid
+  role         Role
+  assignedAt   DateTime  @default(now()) @map("assigned_at") @db.Timestamptz
+  unassignedAt DateTime? @map("unassigned_at") @db.Timestamptz
+
+  patient Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staff   StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  /// A nurse's patient list is the hottest query in the staff app; it filters
+  /// on staff plus "still assigned".
+  @@index([staffId, unassignedAt])
+  @@index([patientId, unassignedAt])
+  @@map("patient_assignments")
+}
+
+model MedicalProfile {
+  id        String @id @default(uuid(7)) @db.Uuid
+  patientId String @unique @map("patient_id") @db.Uuid
+
+  bloodType          String?  @map("blood_type")
+  allergies          String[]
+  chronicConditions  String[] @map("chronic_conditions")
+  currentMedications String[] @map("current_medications")
+
+  smoking Boolean?
+  alcohol Boolean?
+
+  notes     String?
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("medical_profiles")
+}
+
+/// Not listed explicitly in section 5, but the follow-up calendar keys off the
+/// surgery date and the finance/analytics panels break down by procedure type
+/// (M10, M11), so it needs to be a first-class record rather than a loose field.
+model Surgery {
+  id        String @id @default(uuid(7)) @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+
+  procedureName String   @map("procedure_name")
+  procedureCode String?  @map("procedure_code")
+  performedAt   DateTime @map("performed_at") @db.Timestamptz
+  surgeonId     String?  @map("surgeon_id") @db.Uuid
+  location      String?
+  notes         String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  patient           Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  followUpSchedules FollowUpSchedule[]
+
+  @@index([patientId, performedAt])
+  @@index([performedAt])
+  @@map("surgeries")
+}
+
+enum MeasurementType {
+  WEIGHT
+  HEIGHT
+  BMI
+  BLOOD_PRESSURE
+  PULSE
+  TEMPERATURE
+  SPO2
+  GLUCOSE
+  WAIST
+}
+
+enum MeasurementSource {
+  PATIENT
+  NURSE
+  DEVICE
+}
+
+model Measurement {
+  id        String          @id @default(uuid(7)) @db.Uuid
+  patientId String          @map("patient_id") @db.Uuid
+  type      MeasurementType
+
+  /// Decimal, not Float: 0.1 kg matters on a weight curve and binary floats
+  /// cannot represent it exactly.
+  value Decimal @db.Decimal(10, 3)
+
+  /// Blood pressure needs a second number; every other type leaves this null.
+  secondaryValue Decimal? @map("secondary_value") @db.Decimal(10, 3)
+
+  unit         String
+  measuredAt   DateTime          @map("measured_at") @db.Timestamptz
+  source       MeasurementSource
+  recordedById String?           @map("recorded_by_id") @db.Uuid
+  note         String?
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  /// Trend charts read one patient, one analyte, ordered by time (M2).
+  @@index([patientId, type, measuredAt])
+  @@map("measurements")
+}
+
+// ===========================================================================
+// Documents, lab results, photos  (spec section 5, M2, M7, M16)
+// ===========================================================================
+
+enum DocumentType {
+  LAB
+  IMAGING
+  REPORT
+  CONSENT
+  INVOICE
+  PASSPORT
+  ECG
+  OTHER
+}
+
+enum ProcessingStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  DONE
+  FAILED
+  SKIPPED
+}
+
+model Document {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  patientId    String       @map("patient_id") @db.Uuid
+  uploadedById String?      @map("uploaded_by_id") @db.Uuid
+  type         DocumentType
+
+  /// Object storage key. Files never touch the server filesystem and are handed
+  /// out only as short-lived signed URLs (spec section 8).
+  fileKey      String  @map("file_key")
+  originalName String? @map("original_name")
+  mime         String
+  size         Int
+  checksum     String?
+  pageCount    Int?    @map("page_count")
+
+  ocrStatus ProcessingStatus @default(PENDING) @map("ocr_status")
+  aiStatus  ProcessingStatus @default(PENDING) @map("ai_status")
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  labResults LabResult[]
+
+  @@index([patientId, createdAt])
+  @@index([ocrStatus])
+  @@map("documents")
+}
+
+enum LabFlag {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+model LabResult {
+  id         String  @id @default(uuid(7)) @db.Uuid
+  patientId  String  @map("patient_id") @db.Uuid
+  documentId String? @map("document_id") @db.Uuid
+
+  /// LOINC where it could be mapped. Unmapped analytes queue for a one-time
+  /// human mapping that the system then remembers (spec M16).
+  analyteCode String? @map("analyte_code")
+  analyteName String  @map("analyte_name")
+
+  value      Decimal  @db.Decimal(14, 4)
+  unit       String
+  refLow     Decimal? @map("ref_low") @db.Decimal(14, 4)
+  refHigh    Decimal? @map("ref_high") @db.Decimal(14, 4)
+  flag       LabFlag?
+  measuredAt DateTime @map("measured_at") @db.Timestamptz
+
+  /// OCR output is never trusted automatically (spec M16). A result is only
+  /// clinical once a human has confirmed it.
+  ocrConfidence Decimal?  @map("ocr_confidence") @db.Decimal(5, 4)
+  verifiedById  String?   @map("verified_by_id") @db.Uuid
+  verifiedAt    DateTime? @map("verified_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  patient  Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  /// Analyte trend over time, the core chart of M2.
+  @@index([patientId, analyteCode, measuredAt])
+  @@index([patientId, flag])
+  @@index([verifiedAt])
+  @@map("lab_results")
+}
+
+/// The analyte name the OCR produced, mapped once by a human to a LOINC code so
+/// the system recognises it next time (spec M16).
+model AnalyteMapping {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  rawName     String   @unique @map("raw_name")
+  analyteCode String   @map("analyte_code")
+  analyteName String   @map("analyte_name")
+  unit        String?
+  mappedById  String?  @map("mapped_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("analyte_mappings")
+}
+
+enum PhotoCategory {
+  BEFORE
+  AFTER
+  COMPLICATION
+  WOUND
+}
+
+model Photo {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  patientId String        @map("patient_id") @db.Uuid
+  category  PhotoCategory
+  bodyArea  String?       @map("body_area")
+
+  /// Free text rather than an enum: milestones differ per procedure
+  /// (pre-op, post-op D1, W2, M1, M3, M6, Y1 — spec M7).
+  phaseLabel String? @map("phase_label")
+
+  fileKey      String  @map("file_key")
+  thumbnailKey String? @map("thumbnail_key")
+  mime         String
+  size         Int
+
+  takenAt DateTime @map("taken_at") @db.Timestamptz
+
+  isFaceBlurred Boolean @default(false) @map("is_face_blurred")
+  /// EXIF location is stripped on upload; this records that it happened.
+  exifStripped  Boolean @default(false) @map("exif_stripped")
+
+  /// Marketing or teaching use requires its own, separately revocable consent
+  /// (spec M7). Without a linked consent the photo is clinical-use only.
+  consentId String? @map("consent_id") @db.Uuid
+
+  uploadedById String?   @map("uploaded_by_id") @db.Uuid
+  note         String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
+
+  patient Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  consent Consent? @relation(fields: [consentId], references: [id], onDelete: SetNull)
+
+  /// The before/after gallery groups by body area and orders by time (M7).
+  @@index([patientId, category, takenAt])
+  @@index([patientId, bodyArea, takenAt])
+  @@map("photos")
+}
+
+// ===========================================================================
+// Messaging, triage and access windows  (spec M3, M4, M5)
+// ===========================================================================
+
+enum TriageLevel {
+  INFO
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  AUDIO
+  SYSTEM
+  BOT
+}
+
+enum MessageStatus {
+  /// Written outside the doctor's access window; released when it opens
+  /// (spec M3). Emergencies bypass this entirely.
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Conversation {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  patientId String  @map("patient_id") @db.Uuid
+  subject   String?
+
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz
+  closedAt      DateTime? @map("closed_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  patient      Patient                   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  participants ConversationParticipant[]
+
+  @@index([patientId, lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  conversationId String    @map("conversation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  joinedAt       DateTime  @default(now()) @map("joined_at") @db.Timestamptz
+  lastReadAt     DateTime? @map("last_read_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  conversationId String      @map("conversation_id") @db.Uuid
+  senderId       String?     @map("sender_id") @db.Uuid
+  type           MessageType @default(TEXT)
+
+  /// What the sender actually wrote. The original is always kept and remains
+  /// viewable even when a translation is shown (spec M3).
+  body             String?
+  originalLanguage String? @map("original_language")
+  translatedText   String? @map("translated_text")
+  translatedTo     String? @map("translated_to")
+
+  mediaKey   String? @map("media_key")
+  transcript String?
+
+  /// Filled by the AI layer. Advisory only — the doctor decides (spec section 14).
+  aiSummary     String?      @map("ai_summary")
+  aiTriageLevel TriageLevel? @map("ai_triage_level")
+
+  status      MessageStatus @default(SENT)
+  queuedUntil DateTime?     @map("queued_until") @db.Timestamptz
+  deliveredAt DateTime?     @map("delivered_at") @db.Timestamptz
+  readAt      DateTime?     @map("read_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  /// Message list: one conversation, newest last, cursor-paginated.
+  @@index([conversationId, createdAt])
+  @@index([status, queuedUntil])
+  @@index([aiTriageLevel, createdAt])
+  @@map("messages")
+}
+
+/// When the clinic is reachable. Outside these hours a patient message is
+/// queued rather than delivered (spec M3).
+model AccessWindow {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  staffId   String? @map("staff_id") @db.Uuid
+  /// 0 = Sunday .. 6 = Saturday
+  dayOfWeek Int     @map("day_of_week")
+  /// Local wall-clock time in the clinic's timezone, stored as "HH:MM".
+  startTime String  @map("start_time")
+  endTime   String  @map("end_time")
+  timezone  String  @default("Europe/Istanbul")
+  isActive  Boolean @default(true) @map("is_active")
+
+  @@index([staffId, dayOfWeek])
+  @@map("access_windows")
+}
+
+/// Source documents for the FAQ assistant. The bot answers ONLY from these
+/// (spec M4), so the corpus is a controlled clinical artefact, not scraped text.
+model ProtocolDocument {
+  id            String  @id @default(uuid(7)) @db.Uuid
+  title         String
+  procedureType String? @map("procedure_type")
+  language      String  @default("tr")
+  content       String
+  fileKey       String? @map("file_key")
+  version       Int     @default(1)
+  isActive      Boolean @default(true) @map("is_active")
+
+  uploadedById String?  @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  chunks ProtocolChunk[]
+
+  @@index([procedureType, language, isActive])
+  @@map("protocol_documents")
+}
+
+model ProtocolChunk {
+  id         String @id @default(uuid(7)) @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+  chunkIndex Int    @map("chunk_index")
+  content    String
+
+  /// pgvector column. Prisma cannot query it directly; retrieval uses raw SQL
+  /// with an ivfflat index created in the migration.
+  embedding Unsupported("vector(1536)")?
+
+  document ProtocolDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, chunkIndex])
+  @@map("protocol_chunks")
+}
+
+// ===========================================================================
+// Appointments, follow-up calendar, medication  (spec M9, M10)
+// ===========================================================================
+
+enum AppointmentType {
+  CONSULTATION
+  SURGERY
+  CONTROL
+  VIDEO_CALL
+}
+
+enum AppointmentStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Appointment {
+  id        String            @id @default(uuid(7)) @db.Uuid
+  patientId String            @map("patient_id") @db.Uuid
+  staffId   String?           @map("staff_id") @db.Uuid
+  type      AppointmentType
+  status    AppointmentStatus @default(REQUESTED)
+
+  scheduledAt     DateTime @map("scheduled_at") @db.Timestamptz
+  durationMinutes Int      @default(30) @map("duration_minutes")
+  location        String?
+  meetingUrl      String?  @map("meeting_url")
+  note            String?
+
+  cancelledAt     DateTime? @map("cancelled_at") @db.Timestamptz
+  cancelledReason String?   @map("cancelled_reason")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  patient Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  staff   StaffProfile? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+
+  /// Conflict detection and the calendar view both scan a staff member's
+  /// upcoming slots.
+  @@index([staffId, scheduledAt])
+  @@index([patientId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("appointments")
+}
+
+enum MilestoneStatus {
+  PENDING
+  NOTIFIED
+  COMPLETED
+  MISSED
+  SKIPPED
+}
+
+/// Generated from the surgery date per procedure template (spec M6): D1, W1,
+/// M1, M2, M3, M6, Y1.
+model FollowUpSchedule {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  patientId   String   @map("patient_id") @db.Uuid
+  surgeryId   String?  @map("surgery_id") @db.Uuid
+  surgeryDate DateTime @map("surgery_date") @db.Timestamptz
+  template    String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  patient    Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  surgery    Surgery?            @relation(fields: [surgeryId], references: [id], onDelete: SetNull)
+  milestones FollowUpMilestone[]
+
+  @@index([patientId])
+  @@map("follow_up_schedules")
+}
+
+/// One row per milestone rather than a JSON blob on the parent: the scheduler
+/// has to ask "which milestones are due today, across all patients", and that
+/// is an index scan on a column, not a JSON traversal.
+model FollowUpMilestone {
+  id         String          @id @default(uuid(7)) @db.Uuid
+  scheduleId String          @map("schedule_id") @db.Uuid
+  /// D1, W1, M1, M2, M3, M6, Y1
+  label      String
+  dueAt      DateTime        @map("due_at") @db.Timestamptz
+  status     MilestoneStatus @default(PENDING)
+
+  notifiedAt  DateTime? @map("notified_at") @db.Timestamptz
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+
+  schedule FollowUpSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([status, dueAt])
+  @@index([scheduleId])
+  @@map("follow_up_milestones")
+}
+
+enum MedicationSource {
+  PRESCRIBED
+  PATIENT_REPORTED
+}
+
+model Medication {
+  id        String @id @default(uuid(7)) @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+
+  drugName String  @map("drug_name")
+  dose     String
+  form     String?
+
+  /// RFC 5545 RRULE, e.g. FREQ=DAILY;INTERVAL=1;COUNT=16 for "twice a day for
+  /// 8 days" (spec M9). A recurrence rule is expressive enough for real
+  /// prescriptions in a way that an interval column is not.
+  frequencyRule String @map("frequency_rule")
+
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  instructions String?
+
+  source       MedicationSource @default(PRESCRIBED)
+  prescriberId String?          @map("prescriber_id") @db.Uuid
+
+  /// Patient-added medication is inert until a clinician approves it (M9).
+  approvedById String?   @map("approved_by_id") @db.Uuid
+  approvedAt   DateTime? @map("approved_at") @db.Timestamptz
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  stoppedAt DateTime? @map("stopped_at") @db.Timestamptz
+
+  patient    Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  prescriber StaffProfile?   @relation("Prescriber", fields: [prescriberId], references: [id], onDelete: SetNull)
+  logs       MedicationLog[]
+
+  @@index([patientId, stoppedAt])
+  @@index([endDate])
+  @@map("medications")
+}
+
+enum MedicationLogStatus {
+  PENDING
+  TAKEN
+  SKIPPED
+  LATE
+  SNOOZED
+}
+
+model MedicationLog {
+  id           String              @id @default(uuid(7)) @db.Uuid
+  medicationId String              @map("medication_id") @db.Uuid
+  scheduledAt  DateTime            @map("scheduled_at") @db.Timestamptz
+  takenAt      DateTime?           @map("taken_at") @db.Timestamptz
+  status       MedicationLogStatus @default(PENDING)
+  snoozedUntil DateTime?           @map("snoozed_until") @db.Timestamptz
+  note         String?
+
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  /// Adherence percentage is computed over this range per medication (M9).
+  @@unique([medicationId, scheduledAt])
+  @@index([status, scheduledAt])
+  @@map("medication_logs")
+}
+
+// ===========================================================================
+// Notifications, AI, emergency, PROM  (spec M5, M6, M8, M18)
+// ===========================================================================
+
+enum NotificationChannel {
+  PUSH
+  SMS
+  EMAIL
+  WHATSAPP
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Notification {
+  id     String @id @default(uuid(7)) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  type   String
+
+  title   String
+  body    String
+  /// Deep-link payload and rich-notification action buttons (spec M6).
+  data    Json?
+  actions Json?
+
+  channel NotificationChannel
+  status  NotificationStatus  @default(PENDING)
+
+  /// Push first, SMS and e-mail as fallback. When a channel fails the next one
+  /// is attempted and linked here, so the chain is auditable (spec M6).
+  fallbackForId String? @map("fallback_for_id") @db.Uuid
+  failureReason String? @map("failure_reason")
+
+  scheduledFor DateTime? @map("scheduled_for") @db.Timestamptz
+  sentAt       DateTime? @map("sent_at") @db.Timestamptz
+  readAt       DateTime? @map("read_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, scheduledFor])
+  @@map("notifications")
+}
+
+model PushToken {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  token      String    @unique
+  platform   String
+  deviceId   String?   @map("device_id")
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz
+
+  @@index([userId, isActive])
+  @@map("push_tokens")
+}
+
+/// Per-channel, per-type preferences plus quiet hours (spec M6).
+model NotificationPreference {
+  id      String              @id @default(uuid(7)) @db.Uuid
+  userId  String              @map("user_id") @db.Uuid
+  type    String
+  channel NotificationChannel
+  enabled Boolean             @default(true)
+
+  quietHoursStart String? @map("quiet_hours_start")
+  quietHoursEnd   String? @map("quiet_hours_end")
+  timezone        String  @default("Europe/Istanbul")
+
+  @@unique([userId, type, channel])
+  @@map("notification_preferences")
+}
+
+enum AiJobType {
+  LAB_INTERPRETATION
+  MESSAGE_SUMMARY
+  TRIAGE
+  PHOTO_ASSESSMENT
+  DAILY_BRIEFING
+  OCR
+  TRANSLATION
+  DRUG_INTERACTION
+}
+
+model AiJob {
+  id     String           @id @default(uuid(7)) @db.Uuid
+  type   AiJobType
+  status ProcessingStatus @default(QUEUED)
+
+  inputRef  String? @map("input_ref")
+  resultRef String? @map("result_ref")
+
+  /// Cost and token accounting is mandatory (spec section 3.4) — an unbounded
+  /// AI spend on a clinic budget is a real failure mode.
+  model     String?
+  tokensIn  Int?     @map("tokens_in")
+  tokensOut Int?     @map("tokens_out")
+  costUsd   Decimal? @map("cost_usd") @db.Decimal(10, 6)
+
+  attempts   Int       @default(0)
+  error      String?
+  startedAt  DateTime? @map("started_at") @db.Timestamptz
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([status, createdAt])
+  @@index([type, createdAt])
+  @@map("ai_jobs")
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model AiReport {
+  id        String @id @default(uuid(7)) @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+  source    String
+
+  /// Two renderings of the same finding: plain language for the patient,
+  /// clinical for the doctor (spec M5).
+  contentMd       String  @map("content_md")
+  patientFacingMd String? @map("patient_facing_md")
+
+  riskLevel RiskLevel?
+
+  /// Traceability: which model, which version, when (spec section 14.6).
+  model        String
+  modelVersion String?  @map("model_version")
+  generatedAt  DateTime @default(now()) @map("generated_at") @db.Timestamptz
+
+  /// Nothing critical reaches a patient without a human signing off
+  /// (spec M5, section 14.3).
+  reviewedById        String?   @map("reviewed_by_id") @db.Uuid
+  reviewedAt          DateTime? @map("reviewed_at") @db.Timestamptz
+  releasedToPatientAt DateTime? @map("released_to_patient_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, generatedAt])
+  @@index([riskLevel, reviewedAt])
+  @@map("ai_reports")
+}
+
+enum EmergencyStatus {
+  TRIGGERED
+  ACKNOWLEDGED
+  RESOLVED
+  FALSE_ALARM
+}
+
+model EmergencyEvent {
+  id        String          @id @default(uuid(7)) @db.Uuid
+  patientId String          @map("patient_id") @db.Uuid
+  status    EmergencyStatus @default(TRIGGERED)
+
+  triggeredAt DateTime @default(now()) @map("triggered_at") @db.Timestamptz
+  latitude    Decimal? @db.Decimal(9, 6)
+  longitude   Decimal? @db.Decimal(9, 6)
+  note        String?
+
+  /// Escalation ladder: 2 minutes unanswered goes to the second contact,
+  /// 5 minutes to the doctor (spec M8).
+  escalationLevel  Int       @default(0) @map("escalation_level")
+  acknowledgedById String?   @map("acknowledged_by_id") @db.Uuid
+  acknowledgedAt   DateTime? @map("acknowledged_at") @db.Timestamptz
+  resolution       String?
+  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([status, triggeredAt])
+  @@index([patientId, triggeredAt])
+  @@map("emergency_events")
+}
+
+/// Patient-reported outcome measures (spec M18): pain (VAS 0-10), swelling,
+/// sleep, satisfaction (NPS).
+model PromSurvey {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  name          String
+  procedureType String?  @map("procedure_type")
+  /// Question definitions: type, scale, i18n keys.
+  questions     Json
+  /// Days after surgery at which this survey is sent.
+  offsetDays    Int[]    @map("offset_days")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  responses PromResponse[]
+
+  @@map("prom_surveys")
+}
+
+model PromResponse {
+  id        String @id @default(uuid(7)) @db.Uuid
+  surveyId  String @map("survey_id") @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+
+  answers   Json
+  /// Denormalised for trend charts and the "worsening" alert (spec M18).
+  painScore Int? @map("pain_score")
+  npsScore  Int? @map("nps_score")
+
+  milestoneLabel String?  @map("milestone_label")
+  submittedAt    DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+
+  survey  PromSurvey @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  patient Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, submittedAt])
+  @@index([surveyId])
+  @@map("prom_responses")
+}
+
+// ===========================================================================
+// Finance, consent, audit  (spec M11, M13, M17, M19)
+// ===========================================================================
+
+/// Referring agency in the health tourism flow, with commission tracking
+/// (spec M19).
+model Agency {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  name           String
+  country        String?
+  contactName    String?  @map("contact_name")
+  contactEmail   String?  @map("contact_email")
+  contactPhone   String?  @map("contact_phone")
+  commissionRate Decimal? @map("commission_rate") @db.Decimal(5, 4)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  patients       Patient[]
+  financeRecords FinanceRecord[]
+
+  @@map("agencies")
+}
+
+enum Currency {
+  TRY
+  EUR
+  USD
+  GBP
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+  CANCELLED
+}
+
+model FinanceRecord {
+  id        String @id @default(uuid(7)) @db.Uuid
+  patientId String @map("patient_id") @db.Uuid
+
+  procedureName String   @map("procedure_name")
+  currency      Currency
+
+  /// Decimal(14,2), never Float. Amounts are also stored in the original
+  /// currency; conversion happens at report time using a dated rate, so a
+  /// later FX move cannot silently rewrite history (spec M11).
+  grossAmount Decimal @map("gross_amount") @db.Decimal(14, 2)
+  discount    Decimal @default(0) @db.Decimal(14, 2)
+  netAmount   Decimal @map("net_amount") @db.Decimal(14, 2)
+
+  costItems Json? @map("cost_items")
+
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paidAmount    Decimal       @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  paidAt        DateTime?     @map("paid_at") @db.Timestamptz
+
+  agencyId         String?  @map("agency_id") @db.Uuid
+  agencyCommission Decimal? @map("agency_commission") @db.Decimal(14, 2)
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  agency  Agency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+
+  @@index([patientId])
+  @@index([paymentStatus, createdAt])
+  @@index([createdAt])
+  @@map("finance_records")
+}
+
+/// Dated FX rates so a report for last quarter keeps reporting last quarter's
+/// numbers (spec M11).
+model ExchangeRate {
+  id      String   @id @default(uuid(7)) @db.Uuid
+  base    Currency
+  quote   Currency
+  rate    Decimal  @db.Decimal(18, 8)
+  validOn DateTime @map("valid_on") @db.Date
+
+  @@unique([base, quote, validOn])
+  @@map("exchange_rates")
+}
+
+enum ConsentType {
+  TREATMENT
+  DATA_PROCESSING
+  PHOTO_USAGE
+  MARKETING
+}
+
+model Consent {
+  id        String      @id @default(uuid(7)) @db.Uuid
+  patientId String      @map("patient_id") @db.Uuid
+  type      ConsentType
+
+  /// Versioned: which text the patient actually agreed to has to be provable
+  /// years later (spec M17, KVKK).
+  version          Int
+  documentText     String? @map("document_text")
+  signatureFileKey String? @map("signature_file_key")
+
+  signedAt  DateTime @map("signed_at") @db.Timestamptz
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+
+  /// Photo-usage consent in particular must be revocable (spec M7).
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  photos  Photo[]
+
+  @@index([patientId, type, revokedAt])
+  @@map("consents")
+}
+
+/// Pre-op document checklist (spec M17): passport, labs, ECG, consent.
+model DocumentRequirement {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  procedureType String?      @map("procedure_type")
+  documentType  DocumentType @map("document_type")
+  label         String
+  isMandatory   Boolean      @default(true) @map("is_mandatory")
+  sortOrder     Int          @default(0) @map("sort_order")
+
+  @@map("document_requirements")
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  EXPORT
+  PERMISSION_CHANGE
+}
+
+/// Append-only (spec section 13). UPDATE and DELETE are revoked at the database
+/// level in the migration, so neither a bug nor a compromised application
+/// account can rewrite history — the ORM alone is not a sufficient guarantee.
+///
+/// Reads are logged too: with health data, who *looked* at a file matters as
+/// much as who changed it.
+model AuditLog {
+  id         String      @id @default(uuid(7)) @db.Uuid
+  actorId    String?     @map("actor_id") @db.Uuid
+  actorRole  Role?       @map("actor_role")
+  action     AuditAction
+  entityType String      @map("entity_type")
+  entityId   String?     @map("entity_id")
+
+  /// Null for reads. Values are redacted of secrets before being written.
+  before Json?
+  after  Json?
+
+  patientId String? @map("patient_id") @db.Uuid
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+  requestId String? @map("request_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  /// "What did this user touch?" and "who touched this patient?" are the two
+  /// questions an audit review actually asks (spec M13).
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([patientId, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

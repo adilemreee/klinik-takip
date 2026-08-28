@@ -10,5 +10,7 @@
     // nothing at all — exiting 0 with no output.
     "tsBuildInfoFile": "./dist/.tsbuildinfo"
   },
-  "exclude": ["node_modules", "dist", "coverage", "test", "**/*.spec.ts"]
+  // prisma/ holds the schema seed and its permission catalogue: type-checked
+  // and linted, but not part of the API bundle.
+  "exclude": ["node_modules", "dist", "coverage", "test", "prisma", "**/*.spec.ts"]
 }

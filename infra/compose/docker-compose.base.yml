@@ -99,6 +99,21 @@ services:
         mc anonymous set none "local/$${S3_BUCKET_PHOTOS}"
         echo "buckets ready"
 
+  # Schema migrations and the permission matrix seed. Runs to completion before
+  # the API starts, so no request is ever served against a half-migrated
+  # database. Both steps are idempotent (spec section 10).
+  migrate:
+    <<: *common
+    restart: "no"
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: migrate
+    image: klinik-migrate:${IMAGE_TAG:-local}
+    env_file: [.env]
+    depends_on:
+      postgres: {condition: service_healthy}
+
   api:
     <<: *common
     build:
@@ -116,6 +131,7 @@ services:
     ports:
       - "127.0.0.1:${API_PORT}:3000"
     depends_on:
+      migrate: {condition: service_completed_successfully}
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
       minio-init: {condition: service_completed_successfully}

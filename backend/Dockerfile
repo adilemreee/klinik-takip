@@ -19,6 +19,15 @@ RUN npx prisma generate \
  && test -f dist/main.js \
  && test -f dist/worker.js
 
+# ---------- migrate: one-shot, runs before the API starts ----------
+# Reuses the build stage because it still has devDependencies, and the Prisma
+# CLI is one of them. Keeping it out of the runtime image means the running API
+# cannot alter the schema.
+FROM build AS migrate
+WORKDIR /app
+USER node
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
+
 # ---------- runtime: production deps only, non-root ----------
 FROM node:22-alpine AS runtime
 WORKDIR /app

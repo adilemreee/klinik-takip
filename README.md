@@ -53,7 +53,7 @@ cp .env.example .env
 Backend hazır — bkz. [backend/README.md](backend/README.md).
 iOS ve Android iskeletleri T2.1 ve T2.2'de kurulacaktır.
 
-Veri modeli: [docs/VERI-MODELI.md](docs/VERI-MODELI.md) · Kimlik doğrulama: [docs/KIMLIK-DOGRULAMA.md](docs/KIMLIK-DOGRULAMA.md) · Yetkilendirme: [docs/YETKILENDIRME.md](docs/YETKILENDIRME.md) · Denetim: [docs/DENETIM-GUNLUGU.md](docs/DENETIM-GUNLUGU.md) · Dosyalar: [docs/DOSYA-SERVISI.md](docs/DOSYA-SERVISI.md) · Hasta kayıtları: [docs/HASTA-KAYITLARI.md](docs/HASTA-KAYITLARI.md) · API sözleşmesi: [docs/API-SOZLESMESI.md](docs/API-SOZLESMESI.md) · iOS: [docs/IOS-ISKELETI.md](docs/IOS-ISKELETI.md) · Android: [docs/ANDROID-ISKELETI.md](docs/ANDROID-ISKELETI.md) · Giriş akışı: [docs/GIRIS-AKISI.md](docs/GIRIS-AKISI.md) · Hasta ekranları: [docs/HASTA-EKRANLARI.md](docs/HASTA-EKRANLARI.md) · Hasta ana ekranı: [docs/HASTA-ANA-EKRANI.md](docs/HASTA-ANA-EKRANI.md) · Dağıtım: [docs/DAGITIM.md](docs/DAGITIM.md) · Yedekleme: [docs/YEDEKLEME.md](docs/YEDEKLEME.md)
+Veri modeli: [docs/VERI-MODELI.md](docs/VERI-MODELI.md) · Kimlik doğrulama: [docs/KIMLIK-DOGRULAMA.md](docs/KIMLIK-DOGRULAMA.md) · Yetkilendirme: [docs/YETKILENDIRME.md](docs/YETKILENDIRME.md) · Denetim: [docs/DENETIM-GUNLUGU.md](docs/DENETIM-GUNLUGU.md) · Dosyalar: [docs/DOSYA-SERVISI.md](docs/DOSYA-SERVISI.md) · Hasta kayıtları: [docs/HASTA-KAYITLARI.md](docs/HASTA-KAYITLARI.md) · API sözleşmesi: [docs/API-SOZLESMESI.md](docs/API-SOZLESMESI.md) · iOS: [docs/IOS-ISKELETI.md](docs/IOS-ISKELETI.md) · Android: [docs/ANDROID-ISKELETI.md](docs/ANDROID-ISKELETI.md) · Giriş akışı: [docs/GIRIS-AKISI.md](docs/GIRIS-AKISI.md) · Hasta ekranları: [docs/HASTA-EKRANLARI.md](docs/HASTA-EKRANLARI.md) · Hasta ana ekranı: [docs/HASTA-ANA-EKRANI.md](docs/HASTA-ANA-EKRANI.md) · Offline ve çakışma: [docs/OFFLINE-VE-CAKISMA.md](docs/OFFLINE-VE-CAKISMA.md) · Dağıtım: [docs/DAGITIM.md](docs/DAGITIM.md) · Yedekleme: [docs/YEDEKLEME.md](docs/YEDEKLEME.md)
 
 > ⚠️ **Bu depo herkese açıktır.** Sunucu adresleri, gerçek hostname'ler, servis
 > envanteri ve bilinen açıklar bilinçli olarak buraya **yazılmaz**; bunlar yerel
@@ -75,7 +75,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 |---|---|
 | Faz 0 — Temel Kurulum | ✅ **tamamlandı** (T0.1–T0.7) |
 | Faz 1 — Kimlik ve Çekirdek Veri | ✅ **tamamlandı** (T1.1–T1.7) |
-| Faz 2 — Mobil İskeletler | 🔄 devam ediyor (T2.1–T2.5 ✅) |
+| Faz 2 — Mobil İskeletler | ✅ **tamamlandı** (T2.1–T2.6) |
 | Faz 3 — Klinik Modüller | ⬜ |
 | Faz 4 — İletişim ve Bildirim | ⬜ |
 | Faz 5 — Yapay Zeka Katmanı | ⬜ |

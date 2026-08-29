@@ -11,6 +11,7 @@ import { startMetricsServer } from './observability/metrics.server';
 import { runWorker } from './queue/job-runner';
 import { JOBS, QUEUES } from './queue/queue.constants';
 import { QueueService } from './queue/queue.service';
+import { attachWorkerLogging } from './worker-bootstrap';
 
 /**
  * Queue worker process. Runs the same codebase as the API but serves no HTTP.
@@ -23,6 +24,8 @@ async function bootstrap(): Promise<void> {
   registerDefaultMetrics(`${env.SERVICE_NAME}-worker`);
 
   const app = await NestFactory.createApplicationContext(AppModule, { bufferLogs: true });
+  attachWorkerLogging(app);
+
   const logger = new Logger('Worker');
 
   // The worker serves no HTTP, but Prometheus still needs to see queue depth

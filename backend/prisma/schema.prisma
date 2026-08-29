@@ -279,6 +279,7 @@ model Patient {
   surgeries         Surgery[]
   measurements      Measurement[]
   documents         Document[]
+  uploadSessions    UploadSession[]
   labResults        LabResult[]
   photos            Photo[]
   conversations     Conversation[]
@@ -1025,6 +1026,51 @@ model AiJob {
   @@index([status, createdAt])
   @@index([type, createdAt])
   @@map("ai_jobs")
+}
+
+enum UploadStatus {
+  ACTIVE
+  COMPLETED
+  ABORTED
+}
+
+/// An upload in progress (spec section 9: chunked, resumable).
+///
+/// The session lives in the database rather than in memory because the point of
+/// it is surviving things: a dropped connection, an app sent to the background,
+/// a server restart. A patient abroad on mobile data who has sent 18 of 20 MB
+/// must not have to start again.
+model UploadSession {
+  id           String  @id @default(uuid(7)) @db.Uuid
+  patientId    String  @map("patient_id") @db.Uuid
+  createdById  String? @map("created_by_id") @db.Uuid
+  documentType DocumentType @map("document_type")
+
+  originalName String? @map("original_name")
+
+  /// Sniffed from the first chunk, so a file that is not an accepted type is
+  /// refused after a few kilobytes rather than after twenty megabytes.
+  mime String?
+
+  /// How much has been accepted. Also the offset the client resumes from — the
+  /// single number the whole protocol turns on.
+  receivedBytes Int @default(0) @map("received_bytes")
+  partCount     Int @default(0) @map("part_count")
+
+  status UploadStatus @default(ACTIVE)
+
+  /// Abandoned sessions leave parts in the bucket; the sweep uses this.
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+
+  documentId String?  @map("document_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, createdAt])
+  @@index([status, expiresAt])
+  @@map("upload_sessions")
 }
 
 /// A queued unit of work, recorded in the database as well as in the queue.

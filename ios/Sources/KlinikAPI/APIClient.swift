@@ -25,6 +25,8 @@ public struct Endpoint: Sendable {
     public let path: String
     public let query: [String: String]
     public let body: Data?
+    /// Overrides the request's Content-Type. Raw chunk uploads are not JSON.
+    public let contentType: String?
     /// Endpoints that must not carry a token — sign-in, refresh, invitation
     /// redemption. Attaching an expired token to these would trigger a pointless
     /// refresh, and refreshing to call refresh is a loop.
@@ -42,6 +44,7 @@ public struct Endpoint: Sendable {
         path: String,
         query: [String: String] = [:],
         body: Data? = nil,
+        contentType: String? = nil,
         requiresAuthentication: Bool = true,
         bearerOverride: String? = nil
     ) {
@@ -49,6 +52,7 @@ public struct Endpoint: Sendable {
         self.path = path
         self.query = query
         self.body = body
+        self.contentType = contentType
         self.requiresAuthentication = requiresAuthentication
         self.bearerOverride = bearerOverride
     }
@@ -197,7 +201,7 @@ public actor APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(configuration.preferredLanguage, forHTTPHeaderField: "Accept-Language")
 
-        if let contentType {
+        if let contentType = contentType ?? endpoint.contentType {
             request.setValue(contentType, forHTTPHeaderField: "Content-Type")
         } else if endpoint.body != nil {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")

@@ -93,7 +93,14 @@ final class DocumentsModelTests: XCTestCase {
             transport: transport,
             session: session
         )
-        return DocumentsModel(api: DocumentsAPI(client: client), patientId: "p1")
+        return DocumentsModel(
+            api: DocumentsAPI(client: client),
+            resumable: ResumableUpload(client: client),
+            patientId: "p1",
+            // Everything in these tests is small; the resumable path has its
+            // own suite.
+            resumableThreshold: Int.max
+        )
     }
 
     func testLoadsTheList() async {

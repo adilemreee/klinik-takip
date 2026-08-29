@@ -14,6 +14,13 @@ export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
 export const JOBS = {
   /** Verifies a freshly uploaded document actually landed in storage. */
   documentIntake: 'document-intake',
+
+  /**
+   * Releases the parts of uploads nobody came back to. On a bad connection —
+   * which is the connection resumable upload exists for — most attempts are
+   * abandoned, so without this the bucket grows by every one of them.
+   */
+  uploadSweep: 'upload-sweep',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

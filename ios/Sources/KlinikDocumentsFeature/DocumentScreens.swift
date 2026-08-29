@@ -97,6 +97,14 @@ public struct DocumentListView: View {
                     }
                     .accessibilityLabel(L10n.string("document.type"))
 
+                    if let progress = state.uploadProgress {
+                        // A 20 MB scan on mobile data takes long enough that a
+                        // spinner alone reads as a hang.
+                        ProgressView(value: progress.fraction)
+                            .accessibilityLabel(L10n.string("document.uploading"))
+                            .accessibilityValue("\(Int(progress.fraction * 100))%")
+                    }
+
                     PrimaryButton(
                         title: L10n.string("document.upload"),
                         isBusy: state.uploading,

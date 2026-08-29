@@ -18,6 +18,24 @@ import type { JobHandler } from '../queue/job-runner';
  * reachable. It is also what makes the OCR stage in T3.3 able to assume the
  * bytes exist.
  */
+/**
+ * Releases the parts of uploads nobody came back to (spec section 9).
+ *
+ * Housekeeping, so a run that finds nothing is not worth a record — the handler
+ * simply returns and the wrapper marks the job done.
+ */
+export function uploadSweep(uploads: { sweepExpired: () => Promise<number> }): JobHandler {
+  const logger = new Logger('UploadSweep');
+
+  return async (): Promise<void> => {
+    const removed = await uploads.sweepExpired();
+
+    if (removed > 0) {
+      logger.warn(`Released ${removed} abandoned upload session(s)`);
+    }
+  };
+}
+
 export function documentIntake(prisma: PrismaService, files: FileService): JobHandler {
   const logger = new Logger('DocumentIntake');
 

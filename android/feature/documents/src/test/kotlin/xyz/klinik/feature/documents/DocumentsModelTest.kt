@@ -18,6 +18,7 @@ import xyz.klinik.network.HttpResponse
 import xyz.klinik.network.HttpTransport
 import xyz.klinik.network.InMemoryTokenStore
 import xyz.klinik.network.ProcessingStatus
+import xyz.klinik.network.ResumableUpload
 import xyz.klinik.network.SessionManager
 import xyz.klinik.network.SessionTokens
 import xyz.klinik.network.TokenRefresher
@@ -81,7 +82,14 @@ class DocumentsModelTest {
         val session = SessionManager(InMemoryTokenStore(), UnusedRefresher)
         session.signIn(SessionTokens("access", "refresh", System.currentTimeMillis() + 900_000))
         val client = ApiClient(ApiConfiguration("https://api.test"), transport, session)
-        return DocumentsModel(DocumentsApi(client), "p1")
+        return DocumentsModel(
+            DocumentsApi(client),
+            ResumableUpload(client),
+            "p1",
+            // Everything in these tests is small; the resumable path has its
+            // own suite.
+            resumableThreshold = Long.MAX_VALUE,
+        )
     }
 
     @Test

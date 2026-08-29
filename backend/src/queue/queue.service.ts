@@ -168,6 +168,26 @@ export class QueueService implements OnModuleDestroy {
     return requeued;
   }
 
+  /**
+   * Schedules a job to run on a fixed interval.
+   *
+   * Repeatable jobs live in Redis and are keyed by name, so calling this on
+   * every worker start replaces the schedule rather than accumulating copies.
+   * These are housekeeping, so they carry no `jobs` row: a durable record of
+   * every sweep that found nothing would bury the records that matter.
+   */
+  async schedule(
+    queue: QueueName,
+    name: JobName,
+    everyMs: number,
+  ): Promise<void> {
+    await this.queue(queue).add(
+      name,
+      {},
+      { repeat: { every: everyMs }, jobId: `repeat:${name}`, removeOnComplete: true },
+    );
+  }
+
   /** Queue depth, for the metrics endpoint and for operators. */
   async depth(name: QueueName): Promise<{ waiting: number; active: number; failed: number }> {
     const queue = this.queue(name);

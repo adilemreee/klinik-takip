@@ -20,6 +20,8 @@ public struct DocumentsState: Sendable, Equatable {
     public var isLoadingMore = false
     public var uploading = false
     public var uploadError: String?
+    /// How much of the current upload has reached the server, for a progress bar.
+    public var uploadProgress: UploadProgress?
 
     public var hasMore: Bool { nextCursor != nil }
 
@@ -35,15 +37,34 @@ public struct DocumentsState: Sendable, Equatable {
 /// A patient's documents: the list, uploading, and watching processing finish.
 public actor DocumentsModel {
     private let api: DocumentsAPI
+    private let resumable: ResumableUpload
     private let patientId: String
     private let pageSize: Int
 
+    /**
+     * Above this, the upload is chunked and resumable.
+     *
+     * Below it, a failed attempt costs one small request and the three-call
+     * dance would be pure overhead. Above it, a dropped connection costs the
+     * patient their whole transfer — which on mobile data abroad is the case
+     * this product has to survive.
+     */
+    private let resumableThreshold: Int
+
     private(set) public var state = DocumentsState()
 
-    public init(api: DocumentsAPI, patientId: String, pageSize: Int = 25) {
+    public init(
+        api: DocumentsAPI,
+        resumable: ResumableUpload,
+        patientId: String,
+        pageSize: Int = 25,
+        resumableThreshold: Int = ResumableUpload.chunkSize
+    ) {
         self.api = api
+        self.resumable = resumable
         self.patientId = patientId
         self.pageSize = pageSize
+        self.resumableThreshold = resumableThreshold
     }
 
     public func currentState() -> DocumentsState { state }
@@ -81,15 +102,23 @@ public actor DocumentsModel {
 
         state.uploading = true
         state.uploadError = nil
-        defer { state.uploading = false }
+        state.uploadProgress = nil
+        defer {
+            state.uploading = false
+            state.uploadProgress = nil
+        }
 
         do {
-            _ = try await api.upload(
-                patientId: patientId,
-                fileURL: fileURL,
-                type: type,
-                contentType: contentType
-            )
+            if (try? fileSize(of: fileURL)) ?? 0 > resumableThreshold {
+                try await sendResumable(fileURL: fileURL, type: type)
+            } else {
+                _ = try await api.upload(
+                    patientId: patientId,
+                    fileURL: fileURL,
+                    type: type,
+                    contentType: contentType
+                )
+            }
         } catch let error as APIError {
             // A refused upload is the type or size check doing its job, and the
             // server's message says which. Our own would say less.
@@ -133,6 +162,40 @@ public actor DocumentsModel {
         } catch {
             state.uploadError = L10n.string("error.server")
         }
+    }
+
+    /// Opens a session, streams the file, and completes it. The session id is
+    /// kept for the duration so an interrupted send resumes rather than
+    /// restarts; surviving an app relaunch needs the local store that T2.6
+    /// still owes.
+    private func sendResumable(fileURL: URL, type: DocumentType) async throws {
+        let session = try await resumable.begin(
+            patientId: patientId,
+            type: type,
+            originalName: fileURL.lastPathComponent
+        )
+
+        do {
+            _ = try await resumable.send(fileURL: fileURL, sessionId: session.id) { progress in
+                Task { await self.report(progress) }
+            }
+
+            _ = try await resumable.complete(sessionId: session.id, fileURL: fileURL)
+        } catch {
+            // Releases the parts already sent. Best-effort: the sweep on the
+            // server catches whatever this misses.
+            try? await resumable.abort(sessionId: session.id)
+            throw error
+        }
+    }
+
+    private func report(_ progress: UploadProgress) {
+        state.uploadProgress = progress
+    }
+
+    private func fileSize(of fileURL: URL) throws -> Int {
+        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+        return (attributes[.size] as? Int) ?? 0
     }
 
     private func fetchPage(cursor: String?) async {

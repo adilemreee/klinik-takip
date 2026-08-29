@@ -1,7 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DocumentType, ProcessingStatus } from '@prisma/client';
+import { DocumentType, ProcessingStatus, UploadStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class ListDocumentsDto {
   @ApiPropertyOptional({ description: 'Id of the last item on the previous page' })
@@ -97,4 +107,48 @@ export class JobDto {
 
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: Date;
+}
+
+export class BeginUploadDto {
+  @ApiProperty({ enum: DocumentType, default: DocumentType.OTHER })
+  @IsEnum(DocumentType)
+  type!: DocumentType;
+
+  @ApiPropertyOptional({ maxLength: 255 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  originalName?: string;
+}
+
+export class CompleteUploadDto {
+  @ApiPropertyOptional({
+    description:
+      'SHA-256 the client computed over the file it read. Checked against the ' +
+      'assembled bytes, so a corrupted transfer is refused rather than filed.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-f0-9]{64}$/)
+  checksum?: string;
+}
+
+export class UploadSessionDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ description: 'The offset to send next — resume from here' })
+  receivedBytes!: number;
+
+  @ApiProperty({ enum: UploadStatus })
+  status!: UploadStatus;
+
+  @ApiProperty({ nullable: true, description: 'Detected from the first chunk' })
+  mime!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  expiresAt!: Date;
+
+  @ApiProperty({ format: 'uuid', nullable: true, description: 'Set once completed' })
+  documentId!: string | null;
 }

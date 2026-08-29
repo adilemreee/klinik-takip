@@ -2,7 +2,8 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { validateEnv } from './config/env.schema';
-import { documentIntake } from './documents/document-intake.processor';
+import { documentIntake, uploadSweep } from './documents/document-intake.processor';
+import { ResumableUploadService } from './documents/resumable-upload.service';
 import { FileService } from './files/file.service';
 import { PrismaService } from './infra/prisma.service';
 import { initErrorReporting } from './observability/error-reporting';
@@ -35,13 +36,19 @@ async function bootstrap(): Promise<void> {
   const queues = app.get(QueueService);
   const prisma = app.get(PrismaService);
   const files = app.get(FileService);
+  const uploads = app.get(ResumableUploadService);
 
   const worker = runWorker({
     queue: QUEUES.documents,
-    handlers: { [JOBS.documentIntake]: documentIntake(prisma, files) },
+    handlers: {
+      [JOBS.documentIntake]: documentIntake(prisma, files),
+      [JOBS.uploadSweep]: uploadSweep(uploads),
+    },
     connection: queues.connection,
     prisma,
   });
+
+  await queues.schedule(QUEUES.documents, JOBS.uploadSweep, 60 * 60 * 1000);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever

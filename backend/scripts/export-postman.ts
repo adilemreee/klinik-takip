@@ -175,6 +175,7 @@ for (const [path, operations] of Object.entries(spec.paths)) {
 
     const bodySchema = operation.requestBody?.content?.['application/json']?.schema;
     const multipartSchema = operation.requestBody?.content?.['multipart/form-data']?.schema;
+    const binaryBody = operation.requestBody?.content?.['application/octet-stream'] !== undefined;
 
     const request: Record<string, unknown> = {
       method: method.toUpperCase(),
@@ -201,6 +202,10 @@ for (const [path, operations] of Object.entries(spec.paths)) {
       // that stops being used for the one request hardest to hand-build.
       // Content-Type is left to Postman, which has to add the boundary.
       request.body = { mode: 'formdata', formdata: formData(multipartSchema) };
+    } else if (binaryBody) {
+      // A raw chunk. Postman sends the chosen file as the whole body, which is
+      // exactly what the resumable upload endpoint expects.
+      request.body = { mode: 'file', file: { src: '' } };
     }
 
     const items = folders.get(tag) ?? [];

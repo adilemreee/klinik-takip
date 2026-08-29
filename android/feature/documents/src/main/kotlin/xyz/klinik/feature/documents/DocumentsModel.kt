@@ -1,5 +1,6 @@
 package xyz.klinik.feature.documents
 
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,6 +9,8 @@ import xyz.klinik.network.ApiError
 import xyz.klinik.network.ClinicalDocument
 import xyz.klinik.network.DocumentType
 import xyz.klinik.network.DocumentsApi
+import xyz.klinik.network.ResumableUpload
+import xyz.klinik.network.UploadProgress
 import xyz.klinik.network.UiText
 import xyz.klinik.network.messageKey
 import xyz.klinik.network.uiText
@@ -34,6 +37,8 @@ data class DocumentsState(
     val nextCursor: String? = null,
     val loadingMore: Boolean = false,
     val uploading: Boolean = false,
+    /** How much of the current upload has reached the server, for a progress bar. */
+    val uploadProgress: UploadProgress? = null,
     val uploadError: UiText? = null,
 ) {
     val hasMore: Boolean get() = nextCursor != null
@@ -48,8 +53,18 @@ data class DocumentsState(
 /** A patient's documents: the list, uploading, and watching processing finish. */
 class DocumentsModel(
     private val api: DocumentsApi,
+    private val resumable: ResumableUpload,
     private val patientId: String,
     private val pageSize: Int = 25,
+    /**
+     * Above this, the upload is chunked and resumable.
+     *
+     * Below it, a failed attempt costs one small request and the three-call
+     * dance would be pure overhead. Above it, a dropped connection costs the
+     * patient their whole transfer — which on mobile data abroad is the case
+     * this product has to survive.
+     */
+    private val resumableThreshold: Long = ResumableUpload.CHUNK_SIZE.toLong(),
 ) {
     private val _state = MutableStateFlow(DocumentsState())
     val state: StateFlow<DocumentsState> = _state.asStateFlow()
@@ -94,13 +109,24 @@ class DocumentsModel(
     ): Boolean {
         if (!uploadLock.tryLock()) return false
 
-        _state.value = _state.value.copy(uploading = true, uploadError = null)
+        _state.value = _state.value.copy(
+            uploading = true,
+            uploadError = null,
+            uploadProgress = null,
+        )
 
         try {
-            api.upload(patientId, path, filename, type, contentType)
+            val file = File(path)
+
+            if (file.length() > resumableThreshold) {
+                sendResumable(file, filename, type)
+            } else {
+                api.upload(patientId, path, filename, type, contentType)
+            }
         } catch (error: Throwable) {
             _state.value = _state.value.copy(
                 uploading = false,
+                uploadProgress = null,
                 // A refused upload is the type or size check doing its job, and
                 // the server's message says which.
                 uploadError = (error as? ApiError)?.uiText() ?: UiText.Key("error.server"),
@@ -111,8 +137,31 @@ class DocumentsModel(
         }
 
         load()
-        _state.value = _state.value.copy(uploading = false)
+        _state.value = _state.value.copy(uploading = false, uploadProgress = null)
         return true
+    }
+
+    /**
+     * Opens a session, streams the file, and completes it. The session id is
+     * kept for the duration so an interrupted send resumes rather than
+     * restarts; surviving an app relaunch needs the local store that T2.6
+     * still owes.
+     */
+    private suspend fun sendResumable(file: File, filename: String, type: DocumentType) {
+        val session = resumable.begin(patientId, type, filename)
+
+        try {
+            resumable.send(file, session.id) { progress ->
+                _state.value = _state.value.copy(uploadProgress = progress)
+            }
+
+            resumable.complete(session.id, file)
+        } catch (error: Throwable) {
+            // Releases the parts already sent. Best-effort: the sweep on the
+            // server catches whatever this misses.
+            runCatching { resumable.abort(session.id) }
+            throw error
+        }
     }
 
     /**

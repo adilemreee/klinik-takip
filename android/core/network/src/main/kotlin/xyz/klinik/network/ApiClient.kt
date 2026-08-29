@@ -20,6 +20,10 @@ data class Endpoint(
      * Content-Type is left to the transport, which has to add the boundary.
      */
     val multipart: MultipartUpload? = null,
+    /** A raw binary body — one chunk of a resumable upload. */
+    val bytes: ByteArray? = null,
+    /** Overrides the request's Content-Type. A raw chunk is not JSON. */
+    val contentType: String? = null,
     /**
      * Endpoints that must not carry a token — sign-in, refresh, invitation
      * redemption. Attaching an expired token would trigger a refresh in order
@@ -90,7 +94,8 @@ class ApiClient(
         val headers = buildMap {
             put("Accept", "application/json")
             put("Accept-Language", configuration.preferredLanguage)
-            if (endpoint.body != null) put("Content-Type", "application/json")
+            endpoint.contentType?.let { put("Content-Type", it) }
+                ?: run { if (endpoint.body != null) put("Content-Type", "application/json") }
             if (token != null) put("Authorization", "Bearer $token")
         }
 
@@ -100,6 +105,7 @@ class ApiClient(
             headers = headers,
             body = endpoint.body,
             multipart = endpoint.multipart,
+            bytes = endpoint.bytes,
         )
     }
 

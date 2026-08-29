@@ -426,7 +426,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 
 ### FAZ 3 — Klinik Modüller
 - [x] T3.1 Ölçümler ve VKİ + grafikler ([OLCUMLER](OLCUMLER.md))
-- [ ] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi ([BELGE-KUYRUGU](BELGE-KUYRUGU.md)) — kuyruk, iş durumu takibi ve 20 MB'a kadar akışlı yükleme **tamam**; §9'un istediği **parçalı (chunked) ve devam ettirilebilir yükleme eksik** — kötü bağlantıda yarıda kalan 20 MB'lık bir tarama şu an baştan yükleniyor
+- [x] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi ([BELGE-KUYRUGU](BELGE-KUYRUGU.md)) — parçalı ve devam ettirilebilir yükleme dahil. Oturum kimliğinin uygulama yeniden başlatıldığında da yaşaması T2.6'nın kalıcı deposuna bağlı
 - [ ] T3.3 OCR worker + lab sonucu yapılandırma + doktor onay ekranı
 - [ ] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı
 - [ ] T3.5 Fotoğraf modülü: yükleme, faz etiketleme, overlay çekim, karşılaştırma

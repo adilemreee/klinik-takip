@@ -19,6 +19,7 @@ let package = Package(
         .library(name: "KlinikHomeFeature", targets: ["KlinikHomeFeature"]),
         .library(name: "KlinikMeasurementsFeature", targets: ["KlinikMeasurementsFeature"]),
         .library(name: "KlinikDocumentsFeature", targets: ["KlinikDocumentsFeature"]),
+        .library(name: "KlinikLabFeature", targets: ["KlinikLabFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
     ],
     targets: [
@@ -60,10 +61,17 @@ let package = Package(
             name: "KlinikMeasurementsFeatureTests",
             dependencies: ["KlinikMeasurementsFeature", "KlinikCore"]
         ),
+        // Reviewing what OCR read, before any of it is clinical (spec M16).
+        .target(
+            name: "KlinikLabFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .testTarget(
             name: "KlinikDocumentsFeatureTests",
             dependencies: ["KlinikDocumentsFeature", "KlinikCore"]
         ),
+        .testTarget(name: "KlinikLabFeatureTests", dependencies: ["KlinikLabFeature", "KlinikCore"]),
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 

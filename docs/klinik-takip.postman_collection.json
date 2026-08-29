@@ -1411,6 +1411,132 @@
           }
         }
       ]
+    },
+    {
+      "name": "lab",
+      "item": [
+        {
+          "name": "Results waiting for a human, least certain first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/lab-results/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "lab-results",
+                "pending"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Results waiting for a human, least certain first"
+          }
+        },
+        {
+          "name": "Confirmed results only — what a trend may be drawn from",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/lab-results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "lab-results"
+              ],
+              "query": [
+                {
+                  "key": "analyteCode",
+                  "value": "",
+                  "disabled": false
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Confirmed results only — what a trend may be drawn from"
+          }
+        },
+        {
+          "name": "Confirm a result, with corrections",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/lab-results/:resultId/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lab-results",
+                ":resultId",
+                "verify"
+              ],
+              "variable": [
+                {
+                  "key": "resultId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Confirm a result, with corrections",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"analyteName\": \"\",\n  \"analyteCode\": \"\",\n  \"value\": 0,\n  \"unit\": \"\",\n  \"refLow\": {},\n  \"refHigh\": {},\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Discard something OCR read that is not a result",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/lab-results/:resultId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "lab-results",
+                ":resultId"
+              ],
+              "variable": [
+                {
+                  "key": "resultId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Discard something OCR read that is not a result"
+          }
+        }
+      ]
     }
   ]
 }

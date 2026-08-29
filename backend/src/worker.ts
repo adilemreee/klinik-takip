@@ -1,11 +1,16 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { validateEnv } from './config/env.schema';
 import { documentIntake, uploadSweep } from './documents/document-intake.processor';
 import { ResumableUploadService } from './documents/resumable-upload.service';
+import { LabService } from './lab/lab.service';
+import { documentOcr } from './ocr/ocr.processor';
+import { TesseractEngine } from './ocr/tesseract.engine';
 import { FileService } from './files/file.service';
 import { PrismaService } from './infra/prisma.service';
+import { StorageService } from './infra/storage.service';
 import { initErrorReporting } from './observability/error-reporting';
 import { queueDepth, registerDefaultMetrics } from './observability/metrics';
 import { startMetricsServer } from './observability/metrics.server';
@@ -37,12 +42,24 @@ async function bootstrap(): Promise<void> {
   const prisma = app.get(PrismaService);
   const files = app.get(FileService);
   const uploads = app.get(ResumableUploadService);
+  const lab = app.get(LabService);
+  const engine = app.get(TesseractEngine);
+  const storage = app.get(StorageService);
+  const config = app.get(ConfigService);
 
   const worker = runWorker({
     queue: QUEUES.documents,
     handlers: {
-      [JOBS.documentIntake]: documentIntake(prisma, files),
+      [JOBS.documentIntake]: documentIntake(prisma, files, queues),
       [JOBS.uploadSweep]: uploadSweep(uploads),
+      [JOBS.documentOcr]: documentOcr({
+        prisma,
+        files,
+        storage,
+        lab,
+        engine,
+        bucket: config.get<string>('S3_BUCKET_DOCUMENTS')!,
+      }),
     },
     connection: queues.connection,
     prisma,

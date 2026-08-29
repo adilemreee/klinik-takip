@@ -126,3 +126,24 @@
 "job.status.DONE" = "Tamamlandı";
 "job.status.FAILED" = "Başarısız";
 "job.status.SKIPPED" = "İşlenmedi";
+
+/* Tahlil onayı (Şartname M16, T3.3) */
+"lab.review.empty" = "Onay bekleyen tahlil sonucu yok.";
+"lab.review.notice" = "Bu değerler belgeden otomatik okundu ve HENÜZ HASTA DOSYASINDA DEĞİL. Onayladığınız satırlar dosyaya işlenir.";
+"lab.review.lowConfidence" = "Okuma şüpheli — kontrol edin";
+"lab.review.needsMapping" = "Analit eşleştirilmedi";
+"lab.review.confirm" = "Onayla";
+"lab.review.correct" = "Düzelt";
+"lab.review.discard" = "Sonuç değil, sil";
+
+"lab.field.analyteName" = "Analit adı";
+"lab.field.analyteCode" = "LOINC kodu";
+"lab.field.value" = "Değer";
+"lab.field.unit" = "Birim";
+"lab.field.refLow" = "Referans alt";
+"lab.field.refHigh" = "Referans üst";
+
+"lab.flag.LOW" = "Düşük";
+"lab.flag.NORMAL" = "Normal";
+"lab.flag.HIGH" = "Yüksek";
+"lab.flag.CRITICAL" = "Kritik";

@@ -93,6 +93,12 @@ jobs:
             mc anonymous set none ci/klinik-photos
           '
 
+      # The OCR stage shells out to these; without them the OCR tests fail
+      # rather than skip, which is the point — a silently skipped OCR test is a
+      # pipeline that has stopped checking the module it is there for.
+      - name: Install OCR tooling
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-tur poppler-utils
+
       - name: Install dependencies
         run: npm ci
 

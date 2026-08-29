@@ -3448,6 +3448,327 @@
           "documents"
         ]
       }
+    },
+    "/patients/{id}/lab-results/pending": {
+      "get": {
+        "operationId": "PatientLabController_pending",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Results waiting for a human, least certain first",
+        "tags": [
+          "lab"
+        ]
+      }
+    },
+    "/patients/{id}/lab-results": {
+      "get": {
+        "operationId": "PatientLabController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "analyteCode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabResultDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirmed results only — what a trend may be drawn from",
+        "tags": [
+          "lab"
+        ]
+      }
+    },
+    "/lab-results/{resultId}/verify": {
+      "patch": {
+        "operationId": "LabResultsController_verify",
+        "parameters": [
+          {
+            "name": "resultId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyLabResultDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm a result, with corrections",
+        "tags": [
+          "lab"
+        ]
+      }
+    },
+    "/lab-results/{resultId}": {
+      "delete": {
+        "operationId": "LabResultsController_discard",
+        "parameters": [
+          {
+            "name": "resultId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Discard something OCR read that is not a result",
+        "tags": [
+          "lab"
+        ]
+      }
     }
   },
   "info": {
@@ -4960,6 +5281,127 @@
           "finishedAt",
           "createdAt"
         ]
+      },
+      "LabResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "analyteCode": {
+            "type": "object",
+            "nullable": true,
+            "description": "LOINC, where it could be mapped"
+          },
+          "analyteName": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "refLow": {
+            "type": "object",
+            "nullable": true
+          },
+          "refHigh": {
+            "type": "object",
+            "nullable": true
+          },
+          "flag": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "CRITICAL"
+            ],
+            "nullable": true,
+            "description": "Null when there is no range"
+          },
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ocrConfidence": {
+            "type": "object",
+            "nullable": true,
+            "description": "The engine's confidence, 0..1"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "analyteCode",
+          "analyteName",
+          "value",
+          "unit",
+          "refLow",
+          "refHigh",
+          "flag",
+          "measuredAt",
+          "ocrConfidence",
+          "verifiedAt"
+        ]
+      },
+      "ReviewItemDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/LabResultDto"
+          },
+          "needsAttention": {
+            "type": "boolean",
+            "description": "The engine was unsure; look at this one first"
+          },
+          "awaitingMapping": {
+            "type": "boolean",
+            "description": "The printed name has no code yet"
+          }
+        },
+        "required": [
+          "result",
+          "needsAttention",
+          "awaitingMapping"
+        ]
+      },
+      "VerifyLabResultDto": {
+        "type": "object",
+        "properties": {
+          "analyteName": {
+            "type": "string",
+            "description": "Corrected analyte name"
+          },
+          "analyteCode": {
+            "type": "string",
+            "description": "LOINC code; supplying it teaches the mapping"
+          },
+          "value": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "refLow": {
+            "type": "object",
+            "nullable": true
+          },
+          "refHigh": {
+            "type": "object",
+            "nullable": true
+          },
+          "measuredAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        }
       }
     }
   }

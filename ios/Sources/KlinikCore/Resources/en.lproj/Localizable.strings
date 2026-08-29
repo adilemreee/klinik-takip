@@ -126,3 +126,24 @@
 "job.status.DONE" = "Done";
 "job.status.FAILED" = "Failed";
 "job.status.SKIPPED" = "Not processed";
+
+/* Lab result review (spec M16, T3.3) */
+"lab.review.empty" = "No lab results are waiting for review.";
+"lab.review.notice" = "These values were read from the document automatically and are NOT IN THE PATIENT RECORD YET. Rows you confirm are added to it.";
+"lab.review.lowConfidence" = "Uncertain reading — please check";
+"lab.review.needsMapping" = "Analyte not mapped";
+"lab.review.confirm" = "Confirm";
+"lab.review.correct" = "Correct";
+"lab.review.discard" = "Not a result, remove";
+
+"lab.field.analyteName" = "Analyte name";
+"lab.field.analyteCode" = "LOINC code";
+"lab.field.value" = "Value";
+"lab.field.unit" = "Unit";
+"lab.field.refLow" = "Reference low";
+"lab.field.refHigh" = "Reference high";
+
+"lab.flag.LOW" = "Low";
+"lab.flag.NORMAL" = "Normal";
+"lab.flag.HIGH" = "High";
+"lab.flag.CRITICAL" = "Critical";

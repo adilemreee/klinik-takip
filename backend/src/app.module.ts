@@ -7,6 +7,7 @@ import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
 import { DocumentsModule } from './documents/documents.module';
 import { QueueModule } from './queue/queue.module';
+import { LabModule } from './lab/lab.module';
 import { MeasurementsModule } from './measurements/measurements.module';
 import { MeModule } from './me/me.module';
 import { PatientsModule } from './patients/patients.module';
@@ -33,6 +34,7 @@ import { ObservabilityModule } from './observability/observability.module';
     MeModule,
     MeasurementsModule,
     DocumentsModule,
+    LabModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -4,6 +4,8 @@ import type { Job } from 'bullmq';
 import { FileService } from '../files/file.service';
 import { PrismaService } from '../infra/prisma.service';
 import type { JobHandler } from '../queue/job-runner';
+import { JOBS, QUEUES } from '../queue/queue.constants';
+import { QueueService } from '../queue/queue.service';
 
 /**
  * Intake: confirming the upload is really there.
@@ -36,7 +38,11 @@ export function uploadSweep(uploads: { sweepExpired: () => Promise<number> }): J
   };
 }
 
-export function documentIntake(prisma: PrismaService, files: FileService): JobHandler {
+export function documentIntake(
+  prisma: PrismaService,
+  files: FileService,
+  queue: QueueService,
+): JobHandler {
   const logger = new Logger('DocumentIntake');
 
   return async (job: Job): Promise<void> => {
@@ -53,7 +59,7 @@ export function documentIntake(prisma: PrismaService, files: FileService): JobHa
 
     const document = await prisma.document.findUnique({
       where: { id: documentId },
-      select: { id: true, fileKey: true, size: true },
+      select: { id: true, fileKey: true, size: true, patientId: true },
     });
 
     if (!document) {
@@ -74,11 +80,26 @@ export function documentIntake(prisma: PrismaService, files: FileService): JobHa
       );
     }
 
-    // Verified and ready for the OCR stage, which T3.3 adds. PENDING here means
-    // "waiting for OCR", not "waiting for intake".
     await prisma.document.update({
       where: { id: document.id },
       data: { ocrStatus: ProcessingStatus.PENDING },
     });
+
+    // Reading is a separate job from verifying, so a document whose OCR fails
+    // is still known to have arrived intact — and can be retried on its own
+    // rather than re-downloading and re-checking bytes that were fine.
+    await queue.enqueue(
+      {
+        queue: QUEUES.documents,
+        name: JOBS.documentOcr,
+        data: {},
+        entityType: 'documents',
+        entityId: document.id,
+        patientId: document.patientId,
+      },
+      async (tx, jobId) => {
+        await tx.job.update({ where: { id: jobId }, data: { entityId: document.id } });
+      },
+    );
   };
 }

@@ -21,6 +21,9 @@ export const JOBS = {
    * abandoned, so without this the bucket grows by every one of them.
    */
   uploadSweep: 'upload-sweep',
+
+  /** Reads a document and files candidate lab values for a human to confirm. */
+  documentOcr: 'document-ocr',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

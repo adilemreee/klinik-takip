@@ -31,7 +31,20 @@ CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
 # ---------- runtime: production deps only, non-root ----------
 FROM node:22-alpine AS runtime
 WORKDIR /app
-RUN apk add --no-cache openssl
+
+# tesseract and poppler are the OCR stage (spec M16). Installed in the runtime
+# image because the API and the worker share it: the worker is the only process
+# that shells out to them, but splitting the image to save ~90 MB would mean two
+# images to build, scan and keep in step.
+#
+# Both language files are needed: reports arrive in the patient's language and
+# the clinic reads them in its own.
+RUN apk add --no-cache \
+    openssl \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    tesseract-ocr-data-tur \
+    poppler-utils
 ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./

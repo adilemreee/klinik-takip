@@ -355,7 +355,7 @@ describe('documents', () => {
       const body = response.body as Uploaded;
       await remember(body.id);
 
-      const handler = documentIntake(prisma as unknown as PrismaService, files);
+      const handler = documentIntake(prisma as unknown as PrismaService, files, queues);
       await handler({ data: { jobId: body.jobId } } as never);
 
       const stored = await prisma.document.findUniqueOrThrow({ where: { id: body.id } });
@@ -377,7 +377,7 @@ describe('documents', () => {
         data: { size: body.size + 1 },
       });
 
-      const handler = documentIntake(prisma as unknown as PrismaService, files);
+      const handler = documentIntake(prisma as unknown as PrismaService, files, queues);
 
       await expect(handler({ data: { jobId: body.jobId } } as never)).rejects.toThrow(/bytes/);
     });
@@ -391,7 +391,7 @@ describe('documents', () => {
 
       await prisma.document.delete({ where: { id: body.id } });
 
-      const handler = documentIntake(prisma as unknown as PrismaService, files);
+      const handler = documentIntake(prisma as unknown as PrismaService, files, queues);
 
       await expect(handler({ data: { jobId: body.jobId } } as never)).resolves.toBeUndefined();
     });
@@ -442,7 +442,7 @@ describe('documents', () => {
 
       const worker = runWorker({
         queue: QUEUES.documents,
-        handlers: { [JOBS.documentIntake]: documentIntake(prisma as unknown as PrismaService, files) },
+        handlers: { [JOBS.documentIntake]: documentIntake(prisma as unknown as PrismaService, files, queues) },
         connection: queues.connection,
         prisma: prisma as unknown as PrismaService,
         concurrency: 1,

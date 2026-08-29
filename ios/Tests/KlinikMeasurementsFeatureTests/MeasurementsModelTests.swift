@@ -10,14 +10,29 @@ private actor RecordingTransport: HTTPTransport {
     private(set) var paths: [String] = []
     private(set) var sentBodies: [Data] = []
 
-    init(bodies: [String: (Int, String)]) {
+    /**
+     * Per-path delay.
+     *
+     * Without one the two calls in the concurrency tests do not actually
+     * overlap: on a fast machine the first runs to completion — guard released
+     * — before the second starts, and both succeed. That is not the situation
+     * being tested, and it made the test pass locally and fail on CI.
+     */
+    private let delays: [String: Duration]
+
+    init(bodies: [String: (Int, String)], delays: [String: Duration] = [:]) {
         self.bodies = bodies
+        self.delays = delays
     }
 
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         let path = request.url!.path
         paths.append(path)
         if let body = request.httpBody { sentBodies.append(body) }
+
+        if let delay = delays[path] {
+            try? await Task.sleep(for: delay)
+        }
 
         guard let (status, body) = bodies[path] else {
             return HTTPResponse(status: 500, body: Data())
@@ -200,10 +215,15 @@ final class MeasurementsModelTests: XCTestCase {
 
     /// A double tap must not record the same weight twice.
     func testRefusesASecondSaveWhileOneIsInFlight() async {
-        let transport = RecordingTransport(bodies: [
-            "/patients/p1/measurements": (201, "{}"),
-            "/patients/p1/measurements/chart": (200, chartJSON),
-        ])
+        let transport = RecordingTransport(
+            bodies: [
+                "/patients/p1/measurements": (201, "{}"),
+                "/patients/p1/measurements/chart": (200, chartJSON),
+            ],
+            // Held open so the second tap arrives while the first is still in
+            // flight, which is the only way this is a double tap at all.
+            delays: ["/patients/p1/measurements": .milliseconds(200)]
+        )
         let measurements = await model(transport)
 
         async let first = measurements.record(NewMeasurement(type: .weight, value: 66.2))

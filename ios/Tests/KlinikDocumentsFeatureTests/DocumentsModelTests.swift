@@ -9,8 +9,19 @@ private actor RecordingTransport: HTTPTransport {
     private(set) var paths: [String] = []
     private(set) var uploadedFrom: [URL] = []
 
-    init(bodies: [String: (Int, String)]) {
+    /**
+     * Per-path delay.
+     *
+     * Without one the two calls in the concurrency tests do not actually
+     * overlap: on a fast machine the first runs to completion — guard released
+     * — before the second starts, and both succeed. That is not the situation
+     * being tested, and it made the test pass locally and fail on CI.
+     */
+    private let delays: [String: Duration]
+
+    init(bodies: [String: (Int, String)], delays: [String: Duration] = [:]) {
         self.bodies = bodies
+        self.delays = delays
     }
 
     /// Lets a test change what the next list call returns, so a poll can be
@@ -24,6 +35,10 @@ private actor RecordingTransport: HTTPTransport {
         // answering an upload with a list body would hide a decoding failure.
         let path = "\(request.httpMethod ?? "GET") \(request.url!.path)"
         paths.append(path)
+
+        if let delay = delays[path] {
+            try? await Task.sleep(for: delay)
+        }
 
         guard let (status, body) = bodies[path] else {
             return HTTPResponse(status: 500, body: Data())
@@ -199,10 +214,15 @@ final class DocumentsModelTests: XCTestCase {
          "jobId":"j1"}
         """
 
-        let transport = RecordingTransport(bodies: [
-            "POST /patients/p1/documents": (201, created),
-            "GET /patients/p1/documents": (200, page([("d1", "QUEUED")])),
-        ])
+        let transport = RecordingTransport(
+            bodies: [
+                "POST /patients/p1/documents": (201, created),
+                "GET /patients/p1/documents": (200, page([("d1", "QUEUED")])),
+            ],
+            // Held open so the second tap arrives while the first is still in
+            // flight, which is the only way this is a double tap at all.
+            delays: ["POST /patients/p1/documents": .milliseconds(200)]
+        )
         let documents = await model(transport)
 
         async let first = documents.upload(fileURL: file, type: .lab)

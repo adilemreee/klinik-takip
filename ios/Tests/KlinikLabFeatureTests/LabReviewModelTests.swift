@@ -7,13 +7,28 @@ private actor RecordingTransport: HTTPTransport {
     private var bodies: [String: (Int, String)]
     private(set) var calls: [String] = []
 
-    init(bodies: [String: (Int, String)]) {
+    /**
+     * Per-path delay.
+     *
+     * Without one the two calls in the concurrency tests do not actually
+     * overlap: on a fast machine the first runs to completion — guard released
+     * — before the second starts, and both succeed. That is not the situation
+     * being tested, and it made the test pass locally and fail on CI.
+     */
+    private let delays: [String: Duration]
+
+    init(bodies: [String: (Int, String)], delays: [String: Duration] = [:]) {
         self.bodies = bodies
+        self.delays = delays
     }
 
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         let key = "\(request.httpMethod ?? "GET") \(request.url!.path)"
         calls.append(key)
+
+        if let delay = delays[key] {
+            try? await Task.sleep(for: delay)
+        }
 
         guard let (status, body) = bodies[key] else {
             return HTTPResponse(status: 500, body: Data())
@@ -196,7 +211,8 @@ final class LabReviewModelTests: XCTestCase {
 
     /// A double tap must not send two confirmations for the same row.
     func testRefusesASecondActionWhileOneIsInFlight() async {
-        let transport = RecordingTransport(bodies: [
+        let transport = RecordingTransport(
+            bodies: [
             "GET /patients/p1/lab-results/pending": (
                 200,
                 "[\(item("r1", confidence: "0.9", mapped: true)),\(item("r2", confidence: "0.9", mapped: true))]"
@@ -210,7 +226,11 @@ final class LabReviewModelTests: XCTestCase {
                  "verifiedAt":"2026-03-12T09:00:00.000Z"}
                 """
             ),
-        ])
+            ],
+            // Held open so the second tap arrives while the first is still in
+            // flight, which is the only way this is a double tap at all.
+            delays: ["PATCH /lab-results/r1/verify": .milliseconds(200)]
+        )
         let review = await model(transport)
 
         await review.load()

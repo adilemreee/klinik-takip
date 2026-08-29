@@ -72,6 +72,15 @@ kaçışı bırakıp sonra `\n` → `\r\n` dönüşümü uygulamak, satır sonla
 Sunucunun reddettiği, sebebi bulunması berbat bir gövde. Zarf artık satır satır, açıkça
 yazılıyor.
 
+## Eksik: Devam Ettirilebilir Yükleme
+
+Şartname §9 dosya yükleme için **parçalı (chunked) ve devam ettirilebilir** diyor. Şu an tek
+seferlik akışlı yükleme var: 20 MB'lık bir tarama bağlantı koptuğunda **baştan** yükleniyor.
+
+Sağlık turizmi senaryosunda hasta çoğu zaman yurt dışında ve mobil bağlantıda; bu, gerçek bir
+eksik. Kapatılması yükleme protokolünü değiştirmeyi gerektiriyor (parça parça yükleyip
+sunucuda birleştirme veya S3 multipart), bu yüzden ayrı iş olarak T3.2'nin kalanında duruyor.
+
 ## İstemci Tarafı
 
 Klinik belgesi 20 MB olabiliyor. Zarfı telefonun belleğinde kurmak — kameranın ya da dosya

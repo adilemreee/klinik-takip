@@ -398,34 +398,35 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 ## 15. Yol Haritası — Faz ve Task Listesi
 
 ### FAZ 0 — Temel Kurulum
-- [ ] T0.1 Sunucu hazırlığı: kullanıcı, SSH sertleştirme, firewall, fail2ban, Docker kurulumu
-- [ ] T0.2 Repo yapısı (monorepo: `/backend`, `/ios`, `/android`, `/docs`), commit ve branch kuralları
-- [ ] T0.3 Docker Compose iskeleti (postgres, redis, minio, caddy) + staging/production ayrımı
-- [ ] T0.4 NestJS proje iskeleti, config/env yönetimi, health check
-- [ ] T0.5 CI pipeline: lint + test + build
-- [ ] T0.6 Gözlemlenebilirlik: Sentry, Prometheus, Grafana, Loki
-- [ ] T0.7 Otomatik yedekleme scripti + restore testi
+- [ ] T0.1 Sunucu hazırlığı: kullanıcı, SSH sertleştirme, firewall, fail2ban, Docker kurulumu — **kısmen.** Docker ve fail2ban zaten kuruluydu. UFW kurulmadı ve SSH sertleştirmesi ertelendi: ikisi de mevcut VPN/konteyner erişimini keserdi. SSH **açık güvenlik borcu**, T7.2'ye taşındı. Gerekçeler: [SUNUCU-NOTLARI](SUNUCU-NOTLARI.md)
+- [x] T0.2 Repo yapısı (monorepo: `/backend`, `/ios`, `/android`, `/docs`), commit ve branch kuralları
+- [x] T0.3 Docker Compose iskeleti (postgres, redis, minio, ~~caddy~~ → **mevcut cloudflared tunnel**) + staging/production ayrımı ([DAGITIM](DAGITIM.md) · [PORTS](PORTS.md))
+- [x] T0.4 NestJS proje iskeleti, config/env yönetimi, health check
+- [x] T0.5 CI pipeline: lint + test + build
+- [x] T0.6 Gözlemlenebilirlik: ~~Sentry~~ → **GlitchTip** (self-hosted, Sentry protokolü), Prometheus, Grafana, Loki
+- [x] T0.7 Otomatik yedekleme scripti + restore testi ([YEDEKLEME](YEDEKLEME.md))
 
 ### FAZ 1 — Kimlik ve Çekirdek Veri
-- [ ] T1.1 Veri modeli ve ilk migration'lar
-- [ ] T1.2 Auth: kayıt/davet, giriş, refresh rotation, 2FA, cihaz oturumları
-- [ ] T1.3 RBAC izin sistemi + guard'lar + negatif testler
-- [ ] T1.4 Audit log altyapısı (interceptor ile otomatik)
-- [ ] T1.5 Dosya servisi (MinIO, imzalı URL, virüs taraması opsiyonel)
-- [ ] T1.6 Hasta CRUD, arama, filtreleme, atama
-- [ ] T1.7 OpenAPI dokümanı + Postman koleksiyonu
+- [x] T1.1 Veri modeli ve ilk migration'lar ([VERI-MODELI](VERI-MODELI.md))
+- [x] T1.2 Auth: kayıt/davet, giriş, refresh rotation, 2FA, cihaz oturumları ([KIMLIK-DOGRULAMA](KIMLIK-DOGRULAMA.md))
+- [x] T1.3 RBAC izin sistemi + guard'lar + negatif testler ([YETKILENDIRME](YETKILENDIRME.md))
+- [x] T1.4 Audit log altyapısı (interceptor ile otomatik) ([DENETIM-GUNLUGU](DENETIM-GUNLUGU.md))
+- [x] T1.5 Dosya servisi (MinIO, imzalı URL) — virüs taraması şartnamede opsiyonel; ClamAV 1 GB+ kalıcı bellek istediği ve sunucu 21 servis barındırdığı için kurulmadı ([DOSYA-SERVISI](DOSYA-SERVISI.md))
+- [x] T1.6 Hasta CRUD, arama, filtreleme, atama ([HASTA-KAYITLARI](HASTA-KAYITLARI.md))
+- [x] T1.7 OpenAPI dokümanı + Postman koleksiyonu ([API-SOZLESMESI](API-SOZLESMESI.md) · [openapi.json](openapi.json))
 
 ### FAZ 2 — Mobil İskeletler
-- [ ] T2.1 iOS proje kurulumu: mimari, ağ katmanı, tasarım sistemi, i18n
-- [ ] T2.2 Android proje kurulumu: aynı kapsam
-- [ ] T2.3 Giriş/onboarding akışları (her iki platform)
-- [ ] T2.4 Hasta listesi + hasta detay ekranı (personel tarafı)
-- [ ] T2.5 Hasta ana ekranı (hasta tarafı)
-- [ ] T2.6 Offline katmanı: yerel DB + outbox + senkronizasyon
+- [x] T2.1 iOS proje kurulumu: mimari, ağ katmanı, tasarım sistemi, i18n ([IOS-ISKELETI](IOS-ISKELETI.md)) — i18n altyapısı tamam, **diller eksik**: aşağıdaki T2.7'ye bakın
+- [x] T2.2 Android proje kurulumu: aynı kapsam ([ANDROID-ISKELETI](ANDROID-ISKELETI.md)) — aynı not
+- [x] T2.3 Giriş/onboarding akışları (her iki platform) ([GIRIS-AKISI](GIRIS-AKISI.md))
+- [x] T2.4 Hasta listesi + hasta detay ekranı (personel tarafı) ([HASTA-EKRANLARI](HASTA-EKRANLARI.md))
+- [x] T2.5 Hasta ana ekranı (hasta tarafı) ([HASTA-ANA-EKRANI](HASTA-ANA-EKRANI.md))
+- [ ] T2.6 Offline katmanı: outbox + senkronizasyon + çakışma çözümü **tamam ve testli**; kalıcı yerel DB (GRDB / Room) **eksik** — depolar şu an bellekte, yani uygulama kapanınca kuyruk kayboluyor. Tasarım: [OFFLINE-VE-CAKISMA](OFFLINE-VE-CAKISMA.md)
+- [ ] T2.7 **Dil seti: AR (RTL), DE, RU** — §7 bunları başlangıç setinde istiyor; şu an yalnız TR ve EN var. Metinlerin tamamı zaten dış kaynak dosyalarında ve tek katalogdan üretiliyor, dolayısıyla eksik olan çeviriler ve **Arapça için RTL yerleşimi**. *(Şartnamenin task listesinde yoktu; §7 ile liste arasındaki boşluğu kapatmak için eklendi.)*
 
 ### FAZ 3 — Klinik Modüller
-- [x] T3.1 Ölçümler ve VKİ + grafikler
-- [x] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi
+- [x] T3.1 Ölçümler ve VKİ + grafikler ([OLCUMLER](OLCUMLER.md))
+- [ ] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi ([BELGE-KUYRUGU](BELGE-KUYRUGU.md)) — kuyruk, iş durumu takibi ve 20 MB'a kadar akışlı yükleme **tamam**; §9'un istediği **parçalı (chunked) ve devam ettirilebilir yükleme eksik** — kötü bağlantıda yarıda kalan 20 MB'lık bir tarama şu an baştan yükleniyor
 - [ ] T3.3 OCR worker + lab sonucu yapılandırma + doktor onay ekranı
 - [ ] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı
 - [ ] T3.5 Fotoğraf modülü: yükleme, faz etiketleme, overlay çekim, karşılaştırma

@@ -12,11 +12,13 @@ Tam şartname: [docs/SARTNAME.md](docs/SARTNAME.md)
 
 ```
 backend/    NestJS + Prisma + PostgreSQL + Redis + BullMQ  (API + worker)
-ios/        Swift paketi: KlinikCore, KlinikAPI, KlinikDesign
-android/    Gradle: core:network (saf JVM), core:design (Compose)
+ios/        Swift paketi: KlinikCore, KlinikAPI, KlinikDesign + özellik modülleri
+            (Auth, Patients, Home, Measurements, Documents, Sync)
+android/    Gradle: core:network / core:sync (saf JVM), core:design (Compose),
+            feature:* (mantık, saf JVM) + feature:*-ui (Compose)
 design/     tokens.json — iki platformun ortak tasarım kaynağı
 infra/      docker-compose, nginx server blokları
-docs/       şartname, sunucu notları, port tahsisi, katkı kuralları
+docs/       şartname + yol haritası, modül dokümanları, sunucu notları, port tahsisi
 ```
 
 ## Teknoloji Özeti
@@ -51,7 +53,13 @@ cp .env.example .env
 ```
 
 Backend hazır — bkz. [backend/README.md](backend/README.md).
-iOS ve Android iskeletleri T2.1 ve T2.2'de kurulacaktır.
+
+```bash
+cd ios && swift test          # iOS paketi ve testleri
+cd android && ./gradlew test  # Android JVM modülleri
+```
+
+Compose modülleri yalnız Android SDK bulunan makinelerde derlenir; CI'da her zaman derlenir.
 
 Veri modeli: [docs/VERI-MODELI.md](docs/VERI-MODELI.md) · Kimlik doğrulama: [docs/KIMLIK-DOGRULAMA.md](docs/KIMLIK-DOGRULAMA.md) · Yetkilendirme: [docs/YETKILENDIRME.md](docs/YETKILENDIRME.md) · Denetim: [docs/DENETIM-GUNLUGU.md](docs/DENETIM-GUNLUGU.md) · Dosyalar: [docs/DOSYA-SERVISI.md](docs/DOSYA-SERVISI.md) · Hasta kayıtları: [docs/HASTA-KAYITLARI.md](docs/HASTA-KAYITLARI.md) · API sözleşmesi: [docs/API-SOZLESMESI.md](docs/API-SOZLESMESI.md) · iOS: [docs/IOS-ISKELETI.md](docs/IOS-ISKELETI.md) · Android: [docs/ANDROID-ISKELETI.md](docs/ANDROID-ISKELETI.md) · Giriş akışı: [docs/GIRIS-AKISI.md](docs/GIRIS-AKISI.md) · Hasta ekranları: [docs/HASTA-EKRANLARI.md](docs/HASTA-EKRANLARI.md) · Hasta ana ekranı: [docs/HASTA-ANA-EKRANI.md](docs/HASTA-ANA-EKRANI.md) · Offline ve çakışma: [docs/OFFLINE-VE-CAKISMA.md](docs/OFFLINE-VE-CAKISMA.md) · Dağıtım: [docs/DAGITIM.md](docs/DAGITIM.md) · Yedekleme: [docs/YEDEKLEME.md](docs/YEDEKLEME.md)
 
@@ -71,13 +79,29 @@ Veri modeli: [docs/VERI-MODELI.md](docs/VERI-MODELI.md) · Kimlik doğrulama: [d
 
 Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 
-| Faz | Durum |
-|---|---|
-| Faz 0 — Temel Kurulum | ✅ **tamamlandı** (T0.1–T0.7) |
-| Faz 1 — Kimlik ve Çekirdek Veri | ✅ **tamamlandı** (T1.1–T1.7) |
-| Faz 2 — Mobil İskeletler | ✅ **tamamlandı** (T2.1–T2.6) |
-| Faz 3 — Klinik Modüller | ⬜ |
-| Faz 4 — İletişim ve Bildirim | ⬜ |
-| Faz 5 — Yapay Zeka Katmanı | ⬜ |
-| Faz 6 — İlaç, Finans, Raporlama | ⬜ |
-| Faz 7 — Sertleştirme ve Yayın | ⬜ |
+| Faz | Durum | Not |
+|---|---|---|
+| Faz 0 — Temel Kurulum | 6 / 7 | T0.1 kısmi: UFW ve SSH sertleştirmesi bilinçli olarak uygulanmadı |
+| Faz 1 — Kimlik ve Çekirdek Veri | 7 / 7 | ✅ |
+| Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
+| Faz 3 — Klinik Modüller | 1 / 6 | T3.1 tamam · T3.2 kısmi: parçalı/devam ettirilebilir yükleme eksik · sırada T3.3 OCR |
+| Faz 4 — İletişim ve Bildirim | 0 / 6 | |
+| Faz 5 — Yapay Zeka Katmanı | 0 / 7 | |
+| Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
+| Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |
+
+Kutucuklu tam liste, her tamamlanan işin doküman bağlantısıyla birlikte:
+[docs/SARTNAME.md §15](docs/SARTNAME.md#15-yol-haritası--faz-ve-task-listesi)
+
+### Devredilen borçlar
+
+Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
+
+| Borç | Neden ertelendi | Nereye |
+|---|---|---|
+| SSH sertleştirmesi | Sunucuda çalışan kritik servislerin erişimini kesme riski | T7.2 |
+| Kalıcı outbox deposu (GRDB / Room) | Senkronizasyon mantığı depodan bağımsız tasarlandı; kalıcılık ayrı bir iş | T2.6 kalanı |
+| Parçalı (chunked) / devam ettirilebilir yükleme | Tek seferlik akışlı yükleme çalışıyor; §9'un istediği devam ettirme ayrı bir protokol | T3.2 kalanı |
+| AR (RTL), DE, RU çevirileri | §7 başlangıç setinde istiyor; altyapı hazır, çeviriler ve RTL yerleşimi yapılmadı | T2.7 |
+| `audit_logs` partition'lama | Tablo büyümeden önce gerekmiyor | Faz 7 öncesi |
+| Yedek şifreleme parolasının kasaya alınması | **Sizde:** parola sunucu dışında saklanmalı, yoksa off-site yedekler açılamaz | — |

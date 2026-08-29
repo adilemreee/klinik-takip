@@ -70,6 +70,12 @@ export const envSchema = z.object({
   ENCRYPTION_KEY: z.string().min(44),
 
   /** Account lockout after repeated failed logins (spec section 2). */
+  /**
+   * Largest accepted upload (spec section 8 names 20 MB). Enforced while
+   * streaming, so a client cannot declare a small Content-Length and send more.
+   */
+  UPLOAD_MAX_BYTES: z.coerce.number().int().positive().default(20 * 1024 * 1024),
+
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   INVITATION_TTL_HOURS: z.coerce.number().int().positive().default(72),

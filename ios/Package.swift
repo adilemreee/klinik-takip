@@ -18,6 +18,7 @@ let package = Package(
         .library(name: "KlinikPatientsFeature", targets: ["KlinikPatientsFeature"]),
         .library(name: "KlinikHomeFeature", targets: ["KlinikHomeFeature"]),
         .library(name: "KlinikMeasurementsFeature", targets: ["KlinikMeasurementsFeature"]),
+        .library(name: "KlinikDocumentsFeature", targets: ["KlinikDocumentsFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
     ],
     targets: [
@@ -49,9 +50,19 @@ let package = Package(
         ),
 
         .testTarget(name: "KlinikPatientsFeatureTests", dependencies: ["KlinikPatientsFeature", "KlinikCore"]),
+        // Document upload and the queue's progress (spec M2, T3.2).
+        .target(
+            name: "KlinikDocumentsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .testTarget(
             name: "KlinikMeasurementsFeatureTests",
             dependencies: ["KlinikMeasurementsFeature", "KlinikCore"]
+        ),
+        .testTarget(
+            name: "KlinikDocumentsFeatureTests",
+            dependencies: ["KlinikDocumentsFeature", "KlinikCore"]
         ),
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),

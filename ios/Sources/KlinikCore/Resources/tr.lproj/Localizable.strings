@@ -104,3 +104,25 @@
 "bmi.category.OBESE_I" = "Obezite (1. derece)";
 "bmi.category.OBESE_II" = "Obezite (2. derece)";
 "bmi.category.OBESE_III" = "Obezite (3. derece)";
+
+/* Belgeler ve kuyruk (Şartname M2, T3.2) */
+"document.upload" = "Belge yükle";
+"document.type" = "Belge türü";
+"document.empty" = "Henüz belge yok. Tahlil sonucunuzu veya raporunuzu buradan yükleyebilirsiniz.";
+"document.uploading" = "Yükleniyor…";
+
+"document.type.LAB" = "Tahlil";
+"document.type.IMAGING" = "Görüntüleme";
+"document.type.REPORT" = "Rapor";
+"document.type.CONSENT" = "Onam formu";
+"document.type.INVOICE" = "Fatura";
+"document.type.PASSPORT" = "Pasaport";
+"document.type.ECG" = "EKG";
+"document.type.OTHER" = "Diğer";
+
+"job.status.PENDING" = "Sırada";
+"job.status.QUEUED" = "Sırada";
+"job.status.PROCESSING" = "İşleniyor";
+"job.status.DONE" = "Tamamlandı";
+"job.status.FAILED" = "Başarısız";
+"job.status.SKIPPED" = "İşlenmedi";

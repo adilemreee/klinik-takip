@@ -43,6 +43,9 @@ include(":feature:home")
 // Body measurements and the charts drawn from them (spec M2).
 include(":feature:measurements")
 
+// Document upload and the queue's progress (spec M2, T3.2).
+include(":feature:documents")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -57,6 +60,7 @@ if (androidSdkAvailable) {
     include(":feature:patients-ui")
     include(":feature:home-ui")
     include(":feature:measurements-ui")
+    include(":feature:documents-ui")
 } else {
     logger.lifecycle("Android SDK not found — building JVM modules only (:core:network).")
 }

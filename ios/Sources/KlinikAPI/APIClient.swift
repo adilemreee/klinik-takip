@@ -87,12 +87,44 @@ public actor APIClient {
         _ = try await sendRaw(endpoint)
     }
 
+    /// Sends a multipart body streamed from disk.
+    ///
+    /// The envelope is assembled in a temporary file and removed afterwards
+    /// whatever happens — a failed upload that leaves a 20 MB copy behind fills
+    /// the device one attempt at a time.
+    public func upload<Response: Decodable & Sendable>(
+        _ endpoint: Endpoint,
+        multipart: MultipartBody,
+        as type: Response.Type
+    ) async throws -> Response {
+        let envelope = try multipart.writeToTemporaryFile()
+        defer { try? FileManager.default.removeItem(at: envelope) }
+
+        let response = try await perform(
+            endpoint,
+            retryAfterRefresh: true,
+            contentType: multipart.headerValue,
+            bodyFile: envelope
+        )
+
+        do {
+            return try JSONDecoder.klinik.decode(Response.self, from: response.body)
+        } catch {
+            throw APIError.decoding(String(describing: error))
+        }
+    }
+
     private func sendRaw(_ endpoint: Endpoint) async throws -> Data {
         let response = try await perform(endpoint, retryAfterRefresh: true)
         return response.body
     }
 
-    private func perform(_ endpoint: Endpoint, retryAfterRefresh: Bool) async throws -> HTTPResponse {
+    private func perform(
+        _ endpoint: Endpoint,
+        retryAfterRefresh: Bool,
+        contentType: String? = nil,
+        bodyFile: URL? = nil
+    ) async throws -> HTTPResponse {
         var token: String?
 
         if let override = endpoint.bearerOverride {
@@ -101,7 +133,14 @@ public actor APIClient {
             token = try await session.validAccessToken()
         }
 
-        let response = try await transport.send(try buildRequest(endpoint, token: token))
+        let request = try buildRequest(endpoint, token: token, contentType: contentType)
+        let response: HTTPResponse
+
+        if let bodyFile {
+            response = try await transport.upload(request, fromFile: bodyFile)
+        } else {
+            response = try await transport.send(request)
+        }
 
         if (200...299).contains(response.status) {
             return response
@@ -117,13 +156,22 @@ public actor APIClient {
         if response.status == 401, endpoint.requiresAuthentication, endpoint.bearerOverride == nil,
            retryAfterRefresh, let token {
             _ = try await session.refreshAfterUnauthorized(usedAccessToken: token)
-            return try await perform(endpoint, retryAfterRefresh: false)
+            return try await perform(
+                endpoint,
+                retryAfterRefresh: false,
+                contentType: contentType,
+                bodyFile: bodyFile
+            )
         }
 
         throw mapFailure(response)
     }
 
-    private func buildRequest(_ endpoint: Endpoint, token: String?) throws -> URLRequest {
+    private func buildRequest(
+        _ endpoint: Endpoint,
+        token: String?,
+        contentType: String? = nil
+    ) throws -> URLRequest {
         guard var components = URLComponents(
             url: configuration.baseURL.appendingPathComponent(endpoint.path),
             resolvingAgainstBaseURL: false
@@ -149,7 +197,9 @@ public actor APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(configuration.preferredLanguage, forHTTPHeaderField: "Accept-Language")
 
-        if endpoint.body != nil {
+        if let contentType {
+            request.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        } else if endpoint.body != nil {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
 

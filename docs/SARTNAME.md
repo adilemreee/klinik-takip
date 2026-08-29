@@ -425,7 +425,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 
 ### FAZ 3 — Klinik Modüller
 - [x] T3.1 Ölçümler ve VKİ + grafikler
-- [ ] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi
+- [x] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi
 - [ ] T3.3 OCR worker + lab sonucu yapılandırma + doktor onay ekranı
 - [ ] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı
 - [ ] T3.5 Fotoğraf modülü: yükleme, faz etiketleme, overlay çekim, karşılaştırma

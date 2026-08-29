@@ -23,6 +23,7 @@ interface Schema {
   properties?: Record<string, Schema>;
   required?: string[];
   nullable?: boolean;
+  default?: unknown;
 }
 
 interface Parameter {
@@ -72,6 +73,26 @@ function scalarExample(schema: Schema | undefined): string {
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
     ? String(value)
     : '';
+}
+
+/**
+ * Form fields for a multipart body: file parts as file pickers, everything else
+ * as text prefilled with its default or first allowed value.
+ */
+function formData(schema: Schema): Record<string, unknown>[] {
+  const properties = schema.properties ?? {};
+
+  return Object.entries(properties).map(([name, property]) => {
+    const field = property;
+
+    if (field.format === 'binary') {
+      return { key: name, type: 'file', src: [] };
+    }
+
+    const value = field.default ?? field.enum?.[0] ?? '';
+
+    return { key: name, type: 'text', value: String(value) };
+  });
 }
 
 /** A minimal, representative body so a request is runnable after pasting a token. */
@@ -153,6 +174,7 @@ for (const [path, operations] of Object.entries(spec.paths)) {
       .map((p) => ({ key: p.name, value: '', description: p.description }));
 
     const bodySchema = operation.requestBody?.content?.['application/json']?.schema;
+    const multipartSchema = operation.requestBody?.content?.['multipart/form-data']?.schema;
 
     const request: Record<string, unknown> = {
       method: method.toUpperCase(),
@@ -173,6 +195,12 @@ for (const [path, operations] of Object.entries(spec.paths)) {
         raw: JSON.stringify(example(bodySchema), null, 2),
         options: { raw: { language: 'json' } },
       };
+    } else if (multipartSchema) {
+      // File uploads become a form-data body rather than being skipped: a
+      // collection that cannot exercise the upload endpoint is a collection
+      // that stops being used for the one request hardest to hand-build.
+      // Content-Type is left to Postman, which has to add the boundary.
+      request.body = { mode: 'formdata', formdata: formData(multipartSchema) };
     }
 
     const items = folders.get(tag) ?? [];

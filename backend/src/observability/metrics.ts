@@ -1,4 +1,4 @@
-import { collectDefaultMetrics, Histogram, Registry } from '@prometheus-io/client';
+import { collectDefaultMetrics, Gauge, Histogram, Registry } from '@prometheus-io/client';
 
 /**
  * Dedicated registry rather than the global default, so tests can build a
@@ -15,6 +15,20 @@ export const httpRequestDuration = new Histogram({
   labelNames: ['method', 'route', 'status_code'] as const,
   // Tuned to the spec's targets: p95 < 300ms read, < 800ms write (section 9).
   buckets: [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.8, 1.5, 3, 10],
+  registers: [metricsRegistry],
+});
+
+/**
+ * Queue depth.
+ *
+ * A queue that stops draining is silent — uploads still succeed, jobs still
+ * queue, and nothing surfaces until someone asks why a week-old lab report was
+ * never processed. Waiting depth climbing is the signal that arrives first.
+ */
+export const queueDepth = new Gauge({
+  name: 'queue_depth',
+  help: 'Jobs in a queue, by state',
+  labelNames: ['queue', 'state'] as const,
   registers: [metricsRegistry],
 });
 

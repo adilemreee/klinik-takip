@@ -104,3 +104,25 @@
 "bmi.category.OBESE_I" = "Obesity (class I)";
 "bmi.category.OBESE_II" = "Obesity (class II)";
 "bmi.category.OBESE_III" = "Obesity (class III)";
+
+/* Documents and the queue (spec M2, T3.2) */
+"document.upload" = "Upload a document";
+"document.type" = "Document type";
+"document.empty" = "No documents yet. You can upload a lab result or a report here.";
+"document.uploading" = "Uploading…";
+
+"document.type.LAB" = "Lab result";
+"document.type.IMAGING" = "Imaging";
+"document.type.REPORT" = "Report";
+"document.type.CONSENT" = "Consent form";
+"document.type.INVOICE" = "Invoice";
+"document.type.PASSPORT" = "Passport";
+"document.type.ECG" = "ECG";
+"document.type.OTHER" = "Other";
+
+"job.status.PENDING" = "Waiting";
+"job.status.QUEUED" = "Waiting";
+"job.status.PROCESSING" = "Processing";
+"job.status.DONE" = "Done";
+"job.status.FAILED" = "Failed";
+"job.status.SKIPPED" = "Not processed";

@@ -19,6 +19,21 @@ public struct HTTPResponse: Sendable {
 /// is tested against recorded responses instead of a live server.
 public protocol HTTPTransport: Sendable {
     func send(_ request: URLRequest) async throws -> HTTPResponse
+
+    /// Sends a request whose body is a file on disk.
+    ///
+    /// Separate from `send` so the real transport can stream it. The default
+    /// reads the file in, which is fine for a test double and would not be for
+    /// a 20 MB scan on a phone.
+    func upload(_ request: URLRequest, fromFile fileURL: URL) async throws -> HTTPResponse
+}
+
+public extension HTTPTransport {
+    func upload(_ request: URLRequest, fromFile fileURL: URL) async throws -> HTTPResponse {
+        var buffered = request
+        buffered.httpBody = try Data(contentsOf: fileURL)
+        return try await send(buffered)
+    }
 }
 
 public struct URLSessionTransport: HTTPTransport {
@@ -29,8 +44,19 @@ public struct URLSessionTransport: HTTPTransport {
     }
 
     public func send(_ request: URLRequest) async throws -> HTTPResponse {
+        try await perform { try await session.data(for: request) }
+    }
+
+    /// Streamed from disk by URLSession, so the body is never resident in memory.
+    public func upload(_ request: URLRequest, fromFile fileURL: URL) async throws -> HTTPResponse {
+        try await perform { try await session.upload(for: request, fromFile: fileURL) }
+    }
+
+    private func perform(
+        _ work: () async throws -> (Data, URLResponse)
+    ) async throws -> HTTPResponse {
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await work()
 
             guard let http = response as? HTTPURLResponse else {
                 throw APIError.unknown(status: 0)

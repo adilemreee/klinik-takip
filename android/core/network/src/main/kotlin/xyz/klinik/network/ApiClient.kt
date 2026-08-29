@@ -16,6 +16,11 @@ data class Endpoint(
     val query: Map<String, String> = emptyMap(),
     val body: String? = null,
     /**
+     * A file to upload. The transport streams it; nothing is assembled here.
+     * Content-Type is left to the transport, which has to add the boundary.
+     */
+    val multipart: MultipartUpload? = null,
+    /**
      * Endpoints that must not carry a token — sign-in, refresh, invitation
      * redemption. Attaching an expired token would trigger a refresh in order
      * to call refresh, which is a loop.
@@ -94,6 +99,7 @@ class ApiClient(
             url = "${configuration.baseUrl.trimEnd('/')}/${endpoint.path.trimStart('/')}$query",
             headers = headers,
             body = endpoint.body,
+            multipart = endpoint.multipart,
         )
     }
 

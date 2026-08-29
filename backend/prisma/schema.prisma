@@ -1027,6 +1027,53 @@ model AiJob {
   @@map("ai_jobs")
 }
 
+/// A queued unit of work, recorded in the database as well as in the queue.
+///
+/// BullMQ keeps job state in Redis and drops completed and failed jobs on its
+/// retention policy, which is right for a queue and wrong for an answer to
+/// "what happened to the lab report I uploaded last week". Redis is also not
+/// the system of record here: a flush would erase the history of everything the
+/// clinic has processed.
+model Job {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// Queue name, e.g. "documents". Matches the BullMQ queue.
+  queue String
+
+  /// Job name within the queue, e.g. "intake".
+  name String
+
+  /// The BullMQ job id, so a row can be matched back to the queue while the
+  /// job still exists there.
+  externalId String? @map("external_id")
+
+  /// What this job is about, for "show me this document's jobs" without a
+  /// separate join table per entity type.
+  entityType String? @map("entity_type")
+  entityId   String? @map("entity_id") @db.Uuid
+
+  /// The patient whose record this touches, so job history is reachable through
+  /// the same scope check as everything else.
+  patientId String? @map("patient_id") @db.Uuid
+
+  status   ProcessingStatus @default(QUEUED)
+  attempts Int              @default(0)
+
+  /// Why it failed, in a form safe to show staff. Never carries file contents.
+  error String?
+
+  startedAt  DateTime? @map("started_at") @db.Timestamptz
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  /// "What is still outstanding?" and "what happened to this document?" are the
+  /// two questions asked of this table.
+  @@index([status, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([patientId, createdAt])
+  @@map("jobs")
+}
+
 enum RiskLevel {
   LOW
   MEDIUM

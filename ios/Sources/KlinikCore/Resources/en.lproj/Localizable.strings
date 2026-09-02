@@ -252,3 +252,26 @@
 "notification.action.openAppointment" = "Open appointment";
 "notification.action.uploadDocument" = "Upload document";
 "notification.action.openComplication" = "Open report";
+
+/* Follow-up schedule (spec M6, T4.4) */
+"followUp.empty" = "No check-up schedule has been created yet.";
+"followUp.nextVisit" = "Next check-up";
+"followUp.missedCount" = "Missed check-ups";
+"followUp.markAttended" = "Attended";
+"followUp.markSkipped" = "Skipped";
+
+"followUp.status.PENDING" = "Scheduled";
+"followUp.status.NOTIFIED" = "Reminded";
+"followUp.status.COMPLETED" = "Attended";
+"followUp.status.MISSED" = "Missed";
+"followUp.status.SKIPPED" = "Skipped";
+
+"followUp.milestone.D1" = "Day 1 check-up";
+"followUp.milestone.D3" = "Day 3 check-up";
+"followUp.milestone.W1" = "Week 1 check-up";
+"followUp.milestone.W2" = "Week 2 check-up";
+"followUp.milestone.M1" = "Month 1 check-up";
+"followUp.milestone.M2" = "Month 2 check-up";
+"followUp.milestone.M3" = "Month 3 check-up";
+"followUp.milestone.M6" = "Month 6 check-up";
+"followUp.milestone.Y1" = "Year 1 check-up";

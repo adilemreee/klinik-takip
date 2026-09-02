@@ -252,3 +252,26 @@
 "notification.action.openAppointment" = "Randevuyu aç";
 "notification.action.uploadDocument" = "Belge yükle";
 "notification.action.openComplication" = "Bildirimi aç";
+
+/* Kontrol takvimi (Şartname M6, T4.4) */
+"followUp.empty" = "Henüz kontrol takvimi oluşturulmadı.";
+"followUp.nextVisit" = "Sıradaki kontrol";
+"followUp.missedCount" = "Kaçırılan kontrol";
+"followUp.markAttended" = "Geldi";
+"followUp.markSkipped" = "Atlandı";
+
+"followUp.status.PENDING" = "Planlandı";
+"followUp.status.NOTIFIED" = "Hatırlatıldı";
+"followUp.status.COMPLETED" = "Yapıldı";
+"followUp.status.MISSED" = "Kaçırıldı";
+"followUp.status.SKIPPED" = "Atlandı";
+
+"followUp.milestone.D1" = "1. gün kontrolü";
+"followUp.milestone.D3" = "3. gün kontrolü";
+"followUp.milestone.W1" = "1. hafta kontrolü";
+"followUp.milestone.W2" = "2. hafta kontrolü";
+"followUp.milestone.M1" = "1. ay kontrolü";
+"followUp.milestone.M2" = "2. ay kontrolü";
+"followUp.milestone.M3" = "3. ay kontrolü";
+"followUp.milestone.M6" = "6. ay kontrolü";
+"followUp.milestone.Y1" = "1. yıl kontrolü";

@@ -958,6 +958,24 @@
             },
             "description": "Your conversation with the clinic"
           }
+        },
+        {
+          "name": "Your check-up dates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/follow-up",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "follow-up"
+              ]
+            },
+            "description": "Your check-up dates"
+          }
         }
       ]
     },
@@ -2428,6 +2446,114 @@
               ]
             },
             "description": "Mark your notifications read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "follow-up",
+      "item": [
+        {
+          "name": "The patient's check-up schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/follow-up",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "follow-up"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "The patient's check-up schedule"
+          }
+        },
+        {
+          "name": "Generate the check-up schedule from the operation date",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/follow-up",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "follow-up"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Generate the check-up schedule from the operation date",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"surgeryDate\": \"2026-01-01T00:00:00.000Z\",\n  \"template\": \"default\",\n  \"surgeryId\": \"00000000-0000-7000-8000-000000000000\",\n  \"timezone\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Mark a check-up attended, skipped or missed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/follow-up/milestones/:milestoneId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "follow-up",
+                "milestones",
+                ":milestoneId"
+              ],
+              "variable": [
+                {
+                  "key": "milestoneId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Mark a check-up attended, skipped or missed",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         }
       ]

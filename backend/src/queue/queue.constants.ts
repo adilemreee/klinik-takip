@@ -40,6 +40,12 @@ export const JOBS = {
    * critical value.
    */
   notificationDelivery: 'notification-delivery',
+
+  /**
+   * Notifies check-ups that have come due and marks the ones nobody came back
+   * for. Hourly is enough: these are dates, not moments.
+   */
+  followUpSweep: 'follow-up-sweep',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

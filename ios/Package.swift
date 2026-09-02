@@ -24,6 +24,7 @@ let package = Package(
         .library(name: "KlinikComplicationsFeature", targets: ["KlinikComplicationsFeature"]),
         .library(name: "KlinikMessagingFeature", targets: ["KlinikMessagingFeature"]),
         .library(name: "KlinikNotificationsFeature", targets: ["KlinikNotificationsFeature"]),
+        .library(name: "KlinikFollowUpFeature", targets: ["KlinikFollowUpFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
     ],
     targets: [
@@ -112,9 +113,19 @@ let package = Package(
             name: "KlinikMessagingFeatureTests",
             dependencies: ["KlinikMessagingFeature", "KlinikCore"]
         ),
+        // The check-up calendar generated from the operation date (spec M6).
+        .target(
+            name: "KlinikFollowUpFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .testTarget(
             name: "KlinikNotificationsFeatureTests",
             dependencies: ["KlinikNotificationsFeature", "KlinikCore"]
+        ),
+        .testTarget(
+            name: "KlinikFollowUpFeatureTests",
+            dependencies: ["KlinikFollowUpFeature", "KlinikCore"]
         ),
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),

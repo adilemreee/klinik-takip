@@ -6,6 +6,7 @@ import { AuthzModule } from './authz/authz.module';
 import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
 import { DocumentsModule } from './documents/documents.module';
+import { PhotosModule } from './photos/photos.module';
 import { QueueModule } from './queue/queue.module';
 import { LabModule } from './lab/lab.module';
 import { MeasurementsModule } from './measurements/measurements.module';
@@ -35,6 +36,7 @@ import { ObservabilityModule } from './observability/observability.module';
     MeasurementsModule,
     DocumentsModule,
     LabModule,
+    PhotosModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

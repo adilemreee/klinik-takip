@@ -84,7 +84,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 0 — Temel Kurulum | 6 / 7 | T0.1 kısmi: UFW ve SSH sertleştirmesi bilinçli olarak uygulanmadı |
 | Faz 1 — Kimlik ve Çekirdek Veri | 7 / 7 | ✅ |
 | Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
-| Faz 3 — Klinik Modüller | 3 / 6 | T3.1, T3.2, T3.4 tamam · T3.3 kısmi: sunucu OCR var, cihaz üstü okuma yok · sırada T3.5 fotoğraf |
+| Faz 3 — Klinik Modüller | 3 / 6 | T3.1, T3.2, T3.4 tamam · T3.3 ve T3.5 kısmi: ikisinde de eksik olan **kamera katmanı** · sırada T3.6 |
 | Faz 4 — İletişim ve Bildirim | 0 / 6 | |
 | Faz 5 — Yapay Zeka Katmanı | 0 / 7 | |
 | Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
@@ -101,7 +101,7 @@ Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
 |---|---|---|
 | SSH sertleştirmesi | Sunucuda çalışan kritik servislerin erişimini kesme riski | T7.2 |
 | Kalıcı yerel depo (GRDB / Room) | Senkronizasyon mantığı depodan bağımsız tasarlandı; kalıcılık ayrı bir iş. Yükleme oturumunun uygulama yeniden başlatılınca yaşaması da buna bağlı | T2.6 kalanı |
-| Cihaz üstü OCR (Vision / ML Kit) + kamera ile belge tarama | Sunucu tarafı OCR çalışıyor; cihaz üstü ön okuma §3.2'de birincil ve ayrı bir iş | T3.3 kalanı |
+| Kamera katmanı: cihaz üstü OCR (Vision / ML Kit), belge tarama, fotoğraf overlay çekimi | Gerçek cihaz gerektiriyor ve buradan doğrulanamıyor; sunucu tarafı üçünde de hazır | T3.3 + T3.5 kalanı |
 | AR (RTL), DE, RU çevirileri | §7 başlangıç setinde istiyor; altyapı hazır, çeviriler ve RTL yerleşimi yapılmadı | T2.7 |
 | `audit_logs` partition'lama | Tablo büyümeden önce gerekmiyor | Faz 7 öncesi |
 | Yedek şifreleme parolasının kasaya alınması | **Sizde:** parola sunucu dışında saklanmalı, yoksa off-site yedekler açılamaz | — |

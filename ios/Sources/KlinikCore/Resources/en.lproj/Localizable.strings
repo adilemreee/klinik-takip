@@ -156,3 +156,20 @@
 "lab.trend.referenceHigh" = "Reference high";
 "lab.trend.rangesDiffer" = "These results were measured against different reference ranges; no single band is drawn.";
 "lab.trend.criticalTitle" = "Critical values";
+
+/* Photo module (spec M7, T3.5) */
+"photo.empty" = "No photos yet.";
+"photo.bodyArea" = "Body area";
+"photo.noBodyArea" = "No body area given";
+"photo.compare" = "Compare";
+"photo.compareSlider" = "Comparison slider";
+"photo.before" = "Before";
+"photo.after" = "After";
+"photo.consentGiven" = "Usage consent given";
+"photo.clinicalUseOnly" = "Clinical use only";
+"photo.overlayHint" = "Line the previous photo up and shoot from the same angle and distance.";
+
+"photo.category.BEFORE" = "Before";
+"photo.category.AFTER" = "After";
+"photo.category.COMPLICATION" = "Complication";
+"photo.category.WOUND" = "Wound";

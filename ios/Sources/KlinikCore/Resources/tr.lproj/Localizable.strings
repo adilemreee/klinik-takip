@@ -156,3 +156,20 @@
 "lab.trend.referenceHigh" = "Referans üst sınır";
 "lab.trend.rangesDiffer" = "Bu ölçümler farklı referans aralıklarına göre yapılmış; ortak bant çizilmedi.";
 "lab.trend.criticalTitle" = "Kritik değerler";
+
+/* Fotoğraf modülü (Şartname M7, T3.5) */
+"photo.empty" = "Henüz fotoğraf yok.";
+"photo.bodyArea" = "Vücut bölgesi";
+"photo.noBodyArea" = "Bölge belirtilmemiş";
+"photo.compare" = "Karşılaştır";
+"photo.compareSlider" = "Karşılaştırma kaydırıcısı";
+"photo.before" = "Öncesi";
+"photo.after" = "Sonrası";
+"photo.consentGiven" = "Kullanım onamı var";
+"photo.clinicalUseOnly" = "Yalnızca klinik kullanım";
+"photo.overlayHint" = "Önceki fotoğrafın izini kullanarak aynı açı ve mesafeden çekin.";
+
+"photo.category.BEFORE" = "Öncesi";
+"photo.category.AFTER" = "Sonrası";
+"photo.category.COMPLICATION" = "Komplikasyon";
+"photo.category.WOUND" = "Yara";

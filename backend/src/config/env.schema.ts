@@ -76,6 +76,13 @@ export const envSchema = z.object({
    */
   UPLOAD_MAX_BYTES: z.coerce.number().int().positive().default(20 * 1024 * 1024),
 
+  /**
+   * Largest accepted photo. Lower than a document because a photo is read into
+   * memory to have its metadata stripped, and one request per concurrent
+   * upload at the document limit is a different amount of memory.
+   */
+  PHOTO_MAX_BYTES: z.coerce.number().int().positive().default(15 * 1024 * 1024),
+
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().positive().default(15),
   INVITATION_TTL_HOURS: z.coerce.number().int().positive().default(72),

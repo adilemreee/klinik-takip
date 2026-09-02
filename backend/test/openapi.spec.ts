@@ -144,6 +144,7 @@ describe('the published API contract', () => {
         'me',
         'measurements',
         'patients',
+        'photos',
       ]);
     });
 

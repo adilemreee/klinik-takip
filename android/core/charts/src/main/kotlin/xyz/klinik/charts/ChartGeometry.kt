@@ -1,4 +1,4 @@
-package xyz.klinik.feature.measurements
+package xyz.klinik.charts
 
 /** A point in the chart's own coordinates: 0..1 across, 0..1 down. */
 data class PlotPoint(val x: Double, val y: Double)
@@ -7,7 +7,15 @@ data class Plot(
     val points: List<PlotPoint>,
     /** The goal's height in the same coordinates, or null when none is set. */
     val goalY: Double?,
+    /**
+     * A shaded band — a lab reference interval — in the same coordinates.
+     *
+     * `topY` is the smaller number because y runs downwards.
+     */
+    val band: Band? = null,
 )
+
+data class Band(val topY: Double, val bottomY: Double)
 
 /**
  * Turning readings into coordinates.
@@ -17,12 +25,19 @@ data class Plot(
  * wrong scale still looks like a curve. Here it can be tested.
  */
 object ChartGeometry {
-    fun plot(values: List<Double>, goal: Double? = null): Plot {
+    fun plot(
+        values: List<Double>,
+        goal: Double? = null,
+        reference: ClosedFloatingPointRange<Double>? = null,
+    ): Plot {
         if (values.isEmpty()) return Plot(emptyList(), null)
 
-        // The goal is folded into the range so its line is never drawn off the
-        // canvas — a goal the patient is far from is exactly when it matters.
-        val candidates = values + listOfNotNull(goal)
+        // The goal and the reference band are folded into the range so neither
+        // is drawn off the canvas — a value far outside its band is exactly
+        // when the band matters most.
+        val candidates = values +
+            listOfNotNull(goal) +
+            listOfNotNull(reference?.start, reference?.endInclusive)
         val low = candidates.min()
         val high = candidates.max()
 
@@ -40,6 +55,10 @@ object ChartGeometry {
             PlotPoint(x, y(value))
         }
 
-        return Plot(points, goal?.let { y(it) })
+        return Plot(
+            points,
+            goal?.let { y(it) },
+            reference?.let { Band(topY = y(it.endInclusive), bottomY = y(it.start)) },
+        )
     }
 }

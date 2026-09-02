@@ -82,6 +82,63 @@ export class LabResultDto {
   verifiedAt!: Date | null;
 }
 
+export class TrendPointDto {
+  @ApiProperty({ type: String, format: 'date-time' })
+  measuredAt!: Date;
+
+  @ApiProperty()
+  value!: number;
+
+  @ApiProperty({ enum: LabFlag, nullable: true })
+  flag!: LabFlag | null;
+
+  @ApiProperty({ nullable: true, description: 'The range this result was measured against' })
+  refLow!: number | null;
+
+  @ApiProperty({ nullable: true })
+  refHigh!: number | null;
+}
+
+export class ReferenceBandDto {
+  @ApiProperty({ nullable: true })
+  low!: number | null;
+
+  @ApiProperty({ nullable: true })
+  high!: number | null;
+}
+
+export class AnalyteTrendDto {
+  @ApiProperty({ nullable: true })
+  analyteCode!: string | null;
+
+  @ApiProperty()
+  analyteName!: string;
+
+  @ApiProperty({ description: 'Series are split by unit; the same analyte in two units is two series' })
+  unit!: string;
+
+  @ApiProperty({ type: [TrendPointDto] })
+  points!: TrendPointDto[];
+
+  @ApiProperty({
+    type: ReferenceBandDto,
+    nullable: true,
+    description: 'Null when the points were measured against different ranges',
+  })
+  reference!: ReferenceBandDto | null;
+
+  @ApiProperty({ enum: LabFlag, nullable: true })
+  latestFlag!: LabFlag | null;
+}
+
+export class TrendQueryDto {
+  @ApiPropertyOptional({ description: 'Only results measured at or after this moment' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  since?: Date;
+}
+
 export class ReviewItemDto {
   @ApiProperty({ type: LabResultDto })
   result!: LabResultDto;

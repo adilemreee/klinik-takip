@@ -3528,6 +3528,174 @@
         ]
       }
     },
+    "/patients/{id}/lab-results/trends": {
+      "get": {
+        "operationId": "PatientLabController_trends",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "required": false,
+            "in": "query",
+            "description": "Only results measured at or after this moment",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnalyteTrendDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirmed results as per-analyte series, for charting",
+        "tags": [
+          "lab"
+        ]
+      }
+    },
+    "/patients/{id}/lab-results/critical": {
+      "get": {
+        "operationId": "PatientLabController_critical",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabResultDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirmed results outside the range far enough to need attention",
+        "tags": [
+          "lab"
+        ]
+      }
+    },
     "/patients/{id}/lab-results": {
       "get": {
         "operationId": "PatientLabController_list",
@@ -5370,6 +5538,111 @@
           "result",
           "needsAttention",
           "awaitingMapping"
+        ]
+      },
+      "TrendPointDto": {
+        "type": "object",
+        "properties": {
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "number"
+          },
+          "flag": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "CRITICAL"
+            ],
+            "nullable": true
+          },
+          "refLow": {
+            "type": "object",
+            "nullable": true,
+            "description": "The range this result was measured against"
+          },
+          "refHigh": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "measuredAt",
+          "value",
+          "flag",
+          "refLow",
+          "refHigh"
+        ]
+      },
+      "ReferenceBandDto": {
+        "type": "object",
+        "properties": {
+          "low": {
+            "type": "object",
+            "nullable": true
+          },
+          "high": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "low",
+          "high"
+        ]
+      },
+      "AnalyteTrendDto": {
+        "type": "object",
+        "properties": {
+          "analyteCode": {
+            "type": "object",
+            "nullable": true
+          },
+          "analyteName": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Series are split by unit; the same analyte in two units is two series"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendPointDto"
+            }
+          },
+          "reference": {
+            "nullable": true,
+            "description": "Null when the points were measured against different ranges",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferenceBandDto"
+              }
+            ]
+          },
+          "latestFlag": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "CRITICAL"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "analyteCode",
+          "analyteName",
+          "unit",
+          "points",
+          "reference",
+          "latestFlag"
         ]
       },
       "VerifyLabResultDto": {

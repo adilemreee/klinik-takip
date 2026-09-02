@@ -147,3 +147,12 @@
 "lab.flag.NORMAL" = "Normal";
 "lab.flag.HIGH" = "High";
 "lab.flag.CRITICAL" = "Critical";
+
+/* Lab trends (spec M2, T3.4) */
+"lab.trend.empty" = "No confirmed lab results yet. The chart appears as results are confirmed.";
+"lab.trend.analyte" = "Analyte";
+"lab.trend.reference" = "Reference range";
+"lab.trend.referenceLow" = "Reference low";
+"lab.trend.referenceHigh" = "Reference high";
+"lab.trend.rangesDiffer" = "These results were measured against different reference ranges; no single band is drawn.";
+"lab.trend.criticalTitle" = "Critical values";

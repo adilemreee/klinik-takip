@@ -31,13 +31,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import java.util.Locale
+import xyz.klinik.charts.ChartGeometry
+import xyz.klinik.charts.Plot
+import xyz.klinik.charts.PlotPoint
 import xyz.klinik.design.Tokens
 import xyz.klinik.design.klinikColor
-import xyz.klinik.feature.measurements.ChartGeometry
 import xyz.klinik.feature.measurements.ChartPhase
 import xyz.klinik.feature.measurements.MeasurementsState
-import xyz.klinik.feature.measurements.Plot
-import xyz.klinik.feature.measurements.PlotPoint
+
 import xyz.klinik.network.BmiCategory
 import xyz.klinik.network.BodyChart
 

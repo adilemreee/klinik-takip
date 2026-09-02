@@ -1442,6 +1442,66 @@
           }
         },
         {
+          "name": "Confirmed results as per-analyte series, for charting",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/lab-results/trends",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "lab-results",
+                "trends"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "",
+                  "description": "Only results measured at or after this moment",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Confirmed results as per-analyte series, for charting"
+          }
+        },
+        {
+          "name": "Confirmed results outside the range far enough to need attention",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/lab-results/critical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "lab-results",
+                "critical"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Confirmed results outside the range far enough to need attention"
+          }
+        },
+        {
           "name": "Confirmed results only — what a trend may be drawn from",
           "request": {
             "method": "GET",

@@ -5,8 +5,14 @@ import { Audit } from '../audit/decorators/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
-import { LabResultDto, ReviewItemDto, VerifyLabResultDto } from './dto/lab.dto';
-import { LabService, ReviewItem } from './lab.service';
+import {
+  AnalyteTrendDto,
+  LabResultDto,
+  ReviewItemDto,
+  TrendQueryDto,
+  VerifyLabResultDto,
+} from './dto/lab.dto';
+import { AnalyteTrend, LabService, ReviewItem } from './lab.service';
 
 @ApiTags('lab')
 @ApiBearerAuth()
@@ -31,6 +37,38 @@ export class PatientLabController {
     @Param('id', ParseUUIDPipe) patientId: string,
   ): Promise<ReviewItem[]> {
     return this.lab.pendingReview(user, patientId);
+  }
+
+  @Get('trends')
+  @RequirePermissions('medical.read')
+  @Audit({ entityType: 'lab_results', action: AuditAction.READ, patientIdParam: 'id' })
+  @ApiOperation({ summary: 'Confirmed results as per-analyte series, for charting' })
+  @ApiOkResponse({ type: [AnalyteTrendDto] })
+  @ApiStandardErrors()
+  async trends(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) patientId: string,
+    @Query() query: TrendQueryDto,
+  ): Promise<AnalyteTrend[]> {
+    return this.lab.trends(user, patientId, query.since);
+  }
+
+  /**
+   * A critical value is not something to find by scrolling. Spec M2 asks for it
+   * marked in red; putting it only inside a chart makes seeing it depend on
+   * which chart the doctor happened to open.
+   */
+  @Get('critical')
+  @RequirePermissions('medical.read')
+  @Audit({ entityType: 'lab_results', action: AuditAction.READ, patientIdParam: 'id' })
+  @ApiOperation({ summary: 'Confirmed results outside the range far enough to need attention' })
+  @ApiOkResponse({ type: [LabResultDto] })
+  @ApiStandardErrors()
+  async critical(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) patientId: string,
+  ): Promise<LabResult[]> {
+    return this.lab.critical(user, patientId);
   }
 
   @Get()

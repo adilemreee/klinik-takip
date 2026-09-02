@@ -87,6 +87,13 @@
     <string name="lab_review_low_confidence">Uncertain reading — please check</string>
     <string name="lab_review_needs_mapping">Analyte not mapped</string>
     <string name="lab_review_notice">These values were read from the document automatically and are NOT IN THE PATIENT RECORD YET. Rows you confirm are added to it.</string>
+    <string name="lab_trend_analyte">Analyte</string>
+    <string name="lab_trend_critical_title">Critical values</string>
+    <string name="lab_trend_empty">No confirmed lab results yet. The chart appears as results are confirmed.</string>
+    <string name="lab_trend_ranges_differ">These results were measured against different reference ranges; no single band is drawn.</string>
+    <string name="lab_trend_reference">Reference range</string>
+    <string name="lab_trend_reference_high">Reference high</string>
+    <string name="lab_trend_reference_low">Reference low</string>
     <string name="measurement_add">Add a reading</string>
     <string name="measurement_bmi">BMI</string>
     <string name="measurement_date">Date</string>

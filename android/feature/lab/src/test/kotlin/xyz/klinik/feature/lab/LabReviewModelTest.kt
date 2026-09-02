@@ -5,48 +5,17 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import xyz.klinik.network.ApiClient
 import xyz.klinik.network.ApiConfiguration
 import xyz.klinik.network.ApiError
 import xyz.klinik.network.ErrorResponse
-import xyz.klinik.network.HttpRequest
-import xyz.klinik.network.HttpResponse
 import xyz.klinik.network.HttpTransport
 import xyz.klinik.network.InMemoryTokenStore
 import xyz.klinik.network.LabApi
 import xyz.klinik.network.SessionManager
 import xyz.klinik.network.SessionTokens
-import xyz.klinik.network.TokenRefresher
 import xyz.klinik.network.UiText
-
-private class RecordingTransport(
-    private val bodies: Map<String, Pair<Int, String>>,
-    private val delays: Map<String, Long> = emptyMap(),
-) : HttpTransport {
-    val calls = mutableListOf<String>()
-
-    override suspend fun send(request: HttpRequest): HttpResponse {
-        val path = request.url.substringAfter("https://api.test/").substringBefore("?")
-        val key = "${request.method} $path"
-        calls += key
-
-        delays[key]?.let { delay(it) }
-
-        val (status, body) = bodies[key] ?: (500 to "{}")
-        return HttpResponse(status, body)
-    }
-}
-
-private class FailingTransport(private val error: ApiError) : HttpTransport {
-    override suspend fun send(request: HttpRequest): HttpResponse = throw error
-}
-
-private object UnusedRefresher : TokenRefresher {
-    override suspend fun refresh(refreshToken: String): SessionTokens =
-        error("The review queue must not refresh")
-}
 
 /**
  * Nothing on this screen is in the patient's record. The tests that matter are

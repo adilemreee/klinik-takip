@@ -428,7 +428,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T3.1 Ölçümler ve VKİ + grafikler ([OLCUMLER](OLCUMLER.md))
 - [x] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi ([BELGE-KUYRUGU](BELGE-KUYRUGU.md)) — parçalı ve devam ettirilebilir yükleme dahil. Oturum kimliğinin uygulama yeniden başlatıldığında da yaşaması T2.6'nın kalıcı deposuna bağlı
 - [ ] T3.3 OCR worker + lab sonucu yapılandırma + doktor onay ekranı ([OCR-VE-TAHLIL](OCR-VE-TAHLIL.md)) — sunucu tarafı OCR, yapılandırma, LOINC eşleştirme ve onay ekranı **tamam**; §3.2'nin birincil saydığı **cihaz üstü ön okuma (Vision / ML Kit) ve kamera ile belge tarama eksik**
-- [ ] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı
+- [x] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı ([OCR-VE-TAHLIL](OCR-VE-TAHLIL.md#trend-grafikleri-t34)) — bildirim gönderimi T4.2'de
 - [ ] T3.5 Fotoğraf modülü: yükleme, faz etiketleme, overlay çekim, karşılaştırma
 - [ ] T3.6 Komplikasyon bildirimi akışı
 

@@ -40,6 +40,10 @@ include(":feature:patients")
 // The patient's own home screen.
 include(":feature:home")
 
+// Turning readings into chart coordinates. Shared, because measurements and
+// lab results draw the same shapes and a second copy would drift.
+include(":core:charts")
+
 // Body measurements and the charts drawn from them (spec M2).
 include(":feature:measurements")
 

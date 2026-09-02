@@ -11,6 +11,7 @@ kotlin {
 
 dependencies {
     api(project(":core:network"))
+    api(project(":core:charts"))
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(kotlin("test"))

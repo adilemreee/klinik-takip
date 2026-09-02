@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { AuditAction, LabResult } from '@prisma/client';
+import { AuditAction, LabFlag, LabResult } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
@@ -13,6 +13,33 @@ export interface ReviewItem {
   needsAttention: boolean;
   /** Set when the printed name could not be mapped to a code. */
   awaitingMapping: boolean;
+}
+
+export interface TrendPoint {
+  measuredAt: Date;
+  value: number;
+  flag: LabFlag | null;
+  /// The range this particular result was measured against.
+  refLow: number | null;
+  refHigh: number | null;
+}
+
+export interface AnalyteTrend {
+  analyteCode: string | null;
+  analyteName: string;
+  unit: string;
+  points: TrendPoint[];
+  /**
+   * The band to draw, present only when every point shares one range.
+   *
+   * A laboratory can change its reference interval, and two laboratories
+   * rarely agree. Drawing one band across points measured against different
+   * ranges would put results on the wrong side of a line they were never
+   * compared to.
+   */
+  reference: { low: number | null; high: number | null } | null;
+  /** The most recent flag — what a summary strip shows. */
+  latestFlag: LabFlag | null;
 }
 
 export interface VerifiedFields {
@@ -219,6 +246,81 @@ export class LabService {
     });
   }
 
+  /**
+   * Confirmed results as per-analyte series (spec M2).
+   *
+   * Grouped by code where the analyte was mapped and by name where it was not,
+   * and **also by unit**: a glucose in mg/dL and a glucose in mmol/L are the
+   * same analyte and an eighteen-fold difference on the same axis. Splitting
+   * them is the only reading that is not a lie.
+   */
+  async trends(
+    user: AuthenticatedUser,
+    patientId: string,
+    since?: Date,
+  ): Promise<AnalyteTrend[]> {
+    await this.access.assertCanAccess(user, patientId);
+
+    const results = await this.prisma.labResult.findMany({
+      where: {
+        patientId,
+        verifiedAt: { not: null },
+        measuredAt: since ? { gte: since } : undefined,
+      },
+      orderBy: { measuredAt: 'asc' },
+    });
+
+    const series = new Map<string, AnalyteTrend>();
+
+    for (const result of results) {
+      const key = `${result.analyteCode ?? normalise(result.analyteName)}|${result.unit}`;
+
+      const trend = series.get(key) ?? {
+        analyteCode: result.analyteCode,
+        analyteName: result.analyteName,
+        unit: result.unit,
+        points: [],
+        reference: null,
+        latestFlag: null,
+      };
+
+      trend.points.push({
+        measuredAt: result.measuredAt,
+        value: result.value.toNumber(),
+        flag: result.flag,
+        refLow: result.refLow?.toNumber() ?? null,
+        refHigh: result.refHigh?.toNumber() ?? null,
+      });
+
+      // Ordered oldest first, so the last one written wins and is the latest.
+      trend.latestFlag = result.flag;
+      series.set(key, trend);
+    }
+
+    for (const trend of series.values()) {
+      trend.reference = stableReference(trend.points);
+    }
+
+    return [...series.values()].sort((a, b) => a.analyteName.localeCompare(b.analyteName, 'tr'));
+  }
+
+  /**
+   * Confirmed results a doctor should see now.
+   *
+   * Separate from the trend list because a critical value is not something to
+   * find by scrolling: spec M2 asks for it marked in red, and a screen that
+   * only shows it inside a chart makes seeing it a matter of which chart the
+   * doctor happened to open.
+   */
+  async critical(user: AuthenticatedUser, patientId: string): Promise<LabResult[]> {
+    await this.access.assertCanAccess(user, patientId);
+
+    return this.prisma.labResult.findMany({
+      where: { patientId, verifiedAt: { not: null }, flag: LabFlag.CRITICAL },
+      orderBy: { measuredAt: 'desc' },
+    });
+  }
+
   private toReviewItem(result: LabResult): ReviewItem {
     return {
       result,
@@ -238,6 +340,28 @@ export class LabService {
 
     return result;
   }
+}
+
+/**
+ * The band to draw, or null when the points disagree about it.
+ *
+ * Returning a band anyway — the latest range, say — would draw a line the
+ * older points were never measured against, and put results on the wrong side
+ * of it.
+ */
+function stableReference(
+  points: TrendPoint[],
+): { low: number | null; high: number | null } | null {
+  const withRange = points.filter((point) => point.refLow !== null || point.refHigh !== null);
+
+  if (withRange.length === 0) return null;
+
+  const first = withRange[0]!;
+  const same = withRange.every(
+    (point) => point.refLow === first.refLow && point.refHigh === first.refHigh,
+  );
+
+  return same ? { low: first.refLow, high: first.refHigh } : null;
 }
 
 /**

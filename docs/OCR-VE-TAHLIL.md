@@ -88,6 +88,31 @@ DONE bir şey okunduğunu ima ederdi.
 Çalışma dizini hasta belgesini açık hâlde tutuyor; iş başarılı da olsa başarısız da olsa
 siliniyor.
 
+## Trend Grafikleri (T3.4)
+
+Onaylanmış sonuçlar analit bazında seriye dönüşüyor. Gruplama anahtarı **kod + birim**:
+mg/dL cinsinden bir glukoz ile mmol/L cinsinden bir glukoz aynı analit ve aynı eksende **on
+sekiz kat** fark demek. Ayırmak, yalan olmayan tek okuma.
+
+### Referans bandı ancak tutarlıysa çiziliyor
+
+Bir laboratuvar referans aralığını değiştirebilir, iki laboratuvar da nadiren aynı aralığı
+kullanır. Farklı aralıklara göre ölçülmüş noktaların üstüne tek bir bant çizmek, sonuçları
+**hiç kıyaslanmadıkları bir çizginin** yanlış tarafına koyar.
+
+Bu yüzden sunucu bandı yalnız tüm noktalar aynı aralığı paylaşıyorsa döndürüyor; paylaşmıyorsa
+`reference: null` ve her nokta kendi aralığını taşıyor. Ekran bu durumda bandı çizmiyor ve
+**sebebini yazıyor** — sessizce bant çizmemek "referans aralığı yok" gibi okunurdu.
+
+### Kritik değer grafiğin içinde değil, üstünde
+
+§M2 kritik değeri kırmızı işaretle istiyor. Yalnız grafiğin içinde göstermek, görmeyi
+doktorun hangi grafiği açtığına bağlar. Kritik sonuçlar ayrı bir uçtan geliyor ve ekranın en
+üstünde, grafiklerden önce duruyor. Onaylanmamış kritik değer listelenmiyor — henüz hasta
+hakkında bir olgu değil.
+
+Bildirim gönderimi (push/SMS) T4.2'de.
+
 ## Kalan
 
 - **Cihaz üstü OCR** (Vision / ML Kit) — §3.2 birincil okuma olarak onu istiyor, sunucu

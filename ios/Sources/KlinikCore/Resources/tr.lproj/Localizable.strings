@@ -147,3 +147,12 @@
 "lab.flag.NORMAL" = "Normal";
 "lab.flag.HIGH" = "Yüksek";
 "lab.flag.CRITICAL" = "Kritik";
+
+/* Tahlil trendleri (Şartname M2, T3.4) */
+"lab.trend.empty" = "Onaylanmış tahlil sonucu yok. Sonuçlar onaylandıkça grafik oluşur.";
+"lab.trend.analyte" = "Analit";
+"lab.trend.reference" = "Referans aralığı";
+"lab.trend.referenceLow" = "Referans alt sınır";
+"lab.trend.referenceHigh" = "Referans üst sınır";
+"lab.trend.rangesDiffer" = "Bu ölçümler farklı referans aralıklarına göre yapılmış; ortak bant çizilmedi.";
+"lab.trend.criticalTitle" = "Kritik değerler";

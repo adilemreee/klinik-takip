@@ -63,6 +63,37 @@ data class LabCorrection(
     val refHigh: Double? = null,
 )
 
+@Serializable
+data class TrendPoint(
+    val measuredAt: String,
+    val value: Double,
+    val flag: LabFlag? = null,
+    /** The range this particular result was measured against. */
+    val refLow: Double? = null,
+    val refHigh: Double? = null,
+)
+
+@Serializable
+data class ReferenceBand(val low: Double? = null, val high: Double? = null)
+
+@Serializable
+data class AnalyteTrend(
+    val analyteCode: String? = null,
+    val analyteName: String,
+    /** Series are split by unit: the same analyte in two units is two series. */
+    val unit: String,
+    val points: List<TrendPoint> = emptyList(),
+    /**
+     * Null when the points were measured against different ranges — drawing one
+     * band across them would put results on the wrong side of a line they were
+     * never compared to.
+     */
+    val reference: ReferenceBand? = null,
+    val latestFlag: LabFlag? = null,
+) {
+    val id: String get() = "${analyteCode ?: analyteName}|$unit"
+}
+
 class LabApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
@@ -70,6 +101,22 @@ class LabApi(
     /** What OCR read and nobody has confirmed. Least certain first. */
     suspend fun pending(patientId: String): List<LabReviewItem> =
         decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/lab-results/pending")))
+
+    /** Confirmed results as per-analyte series, ready to chart. */
+    suspend fun trends(patientId: String, since: String? = null): List<AnalyteTrend> =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.GET,
+                    "patients/$patientId/lab-results/trends",
+                    query = since?.let { mapOf("since" to it) } ?: emptyMap(),
+                ),
+            ),
+        )
+
+    /** Confirmed values far enough outside their range to need attention now. */
+    suspend fun critical(patientId: String): List<LabResult> =
+        decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/lab-results/critical")))
 
     /** Confirmed results only — what a trend may be drawn from. */
     suspend fun verified(patientId: String, analyteCode: String? = null): List<LabResult> =

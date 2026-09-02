@@ -75,6 +75,37 @@ public struct LabCorrection: Encodable, Sendable, Equatable {
     }
 }
 
+public struct TrendPoint: Decodable, Sendable, Equatable, Identifiable {
+    public let measuredAt: Date
+    public let value: Double
+    public let flag: LabFlag?
+    /// The range this particular result was measured against.
+    public let refLow: Double?
+    public let refHigh: Double?
+
+    public var id: Date { measuredAt }
+}
+
+public struct ReferenceBand: Decodable, Sendable, Equatable {
+    public let low: Double?
+    public let high: Double?
+}
+
+public struct AnalyteTrend: Decodable, Sendable, Equatable, Identifiable {
+    public let analyteCode: String?
+    public let analyteName: String
+    /// Series are split by unit: the same analyte in two units is two series.
+    public let unit: String
+    public let points: [TrendPoint]
+    /// Nil when the points were measured against different ranges — drawing one
+    /// band across them would put results on the wrong side of a line they were
+    /// never compared to.
+    public let reference: ReferenceBand?
+    public let latestFlag: LabFlag?
+
+    public var id: String { "\(analyteCode ?? analyteName)|\(unit)" }
+}
+
 public struct LabAPI: Sendable {
     private let client: APIClient
 
@@ -87,6 +118,25 @@ public struct LabAPI: Sendable {
         try await client.send(
             Endpoint(method: .get, path: "patients/\(patientId)/lab-results/pending"),
             as: [LabReviewItem].self
+        )
+    }
+
+    /// Confirmed results as per-analyte series, ready to chart.
+    public func trends(patientId: String, since: Date? = nil) async throws -> [AnalyteTrend] {
+        var query: [String: String] = [:]
+        if let since { query["since"] = ISO8601DateFormatter().string(from: since) }
+
+        return try await client.send(
+            Endpoint(method: .get, path: "patients/\(patientId)/lab-results/trends", query: query),
+            as: [AnalyteTrend].self
+        )
+    }
+
+    /// Confirmed values far enough outside their range to need attention now.
+    public func critical(patientId: String) async throws -> [LabResult] {
+        try await client.send(
+            Endpoint(method: .get, path: "patients/\(patientId)/lab-results/critical"),
+            as: [LabResult].self
         )
     }
 

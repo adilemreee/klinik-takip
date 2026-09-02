@@ -16,6 +16,14 @@ import { PrismaService } from '../src/infra/prisma.service';
 import { RedisService } from '../src/infra/redis.service';
 import { StorageService } from '../src/infra/storage.service';
 
+interface TrendRow {
+  analyteName: string;
+  unit: string;
+  points: { measuredAt: string; value: number; refLow: number | null }[];
+  reference: { low: number | null; high: number | null } | null;
+  latestFlag: string | null;
+}
+
 interface ReviewRow {
   result: { id: string; analyteName: string; analyteCode: string | null; flag: string | null };
   needsAttention: boolean;
@@ -451,6 +459,182 @@ describe('lab result review', () => {
         .set('Authorization', `Bearer ${coordinator.token}`)
         .send({})
         .expect(403);
+    });
+  });
+
+  describe('trends', () => {
+    const confirm = async (resultId: string, body: Record<string, unknown> = {}): Promise<void> => {
+      await request(server)
+        .patch(`/lab-results/${resultId}/verify`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .send(body)
+        .expect(200);
+    };
+
+    const trends = async (patientId: string): Promise<TrendRow[]> => {
+      const response = await request(server)
+        .get(`/patients/${patientId}/lab-results/trends`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      return response.body as TrendRow[];
+    };
+
+    it('groups confirmed results into one series per analyte', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [
+        candidate('Hemoglobin', 13.5, 0.9, { low: 12, high: 16 }),
+        candidate('Hemoglobin', 14.1, 0.9, { low: 12, high: 16 }),
+        candidate('Kreatinin', 0.9, 0.9, { low: 0.6, high: 1.2 }),
+      ]);
+
+      for (const row of await pending(patientId)) {
+        await confirm(row.result.id);
+      }
+
+      const series = await trends(patientId);
+
+      expect(series.map((s) => s.analyteName)).toEqual(['Hemoglobin', 'Kreatinin']);
+      expect(series[0]!.points).toHaveLength(2);
+    });
+
+    /** Unconfirmed values are not clinical and must not reach a chart. */
+    it('leaves unconfirmed results out', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [candidate('Hemoglobin', 13.5)]);
+
+      expect(await trends(patientId)).toEqual([]);
+    });
+
+    it('carries the band when every point shares one range', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [
+        candidate('Hemoglobin', 13.5, 0.9, { low: 12, high: 16 }),
+        candidate('Hemoglobin', 14.1, 0.9, { low: 12, high: 16 }),
+      ]);
+
+      for (const row of await pending(patientId)) {
+        await confirm(row.result.id);
+      }
+
+      const [series] = await trends(patientId);
+
+      expect(series!.reference).toEqual({ low: 12, high: 16 });
+    });
+
+    /**
+     * Two laboratories rarely agree on a reference interval. Drawing one band
+     * across points measured against different ones would put results on the
+     * wrong side of a line they were never compared to.
+     */
+    it('draws no band when the points disagree about the range', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [
+        candidate('Hemoglobin', 13.5, 0.9, { low: 12, high: 16 }),
+        candidate('Hemoglobin', 14.1, 0.9, { low: 11.5, high: 15.5 }),
+      ]);
+
+      for (const row of await pending(patientId)) {
+        await confirm(row.result.id);
+      }
+
+      const [series] = await trends(patientId);
+
+      expect(series!.reference).toBeNull();
+      // The per-point ranges are still there, so a client can show each one.
+      expect(series!.points.map((p) => p.refLow)).toEqual([12, 11.5]);
+    });
+
+    /**
+     * A glucose in mg/dL and a glucose in mmol/L are the same analyte and an
+     * eighteen-fold difference on the same axis.
+     */
+    it('splits a series when the unit changes', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [
+        { ...candidate('Glukoz', 92), unit: 'mg/dL' },
+        { ...candidate('Glukoz', 5.1), unit: 'mmol/L' },
+      ]);
+
+      for (const row of await pending(patientId)) {
+        await confirm(row.result.id);
+      }
+
+      const series = await trends(patientId);
+
+      expect(series).toHaveLength(2);
+      expect(series.map((s) => s.unit).sort()).toEqual(['mg/dL', 'mmol/L']);
+    });
+
+    it('reports the most recent flag for the series', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [
+        candidate('Hemoglobin', 13.5, 0.9, { low: 12, high: 16 }),
+        candidate('Hemoglobin', 17.5, 0.9, { low: 12, high: 16 }),
+      ]);
+
+      for (const row of await pending(patientId)) {
+        await confirm(row.result.id);
+      }
+
+      const [series] = await trends(patientId);
+
+      expect(series!.latestFlag).toBe(LabFlag.HIGH);
+    });
+
+    it('refuses a role without medical.read', async () => {
+      const patientId = await makePatient();
+      const finance = await actorFor(Role.FINANCE);
+
+      await request(server)
+        .get(`/patients/${patientId}/lab-results/trends`)
+        .set('Authorization', `Bearer ${finance.token}`)
+        .expect(403);
+    });
+  });
+
+  describe('critical values', () => {
+    /**
+     * A critical value must not be something a doctor finds by scrolling, or by
+     * opening the right chart.
+     */
+    it('lists confirmed critical results, newest first', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [
+        candidate('Hemoglobin', 13.5, 0.9, { low: 12, high: 16 }),
+        candidate('Hemoglobin', 4, 0.9, { low: 12, high: 16 }),
+      ]);
+
+      for (const row of await pending(patientId)) {
+        await request(server)
+          .patch(`/lab-results/${row.result.id}/verify`)
+          .set('Authorization', `Bearer ${doctor.token}`)
+          .send({})
+          .expect(200);
+      }
+
+      const response = await request(server)
+        .get(`/patients/${patientId}/lab-results/critical`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      const rows = response.body as { value: string; flag: string }[];
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]!.flag).toBe(LabFlag.CRITICAL);
+    });
+
+    /** An unconfirmed critical value is not yet a fact about the patient. */
+    it('does not list a critical result nobody has confirmed', async () => {
+      const patientId = await makePatient();
+      await fileCandidates(patientId, [candidate('Hemoglobin', 4, 0.9, { low: 12, high: 16 })]);
+
+      const response = await request(server)
+        .get(`/patients/${patientId}/lab-results/critical`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      expect(response.body).toEqual([]);
     });
   });
 

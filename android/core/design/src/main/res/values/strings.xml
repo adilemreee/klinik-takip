@@ -87,6 +87,13 @@
     <string name="lab_review_low_confidence">Okuma şüpheli — kontrol edin</string>
     <string name="lab_review_needs_mapping">Analit eşleştirilmedi</string>
     <string name="lab_review_notice">Bu değerler belgeden otomatik okundu ve HENÜZ HASTA DOSYASINDA DEĞİL. Onayladığınız satırlar dosyaya işlenir.</string>
+    <string name="lab_trend_analyte">Analit</string>
+    <string name="lab_trend_critical_title">Kritik değerler</string>
+    <string name="lab_trend_empty">Onaylanmış tahlil sonucu yok. Sonuçlar onaylandıkça grafik oluşur.</string>
+    <string name="lab_trend_ranges_differ">Bu ölçümler farklı referans aralıklarına göre yapılmış; ortak bant çizilmedi.</string>
+    <string name="lab_trend_reference">Referans aralığı</string>
+    <string name="lab_trend_reference_high">Referans üst sınır</string>
+    <string name="lab_trend_reference_low">Referans alt sınır</string>
     <string name="measurement_add">Ölçüm ekle</string>
     <string name="measurement_bmi">VKİ</string>
     <string name="measurement_date">Tarih</string>

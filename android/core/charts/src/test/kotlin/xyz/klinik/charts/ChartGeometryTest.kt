@@ -1,4 +1,4 @@
-package xyz.klinik.feature.measurements
+package xyz.klinik.charts
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -54,6 +54,34 @@ class ChartGeometryTest {
 
         assertEquals(1, plot.points.size)
         assertEquals(0.5, plot.points[0].x)
+    }
+
+    /**
+     * A value far outside its reference band is exactly when the band matters,
+     * so the scale has to stretch to include it rather than clipping it away.
+     */
+    @Test
+    fun `includes the reference band in the scale`() {
+        val plot = ChartGeometry.plot(listOf(30.0, 32.0), reference = 12.0..16.0)
+        val band = plot.band!!
+
+        // y runs downwards, so the band's top is the smaller number.
+        assertTrue(band.topY > 0.0)
+        assertTrue(band.bottomY > band.topY)
+        assertTrue(plot.points.all { it.y < band.topY })
+    }
+
+    @Test
+    fun `reports no band when no reference is given`() {
+        assertNull(ChartGeometry.plot(listOf(13.0, 14.0)).band)
+    }
+
+    @Test
+    fun `puts a value inside the band between its edges`() {
+        val plot = ChartGeometry.plot(listOf(14.0), reference = 12.0..16.0)
+        val band = plot.band!!
+
+        assertTrue(plot.points[0].y in band.topY..band.bottomY)
     }
 
     @Test

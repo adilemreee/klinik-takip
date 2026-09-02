@@ -14,7 +14,7 @@ Tam şartname: [docs/SARTNAME.md](docs/SARTNAME.md)
 backend/    NestJS + Prisma + PostgreSQL + Redis + BullMQ  (API + worker)
 ios/        Swift paketi: KlinikCore, KlinikAPI, KlinikDesign + özellik modülleri
             (Auth, Patients, Home, Measurements, Documents, Sync)
-android/    Gradle: core:network / core:sync (saf JVM), core:design (Compose),
+android/    Gradle: core:network / core:sync / core:charts (saf JVM), core:design (Compose),
             feature:* (mantık, saf JVM) + feature:*-ui (Compose)
 design/     tokens.json — iki platformun ortak tasarım kaynağı
 infra/      docker-compose, nginx server blokları
@@ -84,7 +84,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 0 — Temel Kurulum | 6 / 7 | T0.1 kısmi: UFW ve SSH sertleştirmesi bilinçli olarak uygulanmadı |
 | Faz 1 — Kimlik ve Çekirdek Veri | 7 / 7 | ✅ |
 | Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
-| Faz 3 — Klinik Modüller | 2 / 6 | T3.1, T3.2 tamam · T3.3 kısmi: sunucu OCR ve onay ekranı var, cihaz üstü okuma yok |
+| Faz 3 — Klinik Modüller | 3 / 6 | T3.1, T3.2, T3.4 tamam · T3.3 kısmi: sunucu OCR var, cihaz üstü okuma yok · sırada T3.5 fotoğraf |
 | Faz 4 — İletişim ve Bildirim | 0 / 6 | |
 | Faz 5 — Yapay Zeka Katmanı | 0 / 7 | |
 | Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |

@@ -46,6 +46,9 @@ export const JOBS = {
    * for. Hourly is enough: these are dates, not moments.
    */
   followUpSweep: 'follow-up-sweep',
+
+  /** Sends appointment reminders at T-7d, T-1d and T-2h (spec M10). */
+  appointmentReminders: 'appointment-reminders',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

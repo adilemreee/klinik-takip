@@ -9,6 +9,7 @@ import { ComplicationsModule } from './complications/complications.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PhotosModule } from './photos/photos.module';
 import { QueueModule } from './queue/queue.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 import { FollowUpModule } from './followup/followup.module';
 import { LabModule } from './lab/lab.module';
 import { MeasurementsModule } from './measurements/measurements.module';
@@ -45,6 +46,7 @@ import { ObservabilityModule } from './observability/observability.module';
     MessagingModule,
     NotificationsModule,
     FollowUpModule,
+    AppointmentsModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

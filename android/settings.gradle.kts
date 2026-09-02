@@ -68,6 +68,9 @@ include(":feature:notifications")
 // The check-up calendar generated from the operation date (spec M6).
 include(":feature:followup")
 
+// Appointments and the request/approval flow (spec M10).
+include(":feature:appointments")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built

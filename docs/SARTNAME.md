@@ -438,7 +438,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [ ] T4.3 Zengin/aksiyonlu bildirimler (iOS + Android) — sunucu eylem tanımlarını (`[İçtim]`, `[Ertele]`, `[Hastayı Ara]`) üretiyor ve bildirimle gönderiyor; **kalan tamamen cihaz işi**: iOS Notification Content/Action Extension, Android Notification Actions + RemoteInput
 - [x] T4.4 Zamanlayıcı: kontrol takvimi (D1/H1/M1/M2/M3/M6/Y1) otomatik üretimi ([KONTROL-TAKVIMI](KONTROL-TAKVIMI.md)) — ameliyat tipine göre şablon, erteleme, kaçırma eşiği ve hatırlatma kuyruğu dahil
 - [ ] T4.5 Acil durum butonu + eskalasyon zinciri
-- [ ] T4.6 Randevu ve takvim modülü
+- [x] T4.6 Randevu ve takvim modülü ([RANDEVULAR](RANDEVULAR.md)) — müsaitlik, çakışma kontrolü, talep/onay akışı, iptal/erteleme, ICS export ve T-7g/T-1g/T-2sa hatırlatmaları. **Video görüşme** (§M10 opsiyonel) yapılmadı
 
 ### FAZ 5 — Yapay Zeka Katmanı
 - [ ] T5.1 `AIProvider` soyutlaması, maliyet/token loglama, retry politikası

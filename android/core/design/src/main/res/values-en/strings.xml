@@ -2,6 +2,24 @@
 <!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
+    <string name="appointment_add_to_calendar">Add to calendar</string>
+    <string name="appointment_awaiting_confirmation">Awaiting confirmation</string>
+    <string name="appointment_cancel">Cancel</string>
+    <string name="appointment_confirm">Confirm</string>
+    <string name="appointment_empty">You have no appointments yet.</string>
+    <string name="appointment_next">Next appointment</string>
+    <string name="appointment_outside_hours">The clinic does not see patients then. Please choose another day.</string>
+    <string name="appointment_request">Request an appointment</string>
+    <string name="appointment_slot_taken">That time is taken. Please choose another.</string>
+    <string name="appointment_status_cancelled">Cancelled</string>
+    <string name="appointment_status_completed">Completed</string>
+    <string name="appointment_status_confirmed">Confirmed</string>
+    <string name="appointment_status_no_show">Did not attend</string>
+    <string name="appointment_status_requested">Awaiting confirmation</string>
+    <string name="appointment_type_consultation">Consultation</string>
+    <string name="appointment_type_control">Check-up</string>
+    <string name="appointment_type_surgery">Surgery</string>
+    <string name="appointment_type_video_call">Video call</string>
     <string name="auth_error_account_inactive">Your account is not active. Please contact your clinic.</string>
     <string name="auth_error_account_locked">Too many attempts. Try again in a little while.</string>
     <string name="auth_error_invalid_credentials">E-mail or password is incorrect.</string>

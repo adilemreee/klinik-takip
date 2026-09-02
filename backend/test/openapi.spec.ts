@@ -136,6 +136,7 @@ describe('the published API contract', () => {
 
     it('groups requests by tag', () => {
       expect(collection.item.map((folder) => folder.name).sort()).toEqual([
+        'appointments',
         'audit',
         'auth',
         'complications',

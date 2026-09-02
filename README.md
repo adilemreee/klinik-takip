@@ -85,7 +85,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 1 — Kimlik ve Çekirdek Veri | 7 / 7 | ✅ |
 | Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
 | Faz 3 — Klinik Modüller | 4 / 6 | T3.1, T3.2, T3.4, T3.6 tamam · T3.3 ve T3.5'te eksik olan tek şey **kamera katmanı** |
-| Faz 4 — İletişim ve Bildirim | 1 / 6 | T4.4 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı |
+| Faz 4 — İletişim ve Bildirim | 2 / 6 | T4.4, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı · T4.5 sırada |
 | Faz 5 — Yapay Zeka Katmanı | 0 / 7 | |
 | Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
 | Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |

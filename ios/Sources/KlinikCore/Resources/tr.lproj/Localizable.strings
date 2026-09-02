@@ -275,3 +275,25 @@
 "followUp.milestone.M3" = "3. ay kontrolü";
 "followUp.milestone.M6" = "6. ay kontrolü";
 "followUp.milestone.Y1" = "1. yıl kontrolü";
+
+/* Randevular (Şartname M10, T4.6) */
+"appointment.empty" = "Henüz randevunuz yok.";
+"appointment.next" = "Sıradaki randevu";
+"appointment.slotTaken" = "Bu saat dolu. Başka bir saat seçin.";
+"appointment.outsideHours" = "Klinik o saatte randevu vermiyor. Başka bir gün seçin.";
+"appointment.awaitingConfirmation" = "Onay bekleyen";
+"appointment.confirm" = "Onayla";
+"appointment.cancel" = "İptal et";
+"appointment.request" = "Randevu iste";
+"appointment.addToCalendar" = "Takvime ekle";
+
+"appointment.type.CONSULTATION" = "Muayene";
+"appointment.type.SURGERY" = "Ameliyat";
+"appointment.type.CONTROL" = "Kontrol";
+"appointment.type.VIDEO_CALL" = "Video görüşme";
+
+"appointment.status.REQUESTED" = "Onay bekliyor";
+"appointment.status.CONFIRMED" = "Onaylandı";
+"appointment.status.CANCELLED" = "İptal edildi";
+"appointment.status.COMPLETED" = "Tamamlandı";
+"appointment.status.NO_SHOW" = "Gelinmedi";

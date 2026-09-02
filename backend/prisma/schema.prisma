@@ -206,6 +206,7 @@ model StaffProfile {
   prescribedMedications Medication[]        @relation("Prescriber")
 
   @@map("staff_profiles")
+  availabilityWindows AvailabilityWindow[]
 }
 
 // ===========================================================================
@@ -720,6 +721,32 @@ model QuickReply {
   @@map("quick_replies")
 }
 
+/// When a staff member can be booked (spec M10).
+///
+/// The same shape as AccessWindow and deliberately not the same table: one says
+/// when the clinic reads messages, the other when it can see patients, and a
+/// doctor who answers messages at midnight is not offering midnight
+/// appointments. Merging them would make one setting silently change the other.
+model AvailabilityWindow {
+  id      String @id @default(uuid(7)) @db.Uuid
+  staffId String @map("staff_id") @db.Uuid
+
+  /// 0 = Sunday .. 6 = Saturday
+  dayOfWeek Int    @map("day_of_week")
+  /// Local wall-clock time in the clinic's timezone, stored as "HH:MM".
+  startTime String @map("start_time")
+  endTime   String @map("end_time")
+  timezone  String @default("Europe/Istanbul")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  staff StaffProfile @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId, dayOfWeek])
+  @@map("availability_windows")
+}
+
 model AccessWindow {
   id        String  @id @default(uuid(7)) @db.Uuid
   staffId   String? @map("staff_id") @db.Uuid
@@ -807,6 +834,13 @@ model Appointment {
 
   cancelledAt     DateTime? @map("cancelled_at") @db.Timestamptz
   cancelledReason String?   @map("cancelled_reason")
+
+  /// Which reminders have gone out — "P7D", "P1D", "PT2H" (spec M10).
+  ///
+  /// Kept on the row rather than inferred from the clock: a worker that
+  /// restarts, or a schedule that moves, would otherwise send the same
+  /// reminder twice or skip it entirely.
+  remindersSent String[] @map("reminders_sent")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz

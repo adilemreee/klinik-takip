@@ -5,6 +5,8 @@ import { AppModule } from './app.module';
 import { validateEnv } from './config/env.schema';
 import { documentIntake, uploadSweep } from './documents/document-intake.processor';
 import { ResumableUploadService } from './documents/resumable-upload.service';
+import { appointmentReminders } from './appointments/appointments.processor';
+import { AppointmentsService } from './appointments/appointments.service';
 import { followUpSweep } from './followup/followup.processor';
 import { FollowUpService } from './followup/followup.service';
 import { LabService } from './lab/lab.service';
@@ -52,6 +54,7 @@ async function bootstrap(): Promise<void> {
   const messaging = app.get(MessagingService);
   const notifications = app.get(NotificationsService);
   const followUp = app.get(FollowUpService);
+  const appointments = app.get(AppointmentsService);
   const engine = app.get(TesseractEngine);
   const storage = app.get(StorageService);
   const config = app.get(ConfigService);
@@ -87,6 +90,7 @@ async function bootstrap(): Promise<void> {
     handlers: {
       [JOBS.notificationDelivery]: notificationDelivery(notifications),
       [JOBS.followUpSweep]: followUpSweep(followUp),
+      [JOBS.appointmentReminders]: appointmentReminders(appointments),
     },
     connection: queues.connection,
     prisma,
@@ -101,6 +105,7 @@ async function bootstrap(): Promise<void> {
   // is a minute nobody would defend afterwards.
   await queues.schedule(QUEUES.notifications, JOBS.notificationDelivery, 30 * 1000);
   await queues.schedule(QUEUES.notifications, JOBS.followUpSweep, 60 * 60 * 1000);
+  await queues.schedule(QUEUES.notifications, JOBS.appointmentReminders, 10 * 60 * 1000);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever

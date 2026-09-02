@@ -2,6 +2,24 @@
 <!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
+    <string name="appointment_add_to_calendar">Takvime ekle</string>
+    <string name="appointment_awaiting_confirmation">Onay bekleyen</string>
+    <string name="appointment_cancel">İptal et</string>
+    <string name="appointment_confirm">Onayla</string>
+    <string name="appointment_empty">Henüz randevunuz yok.</string>
+    <string name="appointment_next">Sıradaki randevu</string>
+    <string name="appointment_outside_hours">Klinik o saatte randevu vermiyor. Başka bir gün seçin.</string>
+    <string name="appointment_request">Randevu iste</string>
+    <string name="appointment_slot_taken">Bu saat dolu. Başka bir saat seçin.</string>
+    <string name="appointment_status_cancelled">İptal edildi</string>
+    <string name="appointment_status_completed">Tamamlandı</string>
+    <string name="appointment_status_confirmed">Onaylandı</string>
+    <string name="appointment_status_no_show">Gelinmedi</string>
+    <string name="appointment_status_requested">Onay bekliyor</string>
+    <string name="appointment_type_consultation">Muayene</string>
+    <string name="appointment_type_control">Kontrol</string>
+    <string name="appointment_type_surgery">Ameliyat</string>
+    <string name="appointment_type_video_call">Video görüşme</string>
     <string name="auth_error_account_inactive">Hesabınız aktif değil. Kliniğinizle görüşün.</string>
     <string name="auth_error_account_locked">Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.</string>
     <string name="auth_error_invalid_credentials">E-posta veya parola hatalı.</string>

@@ -976,6 +976,75 @@
             },
             "description": "Your check-up dates"
           }
+        },
+        {
+          "name": "Your appointments, soonest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "appointments"
+              ]
+            },
+            "description": "Your appointments, soonest first"
+          }
+        },
+        {
+          "name": "Request an appointment; the clinic confirms it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "appointments"
+              ]
+            },
+            "description": "Request an appointment; the clinic confirms it",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"CONSULTATION\",\n  \"scheduledAt\": \"2026-01-01T00:00:00.000Z\",\n  \"staffId\": \"00000000-0000-7000-8000-000000000000\",\n  \"durationMinutes\": 0,\n  \"location\": \"\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Your appointments as an iCalendar file",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/appointments/calendar.ics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "appointments",
+                "calendar.ics"
+              ]
+            },
+            "description": "Your appointments as an iCalendar file"
+          }
         }
       ]
     },
@@ -2548,6 +2617,208 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"COMPLETED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "appointments",
+      "item": [
+        {
+          "name": "The caller's calendar between two moments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/calendar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "The caller's calendar between two moments"
+          }
+        },
+        {
+          "name": "Accept a patient's request",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:appointmentId/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                ":appointmentId",
+                "confirm"
+              ],
+              "variable": [
+                {
+                  "key": "appointmentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Accept a patient's request"
+          }
+        },
+        {
+          "name": "Move an appointment; its reminders start again",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:appointmentId/reschedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                ":appointmentId",
+                "reschedule"
+              ],
+              "variable": [
+                {
+                  "key": "appointmentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Move an appointment; its reminders start again",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Cancel an appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/appointments/:appointmentId/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "appointments",
+                ":appointmentId",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "appointmentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Cancel an appointment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "A patient's appointments, soonest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "appointments"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's appointments, soonest first"
+          }
+        },
+        {
+          "name": "Book an appointment for a patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "appointments"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Book an appointment for a patient",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"CONSULTATION\",\n  \"scheduledAt\": \"2026-01-01T00:00:00.000Z\",\n  \"staffId\": \"00000000-0000-7000-8000-000000000000\",\n  \"durationMinutes\": 0,\n  \"location\": \"\",\n  \"note\": \"\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

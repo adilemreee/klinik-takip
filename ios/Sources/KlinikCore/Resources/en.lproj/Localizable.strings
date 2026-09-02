@@ -275,3 +275,25 @@
 "followUp.milestone.M3" = "Month 3 check-up";
 "followUp.milestone.M6" = "Month 6 check-up";
 "followUp.milestone.Y1" = "Year 1 check-up";
+
+/* Appointments (spec M10, T4.6) */
+"appointment.empty" = "You have no appointments yet.";
+"appointment.next" = "Next appointment";
+"appointment.slotTaken" = "That time is taken. Please choose another.";
+"appointment.outsideHours" = "The clinic does not see patients then. Please choose another day.";
+"appointment.awaitingConfirmation" = "Awaiting confirmation";
+"appointment.confirm" = "Confirm";
+"appointment.cancel" = "Cancel";
+"appointment.request" = "Request an appointment";
+"appointment.addToCalendar" = "Add to calendar";
+
+"appointment.type.CONSULTATION" = "Consultation";
+"appointment.type.SURGERY" = "Surgery";
+"appointment.type.CONTROL" = "Check-up";
+"appointment.type.VIDEO_CALL" = "Video call";
+
+"appointment.status.REQUESTED" = "Awaiting confirmation";
+"appointment.status.CONFIRMED" = "Confirmed";
+"appointment.status.CANCELLED" = "Cancelled";
+"appointment.status.COMPLETED" = "Completed";
+"appointment.status.NO_SHOW" = "Did not attend";

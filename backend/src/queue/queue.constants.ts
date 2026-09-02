@@ -8,6 +8,7 @@
 export const QUEUES = {
   documents: 'documents',
   messaging: 'messaging',
+  notifications: 'notifications',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -32,6 +33,13 @@ export const JOBS = {
    * invisible until someone happened to send another one.
    */
   messageRelease: 'message-release',
+
+  /**
+   * Sends notifications that are due, falling back a channel at a time. Its own
+   * queue because a backlog of OCR must never delay telling a doctor about a
+   * critical value.
+   */
+  notificationDelivery: 'notification-delivery',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

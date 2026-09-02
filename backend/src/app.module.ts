@@ -12,6 +12,7 @@ import { QueueModule } from './queue/queue.module';
 import { LabModule } from './lab/lab.module';
 import { MeasurementsModule } from './measurements/measurements.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { MeModule } from './me/me.module';
 import { PatientsModule } from './patients/patients.module';
 import { AppConfigModule } from './config/config.module';
@@ -41,6 +42,7 @@ import { ObservabilityModule } from './observability/observability.module';
     PhotosModule,
     ComplicationsModule,
     MessagingModule,
+    NotificationsModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

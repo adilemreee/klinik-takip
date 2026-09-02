@@ -62,6 +62,9 @@ include(":feature:complications")
 // Patient ↔ clinic messaging, with the access window (spec M3).
 include(":feature:messaging")
 
+// Notification preferences and the delivery log (spec M6).
+include(":feature:notifications")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built

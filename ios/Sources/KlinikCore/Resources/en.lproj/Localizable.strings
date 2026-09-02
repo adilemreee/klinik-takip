@@ -213,3 +213,42 @@
 "message.status.DELIVERED" = "Delivered";
 "message.status.READ" = "Read";
 "message.status.FAILED" = "Not sent";
+
+/* Notifications (spec M6, T4.2) */
+"notification.settingsTitle" = "Notification preferences";
+"notification.quietHours" = "Quiet hours";
+"notification.quietHoursHint" = "Non-urgent notifications wait during these hours; they are not cancelled.";
+"notification.historyTitle" = "Notifications sent";
+"notification.historyEmpty" = "Nothing has been sent yet.";
+"notification.fallbackNote" = "This was sent in place of an attempt that did not reach you.";
+
+"notification.channel.PUSH" = "App notification";
+"notification.channel.SMS" = "SMS";
+"notification.channel.EMAIL" = "E-mail";
+"notification.channel.WHATSAPP" = "WhatsApp";
+"notification.channel.IN_APP" = "In app";
+
+"notification.status.PENDING" = "Waiting";
+"notification.status.SENT" = "Sent";
+"notification.status.DELIVERED" = "Delivered";
+"notification.status.READ" = "Read";
+"notification.status.FAILED" = "Did not arrive";
+
+"notification.type.lab.ready" = "Lab result ready";
+"notification.type.lab.critical" = "Critical lab value";
+"notification.type.message.new" = "New message";
+"notification.type.medication.due" = "Medication time";
+"notification.type.appointment.reminder" = "Appointment reminder";
+"notification.type.document.missing" = "Missing document";
+"notification.type.complication.answered" = "Your report was answered";
+
+"notification.action.openLab" = "View result";
+"notification.action.askDoctor" = "Ask the doctor";
+"notification.action.callPatient" = "Call the patient";
+"notification.action.openFile" = "Open the file";
+"notification.action.openChat" = "Open the message";
+"notification.action.taken" = "Taken";
+"notification.action.snooze" = "Snooze 1 hour";
+"notification.action.openAppointment" = "Open appointment";
+"notification.action.uploadDocument" = "Upload document";
+"notification.action.openComplication" = "Open report";

@@ -23,6 +23,7 @@ let package = Package(
         .library(name: "KlinikPhotosFeature", targets: ["KlinikPhotosFeature"]),
         .library(name: "KlinikComplicationsFeature", targets: ["KlinikComplicationsFeature"]),
         .library(name: "KlinikMessagingFeature", targets: ["KlinikMessagingFeature"]),
+        .library(name: "KlinikNotificationsFeature", targets: ["KlinikNotificationsFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
     ],
     targets: [
@@ -101,9 +102,19 @@ let package = Package(
             name: "KlinikComplicationsFeatureTests",
             dependencies: ["KlinikComplicationsFeature", "KlinikCore"]
         ),
+        // Notification preferences and the delivery log (spec M6).
+        .target(
+            name: "KlinikNotificationsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .testTarget(
             name: "KlinikMessagingFeatureTests",
             dependencies: ["KlinikMessagingFeature", "KlinikCore"]
+        ),
+        .testTarget(
+            name: "KlinikNotificationsFeatureTests",
+            dependencies: ["KlinikNotificationsFeature", "KlinikCore"]
         ),
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),

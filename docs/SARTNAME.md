@@ -434,7 +434,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 
 ### FAZ 4 — İletişim ve Bildirim
 - [ ] T4.1 Mesajlaşma (WS) + medya + sesli mesaj + erişim penceresi ([MESAJLASMA](MESAJLASMA.md)) — mesajlaşma, WebSocket, medya/ses eki, erişim penceresi, okundu bilgisi, hazır yanıtlar **tamam**; §M3'ün istediği **sesli mesaj transkripti ve çift yönlü çeviri** AI katmanına (T5.1) bağlı, alanlar hazır ve boş
-- [ ] T4.2 Push altyapısı (APNs/FCM) + SMS/e-posta fallback + tercih ekranı
+- [ ] T4.2 Push altyapısı + SMS/e-posta fallback + tercih ekranı ([BILDIRIMLER](BILDIRIMLER.md)) — token kaydı, tercihler, sessiz saatler, yedek zinciri ve gönderim kuyruğu **tamam**; **APNs/FCM sağlayıcı entegrasyonu eksik** (kimlik bilgisi ve gerçek cihaz gerektiriyor, göndericiler arayüz arkasında ve başarı uydurmuyor)
 - [ ] T4.3 Zengin/aksiyonlu bildirimler (iOS + Android)
 - [ ] T4.4 Zamanlayıcı: kontrol takvimi (D1/H1/M1/M2/M3/M6/Y1) otomatik üretimi
 - [ ] T4.5 Acil durum butonu + eskalasyon zinciri

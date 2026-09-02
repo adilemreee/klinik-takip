@@ -1,3 +1,5 @@
+import { localParts, parseTime } from '../common/wall-clock';
+
 /**
  * When the clinic is reachable (spec M3).
  *
@@ -21,55 +23,12 @@ export interface WindowSpec {
   isActive: boolean;
 }
 
+export { localParts, parseTime } from '../common/wall-clock';
+
 export interface WindowState {
   open: boolean;
   /** When it next opens. Null when it is open now, or when no window exists. */
   opensAt: Date | null;
-}
-
-/** Minutes since midnight, or null when the text is not a wall-clock time. */
-export function parseTime(text: string): number | null {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(text.trim());
-  if (!match) return null;
-
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-
-  if (hours > 23 || minutes > 59) return null;
-
-  return hours * 60 + minutes;
-}
-
-/**
- * The clinic's local day and minute-of-day for a moment.
- *
- * Computed through Intl rather than by adding an offset, because the offset is
- * not a constant: Istanbul does not change clocks now but the setting is a
- * timezone and clinics elsewhere do, and a window that silently shifts by an
- * hour twice a year is a window nobody trusts.
- */
-export function localParts(at: Date, timezone: string): { day: number; minutes: number } {
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: timezone,
-    weekday: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-
-  const parts = formatter.formatToParts(at);
-  const weekday = parts.find((part) => part.type === 'weekday')?.value ?? 'Sun';
-  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0');
-  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? '0');
-
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  return {
-    day: Math.max(0, days.indexOf(weekday)),
-    // 24:00 is midnight of the next day in some locales' output; clamp so a
-    // moment can never land outside the day it belongs to.
-    minutes: (hour % 24) * 60 + minute,
-  };
 }
 
 /**

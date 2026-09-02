@@ -213,3 +213,42 @@
 "message.status.DELIVERED" = "İletildi";
 "message.status.READ" = "Okundu";
 "message.status.FAILED" = "Gönderilemedi";
+
+/* Bildirimler (Şartname M6, T4.2) */
+"notification.settingsTitle" = "Bildirim tercihleri";
+"notification.quietHours" = "Sessiz saatler";
+"notification.quietHoursHint" = "Bu saatler arasında acil olmayan bildirimler bekletilir, iptal edilmez.";
+"notification.historyTitle" = "Gönderilen bildirimler";
+"notification.historyEmpty" = "Henüz bildirim gönderilmedi.";
+"notification.fallbackNote" = "Bu bildirim, ulaşılamayan bir denemenin yerine gönderildi.";
+
+"notification.channel.PUSH" = "Uygulama bildirimi";
+"notification.channel.SMS" = "SMS";
+"notification.channel.EMAIL" = "E-posta";
+"notification.channel.WHATSAPP" = "WhatsApp";
+"notification.channel.IN_APP" = "Uygulama içi";
+
+"notification.status.PENDING" = "Bekliyor";
+"notification.status.SENT" = "Gönderildi";
+"notification.status.DELIVERED" = "İletildi";
+"notification.status.READ" = "Okundu";
+"notification.status.FAILED" = "Ulaşmadı";
+
+"notification.type.lab.ready" = "Tahlil sonucu hazır";
+"notification.type.lab.critical" = "Kritik tahlil değeri";
+"notification.type.message.new" = "Yeni mesaj";
+"notification.type.medication.due" = "İlaç saati";
+"notification.type.appointment.reminder" = "Randevu hatırlatma";
+"notification.type.document.missing" = "Eksik belge";
+"notification.type.complication.answered" = "Bildiriminiz yanıtlandı";
+
+"notification.action.openLab" = "Sonucu incele";
+"notification.action.askDoctor" = "Doktora sor";
+"notification.action.callPatient" = "Hastayı ara";
+"notification.action.openFile" = "Dosyayı aç";
+"notification.action.openChat" = "Mesajı aç";
+"notification.action.taken" = "İçtim";
+"notification.action.snooze" = "1 saat ertele";
+"notification.action.openAppointment" = "Randevuyu aç";
+"notification.action.uploadDocument" = "Belge yükle";
+"notification.action.openComplication" = "Bildirimi aç";

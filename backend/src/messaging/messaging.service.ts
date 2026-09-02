@@ -1,0 +1,389 @@
+import { Readable } from 'node:stream';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  AuditAction,
+  Conversation,
+  Message,
+  MessageStatus,
+  MessageType,
+  QuickReply,
+  Role,
+} from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
+import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
+import { PatientAccessService } from '../authz/patient-access.service';
+import { Env } from '../config/env.schema';
+import { DOCUMENT_MIME_TYPES } from '../files/file-type';
+import { FileService } from '../files/file.service';
+import { PrismaService } from '../infra/prisma.service';
+import { windowState } from './access-window';
+import { MessagingGateway } from './messaging.gateway';
+
+/** What a message may carry. Audio is allowed here and nowhere else. */
+export const MESSAGE_MIME_TYPES = new Set([...DOCUMENT_MIME_TYPES, 'audio/mp4', 'audio/mpeg']);
+
+export interface SendInput {
+  body?: string;
+  type?: MessageType;
+  mediaKey?: string;
+}
+
+export interface SentMessage {
+  message: Message;
+  /** Set when the message was held; what the sender is told to expect. */
+  queuedUntil: Date | null;
+}
+
+export interface MessagePage {
+  items: Message[];
+  nextCursor: string | null;
+}
+
+@Injectable()
+export class MessagingService {
+  private readonly logger = new Logger(MessagingService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: PatientAccessService,
+    private readonly audit: AuditService,
+    private readonly files: FileService,
+    private readonly config: ConfigService<Env, true>,
+    private readonly gateway: MessagingGateway,
+  ) {}
+
+  /** The patient's conversation, created on first use. */
+  async conversationFor(user: AuthenticatedUser, patientId: string): Promise<Conversation> {
+    await this.access.assertCanAccess(user, patientId);
+
+    const existing = await this.prisma.conversation.findFirst({
+      where: { patientId, closedAt: null },
+      orderBy: { id: 'desc' },
+    });
+
+    if (existing) return existing;
+
+    return this.prisma.conversation.create({ data: { patientId } });
+  }
+
+  /**
+   * Sends a message.
+   *
+   * A patient writing outside the clinic's hours is queued rather than
+   * delivered, and told when it will go (spec M3). Staff are never queued: the
+   * window governs when the clinic answers, not when it may speak.
+   */
+  async send(
+    user: AuthenticatedUser,
+    conversationId: string,
+    input: SendInput,
+  ): Promise<SentMessage> {
+    const conversation = await this.findInScope(user, conversationId);
+
+    const body = input.body?.trim();
+
+    if (!body && !input.mediaKey) {
+      throw new BadRequestException('A message needs text or an attachment');
+    }
+
+    const state = await this.clinicState();
+    const holds = user.role === Role.PATIENT || user.role === Role.CAREGIVER;
+    const queued = holds && !state.open;
+
+    const message = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.message.create({
+        data: {
+          conversationId,
+          senderId: user.id,
+          type: input.type ?? (input.mediaKey ? MessageType.FILE : MessageType.TEXT),
+          body: body?.slice(0, 4000),
+          mediaKey: input.mediaKey,
+          status: queued ? MessageStatus.QUEUED : MessageStatus.SENT,
+          queuedUntil: queued ? state.opensAt : null,
+        },
+      });
+
+      // Only a message that actually went updates the conversation's clock: a
+      // queued one has not been said yet, and moving the conversation to the
+      // top of a clinician's list for something they cannot see would be a
+      // notification about nothing.
+      if (!queued) {
+        await tx.conversation.update({
+          where: { id: conversationId },
+          data: { lastMessageAt: created.createdAt },
+        });
+      }
+
+      await this.audit.recordInTransaction(tx, {
+        actorId: user.id,
+        actorRole: user.role,
+        action: AuditAction.CREATE,
+        entityType: 'messages',
+        entityId: created.id,
+        patientId: conversation.patientId,
+        // The body is clinical content and does not belong in an audit row;
+        // that this message exists, and who sent it, does.
+        after: { id: created.id, type: created.type, status: created.status },
+      });
+
+      return created;
+    });
+
+    // Only what actually went is announced. Pushing a queued message to the
+    // room would put it on a clinician's screen the instant the patient wrote
+    // it, which is the one thing the window exists to prevent.
+    if (!queued) {
+      this.gateway.emitMessage(conversationId, message);
+    }
+
+    return { message, queuedUntil: queued ? state.opensAt : null };
+  }
+
+  /**
+   * Messages, newest last, cursor-paginated backwards.
+   *
+   * A queued message is visible to the person who wrote it — they need to see
+   * that it is waiting — and to nobody else until it is released.
+   */
+  async messages(
+    user: AuthenticatedUser,
+    conversationId: string,
+    options: { cursor?: string; limit?: number } = {},
+  ): Promise<MessagePage> {
+    await this.findInScope(user, conversationId);
+
+    const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
+
+    const rows = await this.prisma.message.findMany({
+      where: {
+        conversationId,
+        OR: [{ status: { not: MessageStatus.QUEUED } }, { senderId: user.id }],
+      },
+      orderBy: { id: 'desc' },
+      take: limit + 1,
+      ...(options.cursor ? { cursor: { id: options.cursor }, skip: 1 } : {}),
+    });
+
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+
+    return {
+      // Reversed so the caller receives them in reading order while the cursor
+      // still walks backwards through history.
+      items: page.slice().reverse(),
+      nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    };
+  }
+
+  /**
+   * Marks everything the caller did not send as read.
+   *
+   * Read receipts are set in bulk rather than per message because a person
+   * opening a conversation has read what is on the screen, and asking the
+   * client to report each one invites a count that drifts from what they saw.
+   */
+  async markRead(user: AuthenticatedUser, conversationId: string): Promise<number> {
+    await this.findInScope(user, conversationId);
+
+    const now = new Date();
+
+    const result = await this.prisma.message.updateMany({
+      where: {
+        conversationId,
+        readAt: null,
+        status: { not: MessageStatus.QUEUED },
+        // NULL sender means the clinic or the system, which is not the caller.
+        // `senderId != me` is NULL for those rows, and SQL treats that as not
+        // matching — so they would never be marked read.
+        OR: [{ senderId: null }, { senderId: { not: user.id } }],
+      },
+      data: { readAt: now, status: MessageStatus.READ },
+    });
+
+    if (result.count > 0) {
+      this.gateway.emitRead(conversationId, user.id);
+    }
+
+    return result.count;
+  }
+
+  /**
+   * Releases messages whose queue time has passed.
+   *
+   * Run on a schedule. Without it a message written at 3am stays invisible
+   * until someone happens to send another one — the queue would hold, and
+   * never let go.
+   */
+  async releaseQueued(now = new Date()): Promise<number> {
+    const due = await this.prisma.message.findMany({
+      where: { status: MessageStatus.QUEUED, queuedUntil: { lte: now } },
+      take: 500,
+    });
+
+    if (due.length === 0) return 0;
+
+    await this.prisma.$transaction([
+      this.prisma.message.updateMany({
+        where: { id: { in: due.map((message) => message.id) } },
+        data: { status: MessageStatus.SENT },
+      }),
+      ...[...new Set(due.map((message) => message.conversationId))].map((conversationId) =>
+        this.prisma.conversation.update({
+          where: { id: conversationId },
+          data: { lastMessageAt: now },
+        }),
+      ),
+    ]);
+
+    // Announced now, not when they were written: this is the moment they
+    // became visible.
+    for (const message of due) {
+      this.gateway.emitMessage(message.conversationId, { ...message, status: MessageStatus.SENT });
+    }
+
+    this.logger.log(`Released ${due.length} queued message(s)`);
+
+    return due.length;
+  }
+
+  /** Stores an attachment and hands back the key to send with the message. */
+  async uploadAttachment(
+    user: AuthenticatedUser,
+    conversationId: string,
+    stream: Readable,
+    filename?: string,
+  ): Promise<{ mediaKey: string; mime: string; size: number }> {
+    await this.findInScope(user, conversationId);
+
+    const stored = await this.files.upload(stream, {
+      bucket: 'documents',
+      allowedMimeTypes: MESSAGE_MIME_TYPES,
+      maxBytes: this.config.get('UPLOAD_MAX_BYTES', { infer: true }),
+      originalName: filename,
+    });
+
+    return { mediaKey: stored.key, mime: stored.mime, size: stored.size };
+  }
+
+  /** A short-lived signed URL for an attachment. */
+  async attachmentUrl(
+    user: AuthenticatedUser,
+    messageId: string,
+  ): Promise<{ url: string; expiresAt: Date }> {
+    const message = await this.prisma.message.findUnique({ where: { id: messageId } });
+
+    if (!message?.mediaKey) {
+      throw new NotFoundException('Message has no attachment');
+    }
+
+    await this.findInScope(user, message.conversationId);
+
+    return this.files.createDownloadUrl('documents', message.mediaKey);
+  }
+
+  /** Whether the clinic is reachable now, for the client to say so plainly. */
+  async clinicState(): Promise<{ open: boolean; opensAt: Date | null }> {
+    const windows = await this.prisma.accessWindow.findMany();
+
+    return windowState(windows, new Date());
+  }
+
+  /**
+   * Conversations a clinician should look at, most recent first.
+   */
+  async inbox(user: AuthenticatedUser): Promise<Conversation[]> {
+    const scope = await this.access.scopeFilter(user);
+
+    return this.prisma.conversation.findMany({
+      where: { patient: scope, closedAt: null, lastMessageAt: { not: null } },
+      orderBy: { lastMessageAt: 'desc' },
+      take: 100,
+    });
+  }
+
+  /**
+   * Quick replies available to a clinician: the clinic's shared ones and their
+   * own, in the order the clinic put them (spec M3).
+   */
+  async quickReplies(user: AuthenticatedUser): Promise<QuickReply[]> {
+    const profile = await this.prisma.staffProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+
+    return this.prisma.quickReply.findMany({
+      where: {
+        isActive: true,
+        OR: [{ staffId: null }, ...(profile ? [{ staffId: profile.id }] : [])],
+      },
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+    });
+  }
+
+  /** A clinician's own template. Shared ones are seeded, not written here. */
+  async createQuickReply(
+    user: AuthenticatedUser,
+    input: { title: string; body: string; sortOrder?: number },
+  ): Promise<QuickReply> {
+    const profile = await this.prisma.staffProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+
+    if (!profile) {
+      throw new BadRequestException('Only staff can save quick replies');
+    }
+
+    return this.prisma.quickReply.create({
+      data: {
+        staffId: profile.id,
+        title: input.title.trim().slice(0, 100),
+        body: input.body.trim().slice(0, 2000),
+        sortOrder: input.sortOrder ?? 0,
+      },
+    });
+  }
+
+  /**
+   * Retires a template.
+   *
+   * Deactivated rather than deleted, and only the caller's own: a shared reply
+   * removed by one clinician would vanish from everyone's list, and a hard
+   * delete would take it out of nothing else — the messages already sent with
+   * it are their own rows.
+   */
+  async removeQuickReply(user: AuthenticatedUser, id: string): Promise<void> {
+    const profile = await this.prisma.staffProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+
+    const removed = await this.prisma.quickReply.updateMany({
+      where: { id, staffId: profile?.id ?? '00000000-0000-0000-0000-000000000000' },
+      data: { isActive: false },
+    });
+
+    if (removed.count === 0) {
+      throw new NotFoundException('Quick reply not found');
+    }
+  }
+
+  /** Out of scope reads as absent, never as forbidden. */
+  private async findInScope(
+    user: AuthenticatedUser,
+    conversationId: string,
+  ): Promise<Conversation> {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    await this.access.assertCanAccess(user, conversation.patientId);
+
+    return conversation;
+  }
+}

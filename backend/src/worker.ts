@@ -6,6 +6,8 @@ import { validateEnv } from './config/env.schema';
 import { documentIntake, uploadSweep } from './documents/document-intake.processor';
 import { ResumableUploadService } from './documents/resumable-upload.service';
 import { LabService } from './lab/lab.service';
+import { messageRelease } from './messaging/messaging.processor';
+import { MessagingService } from './messaging/messaging.service';
 import { documentOcr } from './ocr/ocr.processor';
 import { TesseractEngine } from './ocr/tesseract.engine';
 import { FileService } from './files/file.service';
@@ -43,6 +45,7 @@ async function bootstrap(): Promise<void> {
   const files = app.get(FileService);
   const uploads = app.get(ResumableUploadService);
   const lab = app.get(LabService);
+  const messaging = app.get(MessagingService);
   const engine = app.get(TesseractEngine);
   const storage = app.get(StorageService);
   const config = app.get(ConfigService);
@@ -65,7 +68,18 @@ async function bootstrap(): Promise<void> {
     prisma,
   });
 
+  const messagingWorker = runWorker({
+    queue: QUEUES.messaging,
+    handlers: { [JOBS.messageRelease]: messageRelease(messaging) },
+    connection: queues.connection,
+    prisma,
+    concurrency: 1,
+  });
+
   await queues.schedule(QUEUES.documents, JOBS.uploadSweep, 60 * 60 * 1000);
+  // Every minute: the patient was promised a clock time, and 18:55 for a
+  // message told it would go at 18:00 breaks the one assurance queueing gives.
+  await queues.schedule(QUEUES.messaging, JOBS.messageRelease, 60 * 1000);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever
@@ -97,13 +111,14 @@ async function bootstrap(): Promise<void> {
     logger.log('Draining the queue before exit');
     clearInterval(depthTimer);
     await worker.close();
+    await messagingWorker.close();
     await app.close();
   };
 
   process.once('SIGTERM', () => void shutdown());
   process.once('SIGINT', () => void shutdown());
 
-  logger.log(`Worker started — consuming ${QUEUES.documents}`);
+  logger.log(`Worker started — consuming ${QUEUES.documents} and ${QUEUES.messaging}`);
 }
 
 void bootstrap();

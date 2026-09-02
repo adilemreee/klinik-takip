@@ -59,6 +59,9 @@ include(":feature:photos")
 // Complications a patient reports themselves (spec M7).
 include(":feature:complications")
 
+// Patient ↔ clinic messaging, with the access window (spec M3).
+include(":feature:messaging")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -77,6 +80,7 @@ if (androidSdkAvailable) {
     include(":feature:lab-ui")
     include(":feature:photos-ui")
     include(":feature:complications-ui")
+    include(":feature:messaging-ui")
 } else {
     logger.lifecycle("Android SDK not found — building JVM modules only (:core:network).")
 }

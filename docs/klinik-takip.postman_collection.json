@@ -940,6 +940,24 @@
             },
             "description": "One of your reading types over time"
           }
+        },
+        {
+          "name": "Your conversation with the clinic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/conversation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "conversation"
+              ]
+            },
+            "description": "Your conversation with the clinic"
+          }
         }
       ]
     },
@@ -1967,6 +1985,296 @@
               ]
             },
             "description": "A patient's reports, newest first"
+          }
+        }
+      ]
+    },
+    {
+      "name": "messaging",
+      "item": [
+        {
+          "name": "Whether the clinic is inside its access window",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/clinic-state",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                "clinic-state"
+              ]
+            },
+            "description": "Whether the clinic is inside its access window"
+          }
+        },
+        {
+          "name": "Conversations to look at, most recent first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations"
+              ]
+            },
+            "description": "Conversations to look at, most recent first"
+          }
+        },
+        {
+          "name": "Messages, oldest first; the cursor walks backwards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/:conversationId/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                ":conversationId",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": "Id of the oldest message already shown",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "conversationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Messages, oldest first; the cursor walks backwards"
+          }
+        },
+        {
+          "name": "Send a message; a patient outside the window is queued",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/:conversationId/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                ":conversationId",
+                "messages"
+              ],
+              "variable": [
+                {
+                  "key": "conversationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Send a message; a patient outside the window is queued",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"\",\n  \"type\": \"TEXT\",\n  \"mediaKey\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Upload an attachment, then send its key with a message",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/:conversationId/attachments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                ":conversationId",
+                "attachments"
+              ],
+              "variable": [
+                {
+                  "key": "conversationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Upload an attachment, then send its key with a message"
+          }
+        },
+        {
+          "name": "Mark everything the caller did not send as read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/:conversationId/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                ":conversationId",
+                "read"
+              ],
+              "variable": [
+                {
+                  "key": "conversationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Mark everything the caller did not send as read"
+          }
+        },
+        {
+          "name": "A short-lived signed URL for an attachment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/messages/:messageId/attachment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                "messages",
+                ":messageId",
+                "attachment"
+              ],
+              "variable": [
+                {
+                  "key": "messageId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A short-lived signed URL for an attachment"
+          }
+        },
+        {
+          "name": "The clinic's shared replies and the caller's own",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/quick-replies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "quick-replies"
+              ]
+            },
+            "description": "The clinic's shared replies and the caller's own"
+          }
+        },
+        {
+          "name": "Save a reply of your own",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/quick-replies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "quick-replies"
+              ]
+            },
+            "description": "Save a reply of your own",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"body\": \"\",\n  \"sortOrder\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Retire one of your own replies",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/quick-replies/:quickReplyId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "quick-replies",
+                ":quickReplyId"
+              ],
+              "variable": [
+                {
+                  "key": "quickReplyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Retire one of your own replies"
+          }
+        },
+        {
+          "name": "The patient's conversation, created on first use",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/conversation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "conversation"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "The patient's conversation, created on first use"
           }
         }
       ]

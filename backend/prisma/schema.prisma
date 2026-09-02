@@ -698,6 +698,28 @@ model Message {
 
 /// When the clinic is reachable. Outside these hours a patient message is
 /// queued rather than delivered (spec M3).
+/// A canned reply a clinician can send with one tap (spec M3).
+///
+/// Owned by a staff member when they wrote it and shared when staffId is null,
+/// so a clinic can keep house answers without preventing anyone from having
+/// their own.
+model QuickReply {
+  id      String  @id @default(uuid(7)) @db.Uuid
+  staffId String? @map("staff_id") @db.Uuid
+
+  title String
+  body  String
+
+  /// Ordering is the clinic's, not alphabetical: the reply used twenty times a
+  /// day belongs at the top whatever its first letter is.
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([staffId, sortOrder])
+  @@map("quick_replies")
+}
+
 model AccessWindow {
   id        String  @id @default(uuid(7)) @db.Uuid
   staffId   String? @map("staff_id") @db.Uuid

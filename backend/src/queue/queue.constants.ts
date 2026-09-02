@@ -7,6 +7,7 @@
  */
 export const QUEUES = {
   documents: 'documents',
+  messaging: 'messaging',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -24,6 +25,13 @@ export const JOBS = {
 
   /** Reads a document and files candidate lab values for a human to confirm. */
   documentOcr: 'document-ocr',
+
+  /**
+   * Releases messages held until the clinic's access window opens. Without it
+   * the queue would hold and never let go: a message written at 3am would stay
+   * invisible until someone happened to send another one.
+   */
+  messageRelease: 'message-release',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

@@ -433,7 +433,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T3.6 Komplikasyon bildirimi akışı ([KOMPLIKASYON-BILDIRIMI](KOMPLIKASYON-BILDIRIMI.md)) — bildirim, klinisyen kuyruğu, yanıt süresi ölçümü; push bildirimi T4.2'de
 
 ### FAZ 4 — İletişim ve Bildirim
-- [ ] T4.1 Mesajlaşma (WS) + medya + sesli mesaj + erişim penceresi
+- [ ] T4.1 Mesajlaşma (WS) + medya + sesli mesaj + erişim penceresi ([MESAJLASMA](MESAJLASMA.md)) — mesajlaşma, WebSocket, medya/ses eki, erişim penceresi, okundu bilgisi, hazır yanıtlar **tamam**; §M3'ün istediği **sesli mesaj transkripti ve çift yönlü çeviri** AI katmanına (T5.1) bağlı, alanlar hazır ve boş
 - [ ] T4.2 Push altyapısı (APNs/FCM) + SMS/e-posta fallback + tercih ekranı
 - [ ] T4.3 Zengin/aksiyonlu bildirimler (iOS + Android)
 - [ ] T4.4 Zamanlayıcı: kontrol takvimi (D1/H1/M1/M2/M3/M6/Y1) otomatik üretimi

@@ -198,3 +198,18 @@
 
 "common.send" = "Gönder";
 "common.minutesShort" = "dk";
+
+/* Mesajlaşma (Şartname M3, T4.1) */
+"message.compose" = "Mesajınız";
+"message.loadOlder" = "Daha eski mesajlar";
+"message.typing" = "Yazıyor…";
+"message.templates" = "Hazır yanıtlar";
+"message.attachment" = "Ek dosya";
+"message.clinicClosed" = "Klinik şu anda mesaj kutusunu kapalı tutuyor. Mesajınız sıraya alınacak.";
+"message.queuedUntil" = "Mesajınız sıraya alınacak, iletim:";
+
+"message.status.QUEUED" = "Sırada";
+"message.status.SENT" = "Gönderildi";
+"message.status.DELIVERED" = "İletildi";
+"message.status.READ" = "Okundu";
+"message.status.FAILED" = "Gönderilemedi";

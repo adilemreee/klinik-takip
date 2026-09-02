@@ -198,3 +198,18 @@
 
 "common.send" = "Send";
 "common.minutesShort" = "min";
+
+/* Messaging (spec M3, T4.1) */
+"message.compose" = "Your message";
+"message.loadOlder" = "Older messages";
+"message.typing" = "Typing…";
+"message.templates" = "Quick replies";
+"message.attachment" = "Attachment";
+"message.clinicClosed" = "The clinic's inbox is closed right now. Your message will be queued.";
+"message.queuedUntil" = "Your message will be queued and sent at";
+
+"message.status.QUEUED" = "Queued";
+"message.status.SENT" = "Sent";
+"message.status.DELIVERED" = "Delivered";
+"message.status.READ" = "Read";
+"message.status.FAILED" = "Not sent";

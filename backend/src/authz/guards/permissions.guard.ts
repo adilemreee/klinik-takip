@@ -1,7 +1,10 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { RequestWithUser } from '../../auth/decorators/current-user.decorator';
-import { PERMISSIONS_KEY } from '../decorators/require-permissions.decorator';
+import {
+  ANY_PERMISSION_KEY,
+  PERMISSIONS_KEY,
+} from '../decorators/require-permissions.decorator';
 import { PermissionsService } from '../permissions.service';
 
 /**
@@ -24,7 +27,12 @@ export class PermissionsGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (!required?.length) {
+    const anyOf = this.reflector.getAllAndOverride<string[]>(ANY_PERMISSION_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (!required?.length && !anyOf?.length) {
       return true;
     }
 
@@ -36,12 +44,17 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const held = await this.permissions.getEffectivePermissions(user.id, user.role);
-    const missing = required.filter((permission) => !held.has(permission));
+
+    // Names the permission rather than the data: telling the caller which
+    // record they were denied would itself leak that the record exists.
+    const missing = (required ?? []).filter((permission) => !held.has(permission));
 
     if (missing.length > 0) {
-      // Names the permission rather than the data: telling the caller which
-      // record they were denied would itself leak that the record exists.
       throw new ForbiddenException(`Missing permission: ${missing.join(', ')}`);
+    }
+
+    if (anyOf?.length && !anyOf.some((permission) => held.has(permission))) {
+      throw new ForbiddenException(`Missing permission: one of ${anyOf.join(', ')}`);
     }
 
     return true;

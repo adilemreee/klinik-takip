@@ -1787,6 +1787,189 @@
           }
         }
       ]
+    },
+    {
+      "name": "complications",
+      "item": [
+        {
+          "name": "Your reports and the clinic's replies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/complications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "complications"
+              ]
+            },
+            "description": "Your reports and the clinic's replies"
+          }
+        },
+        {
+          "name": "Report something wrong, with photos already uploaded",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/complications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "complications"
+              ]
+            },
+            "description": "Report something wrong, with photos already uploaded",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"\",\n  \"bodyArea\": \"\",\n  \"photoIds\": [\n    \"\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Reports still waiting, longest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/complications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "complications"
+              ],
+              "query": [
+                {
+                  "key": "includeResolved",
+                  "value": "",
+                  "description": "Include reports already resolved",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Reports still waiting, longest first"
+          }
+        },
+        {
+          "name": "Answer a report; this is what the response time measures",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/complications/:complicationId/acknowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "complications",
+                ":complicationId",
+                "acknowledge"
+              ],
+              "variable": [
+                {
+                  "key": "complicationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Answer a report; this is what the response time measures",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Close a report",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/complications/:complicationId/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "complications",
+                ":complicationId",
+                "resolve"
+              ],
+              "variable": [
+                {
+                  "key": "complicationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Close a report",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "A patient's reports, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/complications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "complications"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's reports, newest first"
+          }
+        }
+      ]
     }
   ]
 }

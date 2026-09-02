@@ -138,6 +138,7 @@ describe('the published API contract', () => {
       expect(collection.item.map((folder) => folder.name).sort()).toEqual([
         'audit',
         'auth',
+        'complications',
         'documents',
         'health',
         'lab',

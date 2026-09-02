@@ -173,3 +173,28 @@
 "photo.category.AFTER" = "After";
 "photo.category.COMPLICATION" = "Complication";
 "photo.category.WOUND" = "Wound";
+
+/* Complication reports (spec M7, T3.6) */
+"complication.reportTitle" = "Report a problem";
+"complication.reportHint" = "Describe what is wrong. If this is an emergency, use the emergency button.";
+"complication.whatIsWrong" = "What happened?";
+"complication.bodyArea" = "Body area (optional)";
+"complication.send" = "Send";
+"complication.awaitingReply" = "The clinic has not replied yet.";
+"complication.queueEmpty" = "No reports waiting.";
+"complication.noBodyArea" = "No body area given";
+"complication.answer" = "Reply";
+"complication.resolve" = "Close";
+"complication.yourAnswer" = "Your reply";
+"complication.answered" = "Reply";
+"complication.waiting" = "Waiting";
+"complication.respondedIn" = "Answered in";
+"complication.overdueCount" = "Waiting a long time";
+"complication.photoCount" = "photo(s)";
+
+"complication.status.REPORTED" = "Reported";
+"complication.status.ACKNOWLEDGED" = "Answered";
+"complication.status.RESOLVED" = "Closed";
+
+"common.send" = "Send";
+"common.minutesShort" = "min";

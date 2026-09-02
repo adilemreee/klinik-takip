@@ -280,6 +280,7 @@ model Patient {
   measurements      Measurement[]
   documents         Document[]
   uploadSessions    UploadSession[]
+  complications     Complication[]
   labResults        LabResult[]
   photos            Photo[]
   conversations     Conversation[]
@@ -581,13 +582,17 @@ model Photo {
   /// (spec M7). Without a linked consent the photo is clinical-use only.
   consentId String? @map("consent_id") @db.Uuid
 
+  /// Set when the photo was attached to a complication report (spec M7).
+  complicationId String? @map("complication_id") @db.Uuid
+
   uploadedById String?   @map("uploaded_by_id") @db.Uuid
   note         String?
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
 
-  patient Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  consent Consent? @relation(fields: [consentId], references: [id], onDelete: SetNull)
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  consent      Consent?      @relation(fields: [consentId], references: [id], onDelete: SetNull)
+  complication Complication? @relation(fields: [complicationId], references: [id], onDelete: SetNull)
 
   /// The before/after gallery groups by body area and orders by time (M7).
   @@index([patientId, category, takenAt])
@@ -1155,6 +1160,52 @@ model AiReport {
   @@index([patientId, generatedAt])
   @@index([riskLevel, reviewedAt])
   @@map("ai_reports")
+}
+
+enum ComplicationStatus {
+  REPORTED
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+/// A complication a patient reports themselves (spec M7).
+///
+/// Distinct from an emergency: this is not the panic button, it is "something
+/// looks wrong with my wound". It goes straight to a clinician rather than
+/// through the message queue, and how long it waited is part of the record —
+/// the spec asks for the response time to be measured, and a number nobody
+/// stores is a number nobody measures.
+model Complication {
+  id        String              @id @default(uuid(7)) @db.Uuid
+  patientId String              @map("patient_id") @db.Uuid
+  status    ComplicationStatus  @default(REPORTED)
+
+  /// The patient's own words. Required: a photo with no description leaves the
+  /// clinician guessing what they are being asked to look at.
+  note     String
+  bodyArea String? @map("body_area")
+
+  reportedById String?  @map("reported_by_id") @db.Uuid
+  reportedAt   DateTime @default(now()) @map("reported_at") @db.Timestamptz
+
+  /// When a clinician first answered, and what they said. The gap between this
+  /// and reportedAt is the response time.
+  acknowledgedById String?   @map("acknowledged_by_id") @db.Uuid
+  acknowledgedAt   DateTime? @map("acknowledged_at") @db.Timestamptz
+  firstResponse    String?   @map("first_response")
+
+  resolvedById String?   @map("resolved_by_id") @db.Uuid
+  resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz
+  resolution   String?
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  photos  Photo[]
+
+  /// "What is still waiting?" is the question this table is read with, and it
+  /// is asked oldest-first.
+  @@index([status, reportedAt])
+  @@index([patientId, reportedAt])
+  @@map("complications")
 }
 
 enum EmergencyStatus {

@@ -173,3 +173,28 @@
 "photo.category.AFTER" = "Sonrası";
 "photo.category.COMPLICATION" = "Komplikasyon";
 "photo.category.WOUND" = "Yara";
+
+/* Komplikasyon bildirimi (Şartname M7, T3.6) */
+"complication.reportTitle" = "Bir sorun bildir";
+"complication.reportHint" = "Neyin ters gittiğini yazın. Acil bir durumdaysanız acil butonunu kullanın.";
+"complication.whatIsWrong" = "Ne oldu?";
+"complication.bodyArea" = "Vücut bölgesi (isteğe bağlı)";
+"complication.send" = "Gönder";
+"complication.awaitingReply" = "Klinik henüz yanıtlamadı.";
+"complication.queueEmpty" = "Bekleyen bildirim yok.";
+"complication.noBodyArea" = "Bölge belirtilmemiş";
+"complication.answer" = "Yanıtla";
+"complication.resolve" = "Kapat";
+"complication.yourAnswer" = "Yanıtınız";
+"complication.answered" = "Yanıt";
+"complication.waiting" = "Bekliyor";
+"complication.respondedIn" = "Yanıtlandı";
+"complication.overdueCount" = "Uzun süredir bekleyen";
+"complication.photoCount" = "fotoğraf";
+
+"complication.status.REPORTED" = "Bildirildi";
+"complication.status.ACKNOWLEDGED" = "Yanıtlandı";
+"complication.status.RESOLVED" = "Kapatıldı";
+
+"common.send" = "Gönder";
+"common.minutesShort" = "dk";

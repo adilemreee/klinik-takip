@@ -277,4 +277,12 @@
     <string name="sessions_sign_out">Çıkış yap</string>
     <string name="sessions_sign_out_everywhere">Tüm cihazlardan çık</string>
     <string name="sessions_title">Cihazlarım</string>
+    <string name="triage_flagged_by_rules">Anahtar kelime taraması işaretledi</string>
+    <string name="triage_level_emergency">Çok acil</string>
+    <string name="triage_level_info">Bilgi</string>
+    <string name="triage_level_routine">Rutin</string>
+    <string name="triage_level_urgent">Acil</string>
+    <string name="triage_released_from_window">Mesaj kutusu saatleri beklenmeden iletildi</string>
+    <string name="triage_summary_disclaimer">Bu özet yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez. Hastanın kendi mesajı aşağıdadır.</string>
+    <string name="triage_summary_title">Yapay zeka özeti</string>
 </resources>

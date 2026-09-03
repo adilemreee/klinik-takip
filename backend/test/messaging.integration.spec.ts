@@ -156,6 +156,7 @@ describe('messaging', () => {
       await files.remove('documents', key).catch(() => undefined);
     }
 
+    await prisma.job.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.message.deleteMany({
       where: { conversation: { patientId: { in: patientIds } } },
     });
@@ -178,6 +179,42 @@ describe('messaging', () => {
 
       expect(sent.message.status).toBe(MessageStatus.SENT);
       expect(sent.queuedUntil).toBeNull();
+    });
+
+    /**
+     * Triage is recorded in the same transaction as the message, so a job that
+     * exists at all is one whose message definitely committed — and a message
+     * that committed always has a job waiting to read it.
+     */
+    it('queues a patient message for triage, in the same transaction', async () => {
+      const patient = await actorFor(Role.PATIENT);
+      const patientId = await makePatient(patient.userId);
+      const conversationId = await conversationFor(patientId);
+
+      const response = await send(conversationId, patient.token, {
+        body: 'Yarada akıntı var',
+      }).expect(201);
+      const sent = response.body as Sent;
+
+      const job = await prisma.job.findFirst({
+        where: { entityType: 'messages', entityId: sent.message.id },
+      });
+
+      expect(job?.name).toBe('message-triage');
+      expect(job?.patientId).toBe(patientId);
+    });
+
+    /** A clinician's own words do not go into a model for no clinical gain. */
+    it('does not queue triage for a message the clinic wrote', async () => {
+      const patientId = await makePatient();
+      const conversationId = await conversationFor(patientId);
+
+      const response = await send(conversationId, doctor.token, { body: 'Geçmiş olsun' }).expect(201);
+      const sent = response.body as Sent;
+
+      expect(
+        await prisma.job.count({ where: { entityType: 'messages', entityId: sent.message.id } }),
+      ).toBe(0);
     });
 
     it('refuses an empty message', async () => {

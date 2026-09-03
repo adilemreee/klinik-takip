@@ -34,10 +34,30 @@ public struct ChatMessage: Decodable, Sendable, Equatable, Identifiable {
     /// When a held message will be delivered.
     public let queuedUntil: Date?
     public let readAt: Date?
+    /// What the clinic acted on: the higher of the keyword screen and the AI.
+    public let triageLevel: TriageLevel?
+    /// Ids of the red flags that fired, never the phrases they matched.
+    public let triageFlags: [String]
+    /// The AI's own reading. It can raise `triageLevel`, never lower it.
+    public let aiTriageLevel: TriageLevel?
+    /// Three lines for the clinician. Rendered beside the message, never instead of it.
+    public let aiSummary: String?
     public let createdAt: Date
 
     public var isQueued: Bool { status == .queued }
     public var hasAttachment: Bool { type == .file || type == .image || type == .audio }
+
+    /// Whether this message should be marked out in a clinician's list.
+    public var needsAttention: Bool { triageLevel == .urgent || triageLevel == .emergency }
+}
+
+public enum TriageLevel: String, Decodable, Sendable, Equatable {
+    case info = "INFO"
+    case routine = "ROUTINE"
+    case urgent = "URGENT"
+    case emergency = "EMERGENCY"
+
+    public var localizedName: String { L10n.string("triage.level.\(rawValue)") }
 }
 
 public struct MessagePage: Decodable, Sendable {

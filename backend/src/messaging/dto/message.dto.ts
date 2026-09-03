@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MessageStatus, MessageType } from '@prisma/client';
+import { MessageStatus, MessageType, TriageLevel } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 
@@ -69,6 +69,32 @@ export class MessageDto {
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   readAt!: Date | null;
+
+  @ApiPropertyOptional({
+    enum: TriageLevel,
+    nullable: true,
+    description: 'What the clinic acted on: the higher of the keyword screen and the AI reading',
+  })
+  triageLevel!: TriageLevel | null;
+
+  @ApiProperty({
+    type: [String],
+    description: 'Ids of the red flags that fired, never the phrases they matched',
+  })
+  triageFlags!: string[];
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: "The AI's own reading. Advisory: it can raise triageLevel, never lower it",
+    enum: TriageLevel,
+  })
+  aiTriageLevel!: TriageLevel | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'Three lines for the clinician (complaint / measurements / duration). Shown beside the message, never instead of it',
+  })
+  aiSummary!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: Date;

@@ -277,4 +277,12 @@
     <string name="sessions_sign_out">Sign out</string>
     <string name="sessions_sign_out_everywhere">Sign out everywhere</string>
     <string name="sessions_title">My devices</string>
+    <string name="triage_flagged_by_rules">Flagged by the keyword screen</string>
+    <string name="triage_level_emergency">Emergency</string>
+    <string name="triage_level_info">Information</string>
+    <string name="triage_level_routine">Routine</string>
+    <string name="triage_level_urgent">Urgent</string>
+    <string name="triage_released_from_window">Delivered without waiting for messaging hours</string>
+    <string name="triage_summary_disclaimer">This summary was produced by AI and is not a medical diagnosis. The patient\'s own message is below.</string>
+    <string name="triage_summary_title">AI summary</string>
 </resources>

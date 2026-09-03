@@ -677,7 +677,18 @@ model Message {
   mediaKey   String? @map("media_key")
   transcript String?
 
-  /// Filled by the AI layer. Advisory only — the doctor decides (spec section 14).
+  /// What the clinic actually acted on: the highest of the keyword screen and
+  /// the AI's reading (spec M4). Recorded separately from the AI's own answer
+  /// because the two are different claims — one is a decision, the other is
+  /// advice that may have been overruled upward or ignored entirely.
+  triageLevel TriageLevel? @map("triage_level")
+
+  /// Ids of the red flags that fired, never the patient's own words. Kept so a
+  /// clinic can tune the list against what it actually caught and missed.
+  triageFlags String[] @map("triage_flags")
+
+  /// Filled by the AI layer. Advisory only — the doctor decides (spec section 14),
+  /// and it can only ever raise `triageLevel`, never lower it.
   aiSummary     String?      @map("ai_summary")
   aiTriageLevel TriageLevel? @map("ai_triage_level")
 
@@ -693,7 +704,8 @@ model Message {
   /// Message list: one conversation, newest last, cursor-paginated.
   @@index([conversationId, createdAt])
   @@index([status, queuedUntil])
-  @@index([aiTriageLevel, createdAt])
+  /// The clinician's queue reads "what is urgent and unanswered".
+  @@index([triageLevel, createdAt])
   @@map("messages")
 }
 

@@ -33,9 +33,32 @@ data class ChatMessage(
     /** When a held message will be delivered. */
     val queuedUntil: String? = null,
     val readAt: String? = null,
+    /** What the clinic acted on: the higher of the keyword screen and the AI. */
+    val triageLevel: TriageLevel? = null,
+    /** Ids of the red flags that fired, never the phrases they matched. */
+    val triageFlags: List<String> = emptyList(),
+    /** The AI's own reading. It can raise [triageLevel], never lower it. */
+    val aiTriageLevel: TriageLevel? = null,
+    /** Three lines for the clinician. Rendered beside the message, never instead of it. */
+    val aiSummary: String? = null,
     val createdAt: String,
 ) {
     val isQueued: Boolean get() = status == MessageStatus.QUEUED
+
+    /** Whether this message should be marked out in a clinician's list. */
+    val needsAttention: Boolean
+        get() = triageLevel == TriageLevel.URGENT || triageLevel == TriageLevel.EMERGENCY
+}
+
+@Serializable
+enum class TriageLevel {
+    INFO,
+    ROUTINE,
+    URGENT,
+    EMERGENCY,
+    ;
+
+    val stringKey: String get() = "triage_level_${name.lowercase()}"
 }
 
 @Serializable

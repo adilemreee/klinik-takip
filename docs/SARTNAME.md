@@ -442,7 +442,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 
 ### FAZ 5 — Yapay Zeka Katmanı
 - [x] T5.1 `AIProvider` soyutlaması, maliyet/token loglama, retry politikası ([AI-KATMANI](AI-KATMANI.md)) — Anthropic + OpenAI sağlayıcıları, tek kapı (`AIService`), §14.5 sıfır saklama kapısı (varsayılan **kapalı**), kimliksizleştirme + giden istemde kimlik taraması (ad/dosya no/telefon/e-posta/TCKN sağlaması), aylık bütçe, retry sınıflandırması + jitter, zaman aşımı ve `ai_jobs`'ta token/maliyet/model kaydı. **Fiyat tablosu bilerek depoda değil** — operatör yapılandırması
-- [ ] T5.2 Mesaj özetleme + triyaj sınıflandırma
+- [x] T5.2 Mesaj özetleme + triyaj sınıflandırma ([TRIYAJ](TRIYAJ.md)) — deterministik kırmızı bayrak taraması (AI kapalıyken de çalışır), üç satırlık klinik özet, **§14.3 taban kuralı** (model yükseltir, asla düşürmez), erişim penceresini delen acil mesaj, susturulamayan bildirim ve `triage_level` / `ai_triage_level` ayrı kaydı. **Kırmızı bayrak listesi klinik gözden geçirme bekliyor**; tarama yalnız TR+EN
 - [ ] T5.3 SSS chatbot + RAG (protokol dokümanı yükleme, pgvector)
 - [ ] T5.4 Lab yorumlama (hasta dili + doktor dili çift çıktı)
 - [ ] T5.5 Fotoğraf ön değerlendirme flag'i

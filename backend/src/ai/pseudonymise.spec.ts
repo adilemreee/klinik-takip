@@ -1,4 +1,10 @@
-import { ageFrom, findLeaks, looksLikeTurkishNationalId, pseudonymise } from './pseudonymise';
+import {
+  ageFrom,
+  findLeaks,
+  looksLikeTurkishNationalId,
+  pseudonymise,
+  redact,
+} from './pseudonymise';
 
 const now = new Date('2026-03-04T12:00:00.000Z');
 
@@ -149,5 +155,79 @@ describe('the national identity checksum', () => {
   it('rejects a leading zero and a wrong length', () => {
     expect(looksLikeTurkishNationalId('01000000146')).toBe(false);
     expect(looksLikeTurkishNationalId('1000000014')).toBe(false);
+  });
+});
+
+/**
+ * Taking the identifiers out instead of refusing the prompt.
+ *
+ * People sign their messages. Refusing every one that says "Ben Ayşe" would
+ * leave exactly those messages untriaged, which is the opposite of safe.
+ */
+describe('scrubbing a prompt', () => {
+  const patient = {
+    names: ['Ayşe', 'Yılmaz'],
+    mrn: 'MRN-90210',
+    phone: '+90 532 111 22 33',
+    email: 'ayse@example.com',
+  };
+
+  it('replaces a name with a placeholder a model can read', () => {
+    const { text, redacted } = redact('Ben Ayşe, dün akşam ateşlendim.', patient);
+
+    expect(text).toBe('Ben [ad], dün akşam ateşlendim.');
+    expect(redacted).toEqual(['name']);
+  });
+
+  it('leaves a clean message untouched', () => {
+    const message = '45 yaşında kadın, ameliyat sonrası 9. gün.';
+
+    expect(redact(message, patient)).toEqual({ text: message, redacted: [] });
+  });
+
+  it('replaces every occurrence, not just the first', () => {
+    const { text } = redact('Ayşe geldi. Ayşe gitti.', patient);
+
+    expect(text).toBe('[ad] geldi. [ad] gitti.');
+  });
+
+  it('scrubs a phone number however it was written', () => {
+    expect(redact('Beni 0532 111 22 33 numarasından arayın', patient).text).toBe(
+      'Beni [telefon] numarasından arayın',
+    );
+  });
+
+  it('scrubs a national identity number', () => {
+    expect(redact('TC 10000000146', {}).text).toBe('TC [kimlik-no]');
+  });
+
+  /**
+   * An e-mail address contains the name it was made from, so the two spans
+   * overlap. Replacing both would cut the placeholder in half.
+   */
+  it('does not cut one placeholder in half with another', () => {
+    const { text } = redact('Yazın: ayse@example.com', patient);
+
+    expect(text).toBe('Yazın: [e-posta]');
+  });
+
+  it('scrubs a name written in capitals', () => {
+    expect(redact('HASTA AYŞE YILMAZ ARADI', patient).text).toBe('HASTA [ad] [ad] ARADI');
+  });
+
+  /**
+   * The point of the pair: the gate still refuses a prompt carrying
+   * identifiers, so what the scrubber missed is what the check now catches.
+   */
+  it('leaves nothing for the leak check to find', () => {
+    const messy = 'Ben Ayşe Yılmaz, dosyam MRN-90210, telefonum 0532 111 22 33, TC 10000000146.';
+
+    expect(findLeaks(redact(messy, patient).text, patient)).toEqual([]);
+  });
+
+  it('keeps the surrounding text exactly as it was', () => {
+    const { text } = redact('Ateşim 38.5, Ayşe.', patient);
+
+    expect(text).toBe('Ateşim 38.5, [ad].');
   });
 });

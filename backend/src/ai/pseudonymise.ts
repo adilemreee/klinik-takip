@@ -52,6 +52,22 @@ export interface SafePatient {
 export type LeakKind = 'name' | 'mrn' | 'phone' | 'email' | 'national-id';
 
 /**
+ * What a redacted identifier is replaced with.
+ *
+ * Kept as words rather than blanked out: a model reading "[ad] dün akşam
+ * ateşlendi" understands a person was named there, where "*** dün akşam" reads
+ * as corruption. Explained in the system prompt so the token is never mistaken
+ * for something the patient wrote.
+ */
+const PLACEHOLDERS: Record<LeakKind, string> = {
+  name: '[ad]',
+  mrn: '[dosya-no]',
+  phone: '[telefon]',
+  email: '[e-posta]',
+  'national-id': '[kimlik-no]',
+};
+
+/**
  * Deliberately carries the *kind* and never the value.
  *
  * A refusal gets logged, and a log line naming the identifier it refused to
@@ -101,15 +117,34 @@ export function pseudonymise(patient: PatientLike, ref: string, now = new Date()
 }
 
 /**
- * Case folding that survives Turkish.
+ * Case folding that survives Turkish, one code unit at a time.
  *
  * `toLowerCase()` under a Turkish locale maps I to ı and İ to i, so "AYŞE" and
  * "Ayşe" fold to different strings and a name written in capitals slips past.
- * Folding the whole dotted/dotless family to `i` first, then lowercasing
- * invariantly, makes every spelling meet.
+ * Folding the whole dotted/dotless family to `i` first, then lowercasing,
+ * makes every spelling meet.
+ *
+ * Done per code unit, and any character whose lowercase is not a single unit
+ * left alone, because the folded string's indices are used to cut the original
+ * apart for redaction. A fold that changed the length by one would move every
+ * cut after it.
  */
 function fold(value: string): string {
-  return value.replace(/[İIıi]/g, 'i').toLowerCase();
+  let folded = '';
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index]!;
+
+    if ('İIıi'.includes(character)) {
+      folded += 'i';
+      continue;
+    }
+
+    const lower = character.toLowerCase();
+    folded += lower.length === 1 ? lower : character;
+  }
+
+  return folded;
 }
 
 function escapeRegExp(value: string): string {
@@ -119,17 +154,6 @@ function escapeRegExp(value: string): string {
 /** Digits only, so +90 555 111 22 33 and 05551112233 compare equal. */
 function digitsOf(value: string): string {
   return value.replace(/\D/g, '');
-}
-
-/**
- * Runs of digits as they appear in text, separators allowed inside them.
- *
- * Extracted as runs rather than by stripping every non-digit from the whole
- * text: flattening the document would let a lab value and a date sitting on
- * consecutive lines join into a number that matches a phone by accident.
- */
-function digitRuns(text: string): string[] {
-  return (text.match(/[0-9][0-9()\-.\s+]{5,}[0-9]|[0-9]{6,}/g) ?? []).map(digitsOf);
 }
 
 /**
@@ -154,16 +178,23 @@ export function looksLikeTurkishNationalId(digits: string): boolean {
   return firstTen % 10 === d[10];
 }
 
+interface Span {
+  kind: LeakKind;
+  start: number;
+  end: number;
+}
+
 /**
- * Everything identifying found in a finished prompt.
+ * Where every identifier sits in the text.
  *
- * Returns all of them rather than the first: a caller fixing one leak should
- * see the others in the same refusal instead of discovering them one deploy at
- * a time.
+ * One implementation behind both `findLeaks` and `redact`, so what the check
+ * refuses is exactly what the scrubber removes. Two matchers would drift, and
+ * the direction they drift in is a prompt that passes the check with something
+ * the scrubber missed.
  */
-export function findLeaks(text: string, identifiers: Identifiers = {}): Leak[] {
-  const leaks: Leak[] = [];
+function spansOf(text: string, identifiers: Identifiers): Span[] {
   const folded = fold(text);
+  const spans: Span[] = [];
 
   for (const name of identifiers.names ?? []) {
     const trimmed = (name ?? '').trim();
@@ -171,42 +202,127 @@ export function findLeaks(text: string, identifiers: Identifiers = {}): Leak[] {
 
     const pattern = new RegExp(
       `(?<![${LETTER_CLASS}])${escapeRegExp(fold(trimmed))}(?![${LETTER_CLASS}])`,
-      'u',
+      'gu',
     );
 
-    if (pattern.test(folded)) {
-      leaks.push({ kind: 'name' });
-      break;
+    for (const match of folded.matchAll(pattern)) {
+      spans.push({ kind: 'name', start: match.index, end: match.index + match[0].length });
     }
   }
 
-  const mrn = identifiers.mrn?.trim();
-  if (mrn && mrn.length >= 3 && folded.includes(fold(mrn))) {
-    leaks.push({ kind: 'mrn' });
-  }
+  for (const [kind, value] of [
+    ['mrn', identifiers.mrn],
+    ['email', identifiers.email],
+  ] as [LeakKind, string | null | undefined][]) {
+    const needle = fold((value ?? '').trim());
+    if (needle.length < 3) continue;
 
-  const email = identifiers.email?.trim();
-  if (email && folded.includes(fold(email))) {
-    leaks.push({ kind: 'email' });
+    let at = folded.indexOf(needle);
+    while (at !== -1) {
+      spans.push({ kind, start: at, end: at + needle.length });
+      at = folded.indexOf(needle, at + needle.length);
+    }
   }
-
-  const runs = digitRuns(text);
 
   const phone = digitsOf(identifiers.phone ?? '');
-  if (phone.length >= 7) {
-    // Compared on the last seven digits: the same line is written +90 532…,
-    // 0532… and 532… by three different people, and all three are the leak.
-    const tail = phone.slice(-7);
-    if (runs.some((run) => run.includes(tail))) {
-      leaks.push({ kind: 'phone' });
+  // Matched on the last seven digits: the same line is written +90 532…, 0532…
+  // and 532… by three different people, and all three are the leak.
+  const tail = phone.length >= 7 ? phone.slice(-7) : null;
+
+  for (const run of digitRuns(text)) {
+    if (tail !== null && run.digits.includes(tail)) {
+      spans.push({ kind: 'phone', start: run.start, end: run.end });
+      continue;
+    }
+
+    if (containsNationalId(run.digits)) {
+      spans.push({ kind: 'national-id', start: run.start, end: run.end });
     }
   }
 
-  if (runs.some((run) => containsNationalId(run))) {
-    leaks.push({ kind: 'national-id' });
+  return spans;
+}
+
+/**
+ * Everything identifying found in a finished prompt.
+ *
+ * Every kind at once rather than the first: a caller fixing one leak should see
+ * the others in the same refusal instead of discovering them one deploy at a
+ * time.
+ */
+export function findLeaks(text: string, identifiers: Identifiers = {}): Leak[] {
+  const kinds = new Set(spansOf(text, identifiers).map((span) => span.kind));
+
+  return [...kinds].map((kind) => ({ kind }));
+}
+
+export interface Redaction {
+  text: string;
+  /** Which kinds were removed. Kinds, never values — see `Leak`. */
+  redacted: LeakKind[];
+}
+
+/**
+ * Takes the identifiers out instead of refusing the prompt.
+ *
+ * The gate in `AIService` refuses a prompt that carries identifiers, which is
+ * right when the prompt was supposed to be built clean. It is wrong for a
+ * patient's own message: people sign their messages, and refusing every one
+ * that says "Ben Ayşe" would leave exactly those messages untriaged. So the
+ * text is scrubbed first and the gate then finds nothing — the check still
+ * runs, and it is now checking the scrubber.
+ */
+export function redact(text: string, identifiers: Identifiers = {}): Redaction {
+  const spans = spansOf(text, identifiers).sort(
+    (a, b) => a.start - b.start || b.end - b.start - (a.end - a.start),
+  );
+
+  // An e-mail address contains the name it was made from, so the spans overlap.
+  // Replacing both would cut the placeholder in half; the outermost match wins.
+  const kept: Span[] = [];
+  let consumedTo = -1;
+
+  for (const span of spans) {
+    if (span.start < consumedTo) continue;
+    kept.push(span);
+    consumedTo = span.end;
   }
 
-  return leaks;
+  let result = text;
+
+  // Back to front, so an earlier replacement cannot move a later index.
+  for (const span of [...kept].reverse()) {
+    result = result.slice(0, span.start) + PLACEHOLDERS[span.kind] + result.slice(span.end);
+  }
+
+  return { text: result, redacted: [...new Set(kept.map((span) => span.kind))] };
+}
+
+interface DigitRun {
+  digits: string;
+  start: number;
+  end: number;
+}
+
+/**
+ * Runs of digits as they appear in text, separators allowed inside them.
+ *
+ * Extracted as runs rather than by stripping every non-digit from the whole
+ * text: flattening the document would let a lab value and a date sitting on
+ * consecutive lines join into a number that matches a phone by accident.
+ */
+function digitRuns(text: string): DigitRun[] {
+  const runs: DigitRun[] = [];
+
+  for (const match of text.matchAll(/[0-9][0-9()\-.\s+]{5,}[0-9]|[0-9]{6,}/g)) {
+    runs.push({
+      digits: digitsOf(match[0]),
+      start: match.index,
+      end: match.index + match[0].length,
+    });
+  }
+
+  return runs;
 }
 
 /** A national id can sit inside a longer run of digits. */

@@ -13,6 +13,8 @@ import { followUpSweep } from './followup/followup.processor';
 import { FollowUpService } from './followup/followup.service';
 import { LabService } from './lab/lab.service';
 import { messageRelease } from './messaging/messaging.processor';
+import { messageTriage } from './triage/triage.processor';
+import { TriageService } from './triage/triage.service';
 import { notificationDelivery } from './notifications/notifications.processor';
 import { NotificationsService } from './notifications/notifications.service';
 import { MessagingService } from './messaging/messaging.service';
@@ -58,6 +60,7 @@ async function bootstrap(): Promise<void> {
   const followUp = app.get(FollowUpService);
   const appointments = app.get(AppointmentsService);
   const emergency = app.get(EmergencyService);
+  const triage = app.get(TriageService);
   const engine = app.get(TesseractEngine);
   const storage = app.get(StorageService);
   const config = app.get(ConfigService);
@@ -99,6 +102,16 @@ async function bootstrap(): Promise<void> {
     connection: queues.connection,
     prisma,
     concurrency: 1,
+  });
+
+  const triageWorker = runWorker({
+    queue: QUEUES.triage,
+    handlers: { [JOBS.messageTriage]: messageTriage(prisma, triage) },
+    connection: queues.connection,
+    prisma,
+    // Two at a time: these wait on a provider rather than on this process, and
+    // a queue of patient messages waiting to be read is the thing to avoid.
+    concurrency: 2,
   });
 
   await queues.schedule(QUEUES.documents, JOBS.uploadSweep, 60 * 60 * 1000);
@@ -146,6 +159,7 @@ async function bootstrap(): Promise<void> {
     clearInterval(depthTimer);
     await worker.close();
     await messagingWorker.close();
+    await triageWorker.close();
     await notificationWorker.close();
     await app.close();
   };
@@ -153,7 +167,10 @@ async function bootstrap(): Promise<void> {
   process.once('SIGTERM', () => void shutdown());
   process.once('SIGINT', () => void shutdown());
 
-  logger.log(`Worker started — consuming ${QUEUES.documents}, ${QUEUES.messaging} and ${QUEUES.notifications}`);
+  logger.log(
+    `Worker started — consuming ${QUEUES.documents}, ${QUEUES.messaging}, ` +
+      `${QUEUES.triage} and ${QUEUES.notifications}`,
+  );
 }
 
 void bootstrap();

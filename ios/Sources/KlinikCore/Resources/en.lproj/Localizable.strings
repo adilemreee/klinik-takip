@@ -337,3 +337,12 @@
 "emergency.status.ACKNOWLEDGED" = "Being handled";
 "emergency.status.RESOLVED" = "Closed";
 "emergency.status.FALSE_ALARM" = "False alarm";
+
+"triage.level.INFO" = "Information";
+"triage.level.ROUTINE" = "Routine";
+"triage.level.URGENT" = "Urgent";
+"triage.level.EMERGENCY" = "Emergency";
+"triage.summaryTitle" = "AI summary";
+"triage.summaryDisclaimer" = "This summary was produced by AI and is not a medical diagnosis. The patient's own message is below.";
+"triage.flaggedByRules" = "Flagged by the keyword screen";
+"triage.releasedFromWindow" = "Delivered without waiting for messaging hours";

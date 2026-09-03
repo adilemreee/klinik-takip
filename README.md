@@ -86,7 +86,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
 | Faz 3 — Klinik Modüller | 4 / 6 | T3.1, T3.2, T3.4, T3.6 tamam · T3.3 ve T3.5'te eksik olan tek şey **kamera katmanı** |
 | Faz 4 — İletişim ve Bildirim | 3 / 6 | T4.4, T4.5, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı |
-| Faz 5 — Yapay Zeka Katmanı | 1 / 7 | T5.1 tamam — sağlayıcı soyutlaması, kimlik sızıntı taraması, bütçe ve retry · katman sağlayıcı anahtarı olmadan **kapalı** ve her çağrıyı reddediyor |
+| Faz 5 — Yapay Zeka Katmanı | 2 / 7 | T5.1, T5.2 tamam · katman sağlayıcı anahtarı olmadan **kapalı**, ama triyajın kırmızı bayrak taraması AI'sız da çalışıyor |
 | Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
 | Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |
 
@@ -103,6 +103,7 @@ Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
 | Kalıcı yerel depo (GRDB / Room) | Senkronizasyon mantığı depodan bağımsız tasarlandı; kalıcılık ayrı bir iş. Yükleme oturumunun uygulama yeniden başlatılınca yaşaması da buna bağlı | T2.6 kalanı |
 | Cihaz katmanı: cihaz üstü OCR, belge tarama, fotoğraf overlay çekimi, APNs/FCM bildirim gösterimi, zengin bildirim eylemleri | Gerçek cihaz (ve push için sağlayıcı hesabı) gerektiriyor; sunucu tarafı hepsinde hazır | T3.3 + T3.5 + T4.2 + T4.3 kalanı |
 | AR (RTL), DE, RU çevirileri | §7 başlangıç setinde istiyor; altyapı hazır, çeviriler ve RTL yerleşimi yapılmadı | T2.7 |
+| Triyaj kırmızı bayrak listesi | **Klinikte:** hangi ifadelerin acil sayılacağı klinik içeriktir, bir klinisyen gözden geçirmeli. Ayrıca tarama yalnız TR+EN; DE/RU/AR yazan hasta yalnız AI geçişini alıyor (o da kapalıyken hiç) — her hâlükârda bir insana ulaşıyor | — |
 | AI sağlayıcı sözleşmesi (sıfır saklama / iş ortaklığı) | **Sizde:** §14.5 gereği; `AI_ZERO_RETENTION` kod tarafından doğrulanamaz, operatörün beyanıdır. Beyan yokken klinik istemler gönderilmiyor | — |
 | AI model fiyatları | **Sizde:** milyon token başına giriş/çıkış fiyatı yapılandırmadan geliyor; depoya konan bir tablo bir çeyrekte eskir ve yine de inanılır | — |
 | Acil numara tablosunun doğrulanması | **Klinikte:** ülke → acil numara eşlemesi operasyonel veridir, yetkili bir kaynağa karşı doğrulanmadı. Yanlış numara, kazanılmak istenen dakikayı harcar | — |

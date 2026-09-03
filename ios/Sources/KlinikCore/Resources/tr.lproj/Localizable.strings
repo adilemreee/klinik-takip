@@ -337,3 +337,12 @@
 "emergency.status.ACKNOWLEDGED" = "İlgileniliyor";
 "emergency.status.RESOLVED" = "Kapatıldı";
 "emergency.status.FALSE_ALARM" = "Yanlış alarm";
+
+"triage.level.INFO" = "Bilgi";
+"triage.level.ROUTINE" = "Rutin";
+"triage.level.URGENT" = "Acil";
+"triage.level.EMERGENCY" = "Çok acil";
+"triage.summaryTitle" = "Yapay zeka özeti";
+"triage.summaryDisclaimer" = "Bu özet yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez. Hastanın kendi mesajı aşağıdadır.";
+"triage.flaggedByRules" = "Anahtar kelime taraması işaretledi";
+"triage.releasedFromWindow" = "Mesaj kutusu saatleri beklenmeden iletildi";

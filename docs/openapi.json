@@ -9988,6 +9988,40 @@
             "format": "date-time",
             "nullable": true
           },
+          "triageLevel": {
+            "type": "string",
+            "enum": [
+              "INFO",
+              "ROUTINE",
+              "URGENT",
+              "EMERGENCY"
+            ],
+            "nullable": true,
+            "description": "What the clinic acted on: the higher of the keyword screen and the AI reading"
+          },
+          "triageFlags": {
+            "description": "Ids of the red flags that fired, never the phrases they matched",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "aiTriageLevel": {
+            "type": "string",
+            "nullable": true,
+            "description": "The AI's own reading. Advisory: it can raise triageLevel, never lower it",
+            "enum": [
+              "INFO",
+              "ROUTINE",
+              "URGENT",
+              "EMERGENCY"
+            ]
+          },
+          "aiSummary": {
+            "type": "object",
+            "nullable": true,
+            "description": "Three lines for the clinician (complaint / measurements / duration). Shown beside the message, never instead of it"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -10003,6 +10037,7 @@
           "status",
           "queuedUntil",
           "readAt",
+          "triageFlags",
           "createdAt"
         ]
       },
@@ -10235,6 +10270,7 @@
               "appointment.reminder",
               "document.missing",
               "complication.answered",
+              "message.urgent",
               "emergency.triggered",
               "emergency.escalated",
               "emergency.acknowledged"

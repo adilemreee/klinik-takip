@@ -17,6 +17,13 @@ export const NOTIFICATION_TYPES = {
   documentMissing: 'document.missing',
   complicationAnswered: 'complication.answered',
 
+  /**
+   * A patient message the triage put above routine (spec M4). Not the panic
+   * button — nobody pressed anything — but it must not wait for the access
+   * window to open.
+   */
+  messageUrgent: 'message.urgent',
+
   /** The panic button, on its way to whoever is meant to answer it (spec M8). */
   emergencyTriggered: 'emergency.triggered',
   /** The same alarm, one rung further up, because nobody answered the last. */
@@ -134,6 +141,22 @@ const TEMPLATES: Record<NotificationType, Template> = {
     urgent: false,
     mandatory: false,
     fallback: [],
+  },
+  'message.urgent': {
+    title: { tr: 'Acil olabilecek mesaj', en: 'Message that may be urgent' },
+    body: {
+      tr: 'Bir hasta mesajı acil olarak değerlendirildi. Açıp okuyun.',
+      en: 'A patient message was triaged as urgent. Open and read it.',
+    },
+    actions: [
+      { id: 'open-chat', labelKey: 'notification.action.openChat' },
+      { id: 'call-patient', labelKey: 'notification.action.callPatient' },
+    ],
+    urgent: true,
+    // Not silenceable, for the same reason the emergency alerts are not: the
+    // whole value of triaging a message upward is that somebody is told now.
+    mandatory: true,
+    fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
   },
   'emergency.triggered': {
     title: { tr: 'ACİL DURUM', en: 'EMERGENCY' },

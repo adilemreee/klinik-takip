@@ -47,12 +47,17 @@ private func message(
     body: String = "Merhaba",
     status: String = "SENT",
     sender: String = "\"u1\"",
-    queuedUntil: String = "null"
+    queuedUntil: String = "null",
+    triageLevel: String = "null",
+    triageFlags: String = "[]",
+    aiSummary: String = "null"
 ) -> String {
     """
     {"id":"\(id)","conversationId":"c1","senderId":\(sender),"type":"TEXT",
      "body":"\(body)","transcript":null,"status":"\(status)",
      "queuedUntil":\(queuedUntil),"readAt":null,
+     "triageLevel":\(triageLevel),"triageFlags":\(triageFlags),
+     "aiTriageLevel":null,"aiSummary":\(aiSummary),
      "createdAt":"2026-03-01T08:00:00.000Z"}
     """
 }
@@ -342,5 +347,57 @@ final class ChatModelTests: XCTestCase {
         await chat.load()
         let hasOlder = await chat.currentState().hasOlder
         XCTAssertTrue(hasOlder)
+    }
+}
+
+/**
+ * Triage, as the chat screen sees it (spec M4, M5).
+ *
+ * The client's only job here is to render what the server decided and to keep
+ * the summary next to the message rather than in place of it.
+ */
+final class TriageRenderingTests: XCTestCase {
+    private func decode(_ json: String) throws -> ChatMessage {
+        try JSONDecoder.klinik.decode(ChatMessage.self, from: Data(json.utf8))
+    }
+
+    func testMarksAnUrgentMessageForAttention() throws {
+        let urgent = try decode(
+            message("m1", triageLevel: "\"URGENT\"", triageFlags: "[\"fever\"]")
+        )
+
+        XCTAssertTrue(urgent.needsAttention)
+        XCTAssertEqual(urgent.triageFlags, ["fever"])
+    }
+
+    func testLeavesAnOrdinaryMessageAlone() throws {
+        XCTAssertFalse(try decode(message("m2", triageLevel: "\"ROUTINE\"")).needsAttention)
+        XCTAssertFalse(try decode(message("m3")).needsAttention)
+    }
+
+    /**
+     * The summary never replaces what the patient wrote. A clinician reading a
+     * three-line paraphrase of a message they cannot see is reading the model,
+     * not the patient.
+     */
+    func testKeepsTheSummaryBesideTheMessageAndNotInsteadOfIt() throws {
+        let summarised = try decode(
+            message(
+                "m4",
+                body: "Ateşim 38.5 ve yarada akıntı var",
+                triageLevel: "\"URGENT\"",
+                aiSummary: "\"Şikayet: yarada akıntı\""
+            )
+        )
+
+        XCTAssertEqual(summarised.body, "Ateşim 38.5 ve yarada akıntı var")
+        XCTAssertEqual(summarised.aiSummary, "Şikayet: yarada akıntı")
+    }
+
+    func testHasAWordForEveryLevel() {
+        for level in [TriageLevel.info, .routine, .urgent, .emergency] {
+            XCTAssertFalse(level.localizedName.isEmpty)
+            XCTAssertNotEqual(level.localizedName, "triage.level.\(level.rawValue)")
+        }
     }
 }

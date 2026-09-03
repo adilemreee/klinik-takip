@@ -9,6 +9,14 @@ export const QUEUES = {
   documents: 'documents',
   messaging: 'messaging',
   notifications: 'notifications',
+
+  /**
+   * Its own queue, for the same reason the notifications queue is: the
+   * messaging worker runs one job at a time so a released message goes at the
+   * clock time the patient was promised, and an AI call that takes a minute
+   * sitting in front of it would break exactly that promise.
+   */
+  triage: 'triage',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -55,6 +63,12 @@ export const JOBS = {
    * only job here whose lateness is measured in seconds rather than minutes.
    */
   emergencyEscalation: 'emergency-escalation',
+
+  /**
+   * Summarises and triages a patient message (spec M4, M5). Off the request
+   * path because the model is slow and the patient is watching a spinner.
+   */
+  messageTriage: 'message-triage',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

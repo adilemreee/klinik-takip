@@ -4,10 +4,10 @@ import {
   EmergencyEvent,
   EmergencyStatus,
   Prisma,
-  Role,
 } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
+import { CareTeamService, RECEIVE_PERMISSION } from '../authz/care-team.service';
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PermissionsService } from '../authz/permissions.service';
 import { PrismaService } from '../infra/prisma.service';
@@ -18,12 +18,11 @@ import {
   dueEscalation,
   escalationChain,
   sanitiseLocation,
-  type CareTeam,
 } from './escalation';
 import { buildGuidance, type EmergencyGuidance } from './guidance';
 
 /** Anyone holding this may open an open emergency, assigned to them or not. */
-const RECEIVE = 'emergency.receive';
+const RECEIVE = RECEIVE_PERMISSION;
 
 export interface TriggerInput {
   latitude?: number | null;
@@ -89,6 +88,7 @@ export class EmergencyService {
     private readonly prisma: PrismaService,
     private readonly access: PatientAccessService,
     private readonly permissions: PermissionsService,
+    private readonly careTeam: CareTeamService,
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
   ) {}
@@ -518,30 +518,15 @@ export class EmergencyService {
     if (notification) await this.notifications.deliverNow([notification]);
   }
 
-  /** The care team, resolved to user ids, in ladder order. */
+  /**
+   * The care team, resolved to user ids, in ladder order.
+   *
+   * "Who is responsible for this patient" is answered in one place, because two
+   * answers would eventually differ and one of them would be waking the wrong
+   * person.
+   */
   private async chainFor(patientId: string): Promise<string[][]> {
-    const [patient, assignments, receivers] = await Promise.all([
-      this.prisma.patient.findUnique({
-        where: { id: patientId },
-        select: { assignedDoctor: { select: { userId: true } } },
-      }),
-      this.prisma.patientAssignment.findMany({
-        where: { patientId, unassignedAt: null },
-        select: { role: true, staff: { select: { userId: true } } },
-      }),
-      this.permissions.usersWith(RECEIVE),
-    ]);
-
-    const team: CareTeam = {
-      nurses: assignments.filter((a) => a.role === Role.NURSE).map((a) => a.staff.userId),
-      coordinators: assignments
-        .filter((a) => a.role === Role.COORDINATOR)
-        .map((a) => a.staff.userId),
-      doctorUserId: patient?.assignedDoctor?.userId ?? null,
-      receivers,
-    };
-
-    return escalationChain(team);
+    return escalationChain(await this.careTeam.of(patientId));
   }
 
   private async close(

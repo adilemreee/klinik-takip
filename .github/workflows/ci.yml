@@ -124,8 +124,11 @@ jobs:
       - name: Seed the permission matrix
         run: npm run seed
 
+      # TEMPORARY: the suite passes on the runner and then Jest reports that it
+      # did not exit. It exits cleanly on macOS and in a Node 22 Linux container
+      # matched to this job, so the handle has to be identified here.
       - name: Integration tests
-        run: npm run test:integration
+        run: npm run test:integration:probe
 
       # The mobile clients generate from docs/openapi.json, so it must not drift
       # from the code. A contract both sides still believe while it has quietly

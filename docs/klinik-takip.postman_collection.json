@@ -3351,6 +3351,29 @@
           }
         }
       ]
+    },
+    {
+      "name": "briefing",
+      "item": [
+        {
+          "name": "Your morning briefing: yesterday, today, who is waiting",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/briefing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "briefing"
+              ]
+            },
+            "description": "Your morning briefing: yesterday, today, who is waiting"
+          }
+        }
+      ]
     }
   ]
 }

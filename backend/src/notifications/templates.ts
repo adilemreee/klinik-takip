@@ -24,6 +24,9 @@ export const NOTIFICATION_TYPES = {
    */
   messageUrgent: 'message.urgent',
 
+  /** The doctor's morning briefing is worth opening today (spec M5). */
+  briefingReady: 'briefing.ready',
+
   /** The panic button, on its way to whoever is meant to answer it (spec M8). */
   emergencyTriggered: 'emergency.triggered',
   /** The same alarm, one rung further up, because nobody answered the last. */
@@ -157,6 +160,19 @@ const TEMPLATES: Record<NotificationType, Template> = {
     // whole value of triaging a message upward is that somebody is told now.
     mandatory: true,
     fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
+  },
+  'briefing.ready': {
+    title: { tr: 'Günlük özet hazır', en: 'Your morning briefing is ready' },
+    body: {
+      tr: 'Dün ne oldu, bugün ne var, kim bekliyor.',
+      en: 'What happened yesterday, what is on today, who is waiting.',
+    },
+    actions: [{ id: 'open-briefing', labelKey: 'notification.action.openBriefing' }],
+    // A morning summary is not worth waking anybody for, and it is only sent
+    // when there is something in it.
+    urgent: false,
+    mandatory: false,
+    fallback: [],
   },
   'emergency.triggered': {
     title: { tr: 'ACİL DURUM', en: 'EMERGENCY' },

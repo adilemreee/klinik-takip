@@ -370,3 +370,25 @@
 "assistant.sourcePrefix" = "Kaynak";
 "assistant.disclaimer" = "Bu yanıt kliniğinizin kendi dokümanlarından üretilmiştir, tıbbi tanı yerine geçmez.";
 "assistant.sent" = "Sorunuz kliniğe iletildi";
+
+"notification.action.openBriefing" = "Özeti aç";
+
+"briefing.title" = "Günlük özet";
+"briefing.yesterday" = "Dün";
+"briefing.today" = "Bugün";
+"briefing.atRisk" = "Bekleyenler";
+"briefing.quiet" = "Sakin bir sabah: bekleyen bir şey yok.";
+"briefing.newMessages" = "Yeni mesaj";
+"briefing.urgentMessages" = "Acil sınıflandırılan";
+"briefing.emergencies" = "Acil çağrı";
+"briefing.complications" = "Komplikasyon";
+"briefing.criticalLabs" = "Kritik tahlil";
+"briefing.appointments" = "Randevu";
+"briefing.followUps" = "Kontrol";
+"briefing.waitingHours" = "%d saattir bekliyor";
+"briefing.waitingMinutes" = "%d dakikadır bekliyor";
+"briefing.risk.emergency-unanswered" = "Acil çağrı yanıtlanmadı";
+"briefing.risk.message-urgent" = "Acil mesaj okunmadı";
+"briefing.risk.complication-overdue" = "Komplikasyon yanıtlanmadı";
+"briefing.risk.follow-up-missed" = "Kontrol kaçırıldı";
+"briefing.risk.report-unreviewed" = "AI yorumu onay bekliyor";

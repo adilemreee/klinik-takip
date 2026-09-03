@@ -7,6 +7,8 @@ import { documentIntake, uploadSweep } from './documents/document-intake.process
 import { ResumableUploadService } from './documents/resumable-upload.service';
 import { appointmentReminders } from './appointments/appointments.processor';
 import { AppointmentsService } from './appointments/appointments.service';
+import { briefingSweep } from './briefing/briefing.processor';
+import { BriefingService } from './briefing/briefing.service';
 import { emergencyEscalation } from './emergency/emergency.processor';
 import { EmergencyService } from './emergency/emergency.service';
 import { followUpSweep } from './followup/followup.processor';
@@ -21,6 +23,7 @@ import { MessagingService } from './messaging/messaging.service';
 import { documentOcr } from './ocr/ocr.processor';
 import { TesseractEngine } from './ocr/tesseract.engine';
 import { FileService } from './files/file.service';
+import { PermissionsService } from './authz/permissions.service';
 import { PrismaService } from './infra/prisma.service';
 import { StorageService } from './infra/storage.service';
 import { initErrorReporting } from './observability/error-reporting';
@@ -61,6 +64,8 @@ async function bootstrap(): Promise<void> {
   const appointments = app.get(AppointmentsService);
   const emergency = app.get(EmergencyService);
   const triage = app.get(TriageService);
+  const briefing = app.get(BriefingService);
+  const permissions = app.get(PermissionsService);
   const engine = app.get(TesseractEngine);
   const storage = app.get(StorageService);
   const config = app.get(ConfigService);
@@ -98,6 +103,7 @@ async function bootstrap(): Promise<void> {
       [JOBS.followUpSweep]: followUpSweep(followUp),
       [JOBS.appointmentReminders]: appointmentReminders(appointments),
       [JOBS.emergencyEscalation]: emergencyEscalation(emergency),
+      [JOBS.briefingSweep]: briefingSweep(prisma, permissions, briefing, notifications),
     },
     connection: queues.connection,
     prisma,
@@ -127,6 +133,9 @@ async function bootstrap(): Promise<void> {
   // minutes away, and a sweep on a one-minute cadence would spend half of that
   // window deciding whether to look.
   await queues.schedule(QUEUES.notifications, JOBS.emergencyEscalation, 30 * 1000);
+  // Hourly, and it fires on the one hour that is eight o'clock in the clinic. A
+  // UTC cron would drift by an hour twice a year.
+  await queues.schedule(QUEUES.notifications, JOBS.briefingSweep, 60 * 60 * 1000);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever

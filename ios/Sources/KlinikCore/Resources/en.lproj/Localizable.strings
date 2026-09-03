@@ -370,3 +370,25 @@
 "assistant.sourcePrefix" = "Source";
 "assistant.disclaimer" = "This answer comes from your clinic's own documents and is not a medical diagnosis.";
 "assistant.sent" = "Your question has been sent to the clinic";
+
+"notification.action.openBriefing" = "Open the briefing";
+
+"briefing.title" = "Morning briefing";
+"briefing.yesterday" = "Yesterday";
+"briefing.today" = "Today";
+"briefing.atRisk" = "Waiting";
+"briefing.quiet" = "A quiet morning: nothing is waiting.";
+"briefing.newMessages" = "New messages";
+"briefing.urgentMessages" = "Triaged urgent";
+"briefing.emergencies" = "Emergency calls";
+"briefing.complications" = "Complications";
+"briefing.criticalLabs" = "Critical labs";
+"briefing.appointments" = "Appointments";
+"briefing.followUps" = "Check-ups";
+"briefing.waitingHours" = "waiting %d hours";
+"briefing.waitingMinutes" = "waiting %d minutes";
+"briefing.risk.emergency-unanswered" = "Emergency call unanswered";
+"briefing.risk.message-urgent" = "Urgent message unread";
+"briefing.risk.complication-overdue" = "Complication unanswered";
+"briefing.risk.follow-up-missed" = "Check-up missed";
+"briefing.risk.report-unreviewed" = "AI interpretation awaiting review";

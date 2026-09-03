@@ -8672,6 +8672,73 @@
           "assistant"
         ]
       }
+    },
+    "/me/briefing": {
+      "get": {
+        "operationId": "BriefingController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BriefingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your morning briefing: yesterday, today, who is waiting",
+        "tags": [
+          "briefing"
+        ]
+      }
     }
   },
   "info": {
@@ -11038,6 +11105,7 @@
               "document.missing",
               "complication.answered",
               "message.urgent",
+              "briefing.ready",
               "emergency.triggered",
               "emergency.escalated",
               "emergency.acknowledged"
@@ -12072,6 +12140,140 @@
           "questionMessageId",
           "answered",
           "sources"
+        ]
+      },
+      "BriefingYesterdayDto": {
+        "type": "object",
+        "properties": {
+          "newMessages": {
+            "type": "number",
+            "description": "Patient messages that were triaged"
+          },
+          "urgentMessages": {
+            "type": "number",
+            "description": "Of those, the ones triaged urgent or higher"
+          },
+          "emergencies": {
+            "type": "number"
+          },
+          "complications": {
+            "type": "number"
+          },
+          "criticalLabs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "newMessages",
+          "urgentMessages",
+          "emergencies",
+          "complications",
+          "criticalLabs"
+        ]
+      },
+      "BriefingTodayDto": {
+        "type": "object",
+        "properties": {
+          "appointments": {
+            "type": "number"
+          },
+          "followUps": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "appointments",
+          "followUps"
+        ]
+      },
+      "RiskItemDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "emergency-unanswered",
+              "message-urgent",
+              "complication-overdue",
+              "follow-up-missed",
+              "report-unreviewed"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "description": "What is waiting; never the patient's own words"
+          },
+          "waitingMinutes": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "patientId",
+          "patientName",
+          "kind",
+          "detail",
+          "waitingMinutes"
+        ]
+      },
+      "BriefingFactsDto": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "yesterday": {
+            "$ref": "#/components/schemas/BriefingYesterdayDto"
+          },
+          "today": {
+            "$ref": "#/components/schemas/BriefingTodayDto"
+          },
+          "atRisk": {
+            "description": "Emergencies first, then longest waiting",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RiskItemDto"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "yesterday",
+          "today",
+          "atRisk"
+        ]
+      },
+      "BriefingDto": {
+        "type": "object",
+        "properties": {
+          "facts": {
+            "description": "The briefing. Always present",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BriefingFactsDto"
+              }
+            ]
+          },
+          "narrative": {
+            "type": "object",
+            "nullable": true,
+            "description": "A paragraph over the numbers. Null when the AI layer is off or declined"
+          },
+          "quiet": {
+            "type": "boolean",
+            "description": "Nothing happened and nothing is waiting"
+          }
+        },
+        "required": [
+          "facts",
+          "quiet"
         ]
       }
     }

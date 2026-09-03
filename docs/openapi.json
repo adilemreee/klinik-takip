@@ -7838,6 +7838,73 @@
           "emergency"
         ]
       }
+    },
+    "/ai/usage": {
+      "get": {
+        "operationId": "AIController_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIUsageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "This month's AI spend, tokens and refusals",
+        "tags": [
+          "ai"
+        ]
+      }
     }
   },
   "info": {
@@ -10869,6 +10936,66 @@
         },
         "required": [
           "resolution"
+        ]
+      },
+      "AIUsageDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "False when no provider is configured"
+          },
+          "provider": {
+            "type": "string",
+            "example": "anthropic"
+          },
+          "model": {
+            "type": "string",
+            "example": "claude-sonnet-5"
+          },
+          "monthStart": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Midnight on the 1st, clinic time"
+          },
+          "spentUsd": {
+            "type": "number",
+            "description": "USD spent since the start of the month"
+          },
+          "budgetUsd": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null when no cap is set"
+          },
+          "budgetUsedFraction": {
+            "type": "object",
+            "nullable": true,
+            "description": "0–1, null when no cap is set"
+          },
+          "calls": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number",
+            "description": "Calls that failed or were refused"
+          },
+          "tokensIn": {
+            "type": "number"
+          },
+          "tokensOut": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "enabled",
+          "provider",
+          "model",
+          "monthStart",
+          "spentUsd",
+          "calls",
+          "failed",
+          "tokensIn",
+          "tokensOut"
         ]
       }
     }

@@ -441,7 +441,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T4.6 Randevu ve takvim modülü ([RANDEVULAR](RANDEVULAR.md)) — müsaitlik, çakışma kontrolü, talep/onay akışı, iptal/erteleme, ICS export ve T-7g/T-1g/T-2sa hatırlatmaları. **Video görüşme** (§M10 opsiyonel) yapılmadı
 
 ### FAZ 5 — Yapay Zeka Katmanı
-- [ ] T5.1 `AIProvider` soyutlaması, maliyet/token loglama, retry politikası
+- [x] T5.1 `AIProvider` soyutlaması, maliyet/token loglama, retry politikası ([AI-KATMANI](AI-KATMANI.md)) — Anthropic + OpenAI sağlayıcıları, tek kapı (`AIService`), §14.5 sıfır saklama kapısı (varsayılan **kapalı**), kimliksizleştirme + giden istemde kimlik taraması (ad/dosya no/telefon/e-posta/TCKN sağlaması), aylık bütçe, retry sınıflandırması + jitter, zaman aşımı ve `ai_jobs`'ta token/maliyet/model kaydı. **Fiyat tablosu bilerek depoda değil** — operatör yapılandırması
 - [ ] T5.2 Mesaj özetleme + triyaj sınıflandırma
 - [ ] T5.3 SSS chatbot + RAG (protokol dokümanı yükleme, pgvector)
 - [ ] T5.4 Lab yorumlama (hasta dili + doktor dili çift çıktı)

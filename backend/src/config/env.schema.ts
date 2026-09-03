@@ -93,6 +93,34 @@ export const envSchema = z.object({
   AI_API_KEY: optional(z.string().min(1)),
   AI_MODEL: optional(z.string().min(1)),
   AI_MONTHLY_BUDGET_USD: optional(z.coerce.number().positive()),
+
+  /**
+   * Prices for the configured model, in USD per million tokens.
+   *
+   * Required whenever the AI layer is switched on, and deliberately not shipped
+   * as a table in the repository: prices change, differ per account, and are
+   * the one number the operator can read off an invoice and we cannot. Section
+   * 3.4 makes cost accounting mandatory, and accounting against stale prices is
+   * not accounting.
+   */
+  AI_PRICE_INPUT_PER_MTOK: optional(z.coerce.number().nonnegative()),
+  AI_PRICE_OUTPUT_PER_MTOK: optional(z.coerce.number().nonnegative()),
+
+  /**
+   * The operator's assertion that the provider account is under zero-retention
+   * or business-associate terms (spec section 14.5).
+   *
+   * Nothing in the code can verify this, which is exactly why it is an explicit
+   * switch that defaults to off: with it off, prompts derived from patient data
+   * are refused rather than sent. A default of "assume yes" would make the
+   * clause in the specification decorative.
+   */
+  AI_ZERO_RETENTION: z
+    .preprocess((value) => (value === '' ? undefined : value), z.coerce.boolean().default(false)),
+
+  /** An AI call with no deadline is a request handler that never returns. */
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(1_024),
   // Points at the self-hosted GlitchTip, not sentry.io.
   SENTRY_DSN: optional(z.string().url()),
 

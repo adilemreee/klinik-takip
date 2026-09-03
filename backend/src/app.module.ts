@@ -9,6 +9,7 @@ import { ComplicationsModule } from './complications/complications.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PhotosModule } from './photos/photos.module';
 import { QueueModule } from './queue/queue.module';
+import { AIModule } from './ai/ai.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { EmergencyModule } from './emergency/emergency.module';
 import { FollowUpModule } from './followup/followup.module';
@@ -49,6 +50,7 @@ import { ObservabilityModule } from './observability/observability.module';
     FollowUpModule,
     AppointmentsModule,
     EmergencyModule,
+    AIModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

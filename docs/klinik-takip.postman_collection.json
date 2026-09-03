@@ -3041,6 +3041,29 @@
           }
         }
       ]
+    },
+    {
+      "name": "ai",
+      "item": [
+        {
+          "name": "This month's AI spend, tokens and refusals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "usage"
+              ]
+            },
+            "description": "This month's AI spend, tokens and refusals"
+          }
+        }
+      ]
     }
   ]
 }

@@ -54,11 +54,11 @@
     <string name="briefing_follow_ups">Check-ups</string>
     <string name="briefing_new_messages">New messages</string>
     <string name="briefing_quiet">A quiet morning: nothing is waiting.</string>
-    <string name="briefing_risk_complication-overdue">Complication unanswered</string>
-    <string name="briefing_risk_emergency-unanswered">Emergency call unanswered</string>
-    <string name="briefing_risk_follow-up-missed">Check-up missed</string>
-    <string name="briefing_risk_message-urgent">Urgent message unread</string>
-    <string name="briefing_risk_report-unreviewed">AI interpretation awaiting review</string>
+    <string name="briefing_risk_complication_overdue">Complication unanswered</string>
+    <string name="briefing_risk_emergency_unanswered">Emergency call unanswered</string>
+    <string name="briefing_risk_follow_up_missed">Check-up missed</string>
+    <string name="briefing_risk_message_urgent">Urgent message unread</string>
+    <string name="briefing_risk_report_unreviewed">AI interpretation awaiting review</string>
     <string name="briefing_title">Morning briefing</string>
     <string name="briefing_today">Today</string>
     <string name="briefing_urgent_messages">Triaged urgent</string>

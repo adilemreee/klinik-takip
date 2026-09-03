@@ -54,11 +54,11 @@
     <string name="briefing_follow_ups">Kontrol</string>
     <string name="briefing_new_messages">Yeni mesaj</string>
     <string name="briefing_quiet">Sakin bir sabah: bekleyen bir şey yok.</string>
-    <string name="briefing_risk_complication-overdue">Komplikasyon yanıtlanmadı</string>
-    <string name="briefing_risk_emergency-unanswered">Acil çağrı yanıtlanmadı</string>
-    <string name="briefing_risk_follow-up-missed">Kontrol kaçırıldı</string>
-    <string name="briefing_risk_message-urgent">Acil mesaj okunmadı</string>
-    <string name="briefing_risk_report-unreviewed">AI yorumu onay bekliyor</string>
+    <string name="briefing_risk_complication_overdue">Komplikasyon yanıtlanmadı</string>
+    <string name="briefing_risk_emergency_unanswered">Acil çağrı yanıtlanmadı</string>
+    <string name="briefing_risk_follow_up_missed">Kontrol kaçırıldı</string>
+    <string name="briefing_risk_message_urgent">Acil mesaj okunmadı</string>
+    <string name="briefing_risk_report_unreviewed">AI yorumu onay bekliyor</string>
     <string name="briefing_title">Günlük özet</string>
     <string name="briefing_today">Bugün</string>
     <string name="briefing_urgent_messages">Acil sınıflandırılan</string>

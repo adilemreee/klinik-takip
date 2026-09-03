@@ -75,5 +75,26 @@ for (const [label, entries] of Object.entries(catalogues)) {
   report(untranslated.length === 0, `${label} has no key-as-value entries`);
 }
 
+/**
+ * Android resource names are letters, digits and underscores.
+ *
+ * Checked here rather than left to the Android build, because the Android
+ * modules only compile on a machine with the SDK — so a key with a hyphen in it
+ * passes every local gate and fails in CI with a message that names the file and
+ * not the key.
+ */
+for (const [name, path] of [
+  ['values', 'android/core/design/src/main/res/values/strings.xml'],
+  ['values-en', 'android/core/design/src/main/res/values-en/strings.xml'],
+]) {
+  const invalid = [...androidKeys(path)].filter((key) => !/^[a-z][a-z0-9_]*$/.test(key));
+
+  report(invalid.length === 0, `${name} has only valid Android resource names`);
+
+  for (const key of invalid) {
+    console.log(`       invalid: ${key}`);
+  }
+}
+
 console.log(failures === 0 ? '\nAll catalogues agree.' : `\n${failures} failure(s).`);
 process.exit(failures === 0 ? 0 : 1);

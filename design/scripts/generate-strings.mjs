@@ -40,9 +40,17 @@ export function parseStrings(text) {
 }
 
 /** `auth.signIn` -> `auth_sign_in` */
+/**
+ * An iOS key as an Android resource name.
+ *
+ * Hyphens are folded to underscores alongside dots, because Android resource
+ * names may only contain letters, digits and underscores — and the build error
+ * for a hyphen arrives from the resource merger with no key in it, which is a
+ * long way from the string catalogue that caused it.
+ */
 export function toAndroidName(key) {
   return key
-    .replace(/\./g, '_')
+    .replace(/[.-]/g, '_')
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
     .replace(/_+/g, '_');

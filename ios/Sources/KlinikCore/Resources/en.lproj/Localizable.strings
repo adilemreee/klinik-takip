@@ -479,3 +479,21 @@
 "analytics.margin" = "Margin";
 "analytics.cityUnknown" = "City not recorded";
 "analytics.average" = "Average fee";
+
+"notification.action.openExport" = "Open the file";
+"export.title" = "Exports";
+"export.status.QUEUED" = "Queued";
+"export.status.PROCESSING" = "Preparing";
+"export.status.DONE" = "Ready";
+"export.status.FAILED" = "Failed";
+"export.summary.title" = "Patient summary";
+"export.includePhotos" = "Include photographs";
+"export.photoWarning" = "Photographs are included only where a live photo consent exists.";
+"export.linkShortLived" = "The download link is short-lived.";
+"export.expired" = "This file has expired and been deleted.";
+"export.omitted" = "Left out of this report";
+"export.download" = "Download";
+"export.omission.lab-unverified" = "{count} unverified lab results were left out";
+"export.omission.photo-no-consent" = "{count} photographs were left out for lack of consent";
+"export.omission.photo-not-requested" = "{count} photographs were not requested";
+"export.omission.ai-unreviewed" = "{count} unapproved AI texts were left out";

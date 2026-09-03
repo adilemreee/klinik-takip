@@ -39,6 +39,9 @@ export const NOTIFICATION_TYPES = {
   emergencyEscalated: 'emergency.escalated',
   /** Back to the patient: somebody has picked this up. */
   emergencyAcknowledged: 'emergency.acknowledged',
+
+  /** A requested export has finished rendering (spec M12). */
+  exportReady: 'export.ready',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
@@ -197,6 +200,19 @@ const TEMPLATES: Record<NotificationType, Template> = {
     urgent: false,
     mandatory: false,
     fallback: [NotificationChannel.EMAIL],
+  },
+  'export.ready': {
+    title: { tr: 'Dosyanız hazır', en: 'Your export is ready' },
+    body: {
+      tr: 'İstediğiniz rapor üretildi. İndirme bağlantısı kısa ömürlüdür.',
+      en: 'The report you asked for has been produced. The download link is short-lived.',
+    },
+    actions: [{ id: 'open-export', labelKey: 'notification.action.openExport' }],
+    // Somebody asked for this and is waiting for it, but it is not worth waking
+    // anyone: a report at 3am can be read at 8.
+    urgent: false,
+    mandatory: false,
+    fallback: [],
   },
   'briefing.ready': {
     title: { tr: 'Günlük özet hazır', en: 'Your morning briefing is ready' },

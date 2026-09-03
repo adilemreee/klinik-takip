@@ -290,6 +290,7 @@ model Patient {
   medications       Medication[]
   aiReports         AiReport[]
   financeRecords    FinanceRecord[]
+  exports           Export[]
   consents          Consent[]
   emergencyEvents   EmergencyEvent[]
   promResponses     PromResponse[]
@@ -1549,6 +1550,66 @@ model ExchangeRate {
   @@unique([base, quote, validOn])
   @@index([base, quote, validOn])
   @@map("exchange_rates")
+}
+
+/// What kind of file an export produces (spec M12).
+enum ExportKind {
+  /// The templated patient summary (spec M12, T6.5).
+  PATIENT_SUMMARY
+}
+
+/// A file the clinic asked for that contains patient data and leaves the
+/// building (spec M12).
+///
+/// A row per request rather than a fire-and-forget download, for three reasons
+/// the specification is explicit about: exports are produced on a queue, the
+/// link handed out is short-lived and signed, and **every one is audited** —
+/// who took what data out, and when.
+model Export {
+  id     String           @id @default(uuid(7)) @db.Uuid
+  kind   ExportKind
+  status ProcessingStatus @default(QUEUED)
+
+  requestedById String  @map("requested_by_id") @db.Uuid
+  /// Null for exports that are not about one patient (spec M12's bulk exports).
+  patientId     String? @map("patient_id") @db.Uuid
+
+  /// What was asked for, so a repeat request can be recognised and the audit
+  /// record can say what the file was meant to contain.
+  params Json?
+
+  /// What actually went in, including what was deliberately left out and why.
+  /// A summary that quietly omitted the photos is a summary that misleads.
+  contents Json?
+
+  fileKey String? @map("file_key")
+  mime    String?
+  size    Int?
+  error   String?
+
+  startedAt  DateTime? @map("started_at") @db.Timestamptz
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz
+
+  /// The stored object is deleted after this.
+  ///
+  /// A full patient summary sitting in object storage forever is a liability
+  /// nobody chose to take on: the file is a snapshot somebody asked for once,
+  /// not an archive.
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz
+
+  /// When the link was actually used, which is the fact an investigation wants.
+  downloadedAt DateTime? @map("downloaded_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([requestedById, createdAt])
+  @@index([patientId, createdAt])
+  @@index([status, createdAt])
+  /// The sweep that deletes expired objects.
+  @@index([expiresAt])
+  @@map("exports")
 }
 
 enum ConsentType {

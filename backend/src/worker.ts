@@ -11,6 +11,9 @@ import { briefingSweep } from './briefing/briefing.processor';
 import { medicationSweep } from './medications/medications.processor';
 import { BriefingService } from './briefing/briefing.service';
 import { emergencyEscalation } from './emergency/emergency.processor';
+import { exportRender, exportSweep } from './exports/exports.processor';
+import { ExportsService } from './exports/exports.service';
+import { PatientSummaryBuilder } from './exports/patient-summary.builder';
 import { EmergencyService } from './emergency/emergency.service';
 import { followUpSweep } from './followup/followup.processor';
 import { FollowUpService } from './followup/followup.service';
@@ -114,6 +117,26 @@ async function bootstrap(): Promise<void> {
     concurrency: 1,
   });
 
+  const exportsWorker = runWorker({
+    queue: QUEUES.exports,
+    handlers: {
+      [JOBS.exportRender]: exportRender(
+        prisma,
+        app.get(ExportsService),
+        app.get(PatientSummaryBuilder),
+        files,
+        notifications,
+        config.get<string>('CLINIC_NAME') ?? 'Klinik Takip',
+      ),
+      [JOBS.exportSweep]: exportSweep(app.get(ExportsService)),
+    },
+    connection: queues.connection,
+    prisma,
+    // One at a time: rendering holds a whole PDF and its photographs in memory,
+    // and nobody is waiting on the second one any sooner.
+    concurrency: 1,
+  });
+
   const triageWorker = runWorker({
     queue: QUEUES.triage,
     handlers: { [JOBS.messageTriage]: messageTriage(prisma, triage) },
@@ -144,6 +167,9 @@ async function bootstrap(): Promise<void> {
   // patient taking their antibiotic twenty minutes late, and the sweep looks
   // back far enough that a restart does not swallow one.
   await queues.schedule(QUEUES.notifications, JOBS.medicationSweep, 5 * 60 * 1000);
+  // Daily. Expiry is measured in days, and a file that outlives its week by a
+  // few hours is not the risk — one that outlives it by a month is.
+  await queues.schedule(QUEUES.exports, JOBS.exportSweep, 24 * 60 * 60 * 1000);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever
@@ -177,6 +203,7 @@ async function bootstrap(): Promise<void> {
     await worker.close();
     await messagingWorker.close();
     await triageWorker.close();
+    await exportsWorker.close();
     await notificationWorker.close();
     await app.close();
   };

@@ -17,6 +17,13 @@ export const QUEUES = {
    * sitting in front of it would break exactly that promise.
    */
   triage: 'triage',
+
+  /**
+   * Its own queue because an export is slow and nothing waits on it. A patient
+   * summary that takes twenty seconds to render must not sit in front of a
+   * document intake that somebody is watching a spinner for.
+   */
+  exports: 'exports',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -78,6 +85,18 @@ export const JOBS = {
    * One sweep for all three: they read the same rows.
    */
   medicationSweep: 'medication-sweep',
+
+  /** Renders a requested export and stores it (spec M12). */
+  exportRender: 'export-render',
+
+  /**
+   * Deletes export objects past their expiry.
+   *
+   * Not housekeeping: a full patient summary sitting in object storage forever
+   * is a liability nobody chose to take on. The file is a snapshot somebody
+   * asked for once.
+   */
+  exportSweep: 'export-sweep',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

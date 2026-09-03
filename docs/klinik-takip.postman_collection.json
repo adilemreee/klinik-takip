@@ -4330,6 +4330,117 @@
           }
         }
       ]
+    },
+    {
+      "name": "exports",
+      "item": [
+        {
+          "name": "Ask for a patient summary PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/exports/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "exports",
+                "summary"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Ask for a patient summary PDF",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"includePhotos\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Exports you asked for",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exports"
+              ]
+            },
+            "description": "Exports you asked for"
+          }
+        },
+        {
+          "name": "Whether it is ready, and what went into it",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exports/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exports",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Whether it is ready, and what went into it"
+          }
+        },
+        {
+          "name": "A short-lived signed link. Audited: this is the moment the data can leave",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exports/:id/download",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exports",
+                ":id",
+                "download"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A short-lived signed link. Audited: this is the moment the data can leave"
+          }
+        }
+      ]
     }
   ]
 }

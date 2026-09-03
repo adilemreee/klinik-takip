@@ -35,6 +35,13 @@ export const envSchema = z.object({
    */
   METRICS_PORT: z.coerce.number().int().min(1).max(65535).default(9464),
   SERVICE_NAME: z.string().default('klinik-api'),
+
+  /**
+   * The name printed at the top of exported reports (spec M12: klinik logolu
+   * şablon). Operator configuration rather than a constant in a public
+   * repository — this is somebody's clinic, not this project's.
+   */
+  CLINIC_NAME: z.string().min(1).default('Klinik Takip'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   // --- Database ------------------------------------------------------------

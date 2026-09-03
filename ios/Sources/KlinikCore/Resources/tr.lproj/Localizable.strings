@@ -479,3 +479,21 @@
 "analytics.margin" = "Marj";
 "analytics.cityUnknown" = "Şehri girilmemiş";
 "analytics.average" = "Ortalama ücret";
+
+"notification.action.openExport" = "Dosyayı aç";
+"export.title" = "Dışa aktarımlar";
+"export.status.QUEUED" = "Sırada";
+"export.status.PROCESSING" = "Hazırlanıyor";
+"export.status.DONE" = "Hazır";
+"export.status.FAILED" = "Başarısız";
+"export.summary.title" = "Hasta özet raporu";
+"export.includePhotos" = "Fotoğrafları ekle";
+"export.photoWarning" = "Fotoğraflar yalnız geçerli fotoğraf onamı olanlar için eklenir.";
+"export.linkShortLived" = "İndirme bağlantısı kısa ömürlüdür.";
+"export.expired" = "Bu dosyanın süresi doldu ve silindi.";
+"export.omitted" = "Rapora girmeyenler";
+"export.download" = "İndir";
+"export.omission.lab-unverified" = "{count} doğrulanmamış laboratuvar sonucu alınmadı";
+"export.omission.photo-no-consent" = "{count} fotoğraf, onam olmadığı için alınmadı";
+"export.omission.photo-not-requested" = "{count} fotoğraf istenmedi";
+"export.omission.ai-unreviewed" = "{count} onaylanmamış yapay zekâ metni alınmadı";

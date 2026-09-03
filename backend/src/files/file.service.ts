@@ -134,6 +134,45 @@ export class FileService {
   }
 
   /**
+   * Reads an object into memory.
+   *
+   * Only for files the server itself has to look at — embedding a photograph in
+   * an exported PDF is the one case. Everything a *user* reads goes out as a
+   * signed URL instead, so patient bytes never travel through this process.
+   *
+   * Bounded, because an object of unknown size read into a Buffer is a way to
+   * take the worker down with one large upload.
+   */
+  async read(bucket: FileBucket, key: string, maxBytes = 20 * 1024 * 1024): Promise<Buffer> {
+    if (!isSafeObjectKey(key)) {
+      throw new BadRequestException('Invalid object key');
+    }
+
+    const { size } = await this.stat(bucket, key);
+
+    if (size > maxBytes) {
+      throw new BadRequestException(`Object is larger than ${maxBytes} bytes`);
+    }
+
+    const stream = await this.storage.client.getObject(this.bucketName(bucket), key);
+    const chunks: Buffer[] = [];
+    let read = 0;
+
+    for await (const chunk of stream) {
+      const buffer = Buffer.from(chunk as Buffer);
+      read += buffer.length;
+
+      // The stat above can race a replaced object, so the limit is enforced
+      // again on the bytes that actually arrive.
+      if (read > maxBytes) throw new BadRequestException('Object grew past the read limit');
+
+      chunks.push(buffer);
+    }
+
+    return Buffer.concat(chunks);
+  }
+
+  /**
    * Removes an object. Clinical files are soft-deleted in the database and
    * their bytes are only removed once the legal retention period expires
    * (spec section 8), so this is not called on a user "delete" action.

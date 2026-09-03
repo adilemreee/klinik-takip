@@ -2,6 +2,20 @@
 <!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
+    <string name="analytics_average">Average fee</string>
+    <string name="analytics_capacity_unconfigured">No working hours configured, so occupancy cannot be calculated.</string>
+    <string name="analytics_channels_title">Channels</string>
+    <string name="analytics_city_unknown">City not recorded</string>
+    <string name="analytics_conversion">Conversion</string>
+    <string name="analytics_cost_lines_unread">Some cost lines could not be read; the margin may be incomplete.</string>
+    <string name="analytics_geography_title">By country</string>
+    <string name="analytics_margin">Margin</string>
+    <string name="analytics_occupancy_title">Diary occupancy</string>
+    <string name="analytics_procedures_title">Operations</string>
+    <string name="analytics_revenue_title">Revenue and cost</string>
+    <string name="analytics_revenue_withheld">Revenue columns are hidden because you may not see them — this does not mean zero.</string>
+    <string name="analytics_title">Dashboard</string>
+    <string name="analytics_too_few">Not enough data</string>
     <string name="appointment_add_to_calendar">Add to calendar</string>
     <string name="appointment_awaiting_confirmation">Awaiting confirmation</string>
     <string name="appointment_cancel">Cancel</string>

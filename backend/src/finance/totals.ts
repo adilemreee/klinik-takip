@@ -1,6 +1,6 @@
 import { Currency } from '@prisma/client';
 import { convert, type Rate } from './exchange';
-import { ZERO, round, type Money } from './money';
+import { ZERO, round, toAmountString, type Money } from './money';
 
 /**
  * Adding up money that is in four currencies (spec M11).
@@ -77,4 +77,32 @@ function listOf(amounts: Map<Currency, Money>): Amount[] {
   return [...amounts.entries()]
     .map(([currency, amount]) => ({ currency, amount: round(amount) }))
     .sort((a, b) => b.amount.comparedTo(a.amount));
+}
+
+export interface AmountView {
+  currency: Currency;
+  amount: string;
+}
+
+/** `Totals` on the wire. Same shape, amounts as strings. */
+export interface TotalsView {
+  currency: Currency;
+  converted: string;
+  byCurrency: AmountView[];
+  /** Non-empty means `converted` is not the whole answer. */
+  unconverted: AmountView[];
+  complete: boolean;
+}
+
+export function toTotalsView(totals: Totals): TotalsView {
+  const amounts = (entries: Amount[]): AmountView[] =>
+    entries.map((entry) => ({ currency: entry.currency, amount: toAmountString(entry.amount) }));
+
+  return {
+    currency: totals.currency,
+    converted: toAmountString(totals.converted),
+    byCurrency: amounts(totals.byCurrency),
+    unconverted: amounts(totals.unconverted),
+    complete: totals.complete,
+  };
 }

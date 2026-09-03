@@ -3771,7 +3771,7 @@
             "description": "Edit a bill. The net is recomputed, never supplied",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"procedureName\": \"\",\n  \"grossAmount\": \"4500.00\",\n  \"discount\": \"500.00\",\n  \"costItems\": {},\n  \"agencyId\": {},\n  \"agencyCommission\": \"450.00\",\n  \"note\": \"\"\n}",
+              "raw": "{\n  \"procedureName\": \"\",\n  \"grossAmount\": \"4500.00\",\n  \"discount\": \"500.00\",\n  \"costItems\": [\n    {\n      \"label\": \"İmplant\",\n      \"amount\": \"1200.00\"\n    }\n  ],\n  \"agencyId\": {},\n  \"agencyCommission\": \"450.00\",\n  \"note\": \"\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4153,13 +4153,180 @@
             "description": "Raise a bill",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"procedureName\": \"Rinoplasti\",\n  \"currency\": \"TRY\",\n  \"grossAmount\": \"4500.00\",\n  \"discount\": \"500.00\",\n  \"costItems\": {},\n  \"agencyId\": \"00000000-0000-7000-8000-000000000000\",\n  \"agencyCommission\": \"450.00\",\n  \"note\": \"\"\n}",
+              "raw": "{\n  \"procedureName\": \"Rinoplasti\",\n  \"currency\": \"TRY\",\n  \"grossAmount\": \"4500.00\",\n  \"discount\": \"500.00\",\n  \"costItems\": [\n    {\n      \"label\": \"İmplant\",\n      \"amount\": \"1200.00\"\n    }\n  ],\n  \"agencyId\": \"00000000-0000-7000-8000-000000000000\",\n  \"agencyCommission\": \"450.00\",\n  \"note\": \"\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "analytics",
+      "item": [
+        {
+          "name": "Operations by month and by type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/procedures",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "procedures"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Operations by month and by type"
+          }
+        },
+        {
+          "name": "Where patients come from, by country and city",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/geography",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "geography"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Where patients come from, by country and city"
+          }
+        },
+        {
+          "name": "Channels, conversion, and — with finance.report — revenue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/channels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "channels"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "currency",
+                  "value": "",
+                  "description": "Everything is converted into this, at each amount's own date",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Channels, conversion, and — with finance.report — revenue"
+          }
+        },
+        {
+          "name": "Billed revenue, costs and margin. Collected money is a different report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/revenue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "revenue"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "currency",
+                  "value": "",
+                  "description": "Everything is converted into this, at each amount's own date",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Billed revenue, costs and margin. Collected money is a different report"
+          }
+        },
+        {
+          "name": "How full the diary is, against configured working hours",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/occupancy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "occupancy"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "How full the diary is, against configured working hours"
           }
         }
       ]

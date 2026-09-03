@@ -464,3 +464,18 @@
 "finance.payment.reversed" = "Düzeltildi";
 "finance.totals.incomplete" = "Bu toplam eksik: kuru olmayan tutarlar aşağıda kendi para biriminde listelendi.";
 "finance.rateMissing" = "Bu güne ait kur kaydı yok";
+
+"analytics.title" = "Panel";
+"analytics.tooFew" = "Yeterli veri yok";
+"analytics.revenueWithheld" = "Gelir sütunları yetkiniz olmadığı için gizlendi — sıfır anlamına gelmez.";
+"analytics.capacityUnconfigured" = "Çalışma saatleri tanımlı değil; doluluk oranı hesaplanamıyor.";
+"analytics.costLinesUnread" = "Bazı maliyet satırları okunamadı; marj eksik olabilir.";
+"analytics.procedures.title" = "Ameliyatlar";
+"analytics.geography.title" = "Ülke dağılımı";
+"analytics.channels.title" = "Kanallar";
+"analytics.revenue.title" = "Gelir ve gider";
+"analytics.occupancy.title" = "Randevu doluluğu";
+"analytics.conversion" = "Dönüşüm";
+"analytics.margin" = "Marj";
+"analytics.cityUnknown" = "Şehri girilmemiş";
+"analytics.average" = "Ortalama ücret";

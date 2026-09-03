@@ -20,7 +20,12 @@ import type { RequestContext } from '../patients/patients.service';
 import { dayToDate, rateDay, rateDayOf, type Rate } from './exchange';
 import { ZERO, money, requirePositive, round, toAmountString, type Money } from './money';
 import { settle } from './settlement';
-import { totalise, type Convertible, type Totals } from './totals';
+import {
+  toTotalsView,
+  totalise,
+  type Convertible,
+  type TotalsView,
+} from './totals';
 
 /**
  * Finance records, payments and the collection report (spec M11, T6.3).
@@ -100,7 +105,7 @@ export interface CreateRecordInput {
   currency: Currency;
   grossAmount: string;
   discount?: string;
-  costItems?: Record<string, unknown>;
+  costItems?: { label: string; amount: string }[];
   agencyId?: string;
   /** Overrides the agency's standing rate for a negotiated case. */
   agencyCommission?: string;
@@ -111,7 +116,7 @@ export interface UpdateRecordInput {
   procedureName?: string;
   grossAmount?: string;
   discount?: string;
-  costItems?: Record<string, unknown>;
+  costItems?: { label: string; amount: string }[];
   agencyId?: string | null;
   agencyCommission?: string | null;
   note?: string;
@@ -138,21 +143,6 @@ export interface ListRecordsQuery {
   to?: Date;
   cursor?: string;
   limit?: number;
-}
-
-export interface AmountView {
-  currency: Currency;
-  amount: string;
-}
-
-/** `Totals` on the wire. Same shape, amounts as strings. */
-export interface TotalsView {
-  currency: Currency;
-  converted: string;
-  byCurrency: AmountView[];
-  /** Non-empty means `converted` is not the whole answer. */
-  unconverted: AmountView[];
-  complete: boolean;
 }
 
 export interface CollectionReport {
@@ -247,7 +237,7 @@ export class FinanceService {
           grossAmount: amounts.gross,
           discount: amounts.discount,
           netAmount: amounts.net,
-          costItems: input.costItems as Prisma.InputJsonValue | undefined,
+          costItems: input.costItems,
           agencyId: input.agencyId,
           agencyCommission: commission,
           note: input.note,
@@ -321,7 +311,7 @@ export class FinanceService {
           grossAmount: amounts.gross,
           discount: amounts.discount,
           netAmount: amounts.net,
-          costItems: input.costItems as Prisma.InputJsonValue | undefined,
+          costItems: input.costItems,
           agencyId,
           agencyCommission: commission,
           note: input.note,
@@ -634,12 +624,12 @@ export class FinanceService {
       from,
       to,
       currency,
-      received: this.totalsView(totalise(received.map(asItem), currency, rates)),
-      refunded: this.totalsView(totalise(refunded.map(asItem), currency, rates)),
-      net: this.totalsView(totalise(signed, currency, rates)),
+      received: toTotalsView(totalise(received.map(asItem), currency, rates)),
+      refunded: toTotalsView(totalise(refunded.map(asItem), currency, rates)),
+      net: toTotalsView(totalise(signed, currency, rates)),
       byMethod: methods.map((method) => ({
         method,
-        totals: this.totalsView(
+        totals: toTotalsView(
           totalise(
             signed.filter((payment) => payment.method === method),
             currency,
@@ -696,7 +686,7 @@ export class FinanceService {
 
     return {
       currency,
-      outstanding: this.totalsView(totalise(owed, currency, rates)),
+      outstanding: toTotalsView(totalise(owed, currency, rates)),
       ageing: AGEING.map(({ bucket, fromDays, toDays }) => {
         const inBucket = owed.filter(
           (item) => item.ageDays >= fromDays && (toDays === null || item.ageDays < toDays),
@@ -704,7 +694,7 @@ export class FinanceService {
 
         return {
           bucket,
-          totals: this.totalsView(totalise(inBucket, currency, rates)),
+          totals: toTotalsView(totalise(inBucket, currency, rates)),
           recordCount: inBucket.length,
         };
       }),
@@ -892,21 +882,7 @@ export class FinanceService {
     };
   }
 
-  private totalsView(totals: Totals): TotalsView {
-    return {
-      currency: totals.currency,
-      converted: toAmountString(totals.converted),
-      byCurrency: totals.byCurrency.map((entry) => ({
-        currency: entry.currency,
-        amount: toAmountString(entry.amount),
-      })),
-      unconverted: totals.unconverted.map((entry) => ({
-        currency: entry.currency,
-        amount: toAmountString(entry.amount),
-      })),
-      complete: totals.complete,
-    };
-  }
+
 
   private amountsOf(
     gross: string | Money,

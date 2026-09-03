@@ -10808,6 +10808,468 @@
           "finance"
         ]
       }
+    },
+    "/analytics/procedures": {
+      "get": {
+        "operationId": "AnalyticsController_procedures",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Operations by month and by type",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/analytics/geography": {
+      "get": {
+        "operationId": "AnalyticsController_geography",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeographyReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Where patients come from, by country and city",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/analytics/channels": {
+      "get": {
+        "operationId": "AnalyticsController_channels",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "required": false,
+            "in": "query",
+            "description": "Everything is converted into this, at each amount's own date",
+            "schema": {
+              "default": "TRY",
+              "type": "string",
+              "enum": [
+                "TRY",
+                "EUR",
+                "USD",
+                "GBP"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Channels, conversion, and — with finance.report — revenue",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/analytics/revenue": {
+      "get": {
+        "operationId": "AnalyticsController_revenue",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "required": false,
+            "in": "query",
+            "description": "Everything is converted into this, at each amount's own date",
+            "schema": {
+              "default": "TRY",
+              "type": "string",
+              "enum": [
+                "TRY",
+                "EUR",
+                "USD",
+                "GBP"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevenueReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Billed revenue, costs and margin. Collected money is a different report",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/analytics/occupancy": {
+      "get": {
+        "operationId": "AnalyticsController_occupancy",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccupancyReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "How full the diary is, against configured working hours",
+        "tags": [
+          "analytics"
+        ]
+      }
     }
   },
   "info": {
@@ -15047,6 +15509,25 @@
           "nextCursor"
         ]
       },
+      "CostItemDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "İmplant"
+          },
+          "amount": {
+            "type": "string",
+            "example": "1200.00",
+            "description": "In the record's currency"
+          }
+        },
+        "required": [
+          "label",
+          "amount"
+        ]
+      },
       "UpdateFinanceRecordDto": {
         "type": "object",
         "properties": {
@@ -15063,7 +15544,10 @@
             "example": "500.00"
           },
           "costItems": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostItemDto"
+            }
           },
           "agencyId": {
             "type": "object",
@@ -15549,8 +16033,11 @@
             "example": "500.00"
           },
           "costItems": {
-            "type": "object",
-            "description": "Cost breakdown, free-form. The net is what the patient pays, not this"
+            "description": "Cost breakdown. The net is what the patient pays; this is what it cost the clinic",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostItemDto"
+            }
           },
           "agencyId": {
             "type": "string",
@@ -15570,6 +16057,391 @@
           "procedureName",
           "currency",
           "grossAmount"
+        ]
+      },
+      "MonthlyCountDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-03"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "count"
+        ]
+      },
+      "NamedCountDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "The clinic's own spelling"
+          },
+          "count": {
+            "type": "number"
+          },
+          "share": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null when there are too few cases to state a proportion — not zero"
+          }
+        },
+        "required": [
+          "label",
+          "count",
+          "share"
+        ]
+      },
+      "ProcedureReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "byMonth": {
+            "description": "Every month in range, empty ones included",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlyCountDto"
+            }
+          },
+          "byProcedure": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedCountDto"
+            }
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "total",
+          "byMonth",
+          "byProcedure"
+        ]
+      },
+      "GeographyReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "byCountry": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedCountDto"
+            }
+          },
+          "byCity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedCountDto"
+            }
+          },
+          "cityUnknown": {
+            "type": "number",
+            "description": "Patients with no city recorded, so the shares add up"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "total",
+          "byCountry",
+          "byCity",
+          "cityUnknown"
+        ]
+      },
+      "ChannelRowDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "patients": {
+            "type": "number"
+          },
+          "converted": {
+            "type": "number"
+          },
+          "conversionRate": {
+            "type": "object",
+            "nullable": true
+          },
+          "revenue": {
+            "description": "Only for a caller who may see money",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TotalsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "label",
+          "key",
+          "patients",
+          "converted",
+          "conversionRate"
+        ]
+      },
+      "ChannelReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChannelRowDto"
+            }
+          },
+          "revenueWithheld": {
+            "type": "boolean",
+            "description": "True when the caller may not see money. Said out loud, because an absent revenue column otherwise reads as \"no revenue\""
+          },
+          "conversionDefinition": {
+            "type": "string",
+            "description": "What \"converted\" means here"
+          },
+          "minimumForRate": {
+            "type": "number",
+            "description": "Below this many cases, a rate is null"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "total",
+          "channels",
+          "revenueWithheld",
+          "conversionDefinition",
+          "minimumForRate"
+        ]
+      },
+      "MonthlyNetDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-03"
+          },
+          "net": {
+            "type": "string",
+            "example": "128400.00"
+          },
+          "converted": {
+            "type": "boolean",
+            "description": "False when this month had amounts with no rate"
+          }
+        },
+        "required": [
+          "month",
+          "net",
+          "converted"
+        ]
+      },
+      "CurrencyAverageDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "average": {
+            "type": "string",
+            "example": "4000.00"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "average",
+          "count"
+        ]
+      },
+      "RevenueReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "gross": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "discount": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "net": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "agencyCommission": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "margin": {
+            "description": "Net less costs and commission",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TotalsDto"
+              }
+            ]
+          },
+          "byMonth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlyNetDto"
+            }
+          },
+          "averageByCurrency": {
+            "description": "Exact, per currency. An average blended across currencies is a fiction",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrencyAverageDto"
+            }
+          },
+          "recordCount": {
+            "type": "number"
+          },
+          "cancelledExcluded": {
+            "type": "number",
+            "description": "Cancelled bills left out of the figures"
+          },
+          "unreadableCostLines": {
+            "type": "number",
+            "description": "Cost lines that could not be read. Non-zero means the margin is missing something"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "gross",
+          "discount",
+          "net",
+          "cost",
+          "agencyCommission",
+          "margin",
+          "byMonth",
+          "averageByCurrency",
+          "recordCount",
+          "cancelledExcluded",
+          "unreadableCostLines"
+        ]
+      },
+      "MonthlyOccupancyDto": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "example": "2026-03"
+          },
+          "bookedMinutes": {
+            "type": "number"
+          },
+          "availableMinutes": {
+            "type": "number"
+          },
+          "rate": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null when no working hours are configured — not zero, which would read as an empty diary"
+          },
+          "appointments": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "month",
+          "bookedMinutes",
+          "availableMinutes",
+          "rate",
+          "appointments"
+        ]
+      },
+      "OccupancyReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "byMonth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlyOccupancyDto"
+            }
+          },
+          "capacityUnconfigured": {
+            "type": "boolean",
+            "description": "True when no availability window exists at all"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "byMonth",
+          "capacityUnconfigured"
         ]
       }
     }

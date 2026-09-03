@@ -464,3 +464,18 @@
 "finance.payment.reversed" = "Corrected";
 "finance.totals.incomplete" = "This total is incomplete: amounts with no rate are listed below in their own currency.";
 "finance.rateMissing" = "No rate recorded for this day";
+
+"analytics.title" = "Dashboard";
+"analytics.tooFew" = "Not enough data";
+"analytics.revenueWithheld" = "Revenue columns are hidden because you may not see them — this does not mean zero.";
+"analytics.capacityUnconfigured" = "No working hours configured, so occupancy cannot be calculated.";
+"analytics.costLinesUnread" = "Some cost lines could not be read; the margin may be incomplete.";
+"analytics.procedures.title" = "Operations";
+"analytics.geography.title" = "By country";
+"analytics.channels.title" = "Channels";
+"analytics.revenue.title" = "Revenue and cost";
+"analytics.occupancy.title" = "Diary occupancy";
+"analytics.conversion" = "Conversion";
+"analytics.margin" = "Margin";
+"analytics.cityUnknown" = "City not recorded";
+"analytics.average" = "Average fee";

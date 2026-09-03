@@ -7,6 +7,8 @@ import {
 } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDate,
   IsEnum,
   IsInt,
@@ -17,6 +19,7 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 /**
@@ -34,6 +37,24 @@ const AMOUNT_MESSAGE = 'must be an amount like "1250.00"';
 const RATE = /^\d{1,10}(\.\d{1,8})?$/;
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * One line of what a case cost the clinic.
+ *
+ * A shape rather than free-form JSON, because "gelir–gider" has to be summable
+ * and a total assembled from whatever happened to be in the column is a total
+ * nobody can check.
+ */
+export class CostItemDto {
+  @ApiProperty({ maxLength: 100, example: 'İmplant' })
+  @IsString()
+  @MaxLength(100)
+  label!: string;
+
+  @ApiProperty({ example: '1200.00', description: "In the record's currency" })
+  @Matches(AMOUNT, { message: `cost amount ${AMOUNT_MESSAGE}` })
+  amount!: string;
+}
 
 export class CreateFinanceRecordDto {
   @ApiProperty({ maxLength: 200, example: 'Rinoplasti' })
@@ -55,10 +76,16 @@ export class CreateFinanceRecordDto {
   discount?: string;
 
   @ApiPropertyOptional({
-    description: 'Cost breakdown, free-form. The net is what the patient pays, not this',
+    type: [CostItemDto],
+    description:
+      'Cost breakdown. The net is what the patient pays; this is what it cost the clinic',
   })
   @IsOptional()
-  costItems?: Record<string, unknown>;
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => CostItemDto)
+  costItems?: CostItemDto[];
 
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
@@ -97,9 +124,13 @@ export class UpdateFinanceRecordDto {
   @Matches(AMOUNT, { message: `discount ${AMOUNT_MESSAGE}` })
   discount?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [CostItemDto] })
   @IsOptional()
-  costItems?: Record<string, unknown>;
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => CostItemDto)
+  costItems?: CostItemDto[];
 
   @ApiPropertyOptional({ format: 'uuid', nullable: true })
   @IsOptional()

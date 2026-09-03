@@ -2,6 +2,20 @@
 <!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
+    <string name="analytics_average">Ortalama ücret</string>
+    <string name="analytics_capacity_unconfigured">Çalışma saatleri tanımlı değil; doluluk oranı hesaplanamıyor.</string>
+    <string name="analytics_channels_title">Kanallar</string>
+    <string name="analytics_city_unknown">Şehri girilmemiş</string>
+    <string name="analytics_conversion">Dönüşüm</string>
+    <string name="analytics_cost_lines_unread">Bazı maliyet satırları okunamadı; marj eksik olabilir.</string>
+    <string name="analytics_geography_title">Ülke dağılımı</string>
+    <string name="analytics_margin">Marj</string>
+    <string name="analytics_occupancy_title">Randevu doluluğu</string>
+    <string name="analytics_procedures_title">Ameliyatlar</string>
+    <string name="analytics_revenue_title">Gelir ve gider</string>
+    <string name="analytics_revenue_withheld">Gelir sütunları yetkiniz olmadığı için gizlendi — sıfır anlamına gelmez.</string>
+    <string name="analytics_title">Panel</string>
+    <string name="analytics_too_few">Yeterli veri yok</string>
     <string name="appointment_add_to_calendar">Takvime ekle</string>
     <string name="appointment_awaiting_confirmation">Onay bekleyen</string>
     <string name="appointment_cancel">İptal et</string>

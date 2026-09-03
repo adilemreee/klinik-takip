@@ -3417,6 +3417,215 @@
           }
         }
       ]
+    },
+    {
+      "name": "medications",
+      "item": [
+        {
+          "name": "A patient's medication, with adherence",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "medications"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's medication, with adherence"
+          }
+        },
+        {
+          "name": "Prescribe, and generate the dose calendar from the rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "medications"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Prescribe, and generate the dose calendar from the rule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"drugName\": \"\",\n  \"dose\": \"500 mg\",\n  \"form\": \"tablet\",\n  \"frequencyRule\": \"FREQ=DAILY;COUNT=16;BYHOUR=9,21\",\n  \"startDate\": \"2026-01-01T00:00:00.000Z\",\n  \"endDate\": \"2026-01-01T00:00:00.000Z\",\n  \"startTime\": \"09:00\",\n  \"timezone\": \"Europe/Berlin\",\n  \"instructions\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Approve a patient-reported medication",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medications/:medicationId/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medications",
+                ":medicationId",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "medicationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Approve a patient-reported medication"
+          }
+        },
+        {
+          "name": "Stop a course",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/medications/:medicationId/stop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "medications",
+                ":medicationId",
+                "stop"
+              ],
+              "variable": [
+                {
+                  "key": "medicationId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Stop a course"
+          }
+        },
+        {
+          "name": "Your medication, today's doses and how it is going",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "medications"
+              ]
+            },
+            "description": "Your medication, today's doses and how it is going"
+          }
+        },
+        {
+          "name": "Add a medication you are taking; a clinician approves it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/medications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "medications"
+              ]
+            },
+            "description": "Add a medication you are taking; a clinician approves it",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"drugName\": \"\",\n  \"dose\": \"500 mg\",\n  \"form\": \"tablet\",\n  \"frequencyRule\": \"FREQ=DAILY;COUNT=16;BYHOUR=9,21\",\n  \"startDate\": \"2026-01-01T00:00:00.000Z\",\n  \"endDate\": \"2026-01-01T00:00:00.000Z\",\n  \"startTime\": \"09:00\",\n  \"timezone\": \"Europe/Berlin\",\n  \"instructions\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Mark a dose taken, skipped, or snoozed",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/medications/doses/:logId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "medications",
+                "doses",
+                ":logId"
+              ],
+              "variable": [
+                {
+                  "key": "logId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Mark a dose taken, skipped, or snoozed",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"taken\",\n  \"snoozeMinutes\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }

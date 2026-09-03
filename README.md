@@ -87,7 +87,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 3 — Klinik Modüller | 4 / 6 | T3.1, T3.2, T3.4, T3.6 tamam · T3.3 ve T3.5'te eksik olan tek şey **kamera katmanı** |
 | Faz 4 — İletişim ve Bildirim | 3 / 6 | T4.4, T4.5, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı |
 | Faz 5 — Yapay Zeka Katmanı | **7 / 7** | Tamam · katman sağlayıcı anahtarı olmadan **kapalı**; triyaj taraması, protokol sözcük araması ve günlük brifing AI'sız da çalışıyor · fotoğraf gönderimi **ayrıca** açılmalı |
-| Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
+| Faz 6 — İlaç, Finans, Raporlama | 1 / 7 | T6.1 tamam — ilaç planı, hatırlatma, check-in, uyum skoru ve ölçülü oyunlaştırma · AI gerektirmiyor, tamamen çalışıyor |
 | Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |
 
 Kutucuklu tam liste, her tamamlanan işin doküman bağlantısıyla birlikte:

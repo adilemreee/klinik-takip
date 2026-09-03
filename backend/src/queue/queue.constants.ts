@@ -72,6 +72,12 @@ export const JOBS = {
 
   /** Announces the morning briefing at eight, clinic time (spec M5). */
   briefingSweep: 'briefing-sweep',
+
+  /**
+   * Dose reminders, renewal reminders and the low-adherence warning (spec M9).
+   * One sweep for all three: they read the same rows.
+   */
+  medicationSweep: 'medication-sweep',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

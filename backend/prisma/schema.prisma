@@ -945,10 +945,20 @@ model Medication {
   dose     String
   form     String?
 
-  /// RFC 5545 RRULE, e.g. FREQ=DAILY;INTERVAL=1;COUNT=16 for "twice a day for
-  /// 8 days" (spec M9). A recurrence rule is expressive enough for real
-  /// prescriptions in a way that an interval column is not.
+  /// RFC 5545 RRULE. "Twice a day for eight days" is
+  /// `FREQ=DAILY;COUNT=16;BYHOUR=9,21` — sixteen doses over eight days, not
+  /// sixteen days (spec M9). A recurrence rule is expressive enough for real
+  /// prescriptions in a way that an interval column is not; the subset this
+  /// system reads is in `src/medications/recurrence.ts` and anything outside it
+  /// is refused rather than guessed at.
   frequencyRule String @map("frequency_rule")
+
+  /// The wall clock the doses belong to.
+  ///
+  /// The patient's, not the clinic's: a course is a sequence of wall-clock
+  /// events, and a patient recovering at home in Germany takes the nine o'clock
+  /// dose at nine where they are.
+  timezone String @default("Europe/Istanbul")
 
   startDate    DateTime  @map("start_date") @db.Date
   endDate      DateTime? @map("end_date") @db.Date
@@ -990,6 +1000,10 @@ model MedicationLog {
   status       MedicationLogStatus @default(PENDING)
   snoozedUntil DateTime?           @map("snoozed_until") @db.Timestamptz
   note         String?
+
+  /// When the reminder went out. Without it the sweep would send the same
+  /// reminder on every run inside the window it looks at.
+  notifiedAt DateTime? @map("notified_at") @db.Timestamptz
 
   medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
 

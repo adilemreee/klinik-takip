@@ -24,6 +24,12 @@ export const NOTIFICATION_TYPES = {
    */
   messageUrgent: 'message.urgent',
 
+  /** Two days of medicine left; time to renew the prescription (spec M9). */
+  medicationRenewal: 'medication.renewal',
+
+  /** The clinic, told that a patient is not keeping to a course (spec M9). */
+  medicationAdherenceLow: 'medication.adherence.low',
+
   /** The doctor's morning briefing is worth opening today (spec M5). */
   briefingReady: 'briefing.ready',
 
@@ -160,6 +166,37 @@ const TEMPLATES: Record<NotificationType, Template> = {
     // whole value of triaging a message upward is that somebody is told now.
     mandatory: true,
     fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
+  },
+  'medication.renewal': {
+    title: { tr: 'İlacınız bitmek üzere', en: 'Your medication is running out' },
+    body: {
+      tr: 'İki günlük ilacınız kaldı. Reçete yenileme için kliniğinize yazın.',
+      en: 'You have about two days left. Message your clinic about a renewal.',
+    },
+    actions: [
+      { id: 'open-medication', labelKey: 'notification.action.openMedication' },
+      { id: 'open-chat', labelKey: 'notification.action.openChat' },
+    ],
+    urgent: false,
+    mandatory: false,
+    fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
+  },
+  'medication.adherence.low': {
+    title: { tr: 'İlaç uyumu düşük', en: 'Low medication adherence' },
+    body: {
+      tr: 'Bir hastanın ilaç uyumu beklenenin altında. Dosyayı açın.',
+      en: "A patient's medication adherence is below the threshold. Open their file.",
+    },
+    actions: [
+      { id: 'open-file', labelKey: 'notification.action.openFile' },
+      { id: 'call-patient', labelKey: 'notification.action.callPatient' },
+    ],
+    // Not urgent and not mandatory: this is a pattern over days, and waking
+    // somebody at night about it would be the wrong lesson to teach them about
+    // what a night-time alert means.
+    urgent: false,
+    mandatory: false,
+    fallback: [NotificationChannel.EMAIL],
   },
   'briefing.ready': {
     title: { tr: 'Günlük özet hazır', en: 'Your morning briefing is ready' },

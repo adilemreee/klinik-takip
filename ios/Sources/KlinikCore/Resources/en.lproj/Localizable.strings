@@ -403,3 +403,27 @@
 "photo.assessment.notAssessed" = "Not assessed";
 "photo.assessment.disclaimer" = "This is a pre-assessment, not a diagnosis. It was produced by AI.";
 "photo.assessment.flaggedTitle" = "Photos suggested for review";
+
+"notification.action.openMedication" = "Open the medication";
+
+"medication.title" = "My medication";
+"medication.today" = "Today's doses";
+"medication.taken" = "Taken";
+"medication.skipped" = "Skipped";
+"medication.snooze" = "Later";
+"medication.adherence" = "Adherence";
+"medication.streak" = "%d days without a miss";
+"medication.noScoreYet" = "No dose is due yet";
+"medication.awaitingApproval" = "Waiting for your doctor";
+"medication.nextDose" = "Next dose";
+"medication.stopped" = "Stopped";
+"medication.addOwn" = "Add something you are taking";
+"medication.status.PENDING" = "Waiting";
+"medication.status.TAKEN" = "Taken";
+"medication.status.SKIPPED" = "Skipped";
+"medication.status.LATE" = "Taken late";
+"medication.status.SNOOZED" = "Snoozed";
+"medication.badge.first-dose" = "First dose";
+"medication.badge.three-days" = "3 days";
+"medication.badge.one-week" = "1 week";
+"medication.badge.four-weeks" = "4 weeks";

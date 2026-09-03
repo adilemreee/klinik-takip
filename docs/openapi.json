@@ -8885,6 +8885,549 @@
           "briefing"
         ]
       }
+    },
+    "/patients/{id}/medications": {
+      "get": {
+        "operationId": "PatientMedicationsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MedicationViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A patient's medication, with adherence",
+        "tags": [
+          "medications"
+        ]
+      },
+      "post": {
+        "operationId": "PatientMedicationsController_prescribe",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrescribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Prescribe, and generate the dose calendar from the rule",
+        "tags": [
+          "medications"
+        ]
+      }
+    },
+    "/medications/{medicationId}/approve": {
+      "patch": {
+        "operationId": "MedicationsController_approve",
+        "parameters": [
+          {
+            "name": "medicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve a patient-reported medication",
+        "tags": [
+          "medications"
+        ]
+      }
+    },
+    "/medications/{medicationId}/stop": {
+      "patch": {
+        "operationId": "MedicationsController_stop",
+        "parameters": [
+          {
+            "name": "medicationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stop a course",
+        "tags": [
+          "medications"
+        ]
+      }
+    },
+    "/me/medications": {
+      "get": {
+        "operationId": "MyMedicationsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyMedicationsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your medication, today's doses and how it is going",
+        "tags": [
+          "medications"
+        ]
+      },
+      "post": {
+        "operationId": "MyMedicationsController_report",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrescribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a medication you are taking; a clinician approves it",
+        "tags": [
+          "medications"
+        ]
+      }
+    },
+    "/me/medications/doses/{logId}": {
+      "patch": {
+        "operationId": "MyMedicationsController_checkIn",
+        "parameters": [
+          {
+            "name": "logId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MedicationLogDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a dose taken, skipped, or snoozed",
+        "tags": [
+          "medications"
+        ]
+      }
     }
   },
   "info": {
@@ -11369,6 +11912,8 @@
               "document.missing",
               "complication.answered",
               "message.urgent",
+              "medication.renewal",
+              "medication.adherence.low",
               "briefing.ready",
               "emergency.triggered",
               "emergency.escalated",
@@ -12478,6 +13023,296 @@
         "required": [
           "facts",
           "quiet"
+        ]
+      },
+      "MedicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "drugName": {
+            "type": "string"
+          },
+          "dose": {
+            "type": "string"
+          },
+          "form": {
+            "type": "object",
+            "nullable": true
+          },
+          "frequencyRule": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string",
+            "description": "The patient's timezone the doses were generated in"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "instructions": {
+            "type": "object",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "PRESCRIBED",
+              "PATIENT_REPORTED"
+            ]
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Patient-reported medication is inert until this is set"
+          },
+          "stoppedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "drugName",
+          "dose",
+          "frequencyRule",
+          "timezone",
+          "startDate",
+          "source"
+        ]
+      },
+      "AdherenceDto": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "object",
+            "nullable": true,
+            "description": "0–1 over the doses that have come due. Null before any have"
+          },
+          "taken": {
+            "type": "number"
+          },
+          "missed": {
+            "type": "number"
+          },
+          "due": {
+            "type": "number",
+            "description": "Doses that have come due"
+          },
+          "upcoming": {
+            "type": "number",
+            "description": "Still ahead: not counted, not missed"
+          },
+          "streak": {
+            "type": "number",
+            "description": "Consecutive days with every due dose taken"
+          }
+        },
+        "required": [
+          "taken",
+          "missed",
+          "due",
+          "upcoming",
+          "streak"
+        ]
+      },
+      "MedicationViewDto": {
+        "type": "object",
+        "properties": {
+          "medication": {
+            "$ref": "#/components/schemas/MedicationDto"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "The rule in a sentence, so a clinician can check it"
+          },
+          "adherence": {
+            "$ref": "#/components/schemas/AdherenceDto"
+          },
+          "badges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nextDose": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "medication",
+          "schedule",
+          "adherence",
+          "badges"
+        ]
+      },
+      "PrescribeDto": {
+        "type": "object",
+        "properties": {
+          "drugName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "dose": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "500 mg"
+          },
+          "form": {
+            "type": "string",
+            "maxLength": 100,
+            "example": "tablet"
+          },
+          "frequencyRule": {
+            "type": "string",
+            "example": "FREQ=DAILY;COUNT=16;BYHOUR=9,21",
+            "description": "RFC 5545 RRULE. Supported: FREQ=DAILY|WEEKLY|HOURLY, INTERVAL, COUNT, UNTIL, BYHOUR, BYMINUTE, BYDAY. Anything else is refused rather than guessed at"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "example": "09:00",
+            "description": "Wall-clock time of the first dose"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Berlin",
+            "description": "The patient's timezone — a dose is a wall-clock event"
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "drugName",
+          "dose",
+          "frequencyRule",
+          "startDate"
+        ]
+      },
+      "MedicationLogDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "medicationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "takenAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "TAKEN",
+              "SKIPPED",
+              "LATE",
+              "SNOOZED"
+            ]
+          },
+          "snoozedUntil": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "medicationId",
+          "scheduledAt",
+          "status"
+        ]
+      },
+      "MyMedicationsDto": {
+        "type": "object",
+        "properties": {
+          "medications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MedicationViewDto"
+            }
+          },
+          "today": {
+            "description": "Today's doses, in order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MedicationLogDto"
+            }
+          },
+          "overall": {
+            "$ref": "#/components/schemas/AdherenceDto"
+          },
+          "badges": {
+            "description": "Withheld while a course is going badly — the tone rule from M9",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "medications",
+          "today",
+          "overall",
+          "badges"
+        ]
+      },
+      "CheckInDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "taken",
+              "skipped",
+              "snooze"
+            ]
+          },
+          "snoozeMinutes": {
+            "type": "number",
+            "minimum": 5,
+            "maximum": 720,
+            "default": 60
+          }
+        },
+        "required": [
+          "action"
         ]
       }
     }

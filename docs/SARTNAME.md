@@ -450,7 +450,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T5.7 AI güvenlik test seti (kırmızı çizgiler doğrulaması) ([AI-KIRMIZI-CIZGILER](AI-KIRMIZI-CIZGILER.md)) — §14'ün dört cümlesi tek kaynakta, kaynak ağacı taraması (her prompt kuralları içeriyor mu, her klinik çağrı `identifiers` veriyor mu, `src/ai/` dışında sağlayıcıya erişen var mı), tüketici doğrulama (`raiseTo` hiçbir bileşimde düşürmüyor), prompt enjeksiyonu ve **gerçek istek gövdesi üzerinde** sızıntı kontrolü
 
 ### FAZ 6 — İlaç, Finans, Raporlama
-- [ ] T6.1 İlaç planı, hatırlatma, check-in, uyum skoru, oyunlaştırma
+- [x] T6.1 İlaç planı, hatırlatma, check-in, uyum skoru, oyunlaştırma ([ILAC-UYUM](ILAC-UYUM.md)) — RRULE alt kümesi (okunamayan kural **reddediliyor**), hastanın kendi saat diliminde ve DST'yi koruyan takvim üretimi, İçtim/Atladım/Ertele, zamanı gelmemiş dozu saymayan uyum skoru, ölçülü rozetler (kür kötü giderken gizleniyor), %70 uyarısı **yalnız atanmış ekibe**, doz sayısına göre yenileme hatırlatması
 - [ ] T6.2 İlaç etkileşim uyarıları
 - [ ] T6.3 Finans kayıtları + para birimi + ödeme durumu
 - [ ] T6.4 Analitik dashboard (ameliyat sayısı, ülke dağılımı, doluluk, gelir)

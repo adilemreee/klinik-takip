@@ -403,3 +403,27 @@
 "photo.assessment.notAssessed" = "Değerlendirilmedi";
 "photo.assessment.disclaimer" = "Bu bir ön değerlendirmedir, tanı değildir. Yapay zeka tarafından üretilmiştir.";
 "photo.assessment.flaggedTitle" = "İncelenmesi önerilen fotoğraflar";
+
+"notification.action.openMedication" = "İlacı aç";
+
+"medication.title" = "İlaçlarım";
+"medication.today" = "Bugünün dozları";
+"medication.taken" = "İçtim";
+"medication.skipped" = "Atladım";
+"medication.snooze" = "Ertele";
+"medication.adherence" = "Uyum";
+"medication.streak" = "%d gündür aksatmadınız";
+"medication.noScoreYet" = "Henüz doz zamanı gelmedi";
+"medication.awaitingApproval" = "Doktor onayı bekliyor";
+"medication.nextDose" = "Sonraki doz";
+"medication.stopped" = "Durduruldu";
+"medication.addOwn" = "Kullandığım bir ilacı ekle";
+"medication.status.PENDING" = "Bekliyor";
+"medication.status.TAKEN" = "İçildi";
+"medication.status.SKIPPED" = "Atlandı";
+"medication.status.LATE" = "Geç içildi";
+"medication.status.SNOOZED" = "Ertelendi";
+"medication.badge.first-dose" = "İlk doz";
+"medication.badge.three-days" = "3 gün";
+"medication.badge.one-week" = "1 hafta";
+"medication.badge.four-weeks" = "4 hafta";

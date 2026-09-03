@@ -8,6 +8,7 @@ import { ResumableUploadService } from './documents/resumable-upload.service';
 import { appointmentReminders } from './appointments/appointments.processor';
 import { AppointmentsService } from './appointments/appointments.service';
 import { briefingSweep } from './briefing/briefing.processor';
+import { medicationSweep } from './medications/medications.processor';
 import { BriefingService } from './briefing/briefing.service';
 import { emergencyEscalation } from './emergency/emergency.processor';
 import { EmergencyService } from './emergency/emergency.service';
@@ -23,6 +24,7 @@ import { MessagingService } from './messaging/messaging.service';
 import { documentOcr } from './ocr/ocr.processor';
 import { TesseractEngine } from './ocr/tesseract.engine';
 import { FileService } from './files/file.service';
+import { CareTeamService } from './authz/care-team.service';
 import { PermissionsService } from './authz/permissions.service';
 import { PrismaService } from './infra/prisma.service';
 import { StorageService } from './infra/storage.service';
@@ -66,6 +68,7 @@ async function bootstrap(): Promise<void> {
   const triage = app.get(TriageService);
   const briefing = app.get(BriefingService);
   const permissions = app.get(PermissionsService);
+  const careTeam = app.get(CareTeamService);
   const engine = app.get(TesseractEngine);
   const storage = app.get(StorageService);
   const config = app.get(ConfigService);
@@ -104,6 +107,7 @@ async function bootstrap(): Promise<void> {
       [JOBS.appointmentReminders]: appointmentReminders(appointments),
       [JOBS.emergencyEscalation]: emergencyEscalation(emergency),
       [JOBS.briefingSweep]: briefingSweep(prisma, permissions, briefing, notifications),
+      [JOBS.medicationSweep]: medicationSweep(prisma, careTeam, notifications),
     },
     connection: queues.connection,
     prisma,
@@ -136,6 +140,10 @@ async function bootstrap(): Promise<void> {
   // Hourly, and it fires on the one hour that is eight o'clock in the clinic. A
   // UTC cron would drift by an hour twice a year.
   await queues.schedule(QUEUES.notifications, JOBS.briefingSweep, 60 * 60 * 1000);
+  // Every five minutes: a dose reminder that arrives twenty minutes late is a
+  // patient taking their antibiotic twenty minutes late, and the sweep looks
+  // back far enough that a restart does not swallow one.
+  await queues.schedule(QUEUES.notifications, JOBS.medicationSweep, 5 * 60 * 1000);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever

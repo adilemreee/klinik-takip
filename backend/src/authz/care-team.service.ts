@@ -65,15 +65,39 @@ export class CareTeamService {
    * The escalation ladder exists for the panic button, where spacing the alerts
    * out keeps somebody in reserve. An urgent message is not that: it is one
    * notification, and it should reach whoever can act on it now.
+   *
+   * Falls back to the whole rota when nobody is assigned, which is right for
+   * something that cannot wait and wrong for anything that can — see
+   * `assigned`.
    */
   async everyone(patientId: string): Promise<string[]> {
     const team = await this.of(patientId);
-    const named = [
-      ...team.nurses,
-      ...team.coordinators,
-      ...(team.doctorUserId ? [team.doctorUserId] : []),
-    ];
+    const named = namedStaff(team);
 
     return [...new Set(named.length > 0 ? named : team.receivers)];
   }
+
+  /**
+   * Only the people actually responsible for this patient, with no fallback.
+   *
+   * For anything that is not urgent. A low medication-adherence warning about
+   * an unassigned patient, broadcast to every account on the emergency rota,
+   * is a daily message to the whole clinic about somebody none of them are
+   * looking after — and the clinic learns to mute it, which is a cost paid by
+   * the alerts that do matter.
+   *
+   * An empty answer means the patient has nobody, and the fix for that is to
+   * assign somebody rather than to page everybody.
+   */
+  async assigned(patientId: string): Promise<string[]> {
+    return [...new Set(namedStaff(await this.of(patientId)))];
+  }
+}
+
+function namedStaff(team: CareTeam): string[] {
+  return [
+    ...team.nurses,
+    ...team.coordinators,
+    ...(team.doctorUserId ? [team.doctorUserId] : []),
+  ];
 }

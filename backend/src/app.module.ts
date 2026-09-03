@@ -14,6 +14,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { EmergencyModule } from './emergency/emergency.module';
 import { AssistantModule } from './assistant/assistant.module';
 import { BriefingModule } from './briefing/briefing.module';
+import { FinanceModule } from './finance/finance.module';
 import { MedicationsModule } from './medications/medications.module';
 import { ProtocolsModule } from './protocols/protocols.module';
 import { ReportsModule } from './reports/reports.module';
@@ -63,6 +64,7 @@ import { ObservabilityModule } from './observability/observability.module';
     AssistantModule,
     BriefingModule,
     MedicationsModule,
+    FinanceModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

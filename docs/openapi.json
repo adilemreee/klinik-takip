@@ -9504,6 +9504,1310 @@
           "medications"
         ]
       }
+    },
+    "/finance/records": {
+      "get": {
+        "operationId": "FinanceController_list",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PARTIAL",
+                "PAID",
+                "REFUNDED",
+                "CANCELLED"
+              ]
+            }
+          },
+          {
+            "name": "currency",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TRY",
+                "EUR",
+                "USD",
+                "GBP"
+              ]
+            }
+          },
+          {
+            "name": "agencyId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Finance records, newest first",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/records/{id}": {
+      "get": {
+        "operationId": "FinanceController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One record, with its payment ledger",
+        "tags": [
+          "finance"
+        ]
+      },
+      "patch": {
+        "operationId": "FinanceController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFinanceRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a bill. The net is recomputed, never supplied",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/records/{id}/cancel": {
+      "post": {
+        "operationId": "FinanceController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelFinanceRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Write a bill off. Not a delete — collected money still has to be accounted for",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/records/{id}/payments": {
+      "post": {
+        "operationId": "FinanceController_addPayment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record money that arrived. The payment status follows from the ledger",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/payments/{id}/reverse": {
+      "post": {
+        "operationId": "FinanceController_reversePayment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReversePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Correct a mistyped payment. The row stays, with its numbers",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/collections": {
+      "get": {
+        "operationId": "FinanceController_collections",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "required": false,
+            "in": "query",
+            "description": "Everything is converted into this, at each payment's own date",
+            "schema": {
+              "default": "TRY",
+              "type": "string",
+              "enum": [
+                "TRY",
+                "EUR",
+                "USD",
+                "GBP"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Money received in a period, each payment converted at its own date",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/outstanding": {
+      "get": {
+        "operationId": "FinanceController_outstanding",
+        "parameters": [
+          {
+            "name": "currency",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "TRY",
+              "type": "string",
+              "enum": [
+                "TRY",
+                "EUR",
+                "USD",
+                "GBP"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutstandingReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What is still owed, and for how long",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/rates": {
+      "get": {
+        "operationId": "FinanceController_listRates",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExchangeRateDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Recorded exchange rates",
+        "tags": [
+          "finance"
+        ]
+      },
+      "post": {
+        "operationId": "FinanceController_putRate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutRateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExchangeRateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a rate for a day. There is no rate feed here — the source is the clinic's",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/agencies": {
+      "get": {
+        "operationId": "FinanceController_listAgencies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgencyDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Agencies, for picking one on a bill",
+        "tags": [
+          "finance"
+        ]
+      },
+      "post": {
+        "operationId": "FinanceController_createAgency",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgencyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add an agency",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/finance/agencies/{id}": {
+      "patch": {
+        "operationId": "FinanceController_updateAgency",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit an agency",
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/patients/{id}/finance": {
+      "get": {
+        "operationId": "PatientFinanceController_forPatient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "This patient's bills",
+        "tags": [
+          "finance"
+        ]
+      },
+      "post": {
+        "operationId": "PatientFinanceController_create",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFinanceRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceRecordResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise a bill",
+        "tags": [
+          "finance"
+        ]
+      }
     }
   },
   "info": {
@@ -13472,6 +14776,800 @@
         },
         "required": [
           "action"
+        ]
+      },
+      "FinancePatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "firstName",
+          "lastName",
+          "country"
+        ]
+      },
+      "PaymentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PAYMENT",
+              "REFUND"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "1500.00"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "appliedAmount": {
+            "type": "string",
+            "example": "1200.00"
+          },
+          "rate": {
+            "type": "object",
+            "nullable": true,
+            "example": "0.80000000"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER",
+              "ONLINE",
+              "OTHER"
+            ]
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reference": {
+            "type": "object",
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "nullable": true
+          },
+          "reversedAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "Reversed rows stay, and stop counting"
+          },
+          "reversalReason": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "amount",
+          "currency",
+          "appliedAmount",
+          "rate",
+          "method",
+          "paidAt",
+          "reference",
+          "note",
+          "reversedAt",
+          "reversalReason"
+        ]
+      },
+      "FinanceRecordResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patient": {
+            "nullable": true,
+            "description": "Name, file number and country. Nothing clinical",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinancePatientDto"
+              }
+            ]
+          },
+          "procedureName": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "grossAmount": {
+            "type": "string",
+            "example": "4500.00"
+          },
+          "discount": {
+            "type": "string",
+            "example": "500.00"
+          },
+          "netAmount": {
+            "type": "string",
+            "example": "4000.00"
+          },
+          "paidAmount": {
+            "type": "string",
+            "example": "1500.00"
+          },
+          "refundedAmount": {
+            "type": "string",
+            "example": "0.00"
+          },
+          "balance": {
+            "type": "string",
+            "example": "2500.00",
+            "description": "Negative when overpaid"
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PARTIAL",
+              "PAID",
+              "REFUNDED",
+              "CANCELLED"
+            ],
+            "description": "Derived from the ledger, never set by a client"
+          },
+          "paidAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "agencyId": {
+            "type": "object",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "agencyName": {
+            "type": "object",
+            "nullable": true
+          },
+          "agencyCommission": {
+            "type": "object",
+            "nullable": true
+          },
+          "costItems": {
+            "type": "object",
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "nullable": true
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentResponseDto"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "patient",
+          "procedureName",
+          "currency",
+          "grossAmount",
+          "discount",
+          "netAmount",
+          "paidAmount",
+          "refundedAmount",
+          "balance",
+          "paymentStatus",
+          "paidAt",
+          "cancelledAt",
+          "agencyId",
+          "agencyName",
+          "agencyCommission",
+          "costItems",
+          "note",
+          "payments",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "FinanceRecordPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FinanceRecordResponseDto"
+            }
+          },
+          "nextCursor": {
+            "type": "object",
+            "nullable": true,
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "UpdateFinanceRecordDto": {
+        "type": "object",
+        "properties": {
+          "procedureName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "grossAmount": {
+            "type": "string",
+            "example": "4500.00"
+          },
+          "discount": {
+            "type": "string",
+            "example": "500.00"
+          },
+          "costItems": {
+            "type": "object"
+          },
+          "agencyId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "agencyCommission": {
+            "type": "object",
+            "example": "450.00",
+            "nullable": true
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "CancelFinanceRecordDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Why the bill was written off. Kept on the record"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "RecordPaymentDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "example": "1500.00"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ],
+            "description": "Defaults to the record's currency"
+          },
+          "appliedAmount": {
+            "type": "string",
+            "example": "1200.00",
+            "description": "How much of the bill this settles. Required when the payment is in another currency — the rate that settles a bill is the one the bank used, not one this software guessed"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER",
+              "ONLINE",
+              "OTHER"
+            ]
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the money moved, which is not when it was typed in. Defaults to now"
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Receipt or transfer reference"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PAYMENT",
+              "REFUND"
+            ],
+            "default": "PAYMENT"
+          }
+        },
+        "required": [
+          "amount",
+          "method"
+        ]
+      },
+      "ReversePaymentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Why it was wrong. Kept on the row"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "AmountDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "4000.00"
+          }
+        },
+        "required": [
+          "currency",
+          "amount"
+        ]
+      },
+      "TotalsDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ],
+            "description": "What everything was converted into"
+          },
+          "converted": {
+            "type": "string",
+            "example": "128400.00"
+          },
+          "byCurrency": {
+            "description": "Every currency present, converted or not",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmountDto"
+            }
+          },
+          "unconverted": {
+            "description": "What had no rate for its day, in its own currency. Non-empty means `converted` is not the whole answer",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmountDto"
+            }
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "Whether `converted` accounts for everything"
+          }
+        },
+        "required": [
+          "currency",
+          "converted",
+          "byCurrency",
+          "unconverted",
+          "complete"
+        ]
+      },
+      "MethodTotalsDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD",
+              "BANK_TRANSFER",
+              "ONLINE",
+              "OTHER"
+            ]
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TotalsDto"
+          }
+        },
+        "required": [
+          "method",
+          "totals"
+        ]
+      },
+      "CollectionReportDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "received": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "refunded": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "net": {
+            "description": "Received less refunded",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TotalsDto"
+              }
+            ]
+          },
+          "byMethod": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MethodTotalsDto"
+            }
+          },
+          "paymentCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "currency",
+          "received",
+          "refunded",
+          "net",
+          "byMethod",
+          "paymentCount"
+        ]
+      },
+      "AgeingBucketDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "enum": [
+              "current",
+              "d30",
+              "d60",
+              "over90"
+            ]
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "recordCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "bucket",
+          "totals",
+          "recordCount"
+        ]
+      },
+      "OutstandingReportDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "outstanding": {
+            "$ref": "#/components/schemas/TotalsDto"
+          },
+          "ageing": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgeingBucketDto"
+            }
+          },
+          "recordCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "outstanding",
+          "ageing",
+          "recordCount"
+        ]
+      },
+      "ExchangeRateDto": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "quote": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "rate": {
+            "type": "string",
+            "example": "35.42000000"
+          },
+          "validOn": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "base",
+          "quote",
+          "rate",
+          "validOn"
+        ]
+      },
+      "PutRateDto": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "quote": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "rate": {
+            "type": "string",
+            "example": "35.42000000",
+            "description": "One unit of base costs this much quote"
+          },
+          "validOn": {
+            "type": "string",
+            "example": "2026-09-03",
+            "description": "The day the rate is for"
+          }
+        },
+        "required": [
+          "base",
+          "quote",
+          "rate",
+          "validOn"
+        ]
+      },
+      "AgencyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "object",
+            "nullable": true
+          },
+          "contactName": {
+            "type": "object",
+            "nullable": true
+          },
+          "contactEmail": {
+            "type": "object",
+            "nullable": true
+          },
+          "contactPhone": {
+            "type": "object",
+            "nullable": true
+          },
+          "commissionRate": {
+            "type": "object",
+            "nullable": true,
+            "example": "0.1000"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "country",
+          "contactName",
+          "contactEmail",
+          "contactPhone",
+          "commissionRate",
+          "isActive"
+        ]
+      },
+      "CreateAgencyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactEmail": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactPhone": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "commissionRate": {
+            "type": "string",
+            "example": "0.1000",
+            "description": "Fraction of the net, 0–1. Applied when a record names this agency"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "CreateFinanceRecordDto": {
+        "type": "object",
+        "properties": {
+          "procedureName": {
+            "type": "string",
+            "maxLength": 200,
+            "example": "Rinoplasti"
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "TRY",
+              "EUR",
+              "USD",
+              "GBP"
+            ]
+          },
+          "grossAmount": {
+            "type": "string",
+            "example": "4500.00",
+            "description": "Before discount"
+          },
+          "discount": {
+            "type": "string",
+            "example": "500.00"
+          },
+          "costItems": {
+            "type": "object",
+            "description": "Cost breakdown, free-form. The net is what the patient pays, not this"
+          },
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agencyCommission": {
+            "type": "string",
+            "example": "450.00",
+            "description": "Overrides the agency's standing rate for a negotiated case"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "procedureName",
+          "currency",
+          "grossAmount"
         ]
       }
     }

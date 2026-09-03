@@ -199,14 +199,14 @@ model StaffProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignments           PatientAssignment[]
-  patientsAsDoctor      Patient[]           @relation("AssignedDoctor")
+  patientsAsDoctor      Patient[]            @relation("AssignedDoctor")
   appointments          Appointment[]
-  prescribedMedications Medication[]        @relation("Prescriber")
+  prescribedMedications Medication[]         @relation("Prescriber")
+  availabilityWindows   AvailabilityWindow[]
 
   @@map("staff_profiles")
-  availabilityWindows AvailabilityWindow[]
 }
 
 // ===========================================================================
@@ -760,11 +760,11 @@ model AvailabilityWindow {
   staffId String @map("staff_id") @db.Uuid
 
   /// 0 = Sunday .. 6 = Saturday
-  dayOfWeek Int    @map("day_of_week")
+  dayOfWeek Int     @map("day_of_week")
   /// Local wall-clock time in the clinic's timezone, stored as "HH:MM".
-  startTime String @map("start_time")
-  endTime   String @map("end_time")
-  timezone  String @default("Europe/Istanbul")
+  startTime String  @map("start_time")
+  endTime   String  @map("end_time")
+  timezone  String  @default("Europe/Istanbul")
   isActive  Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -1151,9 +1151,9 @@ enum UploadStatus {
 /// a server restart. A patient abroad on mobile data who has sent 18 of 20 MB
 /// must not have to start again.
 model UploadSession {
-  id           String  @id @default(uuid(7)) @db.Uuid
-  patientId    String  @map("patient_id") @db.Uuid
-  createdById  String? @map("created_by_id") @db.Uuid
+  id           String       @id @default(uuid(7)) @db.Uuid
+  patientId    String       @map("patient_id") @db.Uuid
+  createdById  String?      @map("created_by_id") @db.Uuid
   documentType DocumentType @map("document_type")
 
   originalName String? @map("original_name")
@@ -1281,9 +1281,9 @@ enum ComplicationStatus {
 /// the spec asks for the response time to be measured, and a number nobody
 /// stores is a number nobody measures.
 model Complication {
-  id        String              @id @default(uuid(7)) @db.Uuid
-  patientId String              @map("patient_id") @db.Uuid
-  status    ComplicationStatus  @default(REPORTED)
+  id        String             @id @default(uuid(7)) @db.Uuid
+  patientId String             @map("patient_id") @db.Uuid
+  status    ComplicationStatus @default(REPORTED)
 
   /// The patient's own words. Required: a photo with no description leaves the
   /// clinician guessing what they are being asked to look at.
@@ -1442,9 +1442,16 @@ model FinanceRecord {
 
   costItems Json? @map("cost_items")
 
+  /// Derived from the payment ledger, never written by a client. A status a
+  /// human can type is a status that can disagree with the money, and then the
+  /// collection report is wrong in a way nobody can see (spec M11).
   paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
   paidAmount    Decimal       @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  /// When the record became fully paid. Null while anything is outstanding.
   paidAt        DateTime?     @map("paid_at") @db.Timestamptz
+  /// Set when the bill is written off or the treatment did not happen. The one
+  /// state the amounts cannot imply, so it is the one a human sets.
+  cancelledAt   DateTime?     @map("cancelled_at") @db.Timestamptz
 
   agencyId         String?  @map("agency_id") @db.Uuid
   agencyCommission Decimal? @map("agency_commission") @db.Decimal(14, 2)
@@ -1453,13 +1460,75 @@ model FinanceRecord {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  agency  Agency? @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  patient  Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  agency   Agency?   @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  payments Payment[]
 
   @@index([patientId])
   @@index([paymentStatus, createdAt])
   @@index([createdAt])
   @@map("finance_records")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  ONLINE
+  OTHER
+}
+
+enum PaymentKind {
+  PAYMENT
+  REFUND
+}
+
+/// Money that actually moved, one row per movement (spec M11: peşin/taksit,
+/// tahsilat raporu).
+///
+/// A running total on the bill cannot answer "how much came in during March",
+/// which is the whole of a collection report, and it cannot be corrected
+/// without destroying the history of what was entered. So payments are a
+/// ledger: rows are never edited or deleted, a mistake is marked reversed and
+/// stops counting, and the bill's `paidAmount` is recomputed from what remains.
+model Payment {
+  id              String      @id @default(uuid(7)) @db.Uuid
+  financeRecordId String      @map("finance_record_id") @db.Uuid
+  kind            PaymentKind @default(PAYMENT)
+
+  /// What the payer handed over, in the currency they handed it over in.
+  amount   Decimal  @db.Decimal(14, 2)
+  currency Currency
+
+  /// The same money in the bill's currency. Equal to `amount` when the
+  /// currencies match; otherwise it is entered by the person recording the
+  /// payment, because the rate that settles a bill is the one the bank used
+  /// that day and not one this software may guess.
+  appliedAmount Decimal  @map("applied_amount") @db.Decimal(14, 2)
+  /// The rate behind a cross-currency payment, kept for the audit trail.
+  rate          Decimal? @db.Decimal(18, 8)
+
+  method    PaymentMethod
+  /// When the money moved, which is not when somebody got round to typing it in.
+  paidAt    DateTime      @map("paid_at") @db.Timestamptz
+  /// Receipt or transfer reference, so a bank line can be matched to a bill.
+  reference String?
+  note      String?
+
+  /// A correction: the row stays, with its original numbers, and stops counting.
+  reversedAt     DateTime? @map("reversed_at") @db.Timestamptz
+  reversedById   String?   @map("reversed_by_id") @db.Uuid
+  reversalReason String?   @map("reversal_reason")
+
+  recordedById String?  @map("recorded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  financeRecord FinanceRecord @relation(fields: [financeRecordId], references: [id], onDelete: Cascade)
+
+  @@index([financeRecordId])
+  /// The collection report: money received in a period.
+  @@index([paidAt])
+  @@map("payments")
 }
 
 /// Dated FX rates so a report for last quarter keeps reporting last quarter's
@@ -1468,10 +1537,17 @@ model ExchangeRate {
   id      String   @id @default(uuid(7)) @db.Uuid
   base    Currency
   quote   Currency
+  /// One unit of `base` costs this much `quote`.
   rate    Decimal  @db.Decimal(18, 8)
   validOn DateTime @map("valid_on") @db.Date
 
+  /// Who entered it. There is no rate feed in this repository — the source is
+  /// the clinic's decision, and a made-up one would be worse than none.
+  recordedById String?  @map("recorded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
   @@unique([base, quote, validOn])
+  @@index([base, quote, validOn])
   @@map("exchange_rates")
 }
 

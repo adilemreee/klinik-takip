@@ -3652,6 +3652,517 @@
           }
         }
       ]
+    },
+    {
+      "name": "finance",
+      "item": [
+        {
+          "name": "Finance records, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "records"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "currency",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "agencyId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Finance records, newest first"
+          }
+        },
+        {
+          "name": "One record, with its payment ledger",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/records/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "records",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "One record, with its payment ledger"
+          }
+        },
+        {
+          "name": "Edit a bill. The net is recomputed, never supplied",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/records/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "records",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Edit a bill. The net is recomputed, never supplied",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"procedureName\": \"\",\n  \"grossAmount\": \"4500.00\",\n  \"discount\": \"500.00\",\n  \"costItems\": {},\n  \"agencyId\": {},\n  \"agencyCommission\": \"450.00\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Write a bill off. Not a delete — collected money still has to be accounted for",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/records/:id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "records",
+                ":id",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Write a bill off. Not a delete — collected money still has to be accounted for",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Record money that arrived. The payment status follows from the ledger",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/records/:id/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "records",
+                ":id",
+                "payments"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Record money that arrived. The payment status follows from the ledger",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"1500.00\",\n  \"currency\": \"TRY\",\n  \"appliedAmount\": \"1200.00\",\n  \"method\": \"CASH\",\n  \"paidAt\": \"2026-01-01T00:00:00.000Z\",\n  \"reference\": \"\",\n  \"note\": \"\",\n  \"kind\": \"PAYMENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Correct a mistyped payment. The row stays, with its numbers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/payments/:id/reverse",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "payments",
+                ":id",
+                "reverse"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Correct a mistyped payment. The row stays, with its numbers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Money received in a period, each payment converted at its own date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/collections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "collections"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "currency",
+                  "value": "",
+                  "description": "Everything is converted into this, at each payment's own date",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Money received in a period, each payment converted at its own date"
+          }
+        },
+        {
+          "name": "What is still owed, and for how long",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/outstanding",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "outstanding"
+              ],
+              "query": [
+                {
+                  "key": "currency",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "What is still owed, and for how long"
+          }
+        },
+        {
+          "name": "Recorded exchange rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/rates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "rates"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                },
+                {
+                  "key": "to",
+                  "value": "2026-01-01T00:00:00.000Z",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Recorded exchange rates"
+          }
+        },
+        {
+          "name": "Record a rate for a day. There is no rate feed here — the source is the clinic's",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/rates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "rates"
+              ]
+            },
+            "description": "Record a rate for a day. There is no rate feed here — the source is the clinic's",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"base\": \"TRY\",\n  \"quote\": \"TRY\",\n  \"rate\": \"35.42000000\",\n  \"validOn\": \"2026-09-03\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Agencies, for picking one on a bill",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/agencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "agencies"
+              ]
+            },
+            "description": "Agencies, for picking one on a bill"
+          }
+        },
+        {
+          "name": "Add an agency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/agencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "agencies"
+              ]
+            },
+            "description": "Add an agency",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"country\": \"\",\n  \"contactName\": \"\",\n  \"contactEmail\": \"\",\n  \"contactPhone\": \"\",\n  \"commissionRate\": \"0.1000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Edit an agency",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/finance/agencies/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "finance",
+                "agencies",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Edit an agency"
+          }
+        },
+        {
+          "name": "This patient's bills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/finance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "finance"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "This patient's bills"
+          }
+        },
+        {
+          "name": "Raise a bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/finance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "finance"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Raise a bill",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"procedureName\": \"Rinoplasti\",\n  \"currency\": \"TRY\",\n  \"grossAmount\": \"4500.00\",\n  \"discount\": \"500.00\",\n  \"costItems\": {},\n  \"agencyId\": \"00000000-0000-7000-8000-000000000000\",\n  \"agencyCommission\": \"450.00\",\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -13,6 +13,7 @@ import { MetricsInterceptor } from './metrics.interceptor';
       useFactory: (config: ConfigService<Env, true>) =>
         buildLoggerParams({
           APP_ENV: config.get('APP_ENV', { infer: true }),
+          NODE_ENV: config.get('NODE_ENV', { infer: true }),
           LOG_LEVEL: config.get('LOG_LEVEL', { infer: true }),
           SERVICE_NAME: config.get('SERVICE_NAME', { infer: true }),
           LOKI_URL: config.get('LOKI_URL', { infer: true }),

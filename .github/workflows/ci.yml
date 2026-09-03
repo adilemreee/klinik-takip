@@ -128,11 +128,6 @@ jobs:
       # did not exit. It exits cleanly on macOS and in a Node 22 Linux container
       # matched to this job, so the handle has to be identified here.
       - name: Integration tests
-        # TEMPORARY: the command is deliberately unchanged — the probe is loaded
-        # through NODE_OPTIONS so the process tree stays exactly as it is when
-        # the hang happens.
-        env:
-          NODE_OPTIONS: --require ./test/exit-probe.js
         run: npm run test:integration
 
       # The mobile clients generate from docs/openapi.json, so it must not drift

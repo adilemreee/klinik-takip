@@ -92,3 +92,55 @@ describe('request serialisation', () => {
     expect(Object.keys(result).sort()).toEqual(['id', 'method', 'path']);
   });
 });
+
+/**
+ * Where the log lines go, and — the part that bit — what that costs the
+ * process they are written from.
+ */
+describe('the transport', () => {
+  const transportOf = (env: Parameters<typeof buildLoggerParams>[0]): unknown =>
+    (buildLoggerParams(env).pinoHttp as LoggerOptions).transport;
+
+  /**
+   * Every pino transport runs in a worker thread, and a test run builds one
+   * application per suite file. Nothing closes those threads, so the process is
+   * left holding a MessagePort per suite and Node will not exit — the suite
+   * passes and the job then hangs, which reads as a stuck pipeline rather than
+   * as a logging problem. It cost most of an afternoon to find once.
+   */
+  it('creates none under test, so no worker thread outlives the run', () => {
+    expect(
+      transportOf({ APP_ENV: 'local', NODE_ENV: 'test', LOG_LEVEL: 'info', SERVICE_NAME: 'test' }),
+    ).toBeUndefined();
+  });
+
+  it('still pretty-prints for a developer watching a terminal', () => {
+    expect(
+      transportOf({
+        APP_ENV: 'local',
+        NODE_ENV: 'development',
+        LOG_LEVEL: 'info',
+        SERVICE_NAME: 'test',
+      }),
+    ).toMatchObject({ target: 'pino-pretty' });
+  });
+
+  it('ships to Loki off the developer machine', () => {
+    expect(
+      transportOf({
+        APP_ENV: 'staging',
+        NODE_ENV: 'production',
+        LOG_LEVEL: 'info',
+        SERVICE_NAME: 'klinik-api',
+        LOKI_URL: 'http://loki:3100',
+      }),
+    ).toMatchObject({ target: 'pino-loki' });
+  });
+
+  /** No Loki configured is not a reason to fall back to a worker thread. */
+  it('writes plainly when there is nowhere to ship to', () => {
+    expect(
+      transportOf({ APP_ENV: 'production', NODE_ENV: 'production', LOG_LEVEL: 'info', SERVICE_NAME: 'x' }),
+    ).toBeUndefined();
+  });
+});

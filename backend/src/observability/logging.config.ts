@@ -35,14 +35,34 @@ const REDACTED_PATHS = [
   '*.note',
 ];
 
-type LoggerEnv = Pick<Env, 'APP_ENV' | 'LOG_LEVEL' | 'SERVICE_NAME'> & { LOKI_URL?: string };
+type LoggerEnv = Pick<Env, 'APP_ENV' | 'LOG_LEVEL' | 'SERVICE_NAME'> & {
+  LOKI_URL?: string;
+  NODE_ENV?: Env['NODE_ENV'];
+};
 
 export function buildLoggerParams(env: LoggerEnv): Params {
+  /**
+   * No transport under test, whatever the environment says.
+   *
+   * Every pino transport — pino-pretty included — runs in a worker thread, and
+   * a test run builds one application per suite file. Nothing closes those
+   * threads, so the test process is left holding a MessagePort per suite and
+   * Node will not exit: the run passes and then hangs, which reads as a stuck
+   * pipeline rather than as a logging problem.
+   *
+   * The pretty printer is a convenience for a developer watching a terminal.
+   * Test output is read from a log file or a CI page, where line-per-JSON is
+   * better anyway, so this costs nothing and removes a whole class of
+   * "the suite passed but the job never finished".
+   */
+  const underTest = env.NODE_ENV === 'test';
   const isLocal = env.APP_ENV === 'local';
 
   // Redaction is applied by pino BEFORE any transport sees the line, so what
   // reaches Loki is already scrubbed.
-  const transport = isLocal
+  const transport = underTest
+    ? undefined
+    : isLocal
     ? { target: 'pino-pretty', options: { singleLine: true } }
     : env.LOKI_URL
       ? {

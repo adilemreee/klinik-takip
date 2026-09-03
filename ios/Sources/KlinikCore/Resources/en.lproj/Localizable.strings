@@ -346,3 +346,19 @@
 "triage.summaryDisclaimer" = "This summary was produced by AI and is not a medical diagnosis. The patient's own message is below.";
 "triage.flaggedByRules" = "Flagged by the keyword screen";
 "triage.releasedFromWindow" = "Delivered without waiting for messaging hours";
+
+"report.risk.LOW" = "Low";
+"report.risk.MEDIUM" = "Medium";
+"report.risk.HIGH" = "High";
+"report.risk.CRITICAL" = "Critical";
+"report.pendingTitle" = "Interpretations awaiting review";
+"report.pendingEmpty" = "Nothing waiting for review";
+"report.doctorView" = "Clinical interpretation";
+"report.patientView" = "Text that will go to the patient";
+"report.releaseAction" = "Approve and send to the patient";
+"report.holdAction" = "Approve, do not send";
+"report.reviewedBy" = "Reviewed by";
+"report.notReleased" = "Not sent to the patient";
+"report.myReportsTitle" = "Your lab interpretations";
+"report.myReportsEmpty" = "Nothing has been shared with you yet";
+"report.generatedAt" = "Generated";

@@ -113,6 +113,25 @@ describe('reading a finished prompt for identifiers', () => {
   });
 
   /**
+   * An OCR'd lab table arrives as a column of bare numbers. Scanning across the
+   * line break splices them into one long number, and two innocent values can
+   * then contain a real phone number between them — refusing a report because
+   * platelets happened to sit above haemoglobin.
+   */
+  it('does not splice numbers across lines into one', () => {
+    const column = ['431112', '233450'].join('\n');
+
+    expect(findLeaks(column, { phone: '+90 532 111 22 33' })).toEqual([]);
+  });
+
+  /** On one line it is a match, and should be. */
+  it('still catches a phone number written with a space in it', () => {
+    expect(findLeaks('Arayin 0532 111 22 33', { phone: '+90 532 111 22 33' })).toEqual([
+      { kind: 'phone' },
+    ]);
+  });
+
+  /**
    * The identifier most likely to be typed into a free-text note, and the one
    * that can be recognised without knowing whose it is.
    */

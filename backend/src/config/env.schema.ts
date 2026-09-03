@@ -118,6 +118,21 @@ export const envSchema = z.object({
   AI_ZERO_RETENTION: z
     .preprocess((value) => (value === '' ? undefined : value), z.coerce.boolean().default(false)),
 
+  /**
+   * Lets a LOW or MEDIUM lab interpretation reach the patient without a
+   * clinician reading it first (spec M5 allows the review requirement to be
+   * switched off).
+   *
+   * Off by default. There is deliberately no setting that releases a HIGH or
+   * CRITICAL interpretation unread — an AI telling a post-operative patient
+   * abroad that something is seriously wrong, before anyone at the clinic has
+   * seen it, is the one outcome the rest of this system would not forgive.
+   */
+  AI_AUTO_RELEASE_LOW_RISK: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.boolean().default(false),
+  ),
+
   /** An AI call with no deadline is a request handler that never returns. */
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(1_024),

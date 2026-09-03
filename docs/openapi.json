@@ -7905,6 +7905,397 @@
           "ai"
         ]
       }
+    },
+    "/reports/pending": {
+      "get": {
+        "operationId": "AIReportsController_pending",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "AI reports waiting for a clinician",
+        "tags": [
+          "ai-reports"
+        ]
+      }
+    },
+    "/reports/{reportId}/review": {
+      "patch": {
+        "operationId": "AIReportsController_review",
+        "parameters": [
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Review a report and release it to the patient, or not",
+        "tags": [
+          "ai-reports"
+        ]
+      }
+    },
+    "/patients/{id}/reports": {
+      "get": {
+        "operationId": "PatientReportsController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A patient's AI reports, newest first",
+        "tags": [
+          "ai-reports"
+        ]
+      }
+    },
+    "/patients/{id}/reports/lab": {
+      "post": {
+        "operationId": "PatientReportsController_interpretLabs",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": false,
+            "in": "query",
+            "description": "Limit the panel to one uploaded document; otherwise the recent verified results",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Interpret the verified lab panel, for doctor and patient",
+        "tags": [
+          "ai-reports"
+        ]
+      }
+    },
+    "/me/reports": {
+      "get": {
+        "operationId": "MyReportsController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientReportDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reports your clinic has released to you",
+        "tags": [
+          "ai-reports"
+        ]
+      }
     }
   },
   "info": {
@@ -11032,6 +11423,146 @@
           "failed",
           "tokensIn",
           "tokensOut"
+        ]
+      },
+      "AIReportDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string",
+            "example": "lab"
+          },
+          "contentMd": {
+            "type": "string",
+            "description": "Clinical rendering, for staff"
+          },
+          "patientFacingMd": {
+            "type": "object",
+            "nullable": true,
+            "description": "Plain-language rendering. Only returned to the patient once released"
+          },
+          "riskLevel": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL"
+            ],
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "description": "The model that actually answered"
+          },
+          "modelVersion": {
+            "type": "object",
+            "nullable": true
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reviewedById": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "object",
+            "format": "date-time",
+            "nullable": true
+          },
+          "releasedToPatientAt": {
+            "type": "object",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "source",
+          "contentMd",
+          "model",
+          "generatedAt"
+        ]
+      },
+      "ReportViewDto": {
+        "type": "object",
+        "properties": {
+          "report": {
+            "$ref": "#/components/schemas/AIReportDto"
+          },
+          "disclaimer": {
+            "type": "string",
+            "description": "The warning that goes under every AI output (spec M5), in the patient's language"
+          },
+          "visibleToPatient": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "report",
+          "disclaimer",
+          "visibleToPatient"
+        ]
+      },
+      "ReviewReportDto": {
+        "type": "object",
+        "properties": {
+          "release": {
+            "type": "boolean",
+            "description": "Whether the patient may see the plain-language half"
+          }
+        },
+        "required": [
+          "release"
+        ]
+      },
+      "PatientReportDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string",
+            "example": "lab"
+          },
+          "contentMd": {
+            "type": "string",
+            "description": "The plain-language rendering"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "releasedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "disclaimer": {
+            "type": "string",
+            "description": "The warning that goes under every AI output (spec M5)"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "contentMd",
+          "generatedAt",
+          "releasedAt",
+          "disclaimer"
         ]
       }
     }

@@ -12,6 +12,7 @@ import { QueueModule } from './queue/queue.module';
 import { AIModule } from './ai/ai.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { EmergencyModule } from './emergency/emergency.module';
+import { ReportsModule } from './reports/reports.module';
 import { TriageModule } from './triage/triage.module';
 import { FollowUpModule } from './followup/followup.module';
 import { LabModule } from './lab/lab.module';
@@ -53,6 +54,7 @@ import { ObservabilityModule } from './observability/observability.module';
     EmergencyModule,
     AIModule,
     TriageModule,
+    ReportsModule,
     QueueModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

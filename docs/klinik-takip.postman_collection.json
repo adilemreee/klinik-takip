@@ -3064,6 +3064,145 @@
           }
         }
       ]
+    },
+    {
+      "name": "ai-reports",
+      "item": [
+        {
+          "name": "AI reports waiting for a clinician",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reports/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                "pending"
+              ]
+            },
+            "description": "AI reports waiting for a clinician"
+          }
+        },
+        {
+          "name": "Review a report and release it to the patient, or not",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports/:reportId/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports",
+                ":reportId",
+                "review"
+              ],
+              "variable": [
+                {
+                  "key": "reportId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Review a report and release it to the patient, or not",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"release\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "A patient's AI reports, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "reports"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's AI reports, newest first"
+          }
+        },
+        {
+          "name": "Interpret the verified lab panel, for doctor and patient",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/reports/lab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "reports",
+                "lab"
+              ],
+              "query": [
+                {
+                  "key": "documentId",
+                  "value": "",
+                  "description": "Limit the panel to one uploaded document; otherwise the recent verified results",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Interpret the verified lab panel, for doctor and patient"
+          }
+        },
+        {
+          "name": "Reports your clinic has released to you",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "reports"
+              ]
+            },
+            "description": "Reports your clinic has released to you"
+          }
+        }
+      ]
     }
   ]
 }

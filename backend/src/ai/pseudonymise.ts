@@ -314,7 +314,11 @@ interface DigitRun {
 function digitRuns(text: string): DigitRun[] {
   const runs: DigitRun[] = [];
 
-  for (const match of text.matchAll(/[0-9][0-9()\-.\s+]{5,}[0-9]|[0-9]{6,}/g)) {
+  // Separators stop at the end of a line. A phone number is never written
+  // across two of them, and letting the scan cross would splice a lab panel's
+  // consecutive values into one long number that can collide with a real
+  // identifier — refusing a report because platelets sat above haemoglobin.
+  for (const match of text.matchAll(/[0-9][0-9()\-.\t +]{5,}[0-9]|[0-9]{6,}/g)) {
     runs.push({
       digits: digitsOf(match[0]),
       start: match.index,

@@ -346,3 +346,19 @@
 "triage.summaryDisclaimer" = "Bu özet yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez. Hastanın kendi mesajı aşağıdadır.";
 "triage.flaggedByRules" = "Anahtar kelime taraması işaretledi";
 "triage.releasedFromWindow" = "Mesaj kutusu saatleri beklenmeden iletildi";
+
+"report.risk.LOW" = "Düşük";
+"report.risk.MEDIUM" = "Orta";
+"report.risk.HIGH" = "Yüksek";
+"report.risk.CRITICAL" = "Kritik";
+"report.pendingTitle" = "Onay bekleyen yorumlar";
+"report.pendingEmpty" = "Onay bekleyen yorum yok";
+"report.doctorView" = "Klinik yorum";
+"report.patientView" = "Hastaya gidecek metin";
+"report.releaseAction" = "Onayla ve hastaya gönder";
+"report.holdAction" = "Onayla, hastaya gönderme";
+"report.reviewedBy" = "Onaylayan";
+"report.notReleased" = "Hastaya gönderilmedi";
+"report.myReportsTitle" = "Tahlil yorumlarınız";
+"report.myReportsEmpty" = "Henüz paylaşılmış bir yorum yok";
+"report.generatedAt" = "Oluşturulma";

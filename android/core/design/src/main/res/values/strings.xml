@@ -20,6 +20,13 @@
     <string name="appointment_type_control">Kontrol</string>
     <string name="appointment_type_surgery">Ameliyat</string>
     <string name="appointment_type_video_call">Video görüşme</string>
+    <string name="assistant_disclaimer">Bu yanıt kliniğinizin kendi dokümanlarından üretilmiştir, tıbbi tanı yerine geçmez.</string>
+    <string name="assistant_handover">Bu soruyu kliniğinizden biri yanıtlayacak.</string>
+    <string name="assistant_not_enough">Bu cevap yeterli değil, doktora ilet</string>
+    <string name="assistant_placeholder">Sorunuzu yazın</string>
+    <string name="assistant_sent">Sorunuz kliniğe iletildi</string>
+    <string name="assistant_source_prefix">Kaynak</string>
+    <string name="assistant_title">Klinik asistanı</string>
     <string name="auth_error_account_inactive">Hesabınız aktif değil. Kliniğinizle görüşün.</string>
     <string name="auth_error_account_locked">Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.</string>
     <string name="auth_error_invalid_credentials">E-posta veya parola hatalı.</string>

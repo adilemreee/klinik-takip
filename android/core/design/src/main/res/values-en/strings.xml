@@ -20,6 +20,13 @@
     <string name="appointment_type_control">Check-up</string>
     <string name="appointment_type_surgery">Surgery</string>
     <string name="appointment_type_video_call">Video call</string>
+    <string name="assistant_disclaimer">This answer comes from your clinic\'s own documents and is not a medical diagnosis.</string>
+    <string name="assistant_handover">Someone at your clinic will answer this.</string>
+    <string name="assistant_not_enough">This answer is not enough, send it to a doctor</string>
+    <string name="assistant_placeholder">Type your question</string>
+    <string name="assistant_sent">Your question has been sent to the clinic</string>
+    <string name="assistant_source_prefix">Source</string>
+    <string name="assistant_title">Clinic assistant</string>
     <string name="auth_error_account_inactive">Your account is not active. Please contact your clinic.</string>
     <string name="auth_error_account_locked">Too many attempts. Try again in a little while.</string>
     <string name="auth_error_invalid_credentials">E-mail or password is incorrect.</string>

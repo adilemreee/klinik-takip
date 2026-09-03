@@ -133,6 +133,18 @@ export const envSchema = z.object({
     z.coerce.boolean().default(false),
   ),
 
+  /**
+   * Embeddings, configured separately because they are a separate market:
+   * Anthropic has no embeddings API, so a clinic may answer with one provider
+   * and embed with another — or answer with one and not embed at all, which is
+   * the state this ships in. Without it, protocol retrieval falls back to the
+   * lexical search.
+   */
+  AI_EMBEDDING_PROVIDER: optional(z.enum(['openai'])),
+  AI_EMBEDDING_API_KEY: optional(z.string().min(1)),
+  AI_EMBEDDING_MODEL: optional(z.string().min(1)),
+  AI_EMBEDDING_PRICE_PER_MTOK: optional(z.coerce.number().nonnegative()),
+
   /** An AI call with no deadline is a request handler that never returns. */
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(1_024),

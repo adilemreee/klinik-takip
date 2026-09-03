@@ -1073,6 +1073,13 @@ enum AiJobType {
   OCR
   TRANSLATION
   DRUG_INTERACTION
+
+  /// Turning protocol text or a patient's question into a vector (spec M4).
+  /// Its own type because it is priced differently and runs far more often.
+  EMBEDDING
+
+  /// The FAQ assistant answering from the protocol corpus (spec M4).
+  ASSISTANT
 }
 
 model AiJob {

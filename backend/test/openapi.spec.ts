@@ -139,6 +139,7 @@ describe('the published API contract', () => {
         'ai',
         'ai-reports',
         'appointments',
+        'assistant',
         'audit',
         'auth',
         'complications',
@@ -153,6 +154,7 @@ describe('the published API contract', () => {
         'notifications',
         'patients',
         'photos',
+        'protocols',
       ]);
     });
 

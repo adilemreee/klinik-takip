@@ -86,7 +86,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
 | Faz 3 — Klinik Modüller | 4 / 6 | T3.1, T3.2, T3.4, T3.6 tamam · T3.3 ve T3.5'te eksik olan tek şey **kamera katmanı** |
 | Faz 4 — İletişim ve Bildirim | 3 / 6 | T4.4, T4.5, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı |
-| Faz 5 — Yapay Zeka Katmanı | 4 / 7 | T5.1, T5.2, T5.4, T5.7 tamam · katman sağlayıcı anahtarı olmadan **kapalı**, ama triyajın kırmızı bayrak taraması AI'sız da çalışıyor |
+| Faz 5 — Yapay Zeka Katmanı | 5 / 7 | T5.1–T5.4, T5.7 tamam (T5.5, T5.6 kaldı) · katman sağlayıcı anahtarı olmadan **kapalı**; triyajın kırmızı bayrak taraması ve protokol sözcük araması AI'sız da çalışıyor |
 | Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
 | Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |
 

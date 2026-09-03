@@ -362,3 +362,11 @@
 "report.myReportsTitle" = "Tahlil yorumlarınız";
 "report.myReportsEmpty" = "Henüz paylaşılmış bir yorum yok";
 "report.generatedAt" = "Oluşturulma";
+
+"assistant.title" = "Klinik asistanı";
+"assistant.placeholder" = "Sorunuzu yazın";
+"assistant.handover" = "Bu soruyu kliniğinizden biri yanıtlayacak.";
+"assistant.notEnough" = "Bu cevap yeterli değil, doktora ilet";
+"assistant.sourcePrefix" = "Kaynak";
+"assistant.disclaimer" = "Bu yanıt kliniğinizin kendi dokümanlarından üretilmiştir, tıbbi tanı yerine geçmez.";
+"assistant.sent" = "Sorunuz kliniğe iletildi";

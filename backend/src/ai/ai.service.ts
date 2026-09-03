@@ -11,6 +11,7 @@ import {
   type FetchLike,
 } from './ai-provider';
 import { budgetUsedFraction, costUsd, withinBudget, type Pricing, type TokenUsage } from './cost';
+import { OpenAIEmbeddingProvider, type EmbeddingProvider } from './embeddings';
 import { findLeaks, type Identifiers, type Leak } from './pseudonymise';
 import { AnthropicProvider } from './providers/anthropic.provider';
 import { OpenAIProvider } from './providers/openai.provider';
@@ -116,6 +117,8 @@ export class AIService implements OnModuleInit {
   private readonly logger = new Logger(AIService.name);
 
   private provider: AIProvider = new UnconfiguredProvider();
+  private embeddings: EmbeddingProvider | null = null;
+  private embeddingPricing: Pricing | null = null;
   private pricing: Pricing | null = null;
   private budgetUsd: number | null = null;
   private zeroRetention = false;
@@ -168,10 +171,50 @@ export class AIService implements OnModuleInit {
       `AI layer enabled: ${name} ${model}` +
         (this.zeroRetention ? '' : ' — WITHOUT zero-retention, so clinical prompts will be refused'),
     );
+
+    this.configureEmbeddings();
+  }
+
+  /**
+   * Configured on its own, and allowed to be absent.
+   *
+   * Without it the protocol assistant keeps working from the lexical search
+   * alone; what must not happen is retrieval quietly returning nothing and the
+   * assistant answering anyway, and that is prevented above this layer.
+   */
+  private configureEmbeddings(): void {
+    const provider = this.config.get('AI_EMBEDDING_PROVIDER', { infer: true });
+    const apiKey = this.config.get('AI_EMBEDDING_API_KEY', { infer: true });
+    const model = this.config.get('AI_EMBEDDING_MODEL', { infer: true });
+    const price = this.config.get('AI_EMBEDDING_PRICE_PER_MTOK', { infer: true });
+
+    if (!provider || !apiKey || !model) {
+      this.logger.log('No embedding provider configured; retrieval will be lexical only');
+      return;
+    }
+
+    if (price === undefined) {
+      this.logger.error(
+        'An embedding provider is configured but AI_EMBEDDING_PRICE_PER_MTOK is not. ' +
+          'Cost accounting is mandatory, so embeddings stay off.',
+      );
+      return;
+    }
+
+    // Output tokens do not exist for an embedding call; the same shape is
+    // reused so one costing function covers both.
+    this.embeddingPricing = { inputPerMillionUsd: price, outputPerMillionUsd: 0 };
+    this.embeddings = new OpenAIEmbeddingProvider(model, apiKey, this.fetchImpl);
+
+    this.logger.log(`Embeddings enabled: ${provider} ${model}`);
   }
 
   get enabled(): boolean {
     return this.provider.name !== 'unconfigured';
+  }
+
+  get embeddingsEnabled(): boolean {
+    return this.embeddings !== null;
   }
 
   /**
@@ -220,6 +263,122 @@ export class AIService implements OnModuleInit {
     }
 
     return this.callProvider(request);
+  }
+
+  /**
+   * Embeddings, through the same door as everything else.
+   *
+   * A vector is not less of a disclosure than a completion: the text still
+   * leaves the building. So the zero-retention gate, the leak check, the budget
+   * and the `ai_jobs` row all apply, and the only thing that differs is what
+   * comes back.
+   */
+  async embed(input: {
+    texts: string[];
+    containsHealthData: boolean;
+    identifiers?: Identifiers;
+    patientId?: string;
+  }): Promise<{ ok: true; vectors: number[][]; model: string } | AIRefusal> {
+    const provider = this.embeddings;
+
+    if (!provider) {
+      return {
+        ok: false,
+        jobId: null,
+        reason: 'not-configured',
+        message: 'No embedding provider is configured',
+      };
+    }
+
+    const request: AIRequest = {
+      purpose: AiJobType.EMBEDDING,
+      system: '',
+      messages: input.texts.map((text) => ({ role: 'user' as const, content: text })),
+      containsHealthData: input.containsHealthData,
+      identifiers: input.identifiers,
+      patientId: input.patientId,
+    };
+
+    if (input.containsHealthData && !this.zeroRetention) {
+      return this.refuse(
+        request,
+        'no-zero-retention',
+        'The provider account is not marked zero-retention, so clinical text is not embedded',
+      );
+    }
+
+    const leaks = findLeaks(input.texts.join('\n'), input.identifiers);
+
+    if (leaks.length > 0) {
+      return this.refuse(
+        request,
+        'identifier-in-prompt',
+        `The text carries identifying data (${leaks.map((leak: Leak) => leak.kind).join(', ')})`,
+      );
+    }
+
+    const spentUsd = await this.spentThisMonth();
+
+    if (!withinBudget({ spentUsd, budgetUsd: this.budgetUsd })) {
+      return this.refuse(
+        request,
+        'budget-exhausted',
+        `This month's AI budget of $${this.budgetUsd?.toFixed(2)} is spent`,
+      );
+    }
+
+    const job = await this.prisma.aiJob.create({
+      data: {
+        type: AiJobType.EMBEDDING,
+        status: ProcessingStatus.PROCESSING,
+        inputRef: input.patientId ?? null,
+        model: provider.model,
+        startedAt: new Date(),
+      },
+    });
+
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const result = await provider.embed(input.texts, controller.signal);
+      const cost = this.embeddingPricing
+        ? costUsd({ inputTokens: result.tokens, outputTokens: 0 }, this.embeddingPricing)
+        : null;
+
+      await this.prisma.aiJob.update({
+        where: { id: job.id },
+        data: {
+          status: ProcessingStatus.DONE,
+          model: result.model,
+          tokensIn: result.tokens,
+          tokensOut: 0,
+          costUsd: cost === null ? null : new Prisma.Decimal(cost),
+          attempts: 1,
+          finishedAt: new Date(),
+        },
+      });
+
+      return { ok: true, vectors: result.vectors, model: result.model };
+    } catch (error: unknown) {
+      const failure = this.asProviderError(error, controller.signal.aborted);
+
+      await this.prisma.aiJob.update({
+        where: { id: job.id },
+        data: {
+          status: ProcessingStatus.FAILED,
+          error: failure.message.slice(0, 500),
+          attempts: 1,
+          finishedAt: new Date(),
+        },
+      });
+
+      this.logger.error(`Embedding failed: ${failure.message}`);
+
+      return { ok: false, jobId: job.id, reason: 'provider-failed', message: failure.message };
+    } finally {
+      clearTimeout(deadline);
+    }
   }
 
   /** For the doctor's panel: what the month has cost so far (spec section 3.4). */

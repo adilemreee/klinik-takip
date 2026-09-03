@@ -362,3 +362,11 @@
 "report.myReportsTitle" = "Your lab interpretations";
 "report.myReportsEmpty" = "Nothing has been shared with you yet";
 "report.generatedAt" = "Generated";
+
+"assistant.title" = "Clinic assistant";
+"assistant.placeholder" = "Type your question";
+"assistant.handover" = "Someone at your clinic will answer this.";
+"assistant.notEnough" = "This answer is not enough, send it to a doctor";
+"assistant.sourcePrefix" = "Source";
+"assistant.disclaimer" = "This answer comes from your clinic's own documents and is not a medical diagnosis.";
+"assistant.sent" = "Your question has been sent to the clinic";

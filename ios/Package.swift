@@ -26,6 +26,7 @@ let package = Package(
         .library(name: "KlinikNotificationsFeature", targets: ["KlinikNotificationsFeature"]),
         .library(name: "KlinikFollowUpFeature", targets: ["KlinikFollowUpFeature"]),
         .library(name: "KlinikAppointmentsFeature", targets: ["KlinikAppointmentsFeature"]),
+        .library(name: "KlinikEmergencyFeature", targets: ["KlinikEmergencyFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
     ],
     targets: [
@@ -137,6 +138,16 @@ let package = Package(
         .testTarget(
             name: "KlinikAppointmentsFeatureTests",
             dependencies: ["KlinikAppointmentsFeature", "KlinikCore"]
+        ),
+        // The emergency button and its escalation (spec M8).
+        .target(
+            name: "KlinikEmergencyFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        .testTarget(
+            name: "KlinikEmergencyFeatureTests",
+            dependencies: ["KlinikEmergencyFeature", "KlinikCore"]
         ),
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),

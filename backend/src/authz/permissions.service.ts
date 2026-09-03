@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Role, UserStatus } from '@prisma/client';
 import { PrismaService } from '../infra/prisma.service';
 import { RedisService } from '../infra/redis.service';
 
@@ -64,6 +64,55 @@ export class PermissionsService {
 
   async has(userId: string, role: Role, permission: string): Promise<boolean> {
     return (await this.getEffectivePermissions(userId, role)).has(permission);
+  }
+
+  /**
+   * The reverse question: who holds this permission?
+   *
+   * Asked by the escalation ladder, which needs a floor under it — the people
+   * who may receive an emergency, when the patient in trouble has no care team
+   * assigned. Uncached deliberately: it is asked once per alarm, and a stale
+   * answer here means alerting someone whose access was revoked this morning.
+   *
+   * Overrides are applied the same way as in `getEffectivePermissions`, in the
+   * same order, because two places computing "does this person have it" from
+   * the same tables must never be able to disagree.
+   */
+  async usersWith(permission: string): Promise<string[]> {
+    const [roles, overrides] = await Promise.all([
+      this.prisma.rolePermission.findMany({
+        where: { permissionCode: permission },
+        select: { role: true },
+      }),
+      this.prisma.userPermission.findMany({
+        where: { permissionCode: permission },
+        select: { userId: true, granted: true },
+      }),
+    ]);
+
+    const byRole = await this.prisma.user.findMany({
+      where: { role: { in: roles.map((r) => r.role) }, status: UserStatus.ACTIVE },
+      select: { id: true },
+    });
+
+    const holders = new Set(byRole.map((user) => user.id));
+
+    for (const override of overrides) {
+      if (override.granted) holders.add(override.userId);
+      else holders.delete(override.userId);
+    }
+
+    if (holders.size === 0) return [];
+
+    // A grant override can name a user who has since been suspended, so the
+    // active check is applied to the whole set rather than only to the role
+    // branch.
+    const active = await this.prisma.user.findMany({
+      where: { id: { in: [...holders] }, status: UserStatus.ACTIVE },
+      select: { id: true },
+    });
+
+    return active.map((user) => user.id);
   }
 
   /** Called by every write that changes what a user may do. */

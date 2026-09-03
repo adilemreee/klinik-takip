@@ -16,6 +16,13 @@ export const NOTIFICATION_TYPES = {
   appointmentReminder: 'appointment.reminder',
   documentMissing: 'document.missing',
   complicationAnswered: 'complication.answered',
+
+  /** The panic button, on its way to whoever is meant to answer it (spec M8). */
+  emergencyTriggered: 'emergency.triggered',
+  /** The same alarm, one rung further up, because nobody answered the last. */
+  emergencyEscalated: 'emergency.escalated',
+  /** Back to the patient: somebody has picked this up. */
+  emergencyAcknowledged: 'emergency.acknowledged',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
@@ -39,6 +46,15 @@ interface Template {
    * notifications off, and then the one that matters does not arrive either.
    */
   urgent: boolean;
+  /**
+   * Not silenceable by a preference.
+   *
+   * Only the emergency alerts. Everything else a person may switch off, and
+   * should be able to — but an alarm you can turn off is an alarm that will be
+   * off on the night it matters, and the person who turned it off will not
+   * remember doing so.
+   */
+  mandatory: boolean;
   /** Where the fallback chain may go when push fails. */
   fallback: NotificationChannel[];
 }
@@ -55,6 +71,7 @@ const TEMPLATES: Record<NotificationType, Template> = {
       { id: 'ask-doctor', labelKey: 'notification.action.askDoctor' },
     ],
     urgent: false,
+    mandatory: false,
     fallback: [NotificationChannel.EMAIL],
   },
   'lab.critical': {
@@ -69,6 +86,7 @@ const TEMPLATES: Record<NotificationType, Template> = {
     ],
     // A value nobody looks at until morning is the case this exists for.
     urgent: true,
+    mandatory: false,
     fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
   },
   'message.new': {
@@ -76,6 +94,7 @@ const TEMPLATES: Record<NotificationType, Template> = {
     body: { tr: 'Kliniğinizden bir mesaj var.', en: 'You have a message from your clinic.' },
     actions: [{ id: 'open-chat', labelKey: 'notification.action.openChat' }],
     urgent: false,
+    mandatory: false,
     fallback: [],
   },
   'medication.due': {
@@ -86,6 +105,7 @@ const TEMPLATES: Record<NotificationType, Template> = {
       { id: 'snooze', labelKey: 'notification.action.snooze' },
     ],
     urgent: false,
+    mandatory: false,
     fallback: [],
   },
   'appointment.reminder': {
@@ -93,6 +113,7 @@ const TEMPLATES: Record<NotificationType, Template> = {
     body: { tr: 'Yaklaşan bir kontrolünüz var.', en: 'You have an upcoming appointment.' },
     actions: [{ id: 'open-appointment', labelKey: 'notification.action.openAppointment' }],
     urgent: false,
+    mandatory: false,
     fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
   },
   'document.missing': {
@@ -103,6 +124,7 @@ const TEMPLATES: Record<NotificationType, Template> = {
     },
     actions: [{ id: 'upload-document', labelKey: 'notification.action.uploadDocument' }],
     urgent: false,
+    mandatory: false,
     fallback: [NotificationChannel.EMAIL],
   },
   'complication.answered': {
@@ -110,7 +132,51 @@ const TEMPLATES: Record<NotificationType, Template> = {
     body: { tr: 'Kliniğiniz bildiriminizi yanıtladı.', en: 'Your clinic has replied to your report.' },
     actions: [{ id: 'open-complication', labelKey: 'notification.action.openComplication' }],
     urgent: false,
+    mandatory: false,
     fallback: [],
+  },
+  'emergency.triggered': {
+    title: { tr: 'ACİL DURUM', en: 'EMERGENCY' },
+    body: {
+      tr: 'Bir hasta acil durum butonuna bastı. Hemen açın.',
+      en: 'A patient pressed the emergency button. Open this now.',
+    },
+    actions: [
+      { id: 'open-emergency', labelKey: 'notification.action.openEmergency' },
+      { id: 'acknowledge-emergency', labelKey: 'notification.action.acknowledgeEmergency' },
+    ],
+    urgent: true,
+    mandatory: true,
+    // Both, and in this order: a phone with no signal for push often still
+    // takes an SMS, and the mail is the one that survives a dead battery.
+    fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
+  },
+  'emergency.escalated': {
+    title: { tr: 'ACİL DURUM — yanıtlanmadı', en: 'EMERGENCY — unanswered' },
+    body: {
+      tr: 'Bir acil durum çağrısı yanıtlanmadı ve size iletildi.',
+      en: 'An emergency call went unanswered and has been passed to you.',
+    },
+    actions: [
+      { id: 'open-emergency', labelKey: 'notification.action.openEmergency' },
+      { id: 'acknowledge-emergency', labelKey: 'notification.action.acknowledgeEmergency' },
+    ],
+    urgent: true,
+    mandatory: true,
+    fallback: [NotificationChannel.SMS, NotificationChannel.EMAIL],
+  },
+  'emergency.acknowledged': {
+    title: { tr: 'Çağrınız alındı', en: 'We have your call' },
+    body: {
+      tr: 'Kliniğinizden biri acil çağrınızı aldı ve size ulaşıyor.',
+      en: 'Someone at your clinic has your emergency call and is reaching you.',
+    },
+    actions: [{ id: 'open-emergency', labelKey: 'notification.action.openEmergency' }],
+    // The patient is waiting and has no way of knowing anyone saw it. Quiet
+    // hours holding *this* would be absurd.
+    urgent: true,
+    mandatory: true,
+    fallback: [NotificationChannel.SMS],
   },
 };
 
@@ -119,6 +185,7 @@ export interface RenderedNotification {
   body: string;
   actions: NotificationAction[];
   urgent: boolean;
+  mandatory: boolean;
   fallback: NotificationChannel[];
 }
 
@@ -143,6 +210,7 @@ export function render(
     body: template.body[lang] ?? template.body.tr!,
     actions: template.actions,
     urgent: template.urgent,
+    mandatory: template.mandatory,
     fallback: template.fallback,
   };
 }

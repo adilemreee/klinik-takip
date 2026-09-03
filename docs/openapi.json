@@ -952,7 +952,8 @@
                 "LOGIN_FAILED",
                 "LOGOUT",
                 "EXPORT",
-                "PERMISSION_CHANGE"
+                "PERMISSION_CHANGE",
+                "EMERGENCY_ACCESS"
               ]
             }
           },
@@ -7232,6 +7233,611 @@
           "me"
         ]
       }
+    },
+    "/me/emergency": {
+      "post": {
+        "operationId": "MyEmergencyController_trigger",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerEmergencyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientEmergencyViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Raise the alarm; pressing again returns the call already open",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/me/emergency/guidance": {
+      "get": {
+        "operationId": "MyEmergencyController_guidance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyGuidanceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What to do until we reach you, and the local number to dial",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/me/emergency/active": {
+      "get": {
+        "operationId": "MyEmergencyController_active",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientEmergencyViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your open call, if you have one",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/me/emergency/{emergencyId}/cancel": {
+      "patch": {
+        "operationId": "MyEmergencyController_cancel",
+        "parameters": [
+          {
+            "name": "emergencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmergencyEventDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "I pressed it by accident — only until someone picks it up",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/emergency": {
+      "get": {
+        "operationId": "EmergencyController_queue",
+        "parameters": [
+          {
+            "name": "includeClosed",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffEmergencyViewDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open calls, longest waiting first",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/emergency/{emergencyId}": {
+      "get": {
+        "operationId": "EmergencyController_detail",
+        "parameters": [
+          {
+            "name": "emergencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One call, with the clinical summary needed to act on it",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/emergency/{emergencyId}/acknowledge": {
+      "patch": {
+        "operationId": "EmergencyController_acknowledge",
+        "parameters": [
+          {
+            "name": "emergencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "I have this — stops the escalation and tells the patient",
+        "tags": [
+          "emergency"
+        ]
+      }
+    },
+    "/emergency/{emergencyId}/resolve": {
+      "patch": {
+        "operationId": "EmergencyController_resolve",
+        "parameters": [
+          {
+            "name": "emergencyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveEmergencyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffEmergencyViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Close the call with a resolution note",
+        "tags": [
+          "emergency"
+        ]
+      }
     }
   },
   "info": {
@@ -7643,7 +8249,8 @@
               "LOGIN_FAILED",
               "LOGOUT",
               "EXPORT",
-              "PERMISSION_CHANGE"
+              "PERMISSION_CHANGE",
+              "EMERGENCY_ACCESS"
             ]
           },
           "entityType": {
@@ -9560,7 +10167,10 @@
               "medication.due",
               "appointment.reminder",
               "document.missing",
-              "complication.answered"
+              "complication.answered",
+              "emergency.triggered",
+              "emergency.escalated",
+              "emergency.acknowledged"
             ]
           },
           "channel": {
@@ -9940,6 +10550,325 @@
         "required": [
           "type",
           "scheduledAt"
+        ]
+      },
+      "TriggerEmergencyDto": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "description": "WGS84 latitude; dropped if implausible, never refused"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "WGS84 longitude; dropped if implausible, never refused"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "What is happening, in the patient's words"
+          }
+        }
+      },
+      "EmergencyEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "TRIGGERED",
+              "ACKNOWLEDGED",
+              "RESOLVED",
+              "FALSE_ALARM"
+            ]
+          },
+          "triggeredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "latitude": {
+            "type": "object",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "object",
+            "nullable": true
+          },
+          "note": {
+            "type": "object",
+            "nullable": true
+          },
+          "escalationLevel": {
+            "type": "number",
+            "description": "Highest rung of the ladder taken: 0 now, 1 at 2 min, 2 at 5 min"
+          },
+          "acknowledgedAt": {
+            "type": "object",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "resolution": {
+            "type": "object",
+            "nullable": true
+          },
+          "resolvedAt": {
+            "type": "object",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "status",
+          "triggeredAt",
+          "escalationLevel"
+        ]
+      },
+      "EmergencyNumberDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "example": "112"
+          },
+          "countryCode": {
+            "type": "string",
+            "example": "DE",
+            "description": "Country the number was chosen for"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "country",
+              "international"
+            ]
+          }
+        },
+        "required": [
+          "number",
+          "countryCode",
+          "source"
+        ]
+      },
+      "GuidanceStepDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "stay-put"
+          },
+          "text": {
+            "type": "string"
+          },
+          "critical": {
+            "type": "boolean",
+            "description": "The one line that points away from the clinic"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "critical"
+        ]
+      },
+      "EmergencyGuidanceDto": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "example": "tr"
+          },
+          "emergencyNumber": {
+            "$ref": "#/components/schemas/EmergencyNumberDto"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuidanceStepDto"
+            }
+          }
+        },
+        "required": [
+          "language",
+          "emergencyNumber",
+          "steps"
+        ]
+      },
+      "PatientEmergencyViewDto": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/EmergencyEventDto"
+          },
+          "guidance": {
+            "$ref": "#/components/schemas/EmergencyGuidanceDto"
+          },
+          "alreadyOpen": {
+            "type": "boolean",
+            "description": "The button was pressed again on a call already open"
+          }
+        },
+        "required": [
+          "event",
+          "guidance",
+          "alreadyOpen"
+        ]
+      },
+      "LastSurgeryDto": {
+        "type": "object",
+        "properties": {
+          "procedureName": {
+            "type": "string"
+          },
+          "performedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "daysAgo": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "procedureName",
+          "performedAt",
+          "daysAgo"
+        ]
+      },
+      "EmergencySummaryDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "object",
+            "nullable": true
+          },
+          "sex": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "city": {
+            "type": "object",
+            "nullable": true
+          },
+          "phone": {
+            "type": "object",
+            "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string"
+          },
+          "bloodType": {
+            "type": "object",
+            "nullable": true
+          },
+          "allergies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "chronicConditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "currentMedications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lastSurgery": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LastSurgeryDto"
+              }
+            ]
+          },
+          "assignedDoctor": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "patientId",
+          "mrn",
+          "fullName",
+          "sex",
+          "country",
+          "preferredLanguage",
+          "allergies",
+          "chronicConditions",
+          "currentMedications"
+        ]
+      },
+      "StaffEmergencyViewDto": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/EmergencyEventDto"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/EmergencySummaryDto"
+          },
+          "waitingMinutes": {
+            "type": "number"
+          },
+          "responseMinutes": {
+            "type": "object",
+            "nullable": true
+          },
+          "unanswered": {
+            "type": "boolean",
+            "description": "The ladder ran out and it is still unanswered"
+          }
+        },
+        "required": [
+          "event",
+          "summary",
+          "waitingMinutes",
+          "unanswered"
+        ]
+      },
+      "ResolveEmergencyDto": {
+        "type": "object",
+        "properties": {
+          "resolution": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "How it was resolved; required"
+          },
+          "falseAlarm": {
+            "type": "boolean",
+            "default": false,
+            "description": "Closes it as a false alarm rather than a real one"
+          }
+        },
+        "required": [
+          "resolution"
         ]
       }
     }

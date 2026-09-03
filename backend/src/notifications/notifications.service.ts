@@ -59,7 +59,7 @@ export class NotificationsService {
 
     const preference = await this.preferenceFor(input.userId, input.type, NotificationChannel.PUSH);
 
-    if (preference && !preference.enabled) {
+    if (preference && !preference.enabled && !rendered.mandatory) {
       // Asked not to be told this way. Not an error, and not a failure to log
       // as one.
       return null;
@@ -110,6 +110,30 @@ export class NotificationsService {
 
     for (const notification of due) {
       if (await this.attempt(notification)) delivered += 1;
+    }
+
+    return delivered;
+  }
+
+  /**
+   * Sends one notification now instead of at the next sweep.
+   *
+   * The delivery sweep runs every thirty seconds, which is right for everything
+   * that has a schedule and wrong for the panic button: half a minute is a
+   * quarter of the time the first escalation rung gets.
+   */
+  async deliverNow(notifications: Notification[]): Promise<number> {
+    let delivered = 0;
+
+    for (const notification of notifications) {
+      // One recipient's dead push token must not stop the next recipient being
+      // told; the sweep would retry it anyway, but not for thirty seconds.
+      const sent = await this.attempt(notification).catch((error: unknown) => {
+        this.logger.error(`Immediate delivery failed for ${notification.id}: ${String(error)}`);
+        return false;
+      });
+
+      if (sent) delivered += 1;
     }
 
     return delivered;
@@ -169,6 +193,8 @@ export class NotificationsService {
     const next = this.nextChannel(notification);
     if (!next) return;
 
+    const rendered = render(notification.type as NotificationType, null);
+
     const preference = await this.preferenceFor(
       notification.userId,
       notification.type as NotificationType,
@@ -177,7 +203,10 @@ export class NotificationsService {
 
     // A channel someone switched off is not a fallback. Falling back onto it
     // would make "no SMS please" mean "SMS, but only when push fails".
-    if (preference && !preference.enabled) return;
+    //
+    // Except for the alerts nobody may switch off: an emergency that stops at
+    // a disabled channel has found the one preference that costs a life.
+    if (preference && !preference.enabled && !rendered?.mandatory) return;
 
     await this.prisma.notification.create({
       data: {

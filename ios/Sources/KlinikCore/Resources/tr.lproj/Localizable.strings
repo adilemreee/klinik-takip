@@ -297,3 +297,43 @@
 "appointment.status.CANCELLED" = "İptal edildi";
 "appointment.status.COMPLETED" = "Tamamlandı";
 "appointment.status.NO_SHOW" = "Gelinmedi";
+
+"notification.action.openEmergency" = "Çağrıyı aç";
+"notification.action.acknowledgeEmergency" = "Ben ilgileniyorum";
+
+"emergency.button" = "Acil Durum";
+"emergency.confirmPrompt" = "Emin misiniz? Onaylamak için tekrar basın";
+"emergency.confirmAction" = "Evet, acil durum";
+"emergency.dismiss" = "Vazgeç";
+"emergency.sending" = "Çağrınız iletiliyor…";
+"emergency.raised" = "Çağrınız kliniğe iletildi";
+"emergency.alreadyOpen" = "Zaten açık bir acil çağrınız var";
+"emergency.failed" = "Çağrı iletilemedi. Aşağıdaki numarayı arayın.";
+"emergency.cancelAction" = "Yanlışlıkla bastım";
+"emergency.cancelled" = "Çağrı iptal edildi";
+"emergency.acknowledgedByClinic" = "Kliniğinizden biri çağrınızı aldı ve size ulaşıyor";
+"emergency.guidanceTitle" = "Biz ulaşana kadar";
+"emergency.callNumber" = "%@ ara";
+"emergency.numberGuess" = "Bu numarayı ülkenize göre doğrulayamadık. Çalışmazsa bulunduğunuz ülkenin acil numarasını arayın.";
+
+"emergency.queueTitle" = "Acil çağrılar";
+"emergency.queueEmpty" = "Açık acil çağrı yok";
+"emergency.waitingMinutes" = "%d dk bekliyor";
+"emergency.unanswered" = "Yanıtlanmadı";
+"emergency.acknowledgeAction" = "Ben ilgileniyorum";
+"emergency.resolveAction" = "Çağrıyı kapat";
+"emergency.resolutionRequired" = "Nasıl çözüldüğünü yazın";
+"emergency.falseAlarm" = "Yanlış alarm";
+"emergency.locationUnknown" = "Konum yok";
+"emergency.summary.bloodType" = "Kan grubu";
+"emergency.summary.allergies" = "Alerjiler";
+"emergency.summary.conditions" = "Kronik hastalıklar";
+"emergency.summary.medications" = "Kullandığı ilaçlar";
+"emergency.summary.lastSurgery" = "Son ameliyat";
+"emergency.summary.daysAgo" = "%d gün önce";
+"emergency.summary.none" = "Kayıt yok";
+
+"emergency.status.TRIGGERED" = "Yanıt bekliyor";
+"emergency.status.ACKNOWLEDGED" = "İlgileniliyor";
+"emergency.status.RESOLVED" = "Kapatıldı";
+"emergency.status.FALSE_ALARM" = "Yanlış alarm";

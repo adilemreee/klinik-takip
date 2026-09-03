@@ -1286,8 +1286,12 @@ model EmergencyEvent {
   escalationLevel  Int       @default(0) @map("escalation_level")
   acknowledgedById String?   @map("acknowledged_by_id") @db.Uuid
   acknowledgedAt   DateTime? @map("acknowledged_at") @db.Timestamptz
-  resolution       String?
-  resolvedAt       DateTime? @map("resolved_at") @db.Timestamptz
+
+  /// Who closed it, alongside how. An emergency with a resolution note and no
+  /// name on it is the one nobody can ask about afterwards.
+  resolvedById String?   @map("resolved_by_id") @db.Uuid
+  resolution   String?
+  resolvedAt   DateTime? @map("resolved_at") @db.Timestamptz
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
@@ -1476,6 +1480,12 @@ enum AuditAction {
   LOGOUT
   EXPORT
   PERMISSION_CHANGE
+
+  /// A clinician opened a patient's file through an open emergency rather than
+  /// through an assignment (spec M8). Its own action, not a READ: the whole
+  /// point of allowing it is that it can be found afterwards, and a break-glass
+  /// read buried among a hundred thousand ordinary ones cannot be.
+  EMERGENCY_ACCESS
 }
 
 /// Append-only (spec section 13). UPDATE and DELETE are revoked at the database

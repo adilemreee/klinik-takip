@@ -49,6 +49,12 @@ export const JOBS = {
 
   /** Sends appointment reminders at T-7d, T-1d and T-2h (spec M10). */
   appointmentReminders: 'appointment-reminders',
+
+  /**
+   * Climbs the emergency ladder for calls nobody has answered (spec M8). The
+   * only job here whose lateness is measured in seconds rather than minutes.
+   */
+  emergencyEscalation: 'emergency-escalation',
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

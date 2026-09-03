@@ -85,7 +85,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 1 — Kimlik ve Çekirdek Veri | 7 / 7 | ✅ |
 | Faz 2 — Mobil İskeletler | 5 / 7 | T2.6 kısmi (kalıcı yerel DB yok) · T2.7 dil seti (AR/DE/RU) açıldı |
 | Faz 3 — Klinik Modüller | 4 / 6 | T3.1, T3.2, T3.4, T3.6 tamam · T3.3 ve T3.5'te eksik olan tek şey **kamera katmanı** |
-| Faz 4 — İletişim ve Bildirim | 2 / 6 | T4.4, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı · T4.5 sırada |
+| Faz 4 — İletişim ve Bildirim | 3 / 6 | T4.4, T4.5, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı |
 | Faz 5 — Yapay Zeka Katmanı | 0 / 7 | |
 | Faz 6 — İlaç, Finans, Raporlama | 0 / 7 | |
 | Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |
@@ -103,5 +103,6 @@ Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
 | Kalıcı yerel depo (GRDB / Room) | Senkronizasyon mantığı depodan bağımsız tasarlandı; kalıcılık ayrı bir iş. Yükleme oturumunun uygulama yeniden başlatılınca yaşaması da buna bağlı | T2.6 kalanı |
 | Cihaz katmanı: cihaz üstü OCR, belge tarama, fotoğraf overlay çekimi, APNs/FCM bildirim gösterimi, zengin bildirim eylemleri | Gerçek cihaz (ve push için sağlayıcı hesabı) gerektiriyor; sunucu tarafı hepsinde hazır | T3.3 + T3.5 + T4.2 + T4.3 kalanı |
 | AR (RTL), DE, RU çevirileri | §7 başlangıç setinde istiyor; altyapı hazır, çeviriler ve RTL yerleşimi yapılmadı | T2.7 |
+| Acil numara tablosunun doğrulanması | **Klinikte:** ülke → acil numara eşlemesi operasyonel veridir, yetkili bir kaynağa karşı doğrulanmadı. Yanlış numara, kazanılmak istenen dakikayı harcar | — |
 | `audit_logs` partition'lama | Tablo büyümeden önce gerekmiyor | Faz 7 öncesi |
 | Yedek şifreleme parolasının kasaya alınması | **Sizde:** parola sunucu dışında saklanmalı, yoksa off-site yedekler açılamaz | — |

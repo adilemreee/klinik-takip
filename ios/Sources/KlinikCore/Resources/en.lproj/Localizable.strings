@@ -297,3 +297,43 @@
 "appointment.status.CANCELLED" = "Cancelled";
 "appointment.status.COMPLETED" = "Completed";
 "appointment.status.NO_SHOW" = "Did not attend";
+
+"notification.action.openEmergency" = "Open the call";
+"notification.action.acknowledgeEmergency" = "I have this";
+
+"emergency.button" = "Emergency";
+"emergency.confirmPrompt" = "Are you sure? Press again to confirm";
+"emergency.confirmAction" = "Yes, this is an emergency";
+"emergency.dismiss" = "Never mind";
+"emergency.sending" = "Sending your call…";
+"emergency.raised" = "Your clinic has your call";
+"emergency.alreadyOpen" = "You already have an emergency call open";
+"emergency.failed" = "The call could not be sent. Dial the number below.";
+"emergency.cancelAction" = "I pressed it by accident";
+"emergency.cancelled" = "Call cancelled";
+"emergency.acknowledgedByClinic" = "Someone at your clinic has your call and is reaching you";
+"emergency.guidanceTitle" = "Until we reach you";
+"emergency.callNumber" = "Call %@";
+"emergency.numberGuess" = "We could not confirm this number for your country. If it does not work, dial the emergency number where you are.";
+
+"emergency.queueTitle" = "Emergency calls";
+"emergency.queueEmpty" = "No open emergency calls";
+"emergency.waitingMinutes" = "waiting %d min";
+"emergency.unanswered" = "Unanswered";
+"emergency.acknowledgeAction" = "I have this";
+"emergency.resolveAction" = "Close the call";
+"emergency.resolutionRequired" = "Say how this was resolved";
+"emergency.falseAlarm" = "False alarm";
+"emergency.locationUnknown" = "No location";
+"emergency.summary.bloodType" = "Blood type";
+"emergency.summary.allergies" = "Allergies";
+"emergency.summary.conditions" = "Chronic conditions";
+"emergency.summary.medications" = "Current medication";
+"emergency.summary.lastSurgery" = "Last operation";
+"emergency.summary.daysAgo" = "%d days ago";
+"emergency.summary.none" = "Nothing on file";
+
+"emergency.status.TRIGGERED" = "Waiting for an answer";
+"emergency.status.ACKNOWLEDGED" = "Being handled";
+"emergency.status.RESOLVED" = "Closed";
+"emergency.status.FALSE_ALARM" = "False alarm";

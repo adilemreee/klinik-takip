@@ -70,6 +70,7 @@ include(":feature:followup")
 
 // Appointments and the request/approval flow (spec M10).
 include(":feature:appointments")
+include(":feature:emergency")
 
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are

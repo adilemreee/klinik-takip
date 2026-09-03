@@ -2828,6 +2828,219 @@
           }
         }
       ]
+    },
+    {
+      "name": "emergency",
+      "item": [
+        {
+          "name": "Raise the alarm; pressing again returns the call already open",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/emergency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "emergency"
+              ]
+            },
+            "description": "Raise the alarm; pressing again returns the call already open",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"note\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "What to do until we reach you, and the local number to dial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/emergency/guidance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "emergency",
+                "guidance"
+              ]
+            },
+            "description": "What to do until we reach you, and the local number to dial"
+          }
+        },
+        {
+          "name": "Your open call, if you have one",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/emergency/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "emergency",
+                "active"
+              ]
+            },
+            "description": "Your open call, if you have one"
+          }
+        },
+        {
+          "name": "I pressed it by accident — only until someone picks it up",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/emergency/:emergencyId/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "emergency",
+                ":emergencyId",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "emergencyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "I pressed it by accident — only until someone picks it up"
+          }
+        },
+        {
+          "name": "Open calls, longest waiting first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency"
+              ],
+              "query": [
+                {
+                  "key": "includeClosed",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Open calls, longest waiting first"
+          }
+        },
+        {
+          "name": "One call, with the clinical summary needed to act on it",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/:emergencyId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency",
+                ":emergencyId"
+              ],
+              "variable": [
+                {
+                  "key": "emergencyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "One call, with the clinical summary needed to act on it"
+          }
+        },
+        {
+          "name": "I have this — stops the escalation and tells the patient",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/:emergencyId/acknowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency",
+                ":emergencyId",
+                "acknowledge"
+              ],
+              "variable": [
+                {
+                  "key": "emergencyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "I have this — stops the escalation and tells the patient"
+          }
+        },
+        {
+          "name": "Close the call with a resolution note",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/:emergencyId/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "emergency",
+                ":emergencyId",
+                "resolve"
+              ],
+              "variable": [
+                {
+                  "key": "emergencyId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Close the call with a resolution note",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"\",\n  \"falseAlarm\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }

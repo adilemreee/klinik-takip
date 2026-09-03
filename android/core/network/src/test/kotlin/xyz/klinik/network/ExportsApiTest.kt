@@ -101,6 +101,60 @@ class ExportsApiTest {
     }
 
     @Test
+    fun `a bulk list carries its own manifest`() {
+        val list = json.decodeFromString<ExportRequest>(
+            """
+            {"id":"e2","kind":"PATIENT_LIST","status":"DONE","size":4096,
+             "contents":{"format":"CSV","columns":["mrn","country"],"rows":120,
+                         "matched":120,"truncated":false},
+             "expiresAt":"2099-03-09T09:00:00.000Z"}
+            """.trimIndent(),
+        )
+
+        assertEquals(ExportKind.PATIENT_LIST, list.kind)
+        assertNull(list.patientId)
+        assertEquals(ExportFormat.CSV, list.contents?.format)
+        assertEquals(120, list.contents?.rows)
+        val manifest = list.contents!!
+        assertTrue(manifest.isComplete)
+        assertNull(manifest.truncationKey)
+    }
+
+    /** A file that stops short without saying so is the one nobody catches. */
+    @Test
+    fun `a truncated list says so`() {
+        val list = json.decodeFromString<ExportRequest>(
+            """
+            {"id":"e2","kind":"PATIENT_LIST","status":"DONE","size":4096,
+             "contents":{"format":"XLSX","rows":100000,"matched":250000,"truncated":true},
+             "expiresAt":"2099-03-09T09:00:00.000Z"}
+            """.trimIndent(),
+        )
+
+        val manifest = list.contents!!
+        assertFalse(manifest.isComplete)
+        assertEquals("export_truncated", manifest.truncationKey)
+        assertEquals(250000, manifest.matched)
+    }
+
+    @Test
+    fun `the column catalogue marks what is out of reach`() {
+        val columns = json.decodeFromString<List<ExportColumn>>(
+            """
+            [{"key":"mrn","header":"Dosya no","group":"identity",
+              "permission":"patients.read","available":true},
+             {"key":"balance","header":"Kalan","group":"finance",
+              "permission":"finance.report","available":false}]
+            """.trimIndent(),
+        )
+
+        // Shown as unavailable rather than hidden.
+        assertEquals(2, columns.size)
+        assertFalse(columns[1].available)
+        assertEquals("finance", columns[1].group)
+    }
+
+    @Test
     fun `has a string key for every status`() {
         for (status in ExportStatus.entries) {
             assertTrue(status.stringKey.startsWith("export_status_"))

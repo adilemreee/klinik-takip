@@ -1556,6 +1556,9 @@ model ExchangeRate {
 enum ExportKind {
   /// The templated patient summary (spec M12, T6.5).
   PATIENT_SUMMARY
+
+  /// A filtered patient list with chosen columns, as CSV or XLSX (spec M12, T6.6).
+  PATIENT_LIST
 }
 
 /// A file the clinic asked for that contains patient data and leaves the

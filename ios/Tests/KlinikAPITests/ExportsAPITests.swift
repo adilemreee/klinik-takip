@@ -43,6 +43,7 @@ final class ExportsAPITests: XCTestCase {
         XCTAssertTrue(ready.isReady)
         XCTAssertFalse(ready.status.isPending)
         XCTAssertTrue(ready.contents!.isComplete)
+        XCTAssertEqual(ready.contents!.labs, 4)
         XCTAssertEqual(ready.size, 21612)
     }
 
@@ -99,7 +100,7 @@ final class ExportsAPITests: XCTestCase {
 
         XCTAssertFalse(contents.isComplete)
 
-        let note = contents.omissions[0].localizedNote
+        let note = contents.omissions![0].localizedNote
         XCTAssertTrue(note.contains("3"))
         XCTAssertFalse(note.contains("{count}"))
         XCTAssertNotEqual(note, "export.omission.lab-unverified")
@@ -137,6 +138,73 @@ final class ExportsAPITests: XCTestCase {
         for status in ExportStatus.allCases {
             XCTAssertNotEqual(status.localizedName, "export.status.\(status.rawValue)")
         }
+    }
+
+    // MARK: - Bulk lists
+
+    func testABulkListCarriesItsOwnManifest() throws {
+        let list = try decode(
+            ExportRequest.self,
+            #"""
+            {"id":"e2","kind":"PATIENT_LIST","status":"DONE","patientId":null,"size":4096,
+             "contents":{"format":"CSV","columns":["mrn","country"],"rows":120,"matched":120,
+                         "truncated":false,"groups":["identity"],"filter":{"country":"DE"}},
+             "error":null,"expiresAt":"2099-03-09T09:00:00.000Z",
+             "createdAt":"2026-03-02T09:00:00.000Z"}
+            """#
+        )
+
+        XCTAssertEqual(list.kind, .patientList)
+        XCTAssertNil(list.patientId)
+        XCTAssertEqual(list.contents?.format, .csv)
+        XCTAssertEqual(list.contents?.rows, 120)
+        XCTAssertTrue(list.contents!.isComplete)
+        XCTAssertNil(list.contents?.truncationNotice)
+    }
+
+    /**
+     * A spreadsheet that stops short and does not say so is the one nobody
+     * catches: it looks exactly like a complete one, and it will be summed.
+     */
+    func testATruncatedListSaysSo() throws {
+        let list = try decode(
+            ExportRequest.self,
+            #"""
+            {"id":"e2","kind":"PATIENT_LIST","status":"DONE","patientId":null,"size":4096,
+             "contents":{"format":"XLSX","columns":["mrn"],"rows":100000,"matched":250000,
+                         "truncated":true},
+             "error":null,"expiresAt":"2099-03-09T09:00:00.000Z",
+             "createdAt":"2026-03-02T09:00:00.000Z"}
+            """#
+        )
+
+        XCTAssertFalse(list.contents!.isComplete)
+
+        let notice = list.contents!.truncationNotice
+        XCTAssertNotNil(notice)
+        XCTAssertTrue(notice!.contains("100000"))
+        XCTAssertTrue(notice!.contains("250000"))
+        XCTAssertFalse(notice!.contains("{rows}"))
+    }
+
+    func testTheColumnCatalogueMarksWhatIsOutOfReach() throws {
+        let columns = try decode(
+            [ExportColumn].self,
+            #"""
+            [{"key":"mrn","header":"Dosya no","group":"identity",
+              "permission":"patients.read","available":true},
+             {"key":"balance","header":"Kalan","group":"finance",
+              "permission":"finance.report","available":false}]
+            """#
+        )
+
+        // Shown as unavailable rather than hidden: a column simply missing from
+        // the list looks like one that does not exist, and somebody will go
+        // looking for the data somewhere less careful.
+        XCTAssertEqual(columns.count, 2)
+        XCTAssertFalse(columns[1].available)
+        XCTAssertEqual(columns[1].group, "finance")
+        XCTAssertNotEqual(L10n.string("export.columnUnavailable"), "export.columnUnavailable")
     }
 
     func testCarriesTheWarningAboutPhotographs() {

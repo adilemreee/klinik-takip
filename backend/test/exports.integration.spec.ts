@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import {
   AuditAction,
   ConsentType,
+  Currency,
   ExportKind,
   PhotoCategory,
   PrismaClient,
@@ -18,11 +19,13 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { isStaffRole } from '../src/auth/auth.errors';
 import { AuthService } from '../src/auth/auth.service';
+import { PermissionsService } from '../src/authz/permissions.service';
 import { configureApp } from '../src/bootstrap';
 import { Env } from '../src/config/env.schema';
 import { hashPassword } from '../src/crypto/hashing';
 import { exportRender } from '../src/exports/exports.processor';
 import { ExportsService } from '../src/exports/exports.service';
+import { PatientListBuilder } from '../src/exports/patient-list.builder';
 import { PatientSummaryBuilder } from '../src/exports/patient-summary.builder';
 import { FileService } from '../src/files/file.service';
 import { PrismaService } from '../src/infra/prisma.service';
@@ -70,7 +73,10 @@ describe('exports', () => {
 
   const PASSWORD = 'correct-horse-battery-9';
 
-  const actorFor = async (role: Role): Promise<{ token: string; userId: string }> => {
+  const actorFor = async (
+    role: Role,
+    grants: string[] = [],
+  ): Promise<{ token: string; userId: string }> => {
     const email = `exp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
     const user = await prisma.user.create({
       data: {
@@ -81,6 +87,13 @@ describe('exports', () => {
       },
     });
     userIds.push(user.id);
+
+    for (const code of grants) {
+      await prisma.userPermission.create({
+        data: { userId: user.id, permissionCode: code, granted: true },
+      });
+    }
+    await app.get(PermissionsService).invalidate(user.id);
 
     if (isStaffRole(role)) {
       const profile = await prisma.staffProfile.create({
@@ -142,14 +155,16 @@ describe('exports', () => {
 
     // The worker's handler, driven directly: this suite is about what the job
     // produces, not about BullMQ's scheduling.
-    render = exportRender(
-      app.get(PrismaService),
+    render = exportRender({
+      prisma: app.get(PrismaService),
       exports,
-      app.get(PatientSummaryBuilder),
+      summaries: app.get(PatientSummaryBuilder),
+      lists: app.get(PatientListBuilder),
       files,
-      app.get(NotificationsService),
-      'Klinik Takip',
-    ) as () => Promise<void>;
+      notifications: app.get(NotificationsService),
+      permissions: app.get(PermissionsService),
+      clinicName: 'Klinik Takip',
+    }) as () => Promise<void>;
 
     const redis = app.get(RedisService);
     await redis.waitUntilReady();
@@ -161,6 +176,7 @@ describe('exports', () => {
       await files.remove('documents', key).catch(() => undefined);
     }
     await prisma.export.deleteMany({ where: { requestedById: { in: userIds } } });
+    await prisma.userPermission.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.photo.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.consent.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.labResult.deleteMany({ where: { patientId: { in: patientIds } } });
@@ -530,6 +546,221 @@ describe('exports', () => {
       expect(after.contents).not.toBeNull();
 
       await expect(files.stat('documents', key)).rejects.toThrow();
+    });
+  });
+
+  describe('a filtered patient list', () => {
+    const requestList = (token: string, body: Record<string, unknown> = {}): request.Test =>
+      request(server)
+        .post('/exports/patients')
+        .set('Authorization', `Bearer ${token}`)
+        .send(body);
+
+    const contentsOf = async (id: string): Promise<Record<string, unknown>> => {
+      const row = await prisma.export.findUniqueOrThrow({ where: { id } });
+      if (row.fileKey) objectKeys.push(row.fileKey);
+
+      return row.contents as Record<string, unknown>;
+    };
+
+    it('produces a CSV that opens in Excel with Turkish intact', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      await makePatient();
+
+      const requested = (
+        await requestList(doctor.token, { columns: ['mrn', 'firstName', 'country'] }).expect(201)
+      ).body as ExportView;
+
+      await render();
+
+      const row = await prisma.export.findUniqueOrThrow({ where: { id: requested.id } });
+      if (row.fileKey) objectKeys.push(row.fileKey);
+
+      expect(row.status).toBe(ProcessingStatus.DONE);
+      expect(row.mime).toContain('text/csv');
+
+      const bytes = await files.read('documents', row.fileKey!);
+
+      // The byte-order mark, or Excel reads the whole file as the local
+      // codepage and every Turkish name comes out wrong.
+      expect(bytes.subarray(0, 3)).toEqual(Buffer.from([0xef, 0xbb, 0xbf]));
+
+      const text = bytes.toString('utf8');
+      expect(text).toContain('Dosya no,Ad,Ülke');
+      expect(text).toContain('Ayşe');
+      // Provenance above the data.
+      expect(text.indexOf('Dışa aktaran')).toBeLessThan(text.indexOf('Dosya no'));
+      expect(text).toContain('Yalnız bu kullanıcının görebildiği hastalar');
+    });
+
+    it('produces an XLSX when asked for one', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      await makePatient();
+
+      const requested = (
+        await requestList(doctor.token, { format: 'XLSX', columns: ['mrn', 'country'] }).expect(201)
+      ).body as ExportView;
+
+      await render();
+
+      const row = await prisma.export.findUniqueOrThrow({ where: { id: requested.id } });
+      if (row.fileKey) objectKeys.push(row.fileKey);
+
+      const bytes = await files.read('documents', row.fileKey!);
+
+      // A zip, which is what an xlsx is.
+      expect(bytes.subarray(0, 2).toString('latin1')).toBe('PK');
+      expect(row.mime).toContain('spreadsheetml');
+    });
+
+    it('neutralises a name a spreadsheet would execute', async () => {
+      // A patient types their own name at registration.
+      const doctor = await actorFor(Role.DOCTOR);
+      const patient = await prisma.patient.create({
+        data: {
+          mrn: `MRN-EXP-${Date.now()}-inj`,
+          firstName: '=HYPERLINK("http://evil.invalid","x")',
+          lastName: 'Test',
+          birthDate: new Date('1981-04-02'),
+          sex: Sex.FEMALE,
+          country: 'DE',
+        },
+      });
+      patientIds.push(patient.id);
+
+      const requested = (
+        await requestList(doctor.token, { columns: ['mrn', 'firstName'] }).expect(201)
+      ).body as ExportView;
+
+      await render();
+
+      const row = await prisma.export.findUniqueOrThrow({ where: { id: requested.id } });
+      if (row.fileKey) objectKeys.push(row.fileKey);
+
+      const text = (await files.read('documents', row.fileKey!)).toString('utf8');
+
+      expect(text).toContain("'=HYPERLINK");
+      expect(text).not.toMatch(/,=HYPERLINK/);
+    });
+
+    it('refuses a column the caller may not export, while they can still fix it', async () => {
+      // Somebody who may export and may not see money: a coordinator the
+      // doctor has granted export rights to (spec section 2).
+      const coordinator = await actorFor(Role.COORDINATOR, ['export.create']);
+
+      const response = await requestList(coordinator.token, {
+        columns: ['mrn', 'balance'],
+      }).expect(400);
+
+      expect(JSON.stringify(response.body)).toContain('balance');
+
+      // And nothing was queued: a refused request produces no file at all.
+      const rows = await prisma.export.count({ where: { requestedById: coordinator.userId } });
+      expect(rows).toBe(0);
+    });
+
+    it('refuses a column that does not exist', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+
+      await requestList(doctor.token, { columns: ['mrn', 'passwordHash'] }).expect(400);
+    });
+
+    it('lets a caller who holds the permission have the money columns', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      const patientId = await makePatient();
+
+      await prisma.financeRecord.create({
+        data: {
+          patientId,
+          procedureName: 'Rinoplasti',
+          currency: Currency.EUR,
+          grossAmount: '4000.00',
+          discount: '0',
+          netAmount: '4000.00',
+        },
+      });
+
+      const requested = (
+        await requestList(doctor.token, {
+          columns: ['mrn', 'billedTotal', 'balance', 'currency', 'paymentStatus'],
+        }).expect(201)
+      ).body as ExportView;
+
+      await render();
+
+      const row = await prisma.export.findUniqueOrThrow({ where: { id: requested.id } });
+      if (row.fileKey) objectKeys.push(row.fileKey);
+
+      const text = (await files.read('documents', row.fileKey!)).toString('utf8');
+      expect(text).toContain('4000.00');
+      expect(text).toContain('PENDING');
+    });
+
+    it('exports only the patients the caller can see', async () => {
+      // A coordinator with no assignment sees nobody, and the file says the
+      // rows are scoped rather than pretending to be the whole clinic.
+      const coordinator = await actorFor(Role.COORDINATOR, ['export.create']);
+      await makePatient();
+
+      const requested = (
+        await requestList(coordinator.token, { columns: ['mrn', 'country'] }).expect(201)
+      ).body as ExportView;
+
+      await render();
+
+      const contents = await contentsOf(requested.id);
+      expect(contents.rows).toBe(0);
+    });
+
+    it('records the filter and the column groups in the manifest', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      await makePatient();
+
+      const requested = (
+        await requestList(doctor.token, {
+          columns: ['mrn', 'lastProcedure'],
+          country: 'DE',
+        }).expect(201)
+      ).body as ExportView;
+
+      await render();
+
+      const contents = await contentsOf(requested.id);
+
+      expect(contents.groups).toEqual(['clinical', 'identity']);
+      expect(contents.filter).toEqual({ country: 'DE' });
+      expect(contents.truncated).toBe(false);
+      expect(contents.format).toBe('CSV');
+    });
+
+    it('offers the column catalogue with what this caller may have', async () => {
+      const coordinator = await actorFor(Role.COORDINATOR, ['export.create']);
+
+      const columns = (
+        await request(server)
+          .get('/exports/columns')
+          .set('Authorization', `Bearer ${coordinator.token}`)
+          .expect(200)
+      ).body as { key: string; group: string; available: boolean }[];
+
+      expect(columns.find((column) => column.key === 'mrn')?.available).toBe(true);
+      expect(columns.find((column) => column.key === 'balance')?.available).toBe(false);
+    });
+
+    it('is audited like every other export', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      await makePatient();
+
+      const requested = (await requestList(doctor.token).expect(201)).body as ExportView;
+      await render();
+      await contentsOf(requested.id);
+
+      const entries = await prisma.auditLog.findMany({
+        where: { entityType: 'exports', entityId: requested.id },
+      });
+
+      expect(entries.length).toBeGreaterThanOrEqual(1);
+      expect(entries[0]!.action).toBe(AuditAction.EXPORT);
     });
   });
 

@@ -167,8 +167,12 @@
     <string name="error_server">Something went wrong. Please try again shortly.</string>
     <string name="error_session_expired">Your session has ended. Please sign in again.</string>
     <string name="error_timed_out">The server did not respond.</string>
+    <string name="export_column_unavailable">You may not export this column</string>
+    <string name="export_columns">Columns</string>
     <string name="export_download">Download</string>
     <string name="export_expired">This file has expired and been deleted.</string>
+    <string name="export_format_csv">CSV</string>
+    <string name="export_format_xlsx">Excel (XLSX)</string>
     <string name="export_include_photos">Include photographs</string>
     <string name="export_link_short_lived">The download link is short-lived.</string>
     <string name="export_omission_ai_unreviewed">{count} unapproved AI texts were left out</string>
@@ -183,6 +187,7 @@
     <string name="export_status_queued">Queued</string>
     <string name="export_summary_title">Patient summary</string>
     <string name="export_title">Exports</string>
+    <string name="export_truncated">This file contains only {rows} of {matched} records; narrow the filter.</string>
     <string name="finance_ageing_current">0–29 days</string>
     <string name="finance_ageing_d30">30–59 days</string>
     <string name="finance_ageing_d60">60–89 days</string>

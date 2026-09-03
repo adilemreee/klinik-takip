@@ -1,6 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ExportKind, ProcessingStatus } from '@prisma/client';
-import { IsBoolean, IsOptional } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDate,
+  IsIn,
+  IsOptional,
+  IsBoolean,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class RequestSummaryDto {
   @ApiPropertyOptional({
@@ -11,6 +22,68 @@ export class RequestSummaryDto {
   @IsOptional()
   @IsBoolean()
   includePhotos?: boolean;
+}
+
+export class RequestPatientListDto {
+  @ApiPropertyOptional({ enum: ['CSV', 'XLSX'], default: 'CSV' })
+  @IsOptional()
+  @IsIn(['CSV', 'XLSX'])
+  format?: 'CSV' | 'XLSX';
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Column keys, in the order they should appear. A column you may not export is refused, not quietly dropped',
+    example: ['mrn', 'firstName', 'lastName', 'country'],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @IsString({ each: true })
+  columns?: string[];
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  from?: Date;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  to?: Date;
+
+  @ApiPropertyOptional({ maxLength: 2, example: 'DE' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(8)
+  country?: string;
+
+  @ApiPropertyOptional({ maxLength: 100, description: 'Matches any of the patient\'s surgeries' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  procedure?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  assignedDoctorId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  agencyId?: string;
+}
+
+export class ExportColumnDto {
+  @ApiProperty() key!: string;
+  @ApiProperty() header!: string;
+  @ApiProperty({ enum: ['identity', 'clinical', 'finance'] }) group!: string;
+  @ApiProperty({ description: 'You need this to export the column' })
+  permission!: string;
+  @ApiProperty({ description: 'Whether you hold it' }) available!: boolean;
 }
 
 export class ExportResponseDto {

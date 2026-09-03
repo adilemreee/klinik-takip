@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   AuditAction,
   ExportKind,
@@ -9,11 +9,15 @@ import {
 import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
+import { PermissionsService } from '../authz/permissions.service';
 import { FileService } from '../files/file.service';
 import { PrismaService } from '../infra/prisma.service';
 import type { RequestContext } from '../patients/patients.service';
 import { JOBS, QUEUES } from '../queue/queue.constants';
 import { QueueService } from '../queue/queue.service';
+import { ColumnError, resolveColumns } from './columns';
+import type { PatientListFilter } from './patient-list.builder';
+import type { ExportFormat } from './writers';
 
 /**
  * Files that contain patient data and leave the building (spec M12, T6.5).
@@ -53,6 +57,7 @@ export class ExportsService {
     private readonly queue: QueueService,
     private readonly files: FileService,
     private readonly audit: AuditService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   /**
@@ -92,6 +97,59 @@ export class ExportsService {
     );
 
     this.logger.log(`Export ${result.id} requested for patient ${patientId}`);
+
+    return result;
+  }
+
+  /**
+   * Asks for a filtered patient list (spec M12, T6.6).
+   *
+   * The columns are checked **here**, not in the worker. A caller who asked for
+   * a column they may not have gets a 400 while they are still looking at the
+   * screen; finding out from a failed job ten minutes later tells them nothing
+   * they can act on.
+   */
+  async requestPatientList(
+    user: AuthenticatedUser,
+    input: {
+      filter: PatientListFilter;
+      columns?: string[];
+      format: ExportFormat;
+    },
+  ): Promise<Export> {
+    const held = await this.permissions.getEffectivePermissions(user.id, user.role);
+
+    let columns;
+    try {
+      columns = resolveColumns(input.columns, held);
+    } catch (error) {
+      if (error instanceof ColumnError) throw new BadRequestException(error.message);
+      throw error;
+    }
+
+    const { result } = await this.queue.enqueue(
+      {
+        queue: QUEUES.exports,
+        name: JOBS.exportRender,
+        entityType: 'exports',
+        data: {},
+      },
+      async (tx, jobId) =>
+        tx.export.create({
+          data: {
+            kind: ExportKind.PATIENT_LIST,
+            requestedById: user.id,
+            params: {
+              jobId,
+              format: input.format,
+              columns: columns.map((column) => column.key),
+              filter: serialiseFilter(input.filter),
+            },
+          },
+        }),
+    );
+
+    this.logger.log(`Export ${result.id} (patient list, ${input.format}) requested`);
 
     return result;
   }
@@ -139,7 +197,9 @@ export class ExportsService {
       throw new NotFoundException('Export has expired');
     }
 
-    const filename = `hasta-ozeti-${row.id.slice(0, 8)}.pdf`;
+    const filename = `${
+      row.kind === ExportKind.PATIENT_LIST ? 'hasta-listesi' : 'hasta-ozeti'
+    }-${row.id.slice(0, 8)}.${extensionOf(row.mime)}`;
 
     const link = await this.files.createDownloadUrl('documents', row.fileKey, {
       filename,
@@ -266,4 +326,26 @@ export class ExportsService {
       data: { status: ProcessingStatus.PROCESSING, startedAt: new Date() },
     });
   }
+}
+
+/** The filter as strings, for the export row and the provenance block. */
+function serialiseFilter(filter: PatientListFilter): Record<string, string> {
+  const entries: Record<string, string> = {};
+
+  if (filter.from) entries.from = filter.from.toISOString();
+  if (filter.to) entries.to = filter.to.toISOString();
+  if (filter.country) entries.country = filter.country;
+  if (filter.procedure) entries.procedure = filter.procedure;
+  if (filter.assignedDoctorId) entries.assignedDoctorId = filter.assignedDoctorId;
+  if (filter.agencyId) entries.agencyId = filter.agencyId;
+
+  return entries;
+}
+
+/** The extension the stored type implies, so the download is named honestly. */
+function extensionOf(mime: string | null): string {
+  if (mime?.startsWith('text/csv')) return 'csv';
+  if (mime?.includes('spreadsheetml')) return 'xlsx';
+
+  return 'pdf';
 }

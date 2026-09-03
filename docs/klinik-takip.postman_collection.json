@@ -4375,6 +4375,56 @@
           }
         },
         {
+          "name": "Ask for a filtered patient list as CSV or XLSX",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exports/patients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exports",
+                "patients"
+              ]
+            },
+            "description": "Ask for a filtered patient list as CSV or XLSX",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"CSV\",\n  \"columns\": [\n    \"mrn\",\n    \"firstName\",\n    \"lastName\",\n    \"country\"\n  ],\n  \"from\": \"2026-01-01T00:00:00.000Z\",\n  \"to\": \"2026-01-01T00:00:00.000Z\",\n  \"country\": \"DE\",\n  \"procedure\": \"\",\n  \"assignedDoctorId\": \"00000000-0000-7000-8000-000000000000\",\n  \"agencyId\": \"00000000-0000-7000-8000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Selectable columns, marked with whether you may export them",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exports/columns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exports",
+                "columns"
+              ]
+            },
+            "description": "Selectable columns, marked with whether you may export them"
+          }
+        },
+        {
           "name": "Exports you asked for",
           "request": {
             "method": "GET",

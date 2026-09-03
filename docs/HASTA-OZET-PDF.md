@@ -107,13 +107,73 @@ aynı cevap.
 Rapordaki klinik adı `CLINIC_NAME` ortam değişkeninden. **Depoda sabit değil** —
 burası birinin kliniği, bu projenin değil.
 
+## Toplu Excel/CSV Export (T6.6)
+
+Aynı yaşam döngüsü: kuyruk, bildirim, kısa ömürlü imzalı link, denetim, yedi
+günlük ömür. Yeni olan üç şey var.
+
+### Elektronik Tablo Formülü Enjeksiyonu
+
+Bir hücre `=`, `+`, `-` ya da `@` ile başlıyorsa elektronik tablo onu **formül
+sayar ve açarken çalıştırır**.
+
+> Hasta kendi adını kayıtta kendisi yazıyor. Ad alanına yazılmış
+> `=HYPERLINK("http://…","Tıkla")`, kliniğin export kopyasında canlı bir bağlantı
+> olur — ve daha kötüsü mümkün.
+
+Her değer yazılmadan önce etkisizleştiriliyor (başına apostrof; Excel ve
+LibreOffice hücreyi metin okur, apostrofu göstermez). **CSV'de de XLSX'te de** —
+dosya biçimi farklı, elektronik tablonun açarken yaptığı şey değil.
+
+Değer olduğu gibi korunuyor: "+90 532…" telefon numarası hâlâ kendisi. Karakteri
+silmek yerine kaçırmanın nedeni bu.
+
+### Kolon Seçimi Reddediyor, Düşürmüyor
+
+Kolonlar kapalı bir katalogdan ve her birinin bir yetkisi var: kimlik kolonları
+`patients.read`, klinik kolonlar `medical.read`, para kolonları `finance.report`.
+
+> Beş kolon isteyip üçünü alan bir tablo, **tam bir tablo gibi görünür**. Eksik
+> kolon boş bir alan değil, hiç yok; sonra açan kimse onun istenmiş olduğunu
+> bilemez.
+
+Bu yüzden yetkisi olmayan bir kolon **istendiği anda 400** ile reddediliyor,
+hangi kolonlar olduğu söylenerek — kişi ekranın başındayken düzeltebilsin.
+Kolonlar worker'da **yeniden** çözülüyor: iş kuyrukta beklerken birinin yetkisi
+alınmış olabilir, ve dosya tıklandığı ana değil yazıldığı ana ait olmalı.
+
+`GET /exports/columns` katalogu, hangisini alabildiğiniz işaretli olarak
+veriyor. İstemciler alamadıklarını **gizlemiyor, "yetkiniz yok" diye
+gösteriyor**: listede hiç olmayan bir kolon, var olmayan bir kolon gibi görünür
+ve birisi o veriyi daha az dikkatli bir yerde aramaya gider.
+
+### Dosyanın Kendisi Nereden Geldiğini Söylüyor
+
+Verinin üstünde bir künye bloğu (XLSX'te ayrı bir "Bilgi" sayfası): kim aldı, ne
+zaman, hangi filtreyle, kaç satır, ve **"Yalnız bu kullanıcının görebildiği
+hastalar"**.
+
+> Ortak klasörde künyesiz duran bir tablo, içinde ne olursa olsun "bütün
+> hastalarımız" diye okunur.
+
+Satırlar çağıranın hasta kapsamına göre; kapsam sorgunun içinde, sonradan
+filtrelenmiyor. 100.000 satırda kesiliyor ve kesildiyse **hem dosyada hem
+manifestte** yazıyor — kısa kesilmiş ama tam görünen bir tablo, kimsenin
+yakalamadığıdır.
+
+CSV'nin başında **BOM** var: onsuz Excel dosyayı yerel kod sayfası sanır ve
+"Ayşe" "AyÅŸe" olur. Ne kadar doğru UTF-8 yazarsanız yazın değişmez.
+
 ## Yapmadıklarım
 
 - **Klinik logosu** — şablonda yeri var, görsel dosyası klinikten gelmeli;
   uydurulmuş bir logo hiç logo olmamasından kötü.
-- **Finansal rapor PDF/Excel** (§M12) — finans verisi hazır, ayrı bir şablon
-  ve ayrı bir yetki (`finance.report`) işi; T6.6 ile birlikte.
-- **Toplu Excel/CSV export** — T6.6. `Export` modeli ve kuyruk onu bekliyor,
-  yeni tür eklemek bir `ExportKind` değeri.
+- **Finansal rapor PDF/Excel** (§M12) — finans verisi ve kolonları hazır
+  (`billedTotal`, `paidTotal`, `balance` hasta listesinde), ama ayrı bir
+  fatura/tahsilat şablonu yapılmadı.
 - **Fotoğrafların yüz bulanıklaştırması** — `isFaceBlurred` alanı var, uygulaması
   cihaz tarafı işi (T3.x borcu).
+- **Çok para birimli toplam** — bir hastanın faturaları birden fazla para
+  biriminde ise tutar hücresi **boş**, para birimi hücresi `KARIŞIK`. Euroyu
+  liraya ekleyen bir sayı yazmaktansa boş bırakmak doğru: bir hücrenin kendini
+  açıklayacak yeri yok, ve bir tablodaki yanlış toplam toplanan türdendir.

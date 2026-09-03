@@ -13,6 +13,7 @@ import { BriefingService } from './briefing/briefing.service';
 import { emergencyEscalation } from './emergency/emergency.processor';
 import { exportRender, exportSweep } from './exports/exports.processor';
 import { ExportsService } from './exports/exports.service';
+import { PatientListBuilder } from './exports/patient-list.builder';
 import { PatientSummaryBuilder } from './exports/patient-summary.builder';
 import { EmergencyService } from './emergency/emergency.service';
 import { followUpSweep } from './followup/followup.processor';
@@ -120,14 +121,16 @@ async function bootstrap(): Promise<void> {
   const exportsWorker = runWorker({
     queue: QUEUES.exports,
     handlers: {
-      [JOBS.exportRender]: exportRender(
+      [JOBS.exportRender]: exportRender({
         prisma,
-        app.get(ExportsService),
-        app.get(PatientSummaryBuilder),
+        exports: app.get(ExportsService),
+        summaries: app.get(PatientSummaryBuilder),
+        lists: app.get(PatientListBuilder),
         files,
         notifications,
-        config.get<string>('CLINIC_NAME') ?? 'Klinik Takip',
-      ),
+        permissions,
+        clinicName: config.get<string>('CLINIC_NAME') ?? 'Klinik Takip',
+      }),
       [JOBS.exportSweep]: exportSweep(app.get(ExportsService)),
     },
     connection: queues.connection,

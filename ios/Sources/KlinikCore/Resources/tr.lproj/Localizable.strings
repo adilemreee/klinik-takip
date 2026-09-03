@@ -497,3 +497,8 @@
 "export.omission.photo-no-consent" = "{count} fotoğraf, onam olmadığı için alınmadı";
 "export.omission.photo-not-requested" = "{count} fotoğraf istenmedi";
 "export.omission.ai-unreviewed" = "{count} onaylanmamış yapay zekâ metni alınmadı";
+"export.truncated" = "Bu dosya {matched} kayıttan yalnız {rows} tanesini içeriyor; filtreyi daraltın.";
+"export.format.CSV" = "CSV";
+"export.format.XLSX" = "Excel (XLSX)";
+"export.columns" = "Kolonlar";
+"export.columnUnavailable" = "Bu kolonu dışa aktarma yetkiniz yok";

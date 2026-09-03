@@ -497,3 +497,8 @@
 "export.omission.photo-no-consent" = "{count} photographs were left out for lack of consent";
 "export.omission.photo-not-requested" = "{count} photographs were not requested";
 "export.omission.ai-unreviewed" = "{count} unapproved AI texts were left out";
+"export.truncated" = "This file contains only {rows} of {matched} records; narrow the filter.";
+"export.format.CSV" = "CSV";
+"export.format.XLSX" = "Excel (XLSX)";
+"export.columns" = "Columns";
+"export.columnUnavailable" = "You may not export this column";

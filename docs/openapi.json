@@ -11357,6 +11357,153 @@
         ]
       }
     },
+    "/exports/patients": {
+      "post": {
+        "operationId": "ExportsController_requestPatientList",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestPatientListDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ask for a filtered patient list as CSV or XLSX",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
+    "/exports/columns": {
+      "get": {
+        "operationId": "ExportsController_columns",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExportColumnDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Selectable columns, marked with whether you may export them",
+        "tags": [
+          "exports"
+        ]
+      }
+    },
     "/exports": {
       "get": {
         "operationId": "ExportsController_list",
@@ -16773,7 +16920,8 @@
           "kind": {
             "type": "string",
             "enum": [
-              "PATIENT_SUMMARY"
+              "PATIENT_SUMMARY",
+              "PATIENT_LIST"
             ]
           },
           "status": {
@@ -16825,6 +16973,92 @@
           "error",
           "expiresAt",
           "createdAt"
+        ]
+      },
+      "RequestPatientListDto": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "CSV",
+              "XLSX"
+            ],
+            "default": "CSV"
+          },
+          "columns": {
+            "description": "Column keys, in the order they should appear. A column you may not export is refused, not quietly dropped",
+            "example": [
+              "mrn",
+              "firstName",
+              "lastName",
+              "country"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "example": "DE"
+          },
+          "procedure": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Matches any of the patient's surgeries"
+          },
+          "assignedDoctorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agencyId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ExportColumnDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "header": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "identity",
+              "clinical",
+              "finance"
+            ]
+          },
+          "permission": {
+            "type": "string",
+            "description": "You need this to export the column"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether you hold it"
+          }
+        },
+        "required": [
+          "key",
+          "header",
+          "group",
+          "permission",
+          "available"
         ]
       },
       "DownloadLinkDto": {

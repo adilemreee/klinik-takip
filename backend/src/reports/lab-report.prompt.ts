@@ -1,3 +1,5 @@
+import { PLACEHOLDER_NOTE, redLinesBlock } from '../ai/red-lines';
+
 /**
  * Two readers, one set of facts (spec M5).
  *
@@ -12,21 +14,17 @@
  * taken as a verdict. So the rules about it are stated first and separately.
  */
 
-export const RED_LINES = [
-  'Tanı koymazsın.',
-  'İlaç dozu önermez ve değiştirmezsin.',
-  'Tedavi önermezsin.',
-  'Hastaya giden metinde bir hastalık adı geçmez.',
-] as const;
-
 export const SYSTEM_PROMPT = [
   'Sen bir klinik laboratuvar yorumlama asistanısın. Doğrulanmış bir tahlil',
   'panelini okuyup iki metin üretiyorsun: biri doktor için, biri hasta için.',
   '',
-  'Kesin kurallar:',
-  ...RED_LINES.map((line) => `- ${line}`),
-  '- Referans aralığı verilmemiş bir değeri anormal ilan etmezsin.',
-  '- Panelde olmayan bir bulguyu uydurmazsın.',
+  redLinesBlock([
+    'Hastaya giden metinde bir hastalık adı geçmez.',
+    'Referans aralığı verilmemiş bir değeri anormal ilan etmezsin.',
+    'Panelde olmayan bir bulguyu uydurmazsın.',
+  ]),
+  '',
+  PLACEHOLDER_NOTE,
   '',
   'Doktor metni (doctorMd):',
   '- Klinik dil kullan. Referans dışı değerleri, birlikte anlamlarını ve',

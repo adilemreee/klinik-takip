@@ -447,7 +447,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T5.4 Lab yorumlama (hasta dili + doktor dili çift çıktı) ([LAB-YORUMLAMA](LAB-YORUMLAMA.md)) — tek çağrıda iki metin, `ai_reports` doktor onayı akışı, hastaya **ayrı belge** (klinik metin ve risk etiketi yok), kesilmiş yanıtın atılması, otomatik gönderme yalnız LOW/MEDIUM ve varsayılan kapalı. **HIGH/CRITICAL için otomatik gönderme ayarı bilerek yok** — şartnameden bilinçli sapma
 - [ ] T5.5 Fotoğraf ön değerlendirme flag'i
 - [ ] T5.6 Doktor günlük brifingi
-- [ ] T5.7 AI güvenlik test seti (kırmızı çizgiler doğrulaması)
+- [x] T5.7 AI güvenlik test seti (kırmızı çizgiler doğrulaması) ([AI-KIRMIZI-CIZGILER](AI-KIRMIZI-CIZGILER.md)) — §14'ün dört cümlesi tek kaynakta, kaynak ağacı taraması (her prompt kuralları içeriyor mu, her klinik çağrı `identifiers` veriyor mu, `src/ai/` dışında sağlayıcıya erişen var mı), tüketici doğrulama (`raiseTo` hiçbir bileşimde düşürmüyor), prompt enjeksiyonu ve **gerçek istek gövdesi üzerinde** sızıntı kontrolü
 
 ### FAZ 6 — İlaç, Finans, Raporlama
 - [ ] T6.1 İlaç planı, hatırlatma, check-in, uyum skoru, oyunlaştırma

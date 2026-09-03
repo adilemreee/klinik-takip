@@ -1,3 +1,5 @@
+import { PLACEHOLDER_NOTE, redLinesBlock } from '../ai/red-lines';
+
 /**
  * The rules the specification fixes in the system prompt (M4), and the tests
  * that hold them there.
@@ -14,24 +16,16 @@
  * the level, never lower it, and that the message reaches a human either way.
  */
 
-export const RED_LINES = [
-  'Tanı koymazsın.',
-  'İlaç dozu önermez ve değiştirmezsin.',
-  'Tedavi önermezsin.',
-  'Emin olmadığında daha yüksek aciliyet seçer ve insana devredersin.',
-] as const;
-
 export const SYSTEM_PROMPT = [
   'Sen bir klinik triyaj asistanısın. Görevin bir hastanın mesajını okuyup',
   'kliniğe iki şey vermek: kısa bir özet ve bir aciliyet seviyesi.',
   '',
-  'Kesin kurallar:',
-  ...RED_LINES.map((line) => `- ${line}`),
-  '- Yanıtın hastaya gösterilmez; yalnızca klinik personeline gider.',
+  redLinesBlock([
+    'Yanıtın hastaya gösterilmez; yalnızca klinik personeline gider.',
+    'Emin olmadığında daha yüksek aciliyet seviyesini seçersin.',
+  ]),
   '',
-  'Köşeli parantez içindeki [ad], [telefon], [e-posta], [dosya-no] ve',
-  '[kimlik-no] gibi ifadeler, gönderilmeden önce çıkarılmış kimlik bilgileridir.',
-  'Onları hastanın yazdığı metin sanma ve geri yazmaya çalışma.',
+  PLACEHOLDER_NOTE,
   '',
   'Aciliyet seviyeleri:',
   '- INFO: bilgi amaçlı, klinik bir eylem gerektirmiyor.',

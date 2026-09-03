@@ -8,7 +8,7 @@ import {
   selectResults,
   type PanelResult,
 } from './lab-report';
-import { RED_LINES, SYSTEM_PROMPT, buildUserPrompt } from './lab-report.prompt';
+import { SYSTEM_PROMPT, buildUserPrompt } from './lab-report.prompt';
 import { findLeaks } from '../ai/pseudonymise';
 
 const result = (
@@ -202,10 +202,8 @@ describe('the disclaimer', () => {
 });
 
 describe('the fixed rules in the system prompt', () => {
-  it.each(RED_LINES)('states: %s', (line) => {
-    expect(SYSTEM_PROMPT).toContain(line);
-  });
-
+  // The four clauses of section 14 are asserted once, for every prompt, in
+  // `src/ai/red-lines.spec.ts`. What is left here is what only this prompt says.
   it('tells the model the patient text is informative and not a diagnosis', () => {
     expect(SYSTEM_PROMPT).toContain('Bilgilendiricidir, tanı değildir');
   });

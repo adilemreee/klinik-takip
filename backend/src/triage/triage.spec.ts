@@ -1,7 +1,7 @@
 import { TriageLevel } from '@prisma/client';
 import { screen, RED_FLAGS, foldForMatch } from './red-flags';
 import { hasContent, needsImmediateAttention, parseVerdict, raiseTo, renderSummary } from './triage';
-import { RED_LINES, SYSTEM_PROMPT, buildUserPrompt } from './triage.prompt';
+import { SYSTEM_PROMPT, buildUserPrompt } from './triage.prompt';
 
 /**
  * The rule that makes it safe to put a model in this path (spec section 14.3).
@@ -204,10 +204,8 @@ describe('parsing the verdict', () => {
  * cannot quietly drop a line.
  */
 describe('the fixed rules in the system prompt', () => {
-  it.each(RED_LINES)('states: %s', (line) => {
-    expect(SYSTEM_PROMPT).toContain(line);
-  });
-
+  // The four clauses of section 14 are asserted once, for every prompt, in
+  // `src/ai/red-lines.spec.ts`. What is left here is what only this prompt says.
   it('tells the model to choose the higher level when unsure', () => {
     expect(SYSTEM_PROMPT).toContain('YÜKSEK');
   });

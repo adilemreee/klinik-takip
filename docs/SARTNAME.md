@@ -451,7 +451,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 
 ### FAZ 6 — İlaç, Finans, Raporlama
 - [x] T6.1 İlaç planı, hatırlatma, check-in, uyum skoru, oyunlaştırma ([ILAC-UYUM](ILAC-UYUM.md)) — RRULE alt kümesi (okunamayan kural **reddediliyor**), hastanın kendi saat diliminde ve DST'yi koruyan takvim üretimi, İçtim/Atladım/Ertele, zamanı gelmemiş dozu saymayan uyum skoru, ölçülü rozetler (kür kötü giderken gizleniyor), %70 uyarısı **yalnız atanmış ekibe**, doz sayısına göre yenileme hatırlatması
-- [ ] T6.2 İlaç etkileşim uyarıları
+- [x] T6.2 İlaç etkileşim uyarıları ([ILAC-ETKILESIM](ILAC-ETKILESIM.md)) — referans tablosundan, **AI hiç karışmıyor** (§M5); marka/jenerik/Türkçe isim normalizasyonu, doz ve form temizleme, uzun bileşen önce; uyarı **engellemiyor**; yanıt tanınmayan ilaçları ve karşılaştırılan çift sayısını taşıyor — **uyarı yokluğu güvenlik değildir**. **Tablo başlangıç seti, eczacı gözden geçirmesi bekliyor**
 - [ ] T6.3 Finans kayıtları + para birimi + ödeme durumu
 - [ ] T6.4 Analitik dashboard (ameliyat sayısı, ülke dağılımı, doluluk, gelir)
 - [ ] T6.5 PDF hasta özet raporu (şablonlu)

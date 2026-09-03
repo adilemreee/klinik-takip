@@ -87,7 +87,7 @@ Fazlar ve task listesi: [docs/SARTNAME.md](docs/SARTNAME.md) §15
 | Faz 3 — Klinik Modüller | 4 / 6 | T3.1, T3.2, T3.4, T3.6 tamam · T3.3 ve T3.5'te eksik olan tek şey **kamera katmanı** |
 | Faz 4 — İletişim ve Bildirim | 3 / 6 | T4.4, T4.5, T4.6 tamam · T4.1, T4.2, T4.3 sunucu tarafı tamam, kalanları cihaza/T5.1'e bağlı |
 | Faz 5 — Yapay Zeka Katmanı | **7 / 7** | Tamam · katman sağlayıcı anahtarı olmadan **kapalı**; triyaj taraması, protokol sözcük araması ve günlük brifing AI'sız da çalışıyor · fotoğraf gönderimi **ayrıca** açılmalı |
-| Faz 6 — İlaç, Finans, Raporlama | 1 / 7 | T6.1 tamam — ilaç planı, hatırlatma, check-in, uyum skoru ve ölçülü oyunlaştırma · AI gerektirmiyor, tamamen çalışıyor |
+| Faz 6 — İlaç, Finans, Raporlama | 2 / 7 | T6.1, T6.2 tamam — ilaç planı, uyum skoru, etkileşim uyarıları · ikisi de AI gerektirmiyor, tamamen çalışıyor |
 | Faz 7 — Sertleştirme ve Yayın | 0 / 7 | |
 
 Kutucuklu tam liste, her tamamlanan işin doküman bağlantısıyla birlikte:
@@ -103,6 +103,7 @@ Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
 | Kalıcı yerel depo (GRDB / Room) | Senkronizasyon mantığı depodan bağımsız tasarlandı; kalıcılık ayrı bir iş. Yükleme oturumunun uygulama yeniden başlatılınca yaşaması da buna bağlı | T2.6 kalanı |
 | Cihaz katmanı: cihaz üstü OCR, belge tarama, fotoğraf overlay çekimi, APNs/FCM bildirim gösterimi, zengin bildirim eylemleri | Gerçek cihaz (ve push için sağlayıcı hesabı) gerektiriyor; sunucu tarafı hepsinde hazır | T3.3 + T3.5 + T4.2 + T4.3 kalanı |
 | AR (RTL), DE, RU çevirileri | §7 başlangıç setinde istiyor; altyapı hazır, çeviriler ve RTL yerleşimi yapılmadı | T2.7 |
+| İlaç etkileşim tablosu | **Klinikte:** başlangıç seti, hiçbir eczacı gözden geçirmedi. Mekanizma hazır; tabloyu klinik sahiplenmeli. Uyarı yokluğu güvenlik anlamına gelmiyor ve arayüz bunu yazıyor | — |
 | Triyaj kırmızı bayrak listesi | **Klinikte:** hangi ifadelerin acil sayılacağı klinik içeriktir, bir klinisyen gözden geçirmeli. Ayrıca tarama yalnız TR+EN; DE/RU/AR yazan hasta yalnız AI geçişini alıyor (o da kapalıyken hiç) — her hâlükârda bir insana ulaşıyor | — |
 | Fotoğraf gönderiminin klinik kararı | **Sizde:** `AI_PHOTO_ASSESSMENT` varsayılan kapalı. Bir görüntü metnin küçültülebildiği gibi küçültülemez — yüzü ya da dövmeyi hiçbir tarama çıkarmaz. Açmak ayrı bir karar | — |
 | AI sağlayıcı sözleşmesi (sıfır saklama / iş ortaklığı) | **Sizde:** §14.5 gereği; `AI_ZERO_RETENTION` kod tarafından doğrulanamaz, operatörün beyanıdır. Beyan yokken klinik istemler gönderilmiyor | — |

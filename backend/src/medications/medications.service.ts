@@ -18,6 +18,7 @@ import {
   type BadgeId,
   type DoseLog,
 } from './adherence';
+import { check as checkInteractions, type InteractionCheck } from './interactions';
 import {
   MAX_OCCURRENCES,
   RecurrenceError,
@@ -48,6 +49,15 @@ export interface MedicationView {
   badges: BadgeId[];
   /** The next dose still ahead, if there is one. */
   nextDose: Date | null;
+  /**
+   * Present on the responses to writing or approving a prescription, where a
+   * clinician is about to act (spec M5, M9).
+   *
+   * Not on a plain list: an interaction warning attached to every read would be
+   * seen so often it stopped being read, and the moment it matters is the
+   * moment somebody adds a drug.
+   */
+  interactions?: InteractionCheck;
 }
 
 export interface MyMedications {
@@ -98,7 +108,34 @@ export class MedicationsService {
       approvedAt: new Date(),
     });
 
-    return this.view(medication);
+    return {
+      ...(await this.view(medication)),
+      interactions: await this.interactionsFor(patientId),
+    };
+  }
+
+  /**
+   * Everything the reference knows about what this patient is taking.
+   *
+   * Advisory, and it never refuses anything: a clinician may knowingly
+   * prescribe an interacting pair — dual antiplatelet therapy is a treatment,
+   * not a mistake — and software that blocked it would be overruling a decision
+   * it cannot see the reasons for.
+   */
+  async interactionsFor(patientId: string): Promise<InteractionCheck> {
+    const active = await this.prisma.medication.findMany({
+      where: { patientId, stoppedAt: null },
+      select: { id: true, drugName: true },
+    });
+
+    return checkInteractions(active);
+  }
+
+  /** The same, through the usual access check, for the clinician's own screen. */
+  async interactions(user: AuthenticatedUser, patientId: string): Promise<InteractionCheck> {
+    await this.access.assertCanAccess(user, patientId);
+
+    return this.interactionsFor(patientId);
   }
 
   /**
@@ -161,7 +198,10 @@ export class MedicationsService {
       return row;
     });
 
-    return this.view(updated);
+    return {
+      ...(await this.view(updated)),
+      interactions: await this.interactionsFor(existing.patientId),
+    };
   }
 
   /**

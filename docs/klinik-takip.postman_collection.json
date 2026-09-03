@@ -3486,6 +3486,32 @@
           }
         },
         {
+          "name": "Known interactions among this patient's medication",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/medications/interactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "medications",
+                "interactions"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Known interactions among this patient's medication"
+          }
+        },
+        {
           "name": "Approve a patient-reported medication",
           "request": {
             "method": "PATCH",

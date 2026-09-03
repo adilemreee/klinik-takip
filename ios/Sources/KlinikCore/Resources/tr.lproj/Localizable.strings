@@ -427,3 +427,13 @@
 "medication.badge.three-days" = "3 gün";
 "medication.badge.one-week" = "1 hafta";
 "medication.badge.four-weeks" = "4 hafta";
+
+"interaction.severity.CONTRAINDICATED" = "Kontrendike";
+"interaction.severity.MAJOR" = "Ciddi";
+"interaction.severity.MODERATE" = "Orta";
+"interaction.severity.MINOR" = "Hafif";
+"interaction.title" = "İlaç etkileşimleri";
+"interaction.none" = "Bilinen etkileşim bulunamadı";
+"interaction.unrecognised" = "Referansta tanınmayan ilaçlar";
+"interaction.notChecked" = "Hiçbir ilaç çifti karşılaştırılamadı";
+"interaction.disclaimer" = "Bu liste bir referans tablosundan gelir ve tam değildir. Uyarı olmaması güvenli olduğu anlamına gelmez.";

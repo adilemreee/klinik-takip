@@ -14,11 +14,13 @@ import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { MeasurementsService } from '../measurements/measurements.service';
 import {
   CheckInDto,
+  InteractionCheckDto,
   MedicationLogDto,
   MedicationViewDto,
   MyMedicationsDto,
   PrescribeDto,
 } from './dto/medication.dto';
+import type { InteractionCheck } from './interactions';
 import {
   MedicationsService,
   type MedicationView,
@@ -42,6 +44,25 @@ export class PatientMedicationsController {
     @Param('id', ParseUUIDPipe) patientId: string,
   ): Promise<MedicationView[]> {
     return this.medications.forPatient(user, patientId);
+  }
+
+  /**
+   * What the reference knows about the drugs this patient is on (spec M5).
+   *
+   * A separate read rather than a field on every list: a warning attached to
+   * every read is one that stops being read, and the moment it matters is the
+   * moment somebody adds a drug — where it is returned with the prescription.
+   */
+  @Get('interactions')
+  @RequirePermissions('medications.read')
+  @ApiOperation({ summary: 'Known interactions among this patient\'s medication' })
+  @ApiOkResponse({ type: InteractionCheckDto })
+  @ApiStandardErrors()
+  async interactions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) patientId: string,
+  ): Promise<InteractionCheck> {
+    return this.medications.interactions(user, patientId);
   }
 
   /**

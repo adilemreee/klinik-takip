@@ -84,6 +84,61 @@ data class DoseLog(
 )
 
 @Serializable
+enum class InteractionSeverity {
+    CONTRAINDICATED,
+    MAJOR,
+    MODERATE,
+    MINOR,
+    ;
+
+    val stringKey: String get() = "interaction_severity_${name.lowercase()}"
+
+    /**
+     * Whether this one has to interrupt.
+     *
+     * Everything is shown; interrupting on a minor interaction is how a clinic
+     * learns to dismiss the dialog without reading it.
+     */
+    val isSevere: Boolean get() = this == CONTRAINDICATED || this == MAJOR
+}
+
+@Serializable
+data class InteractingDrug(
+    val id: String,
+    /** As it was written. */
+    val drugName: String,
+)
+
+@Serializable
+data class InteractionWarning(
+    val severity: InteractionSeverity,
+    val note: String,
+    val ingredients: List<String> = emptyList(),
+    /** The two medications, in the clinician's own words. */
+    val between: List<InteractingDrug> = emptyList(),
+)
+
+@Serializable
+data class InteractionCheck(
+    /** Most serious first. */
+    val warnings: List<InteractionWarning> = emptyList(),
+    /**
+     * Drugs the reference did not recognise.
+     *
+     * The screen must show this. An empty warning list next to three
+     * unrecognised drugs is not a clean bill of health, and reading it as one is
+     * how software misleads somebody.
+     */
+    val unrecognised: List<InteractingDrug> = emptyList(),
+    /** Zero means nothing was actually compared. */
+    val comparedPairs: Int = 0,
+) {
+    /** Whether the answer says anything at all about safety. */
+    val checkedAnything: Boolean get() = comparedPairs > 0
+    val hasSevere: Boolean get() = warnings.any { it.severity.isSevere }
+}
+
+@Serializable
 data class MedicationView(
     val medication: Medication,
     /** The rule in a sentence, so a clinician can check what they wrote. */
@@ -91,6 +146,8 @@ data class MedicationView(
     val adherence: Adherence = Adherence(),
     val badges: List<String> = emptyList(),
     val nextDose: String? = null,
+    /** Present when a clinician has just written or approved a prescription. */
+    val interactions: InteractionCheck? = null,
 )
 
 @Serializable
@@ -127,6 +184,10 @@ class MedicationsApi(
 
     suspend fun forPatient(patientId: String): List<MedicationView> =
         decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/medications")))
+
+    /** What the reference knows about the drugs this patient is on. */
+    suspend fun interactions(patientId: String): InteractionCheck =
+        decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/medications/interactions")))
 
     /** "İçtim" / "Atladım" / "Ertele". */
     suspend fun checkIn(logId: String, action: String, snoozeMinutes: Int? = null): DoseLog =

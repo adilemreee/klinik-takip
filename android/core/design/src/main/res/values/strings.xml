@@ -180,6 +180,15 @@
     <string name="home_next_appointment">Yaklaşan kontrol</string>
     <string name="home_no_patient_file">Hesabınız henüz bir dosyaya bağlanmamış. Kliniğinizle görüşün.</string>
     <string name="home_title">Merhaba</string>
+    <string name="interaction_disclaimer">Bu liste bir referans tablosundan gelir ve tam değildir. Uyarı olmaması güvenli olduğu anlamına gelmez.</string>
+    <string name="interaction_none">Bilinen etkileşim bulunamadı</string>
+    <string name="interaction_not_checked">Hiçbir ilaç çifti karşılaştırılamadı</string>
+    <string name="interaction_severity_contraindicated">Kontrendike</string>
+    <string name="interaction_severity_major">Ciddi</string>
+    <string name="interaction_severity_minor">Hafif</string>
+    <string name="interaction_severity_moderate">Orta</string>
+    <string name="interaction_title">İlaç etkileşimleri</string>
+    <string name="interaction_unrecognised">Referansta tanınmayan ilaçlar</string>
     <string name="job_status_done">Tamamlandı</string>
     <string name="job_status_failed">Başarısız</string>
     <string name="job_status_pending">Sırada</string>

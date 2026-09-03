@@ -427,3 +427,13 @@
 "medication.badge.three-days" = "3 days";
 "medication.badge.one-week" = "1 week";
 "medication.badge.four-weeks" = "4 weeks";
+
+"interaction.severity.CONTRAINDICATED" = "Contraindicated";
+"interaction.severity.MAJOR" = "Major";
+"interaction.severity.MODERATE" = "Moderate";
+"interaction.severity.MINOR" = "Minor";
+"interaction.title" = "Drug interactions";
+"interaction.none" = "No known interaction found";
+"interaction.unrecognised" = "Drugs the reference did not recognise";
+"interaction.notChecked" = "No pair of drugs could be compared";
+"interaction.disclaimer" = "This list comes from a reference table and is not complete. The absence of a warning does not mean the combination is safe.";

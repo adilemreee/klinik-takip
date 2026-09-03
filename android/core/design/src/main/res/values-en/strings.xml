@@ -180,6 +180,15 @@
     <string name="home_next_appointment">Next check-up</string>
     <string name="home_no_patient_file">Your account is not linked to a file yet. Please contact your clinic.</string>
     <string name="home_title">Hello</string>
+    <string name="interaction_disclaimer">This list comes from a reference table and is not complete. The absence of a warning does not mean the combination is safe.</string>
+    <string name="interaction_none">No known interaction found</string>
+    <string name="interaction_not_checked">No pair of drugs could be compared</string>
+    <string name="interaction_severity_contraindicated">Contraindicated</string>
+    <string name="interaction_severity_major">Major</string>
+    <string name="interaction_severity_minor">Minor</string>
+    <string name="interaction_severity_moderate">Moderate</string>
+    <string name="interaction_title">Drug interactions</string>
+    <string name="interaction_unrecognised">Drugs the reference did not recognise</string>
     <string name="job_status_done">Done</string>
     <string name="job_status_failed">Failed</string>
     <string name="job_status_pending">Waiting</string>

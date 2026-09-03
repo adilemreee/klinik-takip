@@ -9049,6 +9049,82 @@
         ]
       }
     },
+    "/patients/{id}/medications/interactions": {
+      "get": {
+        "operationId": "PatientMedicationsController_interactions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionCheckDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Known interactions among this patient's medication",
+        "tags": [
+          "medications"
+        ]
+      }
+    },
     "/medications/{medicationId}/approve": {
       "patch": {
         "operationId": "MedicationsController_approve",
@@ -13161,6 +13237,89 @@
           "schedule",
           "adherence",
           "badges"
+        ]
+      },
+      "PrescribedDrugDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "drugName": {
+            "type": "string",
+            "description": "As it was written"
+          }
+        },
+        "required": [
+          "id",
+          "drugName"
+        ]
+      },
+      "InteractionWarningDto": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CONTRAINDICATED",
+              "MAJOR",
+              "MODERATE",
+              "MINOR"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "What a clinician needs to know, in one sentence"
+          },
+          "ingredients": {
+            "description": "Ingredient codes",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "between": {
+            "description": "The two medications, as written",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrescribedDrugDto"
+            }
+          }
+        },
+        "required": [
+          "severity",
+          "note",
+          "ingredients",
+          "between"
+        ]
+      },
+      "InteractionCheckDto": {
+        "type": "object",
+        "properties": {
+          "warnings": {
+            "description": "Most serious first",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InteractionWarningDto"
+            }
+          },
+          "unrecognised": {
+            "description": "Drugs the reference did not recognise. Read this before reading an empty warning list as safety",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrescribedDrugDto"
+            }
+          },
+          "comparedPairs": {
+            "type": "number",
+            "description": "How many pairs were compared. Zero means nothing was checked"
+          }
+        },
+        "required": [
+          "warnings",
+          "unrecognised",
+          "comparedPairs"
         ]
       },
       "PrescribeDto": {

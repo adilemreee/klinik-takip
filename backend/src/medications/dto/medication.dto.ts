@@ -208,3 +208,40 @@ export class MyMedicationsDto {
   })
   badges!: string[];
 }
+
+export class PrescribedDrugDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ description: 'As it was written' })
+  drugName!: string;
+}
+
+export class InteractionWarningDto {
+  @ApiProperty({ enum: ['CONTRAINDICATED', 'MAJOR', 'MODERATE', 'MINOR'] })
+  severity!: string;
+
+  @ApiProperty({ description: 'What a clinician needs to know, in one sentence' })
+  note!: string;
+
+  @ApiProperty({ type: [String], description: 'Ingredient codes' })
+  ingredients!: string[];
+
+  @ApiProperty({ type: [PrescribedDrugDto], description: 'The two medications, as written' })
+  between!: PrescribedDrugDto[];
+}
+
+export class InteractionCheckDto {
+  @ApiProperty({ type: [InteractionWarningDto], description: 'Most serious first' })
+  warnings!: InteractionWarningDto[];
+
+  @ApiProperty({
+    type: [PrescribedDrugDto],
+    description:
+      'Drugs the reference did not recognise. Read this before reading an empty warning list as safety',
+  })
+  unrecognised!: PrescribedDrugDto[];
+
+  @ApiProperty({ description: 'How many pairs were compared. Zero means nothing was checked' })
+  comparedPairs!: number;
+}

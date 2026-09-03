@@ -532,6 +532,132 @@ describe('medication and adherence', () => {
     });
   });
 
+  /**
+   * The interaction check (spec M5: with a reference database, and the LLM is
+   * not a source on its own). No AI is involved anywhere in this path.
+   */
+  describe('interactions', () => {
+    it('warns when a new prescription interacts with one already on file', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      const patientId = await makePatient();
+
+      await prescribe(patientId, doctor.token, {
+        drugName: 'Coumadin 5mg',
+        frequencyRule: 'FREQ=DAILY;COUNT=5',
+      }).expect(201);
+
+      const second = (
+        await prescribe(patientId, doctor.token, {
+          drugName: 'Coraspin 100mg',
+          frequencyRule: 'FREQ=DAILY;COUNT=5',
+        }).expect(201)
+      ).body as View & {
+        interactions: {
+          warnings: { severity: string; between: { drugName: string }[] }[];
+          unrecognised: { drugName: string }[];
+          comparedPairs: number;
+        };
+      };
+
+      expect(second.interactions.warnings).toHaveLength(1);
+      expect(second.interactions.warnings[0]!.severity).toBe('MAJOR');
+      // The clinician sees their own words back.
+      expect(second.interactions.warnings[0]!.between.map((d) => d.drugName)).toContain(
+        'Coumadin 5mg',
+      );
+    });
+
+    /** Advisory, never blocking: a clinician may prescribe an interacting pair. */
+    it('writes the prescription anyway', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      const patientId = await makePatient();
+
+      await prescribe(patientId, doctor.token, {
+        drugName: 'Coumadin',
+        frequencyRule: 'FREQ=DAILY;COUNT=3',
+      }).expect(201);
+      await prescribe(patientId, doctor.token, {
+        drugName: 'Aspirin',
+        frequencyRule: 'FREQ=DAILY;COUNT=3',
+      }).expect(201);
+
+      expect(await prisma.medication.count({ where: { patientId } })).toBe(2);
+    });
+
+    /**
+     * The field that stops "no interactions" being read as "safe": a clinician
+     * has to see that two of three drugs were never checked.
+     */
+    it('names the drugs the reference did not recognise', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      const patientId = await makePatient();
+
+      for (const drugName of ['Bilinmeyen A', 'Bilinmeyen B', 'Aspirin']) {
+        await prescribe(patientId, doctor.token, {
+          drugName,
+          frequencyRule: 'FREQ=DAILY;COUNT=2',
+        }).expect(201);
+      }
+
+      const response = await request(server)
+        .get(`/patients/${patientId}/medications/interactions`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      const body = response.body as {
+        warnings: unknown[];
+        unrecognised: { drugName: string }[];
+        comparedPairs: number;
+      };
+
+      expect(body.warnings).toEqual([]);
+      expect(body.unrecognised.map((d) => d.drugName).sort()).toEqual([
+        'Bilinmeyen A',
+        'Bilinmeyen B',
+      ]);
+      expect(body.comparedPairs).toBe(0);
+    });
+
+    it('stops warning about a course that was stopped', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      const patientId = await makePatient();
+
+      const first = (
+        await prescribe(patientId, doctor.token, {
+          drugName: 'Coumadin',
+          frequencyRule: 'FREQ=DAILY;COUNT=3',
+        }).expect(201)
+      ).body as View;
+
+      await prescribe(patientId, doctor.token, {
+        drugName: 'Aspirin',
+        frequencyRule: 'FREQ=DAILY;COUNT=3',
+      }).expect(201);
+
+      await request(server)
+        .patch(`/medications/${first.medication.id}/stop`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      const response = await request(server)
+        .get(`/patients/${patientId}/medications/interactions`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      expect((response.body as { warnings: unknown[] }).warnings).toEqual([]);
+    });
+
+    it('does not let a patient read the clinical interaction list', async () => {
+      const patient = await actorFor(Role.PATIENT);
+      const patientId = await makePatient(patient.userId);
+
+      await request(server)
+        .get(`/patients/${patientId}/medications/interactions`)
+        .set('Authorization', `Bearer ${patient.token}`)
+        .expect(403);
+    });
+  });
+
   describe('the sweep', () => {
     it('reminds a patient once per dose', async () => {
       const doctor = await actorFor(Role.DOCTOR);

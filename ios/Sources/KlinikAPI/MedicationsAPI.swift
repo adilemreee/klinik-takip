@@ -75,6 +75,56 @@ public struct DoseLog: Decodable, Sendable, Equatable, Identifiable {
     public let snoozedUntil: Date?
 }
 
+public enum InteractionSeverity: String, Decodable, Sendable, Equatable, CaseIterable {
+    case contraindicated = "CONTRAINDICATED"
+    case major = "MAJOR"
+    case moderate = "MODERATE"
+    case minor = "MINOR"
+
+    public var localizedName: String { L10n.string("interaction.severity.\(rawValue)") }
+
+    /**
+     * Whether this one has to interrupt.
+     *
+     * Everything is shown; interrupting on a minor interaction is how a clinic
+     * learns to dismiss the dialog without reading it.
+     */
+    public var isSevere: Bool { self == .contraindicated || self == .major }
+}
+
+public struct InteractingDrug: Decodable, Sendable, Equatable, Identifiable {
+    public let id: String
+    /// As it was written.
+    public let drugName: String
+}
+
+public struct InteractionWarning: Decodable, Sendable, Equatable {
+    public let severity: InteractionSeverity
+    public let note: String
+    public let ingredients: [String]
+    /// The two medications, in the clinician's own words.
+    public let between: [InteractingDrug]
+}
+
+public struct InteractionCheck: Decodable, Sendable, Equatable {
+    /// Most serious first.
+    public let warnings: [InteractionWarning]
+    /**
+     * Drugs the reference did not recognise.
+     *
+     * The screen must show this. An empty warning list next to three
+     * unrecognised drugs is not a clean bill of health, and reading it as one
+     * is how software misleads somebody.
+     */
+    public let unrecognised: [InteractingDrug]
+    /// Zero means nothing was actually compared.
+    public let comparedPairs: Int
+
+    /// Whether the answer says anything at all about safety.
+    public var checkedAnything: Bool { comparedPairs > 0 }
+    public var hasSevere: Bool { warnings.contains(where: \.severity.isSevere) }
+}
+
 public struct MedicationView: Decodable, Sendable, Equatable, Identifiable {
     public let medication: Medication
     /// The rule in a sentence, so a clinician can check what they wrote.
@@ -82,6 +132,8 @@ public struct MedicationView: Decodable, Sendable, Equatable, Identifiable {
     public let adherence: Adherence
     public let badges: [String]
     public let nextDose: Date?
+    /// Present when a clinician has just written or approved a prescription.
+    public let interactions: InteractionCheck?
 
     public var id: String { medication.id }
 }
@@ -117,6 +169,14 @@ public struct MedicationsAPI: Sendable {
         try await client.send(
             Endpoint(method: .get, path: "patients/\(patientId)/medications"),
             as: [MedicationView].self
+        )
+    }
+
+    /// What the reference knows about the drugs this patient is on.
+    public func interactions(patientId: String) async throws -> InteractionCheck {
+        try await client.send(
+            Endpoint(method: .get, path: "patients/\(patientId)/medications/interactions"),
+            as: InteractionCheck.self
         )
     }
 

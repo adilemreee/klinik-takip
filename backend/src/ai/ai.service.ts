@@ -6,6 +6,7 @@ import { Env } from '../config/env.schema';
 import { PrismaService } from '../infra/prisma.service';
 import {
   ProviderError,
+  textOf,
   type AIMessage,
   type AIProvider,
   type FetchLike,
@@ -538,9 +539,18 @@ export class AIService implements OnModuleInit {
     return { ok: false, jobId: job.id, reason, message };
   }
 
-  /** Everything that will be sent, as one string, for the leak check. */
+  /**
+   * Everything that will be sent, as one string, for the leak check.
+   *
+   * Images are not in it, and cannot be: a face or a tattoo in a wound photo is
+   * an identifier no text scan will ever find. That limit is real and it is
+   * written down in the photo assessment's own documentation rather than
+   * hidden behind a check that looks like it covers everything.
+   */
   private render(request: AIRequest): string {
-    return [request.system, ...request.messages.map((message) => message.content)].join('\n');
+    return [request.system, ...request.messages.map((message) => textOf(message.content))].join(
+      '\n',
+    );
   }
 
   private async spentThisMonth(now = new Date()): Promise<number> {

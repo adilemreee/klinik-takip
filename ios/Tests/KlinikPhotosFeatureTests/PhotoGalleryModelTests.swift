@@ -46,12 +46,16 @@ final class PhotoGalleryModelTests: XCTestCase {
         area: String = "burun",
         phase: String = "pre-op",
         takenAt: String = "2026-01-01T08:00:00.000Z",
-        consent: String = "null"
+        consent: String = "null",
+        aiReviewSuggested: String = "null",
+        aiFindings: String = "[]"
     ) -> String {
         """
         {"id":"\(id)","category":"BEFORE","bodyArea":"\(area)","phaseLabel":"\(phase)",
          "mime":"image/jpeg","size":1024,"takenAt":"\(takenAt)","exifStripped":true,
-         "isFaceBlurred":false,"consentId":\(consent),"note":null}
+         "isFaceBlurred":false,"consentId":\(consent),"note":null,
+         "aiReviewSuggested":\(aiReviewSuggested),"aiFindings":\(aiFindings),
+         "aiAssessedAt":null}
         """
     }
 
@@ -258,5 +262,74 @@ final class PhotoGalleryModelTests: XCTestCase {
 
         let phase = await gallery.currentState().phase
         XCTAssertEqual(phase, .notFound)
+    }
+}
+
+/**
+ * The pre-assessment flag, as the clinician's screen sees it (spec M5).
+ *
+ * Three states, and the difference between two of them is the whole point:
+ * nobody has looked, somebody looked and found nothing, and somebody should
+ * look.
+ */
+final class PhotoAssessmentRenderingTests: XCTestCase {
+    private func decode(_ json: String) throws -> ClinicalPhoto {
+        try JSONDecoder.klinik.decode(ClinicalPhoto.self, from: Data(json.utf8))
+    }
+
+    private func photoJSON(reviewSuggested: String, findings: String) -> String {
+        """
+        {"id":"p1","category":"COMPLICATION","bodyArea":"abdomen","phaseLabel":null,
+         "mime":"image/jpeg","size":1024,"takenAt":"2026-03-01T08:00:00.000Z",
+         "exifStripped":true,"isFaceBlurred":false,"consentId":null,"note":null,
+         "aiReviewSuggested":\(reviewSuggested),"aiFindings":\(findings),
+         "aiAssessedAt":"2026-03-01T09:00:00.000Z"}
+        """
+    }
+
+    func testTellsApartNotLookedFromLookedAndClean() throws {
+        let unassessed = try decode(photoJSON(reviewSuggested: "null", findings: "[]"))
+        let clean = try decode(photoJSON(reviewSuggested: "false", findings: "[]"))
+
+        XCTAssertFalse(unassessed.needsReview)
+        XCTAssertFalse(unassessed.isAssessedClean)
+
+        XCTAssertFalse(clean.needsReview)
+        // Somebody looked and found nothing, which is not the same as nobody
+        // having looked.
+        XCTAssertTrue(clean.isAssessedClean)
+    }
+
+    func testMarksAPhotoAClinicianShouldOpen() throws {
+        let flagged = try decode(
+            photoJSON(reviewSuggested: "true", findings: "[\"redness\",\"discharge\"]")
+        )
+
+        XCTAssertTrue(flagged.needsReview)
+        XCTAssertEqual(flagged.aiFindings, ["redness", "discharge"])
+    }
+
+    /** The model never writes the words a clinician reads. */
+    func testRendersTheFindingsFromTheCatalogueRatherThanTheModel() throws {
+        let flagged = try decode(
+            photoJSON(reviewSuggested: "true", findings: "[\"redness\",\"wound-open\"]")
+        )
+
+        let rendered = flagged.localizedFindings
+
+        XCTAssertEqual(rendered.count, 2)
+        for text in rendered {
+            XCTAssertFalse(text.isEmpty)
+            XCTAssertFalse(text.hasPrefix("photo.finding."))
+        }
+    }
+
+    func testHasAWordForEveryFindingTheServerCanSend() {
+        for finding in ["redness", "discharge", "swelling", "wound-open"] {
+            let text = L10n.string("photo.finding.\(finding)")
+
+            XCTAssertNotEqual(text, "photo.finding.\(finding)")
+            XCTAssertFalse(text.isEmpty)
+        }
     }
 }

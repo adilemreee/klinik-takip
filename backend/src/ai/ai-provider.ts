@@ -14,9 +14,41 @@ import type { TokenUsage } from './cost';
 
 export type AIProviderName = 'anthropic' | 'openai' | 'unconfigured';
 
+/**
+ * A piece of a message.
+ *
+ * Text was enough until the photo pre-assessment (spec M5), which is the first
+ * thing here that has to send a model something other than words — and the
+ * first real test of the seam, because the two providers spell an image
+ * differently and nothing above this line should have to know that.
+ */
+export type ContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'image'; mediaType: string; base64: string };
+
 export interface AIMessage {
   role: 'user' | 'assistant';
-  content: string;
+  /** A plain string is the common case and stays a plain string. */
+  content: string | ContentBlock[];
+}
+
+/**
+ * Refused above this size.
+ *
+ * Both providers reject an image of a few megabytes, and finding that out from
+ * a 400 after uploading it is slower and costs the upload. Clinical photos are
+ * already resized on the way in; this is the backstop for the one that was not.
+ */
+export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+
+/** The text of a message, for the leak check and for logging. */
+export function textOf(content: string | ContentBlock[]): string {
+  if (typeof content === 'string') return content;
+
+  return content
+    .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n');
 }
 
 export interface ProviderRequest {

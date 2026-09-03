@@ -591,12 +591,28 @@ model Photo {
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
 
+  /// AI pre-assessment (spec M5). A **flag**, never a diagnosis: null means
+  /// nobody has looked, true means a clinician should look sooner.
+  ///
+  /// Staff-only by construction — the photo endpoints all require `photos.read`,
+  /// which no patient holds, so there is no path that shows a patient a machine's
+  /// opinion of their wound before a clinician has seen it.
+  aiReviewSuggested Boolean?  @map("ai_review_suggested")
+  /// Vocabulary ids of what was observed (redness, discharge, swelling), never
+  /// a condition name.
+  aiFindings        String[]  @map("ai_findings")
+  aiAssessedAt      DateTime? @map("ai_assessed_at") @db.Timestamptz
+  /// The model that actually answered (spec section 14.6).
+  aiModel           String?   @map("ai_model")
+
   patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   consent      Consent?      @relation(fields: [consentId], references: [id], onDelete: SetNull)
   complication Complication? @relation(fields: [complicationId], references: [id], onDelete: SetNull)
 
   /// The before/after gallery groups by body area and orders by time (M7).
   @@index([patientId, category, takenAt])
+  /// "Which photos should a clinician look at first" is the queue this drives.
+  @@index([aiReviewSuggested, takenAt])
   @@index([patientId, bodyArea, takenAt])
   @@map("photos")
 }

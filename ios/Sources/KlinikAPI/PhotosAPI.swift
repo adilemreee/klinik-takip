@@ -26,7 +26,26 @@ public struct ClinicalPhoto: Decodable, Sendable, Equatable, Identifiable {
     public let consentId: String?
     public let note: String?
 
+    /**
+     * AI pre-assessment (spec M5). Null means nobody has looked.
+     *
+     * A **flag**, never a diagnosis, and never shown to a patient — the photo
+     * endpoints require `photos.read`, which no patient holds.
+     */
+    public let aiReviewSuggested: Bool?
+    /// What was observed, from a closed vocabulary. Never a condition name.
+    public let aiFindings: [String]
+    public let aiAssessedAt: Date?
+
     public var hasUsageConsent: Bool { consentId != nil }
+
+    /// Somebody looked and found nothing, as opposed to nobody having looked.
+    public var isAssessedClean: Bool { aiReviewSuggested == false }
+    public var needsReview: Bool { aiReviewSuggested == true }
+
+    public var localizedFindings: [String] {
+        aiFindings.map { L10n.string("photo.finding.\($0)") }
+    }
 }
 
 public struct GalleryGroup: Decodable, Sendable, Equatable, Identifiable {
@@ -35,6 +54,28 @@ public struct GalleryGroup: Decodable, Sendable, Equatable, Identifiable {
     public let photos: [ClinicalPhoto]
 
     public var id: String { bodyArea ?? "" }
+}
+
+/// Why nothing was assessed, when nothing was.
+public enum AssessmentSkip: String, Decodable, Sendable, Equatable {
+    /// The clinic has not switched photo assessment on.
+    case disabled
+    case unsupportedImage = "unsupported-image"
+    case aiUnavailable = "ai-unavailable"
+    /// The answer could not be read, so the photo is left exactly as it was.
+    case unreadable
+}
+
+public struct PhotoAssessment: Decodable, Sendable, Equatable {
+    public let photo: ClinicalPhoto
+    /// From a closed vocabulary. A word outside it is dropped, not passed through.
+    public let findings: [String]
+    /// Any finding at all means a clinician should look.
+    public let reviewSuggested: Bool
+    public let model: String?
+    public let skippedReason: AssessmentSkip?
+
+    public var wasAssessed: Bool { skippedReason == nil }
 }
 
 public struct PhotoLink: Decodable, Sendable, Equatable {
@@ -47,6 +88,27 @@ public struct PhotosAPI: Sendable {
 
     public init(client: APIClient) {
         self.client = client
+    }
+
+    /**
+     * Photos the pre-assessment flagged, oldest first.
+     *
+     * A worklist: ordered newest-first it would be one where the oldest thing
+     * waits forever.
+     */
+    public func flagged() async throws -> [ClinicalPhoto] {
+        try await client.send(
+            Endpoint(method: .get, path: "photos/flagged"),
+            as: [ClinicalPhoto].self
+        )
+    }
+
+    /// Asks for a pre-assessment. Sends a clinical photograph to a third party.
+    public func assess(_ photoId: String) async throws -> PhotoAssessment {
+        try await client.send(
+            Endpoint(method: .post, path: "photos/\(photoId)/assess"),
+            as: PhotoAssessment.self
+        )
     }
 
     public func gallery(

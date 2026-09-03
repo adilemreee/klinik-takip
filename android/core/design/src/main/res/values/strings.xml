@@ -287,6 +287,12 @@
     <string name="patient_search">Hasta ara</string>
     <string name="patient_search_hint">Ad, soyad veya dosya numarası</string>
     <string name="photo_after">Sonrası</string>
+    <string name="photo_assessment_clean">Bulgu görülmedi</string>
+    <string name="photo_assessment_disclaimer">Bu bir ön değerlendirmedir, tanı değildir. Yapay zeka tarafından üretilmiştir.</string>
+    <string name="photo_assessment_flagged_title">İncelenmesi önerilen fotoğraflar</string>
+    <string name="photo_assessment_not_assessed">Değerlendirilmedi</string>
+    <string name="photo_assessment_review_suggested">Doktor incelemesi önerilir</string>
+    <string name="photo_assessment_title">Ön değerlendirme</string>
     <string name="photo_before">Öncesi</string>
     <string name="photo_body_area">Vücut bölgesi</string>
     <string name="photo_category_after">Sonrası</string>
@@ -298,6 +304,10 @@
     <string name="photo_compare_slider">Karşılaştırma kaydırıcısı</string>
     <string name="photo_consent_given">Kullanım onamı var</string>
     <string name="photo_empty">Henüz fotoğraf yok.</string>
+    <string name="photo_finding_discharge">Akıntı</string>
+    <string name="photo_finding_redness">Kızarıklık</string>
+    <string name="photo_finding_swelling">Şişlik</string>
+    <string name="photo_finding_wound_open">Yara kenarları ayrık</string>
     <string name="photo_no_body_area">Bölge belirtilmemiş</string>
     <string name="photo_overlay_hint">Önceki fotoğrafın izini kullanarak aynı açı ve mesafeden çekin.</string>
     <string name="report_doctor_view">Klinik yorum</string>

@@ -287,6 +287,12 @@
     <string name="patient_search">Search patients</string>
     <string name="patient_search_hint">Name, surname or file number</string>
     <string name="photo_after">After</string>
+    <string name="photo_assessment_clean">Nothing observed</string>
+    <string name="photo_assessment_disclaimer">This is a pre-assessment, not a diagnosis. It was produced by AI.</string>
+    <string name="photo_assessment_flagged_title">Photos suggested for review</string>
+    <string name="photo_assessment_not_assessed">Not assessed</string>
+    <string name="photo_assessment_review_suggested">A clinician should look at this</string>
+    <string name="photo_assessment_title">Pre-assessment</string>
     <string name="photo_before">Before</string>
     <string name="photo_body_area">Body area</string>
     <string name="photo_category_after">After</string>
@@ -298,6 +304,10 @@
     <string name="photo_compare_slider">Comparison slider</string>
     <string name="photo_consent_given">Usage consent given</string>
     <string name="photo_empty">No photos yet.</string>
+    <string name="photo_finding_discharge">Discharge</string>
+    <string name="photo_finding_redness">Redness</string>
+    <string name="photo_finding_swelling">Swelling</string>
+    <string name="photo_finding_wound_open">Wound edges apart</string>
     <string name="photo_no_body_area">No body area given</string>
     <string name="photo_overlay_hint">Line the previous photo up and shoot from the same angle and distance.</string>
     <string name="report_doctor_view">Clinical interpretation</string>

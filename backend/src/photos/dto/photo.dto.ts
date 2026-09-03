@@ -53,6 +53,22 @@ export class PhotoDto {
   @ApiProperty()
   isFaceBlurred!: boolean;
 
+  @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'AI pre-assessment (spec M5). Null when nobody has looked; true when a clinician should look sooner. A flag, never a diagnosis',
+  })
+  aiReviewSuggested!: boolean | null;
+
+  @ApiProperty({
+    type: [String],
+    description: 'What was observed, from a closed vocabulary: redness, discharge, swelling, wound-open',
+  })
+  aiFindings!: string[];
+
+  @ApiPropertyOptional({ nullable: true, format: 'date-time' })
+  aiAssessedAt!: Date | null;
+
   @ApiProperty({
     format: 'uuid',
     nullable: true,
@@ -78,4 +94,28 @@ export class PhotoUrlDto {
 
   @ApiProperty({ type: String, format: 'date-time' })
   expiresAt!: Date;
+}
+
+export class AssessmentResultDto {
+  @ApiProperty({ type: PhotoDto })
+  photo!: PhotoDto;
+
+  @ApiProperty({
+    type: [String],
+    description: 'From a closed vocabulary. A word outside it is dropped rather than passed through',
+  })
+  findings!: string[];
+
+  @ApiProperty({ description: 'Any finding at all means a clinician should look' })
+  reviewSuggested!: boolean;
+
+  @ApiPropertyOptional({ nullable: true, description: 'The model that actually answered' })
+  model!: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    enum: ['disabled', 'unsupported-image', 'ai-unavailable', 'unreadable'],
+    description: 'Why nothing was assessed. The photo is left exactly as it was',
+  })
+  skippedReason!: string | null;
 }

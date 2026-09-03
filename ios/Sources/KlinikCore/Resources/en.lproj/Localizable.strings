@@ -392,3 +392,14 @@
 "briefing.risk.complication-overdue" = "Complication unanswered";
 "briefing.risk.follow-up-missed" = "Check-up missed";
 "briefing.risk.report-unreviewed" = "AI interpretation awaiting review";
+
+"photo.finding.redness" = "Redness";
+"photo.finding.discharge" = "Discharge";
+"photo.finding.swelling" = "Swelling";
+"photo.finding.wound-open" = "Wound edges apart";
+"photo.assessment.title" = "Pre-assessment";
+"photo.assessment.reviewSuggested" = "A clinician should look at this";
+"photo.assessment.clean" = "Nothing observed";
+"photo.assessment.notAssessed" = "Not assessed";
+"photo.assessment.disclaimer" = "This is a pre-assessment, not a diagnosis. It was produced by AI.";
+"photo.assessment.flaggedTitle" = "Photos suggested for review";

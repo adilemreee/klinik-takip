@@ -1,6 +1,9 @@
 import {
+  MAX_IMAGE_BYTES,
   ProviderError,
+  type AIMessage,
   type AIProvider,
+  type ContentBlock,
   type FetchLike,
   type ProviderRequest,
   type ProviderResponse,
@@ -56,7 +59,7 @@ export class AnthropicProvider implements AIProvider {
         model: this.model,
         max_tokens: request.maxOutputTokens,
         system: request.system,
-        messages: request.messages,
+        messages: request.messages.map(toAnthropicMessage),
         ...(request.temperature === undefined ? {} : { temperature: request.temperature }),
       }),
       signal,
@@ -94,6 +97,37 @@ export class AnthropicProvider implements AIProvider {
       },
       stopReason: body.stop_reason ?? null,
     };
+  }
+}
+
+/** Anthropic takes an image as a base64 source block. */
+function toAnthropicMessage(message: AIMessage): {
+  role: string;
+  content: string | Record<string, unknown>[];
+} {
+  if (typeof message.content === 'string') {
+    return { role: message.role, content: message.content };
+  }
+
+  return {
+    role: message.role,
+    content: message.content.map((block: ContentBlock) => {
+      if (block.type === 'text') return { type: 'text', text: block.text };
+
+      assertSize(block.base64);
+
+      return {
+        type: 'image',
+        source: { type: 'base64', media_type: block.mediaType, data: block.base64 },
+      };
+    }),
+  };
+}
+
+function assertSize(base64: string): void {
+  // Four base64 characters carry three bytes.
+  if ((base64.length * 3) / 4 > MAX_IMAGE_BYTES) {
+    throw new ProviderError('The image is too large to send', 413);
   }
 }
 

@@ -145,6 +145,20 @@ export const envSchema = z.object({
   AI_EMBEDDING_MODEL: optional(z.string().min(1)),
   AI_EMBEDDING_PRICE_PER_MTOK: optional(z.coerce.number().nonnegative()),
 
+  /**
+   * Sends clinical photographs to the model for pre-assessment (spec M5).
+   *
+   * Off by default and separate from the rest of the AI layer, because an image
+   * cannot be minimised the way text can: the scrubber removes a name from a
+   * sentence, and nothing removes a face or a tattoo from a wound photograph.
+   * Sending one is a disclosure a clinic should decide on deliberately rather
+   * than inherit from having switched the AI layer on.
+   */
+  AI_PHOTO_ASSESSMENT: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.boolean().default(false),
+  ),
+
   /** An AI call with no deadline is a request handler that never returns. */
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(1_024),

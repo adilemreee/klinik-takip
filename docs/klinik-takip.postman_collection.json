@@ -1843,6 +1843,49 @@
           }
         },
         {
+          "name": "Photos the pre-assessment flagged for review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/flagged",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                "flagged"
+              ]
+            },
+            "description": "Photos the pre-assessment flagged for review"
+          }
+        },
+        {
+          "name": "Flag a wound photo for review, or not. Never a diagnosis",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/photos/:photoId/assess",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "photos",
+                ":photoId",
+                "assess"
+              ],
+              "variable": [
+                {
+                  "key": "photoId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Flag a wound photo for review, or not. Never a diagnosis"
+          }
+        },
+        {
           "name": "A short-lived signed URL for the image",
           "request": {
             "method": "GET",
@@ -1889,6 +1932,29 @@
               ]
             },
             "description": "Soft-delete; the bytes stay for the retention period"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ai",
+      "item": [
+        {
+          "name": "This month's AI spend, tokens and refusals",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/usage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "usage"
+              ]
+            },
+            "description": "This month's AI spend, tokens and refusals"
           }
         }
       ]
@@ -3038,29 +3104,6 @@
                 }
               }
             }
-          }
-        }
-      ]
-    },
-    {
-      "name": "ai",
-      "item": [
-        {
-          "name": "This month's AI spend, tokens and refusals",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/ai/usage",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "ai",
-                "usage"
-              ]
-            },
-            "description": "This month's AI spend, tokens and refusals"
           }
         }
       ]

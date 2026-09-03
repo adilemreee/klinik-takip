@@ -1,6 +1,9 @@
 import {
+  MAX_IMAGE_BYTES,
   ProviderError,
+  type AIMessage,
   type AIProvider,
+  type ContentBlock,
   type FetchLike,
   type ProviderRequest,
   type ProviderResponse,
@@ -45,7 +48,7 @@ export class OpenAIProvider implements AIProvider {
         max_completion_tokens: request.maxOutputTokens,
         messages: [
           { role: 'system', content: request.system },
-          ...request.messages,
+          ...request.messages.map(toOpenAIMessage),
         ],
         ...(request.temperature === undefined ? {} : { temperature: request.temperature }),
       }),
@@ -77,6 +80,33 @@ export class OpenAIProvider implements AIProvider {
       stopReason: choice?.finish_reason ?? null,
     };
   }
+}
+
+/** OpenAI takes an image as a data URL. */
+function toOpenAIMessage(message: AIMessage): {
+  role: string;
+  content: string | Record<string, unknown>[];
+} {
+  if (typeof message.content === 'string') {
+    return { role: message.role, content: message.content };
+  }
+
+  return {
+    role: message.role,
+    content: message.content.map((block: ContentBlock) => {
+      if (block.type === 'text') return { type: 'text', text: block.text };
+
+      // Four base64 characters carry three bytes.
+      if ((block.base64.length * 3) / 4 > MAX_IMAGE_BYTES) {
+        throw new ProviderError('The image is too large to send', 413);
+      }
+
+      return {
+        type: 'image_url',
+        image_url: { url: `data:${block.mediaType};base64,${block.base64}` },
+      };
+    }),
+  };
 }
 
 function parse(raw: string): OpenAIResponse {

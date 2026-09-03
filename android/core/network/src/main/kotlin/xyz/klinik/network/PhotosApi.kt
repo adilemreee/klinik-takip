@@ -30,8 +30,55 @@ data class ClinicalPhoto(
     /** Without a photo-usage consent the image is clinical-use only. */
     val consentId: String? = null,
     val note: String? = null,
+    /**
+     * AI pre-assessment (spec M5). Null means nobody has looked.
+     *
+     * A **flag**, never a diagnosis, and never shown to a patient — the photo
+     * endpoints require `photos.read`, which no patient holds.
+     */
+    val aiReviewSuggested: Boolean? = null,
+    /** What was observed, from a closed vocabulary. Never a condition name. */
+    val aiFindings: List<String> = emptyList(),
+    val aiAssessedAt: String? = null,
 ) {
     val hasUsageConsent: Boolean get() = consentId != null
+
+    /** Somebody looked and found nothing, as opposed to nobody having looked. */
+    val isAssessedClean: Boolean get() = aiReviewSuggested == false
+    val needsReview: Boolean get() = aiReviewSuggested == true
+
+    fun findingKeys(): List<String> = aiFindings.map { "photo_finding_${it.replace('-', '_')}" }
+}
+
+/** Why nothing was assessed, when nothing was. */
+@Serializable
+enum class AssessmentSkip {
+    /** The clinic has not switched photo assessment on. */
+    @kotlinx.serialization.SerialName("disabled")
+    DISABLED,
+
+    @kotlinx.serialization.SerialName("unsupported-image")
+    UNSUPPORTED_IMAGE,
+
+    @kotlinx.serialization.SerialName("ai-unavailable")
+    AI_UNAVAILABLE,
+
+    /** The answer could not be read, so the photo is left exactly as it was. */
+    @kotlinx.serialization.SerialName("unreadable")
+    UNREADABLE,
+}
+
+@Serializable
+data class PhotoAssessment(
+    val photo: ClinicalPhoto,
+    /** From a closed vocabulary. A word outside it is dropped, not passed through. */
+    val findings: List<String> = emptyList(),
+    /** Any finding at all means a clinician should look. */
+    val reviewSuggested: Boolean = false,
+    val model: String? = null,
+    val skippedReason: AssessmentSkip? = null,
+) {
+    val wasAssessed: Boolean get() = skippedReason == null
 }
 
 @Serializable
@@ -50,6 +97,19 @@ class PhotosApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
 ) {
+    /**
+     * Photos the pre-assessment flagged, oldest first.
+     *
+     * A worklist: ordered newest-first it would be one where the oldest thing
+     * waits forever.
+     */
+    suspend fun flagged(): List<ClinicalPhoto> =
+        decode(client.send(Endpoint(HttpMethod.GET, "photos/flagged")))
+
+    /** Asks for a pre-assessment. Sends a clinical photograph to a third party. */
+    suspend fun assess(photoId: String): PhotoAssessment =
+        decode(client.send(Endpoint(HttpMethod.POST, "photos/$photoId/assess")))
+
     suspend fun gallery(
         patientId: String,
         category: PhotoCategory? = null,

@@ -27,8 +27,10 @@ import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { firstFilePart } from '../documents/multipart';
+import { PhotoAssessmentService, type AssessmentResult } from './assessment.service';
 import { GalleryGroup, PhotosService } from './photos.service';
 import {
+  AssessmentResultDto,
   GalleryGroupDto,
   ListPhotosDto,
   OverlayQueryDto,
@@ -125,7 +127,43 @@ export class PatientPhotosController {
 @ApiBearerAuth()
 @Controller('photos')
 export class PhotosController {
-  constructor(private readonly photos: PhotosService) {}
+  constructor(
+    private readonly photos: PhotosService,
+    private readonly assessment: PhotoAssessmentService,
+  ) {}
+
+  /**
+   * Photos a clinician should look at first (spec M5).
+   *
+   * Oldest first: this is a worklist, and a worklist ordered newest-first is
+   * one where the oldest thing waits forever.
+   */
+  @Get('flagged')
+  @RequirePermissions('photos.read')
+  @ApiOperation({ summary: 'Photos the pre-assessment flagged for review' })
+  @ApiOkResponse({ type: [PhotoDto] })
+  @ApiStandardErrors()
+  async flagged(@CurrentUser() user: AuthenticatedUser): Promise<Photo[]> {
+    return this.assessment.flagged(user);
+  }
+
+  /**
+   * Asks for a pre-assessment of one photograph.
+   *
+   * `ai.review` rather than `photos.read`: this sends a clinical photograph to
+   * a third party, and an image cannot be minimised the way text can.
+   */
+  @Post(':photoId/assess')
+  @RequirePermissions('ai.review')
+  @ApiOperation({ summary: 'Flag a wound photo for review, or not. Never a diagnosis' })
+  @ApiCreatedResponse({ type: AssessmentResultDto })
+  @ApiStandardErrors()
+  async assess(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+  ): Promise<AssessmentResult> {
+    return this.assessment.assess(user, photoId);
+  }
 
   @Get(':photoId/url')
   @RequirePermissions('photos.read')

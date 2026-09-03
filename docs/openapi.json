@@ -4247,6 +4247,152 @@
         ]
       }
     },
+    "/photos/flagged": {
+      "get": {
+        "operationId": "PhotosController_flagged",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PhotoDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Photos the pre-assessment flagged for review",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
+    "/photos/{photoId}/assess": {
+      "post": {
+        "operationId": "PhotosController_assess",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Flag a wound photo for review, or not. Never a diagnosis",
+        "tags": [
+          "photos"
+        ]
+      }
+    },
     "/photos/{photoId}/url": {
       "get": {
         "operationId": "PhotosController_url",
@@ -4389,6 +4535,73 @@
         "summary": "Soft-delete; the bytes stay for the retention period",
         "tags": [
           "photos"
+        ]
+      }
+    },
+    "/ai/usage": {
+      "get": {
+        "operationId": "AIController_usage",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIUsageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "This month's AI spend, tokens and refusals",
+        "tags": [
+          "ai"
         ]
       }
     },
@@ -7839,73 +8052,6 @@
         ]
       }
     },
-    "/ai/usage": {
-      "get": {
-        "operationId": "AIController_usage",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AIUsageDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid or revoked token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking the permission",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "This month's AI spend, tokens and refusals",
-        "tags": [
-          "ai"
-        ]
-      }
-    },
     "/reports/pending": {
       "get": {
         "operationId": "AIReportsController_pending",
@@ -10521,6 +10667,23 @@
           "isFaceBlurred": {
             "type": "boolean"
           },
+          "aiReviewSuggested": {
+            "type": "object",
+            "nullable": true,
+            "description": "AI pre-assessment (spec M5). Null when nobody has looked; true when a clinician should look sooner. A flag, never a diagnosis"
+          },
+          "aiFindings": {
+            "description": "What was observed, from a closed vocabulary: redness, discharge, swelling, wound-open",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "aiAssessedAt": {
+            "type": "object",
+            "nullable": true,
+            "format": "date-time"
+          },
           "consentId": {
             "type": "object",
             "format": "uuid",
@@ -10542,6 +10705,7 @@
           "takenAt",
           "exifStripped",
           "isFaceBlurred",
+          "aiFindings",
           "consentId",
           "note"
         ]
@@ -10566,6 +10730,46 @@
           "photos"
         ]
       },
+      "AssessmentResultDto": {
+        "type": "object",
+        "properties": {
+          "photo": {
+            "$ref": "#/components/schemas/PhotoDto"
+          },
+          "findings": {
+            "description": "From a closed vocabulary. A word outside it is dropped rather than passed through",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reviewSuggested": {
+            "type": "boolean",
+            "description": "Any finding at all means a clinician should look"
+          },
+          "model": {
+            "type": "object",
+            "nullable": true,
+            "description": "The model that actually answered"
+          },
+          "skippedReason": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "disabled",
+              "unsupported-image",
+              "ai-unavailable",
+              "unreadable"
+            ],
+            "description": "Why nothing was assessed. The photo is left exactly as it was"
+          }
+        },
+        "required": [
+          "photo",
+          "findings",
+          "reviewSuggested"
+        ]
+      },
       "PhotoUrlDto": {
         "type": "object",
         "properties": {
@@ -10581,6 +10785,66 @@
         "required": [
           "url",
           "expiresAt"
+        ]
+      },
+      "AIUsageDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "False when no provider is configured"
+          },
+          "provider": {
+            "type": "string",
+            "example": "anthropic"
+          },
+          "model": {
+            "type": "string",
+            "example": "claude-sonnet-5"
+          },
+          "monthStart": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Midnight on the 1st, clinic time"
+          },
+          "spentUsd": {
+            "type": "number",
+            "description": "USD spent since the start of the month"
+          },
+          "budgetUsd": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null when no cap is set"
+          },
+          "budgetUsedFraction": {
+            "type": "object",
+            "nullable": true,
+            "description": "0–1, null when no cap is set"
+          },
+          "calls": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number",
+            "description": "Calls that failed or were refused"
+          },
+          "tokensIn": {
+            "type": "number"
+          },
+          "tokensOut": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "enabled",
+          "provider",
+          "model",
+          "monthStart",
+          "spentUsd",
+          "calls",
+          "failed",
+          "tokensIn",
+          "tokensOut"
         ]
       },
       "ReportComplicationDto": {
@@ -11807,66 +12071,6 @@
         },
         "required": [
           "resolution"
-        ]
-      },
-      "AIUsageDto": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "description": "False when no provider is configured"
-          },
-          "provider": {
-            "type": "string",
-            "example": "anthropic"
-          },
-          "model": {
-            "type": "string",
-            "example": "claude-sonnet-5"
-          },
-          "monthStart": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Midnight on the 1st, clinic time"
-          },
-          "spentUsd": {
-            "type": "number",
-            "description": "USD spent since the start of the month"
-          },
-          "budgetUsd": {
-            "type": "object",
-            "nullable": true,
-            "description": "Null when no cap is set"
-          },
-          "budgetUsedFraction": {
-            "type": "object",
-            "nullable": true,
-            "description": "0–1, null when no cap is set"
-          },
-          "calls": {
-            "type": "number"
-          },
-          "failed": {
-            "type": "number",
-            "description": "Calls that failed or were refused"
-          },
-          "tokensIn": {
-            "type": "number"
-          },
-          "tokensOut": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "enabled",
-          "provider",
-          "model",
-          "monthStart",
-          "spentUsd",
-          "calls",
-          "failed",
-          "tokensIn",
-          "tokensOut"
         ]
       },
       "AIReportDto": {

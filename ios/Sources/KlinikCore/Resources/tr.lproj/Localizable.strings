@@ -392,3 +392,14 @@
 "briefing.risk.complication-overdue" = "Komplikasyon yanıtlanmadı";
 "briefing.risk.follow-up-missed" = "Kontrol kaçırıldı";
 "briefing.risk.report-unreviewed" = "AI yorumu onay bekliyor";
+
+"photo.finding.redness" = "Kızarıklık";
+"photo.finding.discharge" = "Akıntı";
+"photo.finding.swelling" = "Şişlik";
+"photo.finding.wound-open" = "Yara kenarları ayrık";
+"photo.assessment.title" = "Ön değerlendirme";
+"photo.assessment.reviewSuggested" = "Doktor incelemesi önerilir";
+"photo.assessment.clean" = "Bulgu görülmedi";
+"photo.assessment.notAssessed" = "Değerlendirilmedi";
+"photo.assessment.disclaimer" = "Bu bir ön değerlendirmedir, tanı değildir. Yapay zeka tarafından üretilmiştir.";
+"photo.assessment.flaggedTitle" = "İncelenmesi önerilen fotoğraflar";

@@ -10,6 +10,13 @@ import xyz.klinik.feature.patients.PatientListModel
 import xyz.klinik.network.ApiClient
 import xyz.klinik.network.ApiConfiguration
 import xyz.klinik.network.AuthApi
+import xyz.klinik.network.ComplicationsApi
+import xyz.klinik.network.DocumentsApi
+import xyz.klinik.network.LabApi
+import xyz.klinik.network.MeasurementsApi
+import xyz.klinik.network.MessagingApi
+import xyz.klinik.network.PhotosApi
+import xyz.klinik.network.ResumableUpload
 import xyz.klinik.network.EmergencyApi
 import xyz.klinik.network.HttpTokenRefresher
 import xyz.klinik.network.JdkHttpTransport
@@ -60,6 +67,15 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val client: ApiClient by lazy { ApiClient(configuration, transport, session) }
 
     val auth: AuthApi by lazy { AuthApi(client) }
+    val messaging: MessagingApi by lazy { MessagingApi(client) }
+    val documents: DocumentsApi by lazy { DocumentsApi(client) }
+    val photos: PhotosApi by lazy { PhotosApi(client) }
+    val complications: ComplicationsApi by lazy { ComplicationsApi(client) }
+    val lab: LabApi by lazy { LabApi(client) }
+    val measurements: MeasurementsApi by lazy { MeasurementsApi(client) }
+
+    /** Chunked upload, shared by every screen that can attach a file. */
+    val resumable: ResumableUpload by lazy { ResumableUpload(client) }
     val me: MeApi by lazy { MeApi(client) }
     val patients: PatientsApi by lazy { PatientsApi(client) }
     val emergency: EmergencyApi by lazy { EmergencyApi(client) }

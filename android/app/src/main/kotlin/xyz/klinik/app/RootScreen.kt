@@ -13,8 +13,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +33,22 @@ import xyz.klinik.feature.auth.ui.AuthFlowScreen
 import xyz.klinik.feature.home.HomeModel
 import xyz.klinik.feature.home.ui.HomeScreen
 import xyz.klinik.feature.patients.PatientListModel
+import xyz.klinik.feature.complications.MyComplicationsModel
+import xyz.klinik.feature.complications.ui.MyComplicationsScreen
+import xyz.klinik.feature.documents.DocumentsModel
+import xyz.klinik.feature.documents.ui.DocumentListScreen
+import xyz.klinik.feature.lab.LabTrendModel
+import xyz.klinik.feature.lab.ui.LabTrendScreen
+import xyz.klinik.feature.measurements.MeasurementsModel
+import xyz.klinik.feature.measurements.ui.RecordMeasurementScreen
+import xyz.klinik.feature.messaging.ChatModel
+import xyz.klinik.feature.messaging.ui.ChatScreen
 import xyz.klinik.feature.patients.ui.PatientListScreen
+import xyz.klinik.feature.photos.PhotoGalleryModel
+import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
+import xyz.klinik.network.MeasurementSource
+import xyz.klinik.network.MeasurementSubject
+import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.messageKey
 import xyz.klinik.shell.RootRoute
 // Design-system resources live in their own R class, not the app's: since AGP
@@ -143,6 +161,26 @@ private fun SignInRoute(environment: AppEnvironment, model: RootViewModel, expir
 private fun PatientHomeRoute(environment: AppEnvironment, model: RootViewModel) {
     val state by model.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    // One level deep, and back returns home. A back stack would be the right
+    // answer once these screens push further; today none of them do.
+    var destination by remember { mutableStateOf<PatientDestination>(PatientDestination.Home) }
+
+    BackHandler(enabled = destination != PatientDestination.Home) {
+        destination = PatientDestination.Home
+    }
+
+    if (destination != PatientDestination.Home) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            TextButton(onClick = { destination = PatientDestination.Home }) {
+                Text(stringResource(DesignR.string.common_close))
+            }
+
+            PatientDestinationScreen(environment, destination)
+        }
+
+        return
+    }
+
     val home: HomeModel = remember { environment.homeModel() }
     // The countdown runs in this scope, so it stops when the screen leaves
     // rather than arming a button nobody is looking at.
@@ -156,7 +194,12 @@ private fun PatientHomeRoute(environment: AppEnvironment, model: RootViewModel) 
         state = homeState,
         emergency = emergencyPhase,
         strings = homeStrings(state.input.identity?.displayName.orEmpty()),
-        onSelect = { /* The individual feature screens arrive with T2.6. */ },
+        onSelect = { action ->
+            // Emergency confirms in place; medications has no Compose screen
+            // on Android yet. Both return null and the tile does nothing,
+            // which is the honest outcome until the screen exists.
+            destinationFor(action)?.let { destination = it }
+        },
         onArmEmergency = { emergency.arm() },
         onConfirmEmergency = { scope.launch { emergency.confirm() } },
         // Backing out before anything is sent.

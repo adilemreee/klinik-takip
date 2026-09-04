@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
+import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.ApiError
 import xyz.klinik.network.ClinicalPhoto
 import xyz.klinik.network.GalleryGroup
@@ -56,7 +57,7 @@ data class GalleryState(
 /** The before/after gallery (spec M7). */
 class PhotoGalleryModel(
     private val api: PhotosApi,
-    private val patientId: String,
+    private val subject: RecordSubject,
 ) {
     private val _state = MutableStateFlow(GalleryState())
     val state: StateFlow<GalleryState> = _state.asStateFlow()
@@ -67,7 +68,7 @@ class PhotoGalleryModel(
         _state.value = _state.value.copy(phase = GalleryPhase.Loading)
 
         try {
-            val groups = api.gallery(patientId, category)
+            val groups = api.gallery(subject, category)
 
             _state.value = _state.value.copy(
                 groups = groups,
@@ -91,7 +92,7 @@ class PhotoGalleryModel(
 
     /** The photo a new capture lines up against, for the translucent guide. */
     suspend fun overlayReference(bodyArea: String): ClinicalPhoto? =
-        runCatching { api.overlayReference(patientId, bodyArea) }.getOrNull()
+        runCatching { api.overlayReference(subject, bodyArea) }.getOrNull()
 
     suspend fun upload(
         path: String,
@@ -105,7 +106,7 @@ class PhotoGalleryModel(
         _state.value = _state.value.copy(uploading = true, error = null)
 
         try {
-            api.upload(patientId, path, filename, category, bodyArea, phaseLabel)
+            api.upload(subject, path, filename, category, bodyArea, phaseLabel)
         } catch (error: Throwable) {
             // The server refuses a format whose location data it cannot strip,
             // and says so. Replacing that with our own message would leave the

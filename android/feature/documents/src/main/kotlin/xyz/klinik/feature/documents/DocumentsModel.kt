@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
+import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.ApiError
 import xyz.klinik.network.ClinicalDocument
 import xyz.klinik.network.DocumentType
@@ -54,7 +55,7 @@ data class DocumentsState(
 class DocumentsModel(
     private val api: DocumentsApi,
     private val resumable: ResumableUpload,
-    private val patientId: String,
+    private val subject: RecordSubject,
     private val pageSize: Int = 25,
     /**
      * Above this, the upload is chunked and resumable.
@@ -121,7 +122,7 @@ class DocumentsModel(
             if (file.length() > resumableThreshold) {
                 sendResumable(file, filename, type)
             } else {
-                api.upload(patientId, path, filename, type, contentType)
+                api.upload(subject, path, filename, type, contentType)
             }
         } catch (error: Throwable) {
             _state.value = _state.value.copy(
@@ -148,7 +149,7 @@ class DocumentsModel(
      * still owes.
      */
     private suspend fun sendResumable(file: File, filename: String, type: DocumentType) {
-        val session = resumable.begin(patientId, type, filename)
+        val session = resumable.begin(subject, type, filename)
 
         try {
             resumable.send(file, session.id) { progress ->
@@ -175,7 +176,7 @@ class DocumentsModel(
         if (!_state.value.hasUnsettledWork) return
 
         val fresh = try {
-            api.list(patientId, limit = pageSize).items
+            api.list(subject, limit = pageSize).items
         } catch (error: Throwable) {
             // A failed poll is not worth interrupting the screen for: the list
             // on display is still correct, only slightly stale.
@@ -211,7 +212,7 @@ class DocumentsModel(
 
     private suspend fun fetchPage(cursor: String?) {
         try {
-            val page = api.list(patientId, cursor = cursor, limit = pageSize)
+            val page = api.list(subject, cursor = cursor, limit = pageSize)
             val documents = _state.value.documents + page.items
 
             _state.value = _state.value.copy(

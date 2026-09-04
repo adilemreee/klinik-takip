@@ -5,6 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.test.runTest
+import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.ApiClient
 import xyz.klinik.network.ApiConfiguration
 import xyz.klinik.network.ApiError
@@ -43,7 +44,7 @@ class LabTrendModelTest {
         session.signIn(SessionTokens("access", "refresh", System.currentTimeMillis() + 900_000))
         return LabTrendModel(
             LabApi(ApiClient(ApiConfiguration("https://api.test"), transport, session)),
-            "p1",
+            RecordSubject.Patient("p1"),
         )
     }
 

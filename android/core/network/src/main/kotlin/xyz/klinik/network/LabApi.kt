@@ -103,12 +103,12 @@ class LabApi(
         decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/lab-results/pending")))
 
     /** Confirmed results as per-analyte series, ready to chart. */
-    suspend fun trends(patientId: String, since: String? = null): List<AnalyteTrend> =
+    suspend fun trends(subject: RecordSubject, since: String? = null): List<AnalyteTrend> =
         decode(
             client.send(
                 Endpoint(
                     HttpMethod.GET,
-                    "patients/$patientId/lab-results/trends",
+                    subject.base("lab-results/trends"),
                     query = since?.let { mapOf("since" to it) } ?: emptyMap(),
                 ),
             ),

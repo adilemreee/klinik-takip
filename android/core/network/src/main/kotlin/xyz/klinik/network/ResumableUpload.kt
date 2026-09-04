@@ -67,7 +67,7 @@ class ResumableUpload(
     }
 
     suspend fun begin(
-        patientId: String,
+        subject: RecordSubject,
         type: DocumentType,
         originalName: String? = null,
     ): UploadSession =
@@ -75,7 +75,7 @@ class ResumableUpload(
             client.send(
                 Endpoint(
                     HttpMethod.POST,
-                    "patients/$patientId/documents/uploads",
+                    subject.base("documents/uploads"),
                     body = json.encodeToString(
                         BeginBody.serializer(),
                         BeginBody(type.name, originalName),

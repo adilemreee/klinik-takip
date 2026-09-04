@@ -89,6 +89,12 @@ dependencies {
     implementation(project(":feature:auth-ui"))
     implementation(project(":feature:patients-ui"))
     implementation(project(":feature:home-ui"))
+    implementation(project(":feature:messaging-ui"))
+    implementation(project(":feature:documents-ui"))
+    implementation(project(":feature:photos-ui"))
+    implementation(project(":feature:complications-ui"))
+    implementation(project(":feature:lab-ui"))
+    implementation(project(":feature:measurements-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

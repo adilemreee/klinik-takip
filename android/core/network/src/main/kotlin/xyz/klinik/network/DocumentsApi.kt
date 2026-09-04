@@ -99,7 +99,7 @@ class DocumentsApi(
     private val json: Json = ApiClient.defaultJson,
 ) {
     suspend fun list(
-        patientId: String,
+        subject: RecordSubject,
         type: DocumentType? = null,
         cursor: String? = null,
         limit: Int? = null,
@@ -108,7 +108,7 @@ class DocumentsApi(
             client.send(
                 Endpoint(
                     HttpMethod.GET,
-                    "patients/$patientId/documents",
+                    subject.base("documents"),
                     query = buildMap {
                         type?.let { put("type", it.name) }
                         cursor?.let { put("cursor", it) }
@@ -120,7 +120,7 @@ class DocumentsApi(
 
     /** Streamed from disk by the transport; nothing is held in memory. */
     suspend fun upload(
-        patientId: String,
+        subject: RecordSubject,
         path: String,
         filename: String,
         type: DocumentType,
@@ -130,7 +130,7 @@ class DocumentsApi(
             client.send(
                 Endpoint(
                     HttpMethod.POST,
-                    "patients/$patientId/documents",
+                    subject.base("documents"),
                     multipart = MultipartUpload(
                         fields = mapOf("type" to type.name),
                         path = path,

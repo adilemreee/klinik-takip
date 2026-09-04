@@ -111,7 +111,7 @@ class PhotosApi(
         decode(client.send(Endpoint(HttpMethod.POST, "photos/$photoId/assess")))
 
     suspend fun gallery(
-        patientId: String,
+        subject: RecordSubject,
         category: PhotoCategory? = null,
         bodyArea: String? = null,
     ): List<GalleryGroup> =
@@ -119,7 +119,7 @@ class PhotosApi(
             client.send(
                 Endpoint(
                     HttpMethod.GET,
-                    "patients/$patientId/photos",
+                    subject.base("photos"),
                     query = buildMap {
                         category?.let { put("category", it.name) }
                         bodyArea?.let { put("bodyArea", it) }
@@ -134,11 +134,11 @@ class PhotosApi(
      * The endpoint answers with an empty object when there is nothing to line
      * up against, which is not the same as a missing field or a failure.
      */
-    suspend fun overlayReference(patientId: String, bodyArea: String): ClinicalPhoto? {
+    suspend fun overlayReference(subject: RecordSubject, bodyArea: String): ClinicalPhoto? {
         val body = client.send(
             Endpoint(
                 HttpMethod.GET,
-                "patients/$patientId/photos/overlay",
+                subject.base("photos/overlay"),
                 query = mapOf("bodyArea" to bodyArea),
             ),
         )
@@ -151,7 +151,7 @@ class PhotosApi(
         decode(client.send(Endpoint(HttpMethod.GET, "photos/$photoId/url")))
 
     suspend fun upload(
-        patientId: String,
+        subject: RecordSubject,
         path: String,
         filename: String,
         category: PhotoCategory,
@@ -164,7 +164,7 @@ class PhotosApi(
             client.send(
                 Endpoint(
                     HttpMethod.POST,
-                    "patients/$patientId/photos",
+                    subject.base("photos"),
                     multipart = MultipartUpload(
                         fields = buildMap {
                             put("category", category.name)

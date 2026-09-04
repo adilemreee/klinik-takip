@@ -5,6 +5,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.AnalyteTrend
 import xyz.klinik.network.ApiError
 import xyz.klinik.network.LabApi
@@ -36,7 +37,7 @@ data class LabTrendState(
 /** The lab trend screen: one series per analyte, with its reference band. */
 class LabTrendModel(
     private val api: LabApi,
-    private val patientId: String,
+    private val subject: RecordSubject,
 ) {
     private val _state = MutableStateFlow(LabTrendState())
     val state: StateFlow<LabTrendState> = _state.asStateFlow()
@@ -45,11 +46,18 @@ class LabTrendModel(
         _state.value = _state.value.copy(phase = LabTrendPhase.Loading)
 
         try {
-            // Fetched together so the screen cannot show a chart while still
-            // unaware of a critical value on the same patient.
+            // Fetched together so a clinician's screen cannot show a chart
+            // while still unaware of a critical value on the same patient.
+            //
+            // A patient looking at their own results does not get the critical
+            // list. Spec M16 puts a doctor's review between an analyser and a
+            // patient on purpose, and "CRITICAL" in red with nobody there to
+            // explain it is the outcome that review exists to prevent.
             coroutineScope {
-                val trends = async { api.trends(patientId) }
-                val critical = async { api.critical(patientId) }
+                val trends = async { api.trends(subject) }
+                val critical = async {
+                    if (subject is RecordSubject.Patient) api.critical(subject.id) else emptyList()
+                }
 
                 val series = trends.await()
 

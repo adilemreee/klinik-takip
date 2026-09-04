@@ -7,6 +7,7 @@ import kotlin.test.assertTrue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.ApiClient
 import xyz.klinik.network.ApiConfiguration
 import xyz.klinik.network.ApiError
@@ -85,7 +86,7 @@ class DocumentsModelTest {
         return DocumentsModel(
             DocumentsApi(client),
             ResumableUpload(client),
-            "p1",
+            RecordSubject.Patient("p1"),
             // Everything in these tests is small; the resumable path has its
             // own suite.
             resumableThreshold = Long.MAX_VALUE,

@@ -7,6 +7,7 @@ import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
 import { ComplicationsModule } from './complications/complications.module';
 import { ConsentsModule } from './consents/consents.module';
+import { LegalModule } from './legal/legal.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PhotosModule } from './photos/photos.module';
 import { QueueModule } from './queue/queue.module';
@@ -57,6 +58,7 @@ import { ObservabilityModule } from './observability/observability.module';
     PhotosModule,
     ComplicationsModule,
     ConsentsModule,
+    LegalModule,
     MessagingModule,
     NotificationsModule,
     FollowUpModule,

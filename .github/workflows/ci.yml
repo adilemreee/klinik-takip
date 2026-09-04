@@ -133,6 +133,18 @@ jobs:
       # The mobile clients generate from docs/openapi.json, so it must not drift
       # from the code. A contract both sides still believe while it has quietly
       # stopped being true is worse than no contract.
+      # The API serves the privacy notice from a copy inside backend/, because
+      # the Docker build context does not include docs/. A notice that exists
+      # twice is one that will disagree with itself.
+      - name: Check the legal texts match docs/
+        run: |
+          npm run legal:sync
+          if ! git diff --quiet -- legal; then
+            echo "::error::backend/legal is out of date. Run 'npm run legal:sync' in backend/ and commit."
+            git --no-pager diff --stat -- legal
+            exit 1
+          fi
+
       - name: Check the API contract is up to date
         run: |
           npm run api:export

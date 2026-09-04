@@ -2,6 +2,7 @@ import SwiftUI
 import KlinikAPI
 import KlinikAppointmentsFeature
 import KlinikComplicationsFeature
+import KlinikConsentsFeature
 import KlinikCore
 import KlinikDesign
 import KlinikDocumentsFeature
@@ -33,6 +34,7 @@ public enum PatientDestination: Hashable, Sendable {
     case complications
     case appointments
     case notificationSettings
+    case consents
 }
 
 /**
@@ -46,6 +48,8 @@ public enum PatientDestination: Hashable, Sendable {
  */
 @MainActor
 struct PatientHomeView: View {
+    @Environment(\.openURL) private var openURL
+
     let environment: AppEnvironment
     let patientId: String?
     let signOut: () async -> Void
@@ -97,6 +101,7 @@ struct PatientHomeView: View {
             Button(L10n.string("menu.labResults")) { path.append(.labResults) }
             Button(L10n.string("menu.complications")) { path.append(.complications) }
             Button(L10n.string("menu.appointments")) { path.append(.appointments) }
+            Button(L10n.string("consent.title")) { path.append(.consents) }
             Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
 
             Divider()
@@ -187,6 +192,19 @@ struct PatientHomeView: View {
 
         case .appointments:
             AppointmentsScreen(model: AppointmentsModel(api: environment.appointments))
+
+        case .consents:
+            ConsentsView(
+                model: ConsentsModel(api: environment.consents),
+                openNotice: {
+                    // The full notice is a document, not a screen: it changes
+                    // with the clinic's legal review rather than with a release,
+                    // so it is served rather than compiled in.
+                    if let url = environment.privacyNoticeURL {
+                        openURL(url)
+                    }
+                }
+            )
 
         case .notificationSettings:
             NotificationSettingsScreen(

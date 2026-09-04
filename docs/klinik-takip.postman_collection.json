@@ -2702,6 +2702,29 @@
       ]
     },
     {
+      "name": "legal",
+      "item": [
+        {
+          "name": "The privacy notice, as Markdown",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/legal/privacy-notice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "legal",
+                "privacy-notice"
+              ]
+            },
+            "description": "The privacy notice, as Markdown"
+          }
+        }
+      ]
+    },
+    {
       "name": "messaging",
       "item": [
         {

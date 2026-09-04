@@ -2,6 +2,28 @@
 
 /* Genel */
 "common.retry" = "Tekrar dene";
+"consent.title" = "İzinlerim";
+"consent.noticeTitle" = "Aydınlatma metni";
+"consent.noticeBody" = "Verilerinizin hangi amaçla, hangi hukuki sebebe dayanarak işlendiğini ve haklarınızı açıklar. Bu bir onay değildir; okuduğunuzu bildirmeniz yeterlidir.";
+"consent.noticeRead" = "Okudum";
+"consent.noticeAcknowledged" = "Okuduğunuzu bildirdiniz";
+"consent.consentsTitle" = "Açık rıza gerektirenler";
+"consent.optionalNote" = "Bu izinlerin hiçbiri tedavinizin şartı değildir. Vermeseniz de, sonradan geri alsanız da tedaviniz etkilenmez.";
+"consent.give" = "İzin ver";
+"consent.withdraw" = "İzni geri al";
+"consent.given" = "İzin verildi";
+"consent.notGiven" = "İzin verilmedi";
+"consent.withdrawnAt" = "Geri alındı";
+"consent.forwardOnly" = "Geri alma ileriye etkilidir: geri alana kadar yapılan işleme hukuka uygundur ve kayıt silinmez.";
+"consent.empty" = "Henüz izin kaydı yok.";
+"consent.type.TREATMENT" = "Tıbbi müdahale onamı";
+"consent.type.DATA_PROCESSING" = "Veri işleme";
+"consent.type.PHOTO_USAGE" = "Fotoğrafların tanıtımda kullanılması";
+"consent.type.MARKETING" = "Pazarlama iletisi";
+"consent.explain.TREATMENT" = "Klinikte imzalanır; uygulamadan verilmez.";
+"consent.explain.DATA_PROCESSING" = "Tedavi için veri işleme rızaya değil, kanunun sağlık hizmeti şartına dayanır; bu yüzden burada sorulmaz.";
+"consent.explain.PHOTO_USAGE" = "Tedavi ve takip için çekilen klinik fotoğraflar bu izne bağlı değildir. Bu izin yalnızca tanıtım materyallerinde kullanım içindir.";
+"consent.explain.MARKETING" = "Randevu, ilaç ve tahlil bildirimleri bu izne bağlı değildir; onları izin vermeseniz de alırsınız.";
 "photo.add" = "Fotoğraf ekle";
 "photo.capture" = "Çek";
 "photo.chooseCategory" = "Bu fotoğraf ne için?";

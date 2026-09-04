@@ -23,6 +23,7 @@ public final class AppEnvironment {
     public let me: MeAPI
     public let patients: PatientsAPI
     public let emergency: EmergencyAPI
+    public let consents: ConsentsAPI
     public let messaging: MessagingAPI
     public let documents: DocumentsAPI
     public let measurements: MeasurementsAPI
@@ -43,6 +44,17 @@ public final class AppEnvironment {
     public let uploads: UploadStore
     public let storeFailure: String?
 
+    /**
+     * Where the privacy notice lives.
+     *
+     * Served rather than compiled in: it changes with the clinic's legal
+     * review, and a notice that needs an App Store release to correct is one
+     * that stays wrong for a fortnight.
+     */
+    public var privacyNoticeURL: URL? {
+        configuration.baseURL.appendingPathComponent("legal/privacy-notice")
+    }
+
     public init(baseURL: URL, preferredLanguage: String = "tr") {
         configuration = APIConfiguration(baseURL: baseURL, preferredLanguage: preferredLanguage)
 
@@ -58,6 +70,7 @@ public final class AppEnvironment {
         me = MeAPI(client: client)
         patients = PatientsAPI(client: client)
         emergency = EmergencyAPI(client: client)
+        consents = ConsentsAPI(client: client)
         messaging = MessagingAPI(client: client)
         documents = DocumentsAPI(client: client)
         measurements = MeasurementsAPI(client: client)

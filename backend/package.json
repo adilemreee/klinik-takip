@@ -29,7 +29,8 @@
     "dev:deps:down": "docker compose -f ../infra/compose/docker-compose.dev.yml down",
     "openapi:export": "ts-node scripts/export-openapi.ts",
     "postman:export": "ts-node scripts/export-postman.ts",
-    "api:export": "npm run openapi:export && npm run postman:export"
+    "api:export": "npm run openapi:export && npm run postman:export",
+    "legal:sync": "ts-node scripts/sync-legal.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

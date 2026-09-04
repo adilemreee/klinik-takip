@@ -54,6 +54,8 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/dist ./dist
 COPY prisma ./prisma
+# The legal texts the API serves; kept in step with docs/ by npm run legal:sync.
+COPY legal ./legal
 
 # node:22-alpine ships an unprivileged `node` user. Never run as root — this
 # process handles special-category health data (spec section 8).

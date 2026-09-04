@@ -6673,6 +6673,68 @@
         ]
       }
     },
+    "/legal/privacy-notice": {
+      "get": {
+        "operationId": "LegalController_privacyNotice",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalDocumentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The privacy notice, as Markdown",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
     "/conversations/clinic-state": {
       "get": {
         "operationId": "ConversationsController_clinicState",
@@ -16103,6 +16165,29 @@
         "required": [
           "type",
           "version"
+        ]
+      },
+      "LegalDocumentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "privacy-notice"
+          },
+          "version": {
+            "type": "number",
+            "example": 1,
+            "description": "Which wording this is. A consent records the version it agreed to."
+          },
+          "body": {
+            "type": "string",
+            "description": "Markdown"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "body"
         ]
       },
       "ClinicStateDto": {

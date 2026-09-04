@@ -153,6 +153,7 @@ describe('the published API contract', () => {
         'follow-up',
         'health',
         'lab',
+        'legal',
         'me',
         'measurements',
         'medications',

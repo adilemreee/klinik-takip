@@ -2,6 +2,28 @@
 
 /* Common */
 "common.retry" = "Try again";
+"consent.title" = "My permissions";
+"consent.noticeTitle" = "Privacy notice";
+"consent.noticeBody" = "Explains why your data is processed, on what legal basis, and what your rights are. This is not a consent; telling us you have read it is enough.";
+"consent.noticeRead" = "I have read this";
+"consent.noticeAcknowledged" = "You confirmed you read this";
+"consent.consentsTitle" = "Things that need your explicit consent";
+"consent.optionalNote" = "None of these is a condition of your treatment. Refusing, or withdrawing later, does not affect your care.";
+"consent.give" = "Give permission";
+"consent.withdraw" = "Withdraw permission";
+"consent.given" = "Permission given";
+"consent.notGiven" = "Not given";
+"consent.withdrawnAt" = "Withdrawn";
+"consent.forwardOnly" = "Withdrawal takes effect from now on: processing done before it was lawful, and the record is kept.";
+"consent.empty" = "No permissions recorded yet.";
+"consent.type.TREATMENT" = "Medical procedure consent";
+"consent.type.DATA_PROCESSING" = "Data processing";
+"consent.type.PHOTO_USAGE" = "Using photographs in promotion";
+"consent.type.MARKETING" = "Marketing messages";
+"consent.explain.TREATMENT" = "Signed at the clinic; not given from the app.";
+"consent.explain.DATA_PROCESSING" = "Processing for treatment rests on the health-care ground in law, not on consent, so it is not asked for here.";
+"consent.explain.PHOTO_USAGE" = "Clinical photographs taken for treatment and follow-up do not depend on this. This permission is only for use in promotional material.";
+"consent.explain.MARKETING" = "Appointment, medication and lab notifications do not depend on this; you receive those either way.";
 "photo.add" = "Add a photo";
 "photo.capture" = "Capture";
 "photo.chooseCategory" = "What is this photo for?";

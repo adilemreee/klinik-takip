@@ -82,9 +82,37 @@ Dürüstlük gereği, bu belgenin tarif ettiği ama sistemin **yapmadığı** ş
 
 | Eksik | Sonucu | Ne zaman |
 |---|---|---|
-| Uygulamada onam ekranı | uçlar var, arayüz yok | T2.6 devamı |
 | VERBİS kaydı | klinik tarafından yapılacak | klinik |
 | Standart sözleşme + Kuruma bildirim | yurt dışı sağlayıcı kullanılacaksa zorunlu | klinik + avukat |
+
+## Onam ekranı — artık var
+
+`ConsentsView` (iOS). Düzeni kolaylık değil, **2026/347** belirledi ve fark
+ekranda görünüyor:
+
+- **Aydınlatma metni kendi bölümünde** ve yalnızca *okuduğuna* dair geri bildirim
+  alıyor. Butonun yazısı "Okudum" — asla "Kabul ediyorum". Bir aydınlatma metnine
+  onay istemek kararın açıkça yasakladığı şey.
+- **Rızalar ayrı**, her biri tek bir karar, hiçbiri bir diğerine bağlı değil.
+  Tek bir "hepsini kabul ediyorum", rızanın özgür olmaktan çıkma biçimidir.
+- **Başka bir hukuki sebebe dayanan hiçbir şey sorulmuyor.** Tedavi de, veri
+  işleme de bu ekranda yok. `ConsentType.askable` yalnız iki değer döndürüyor ve
+  model başka bir şey göndermeyi reddediyor — sunucu da reddediyor, çünkü
+  gönderen bir istemci daha gevşek bir sunucuya yöneltilebilir.
+
+Her satır, o iznin **ne hakkında olmadığını** da yazıyor: fotoğraf tanıtım iznini
+reddetmek, yara fotoğrafı çekilmesini reddetmek gibi okunmamalı.
+
+Aydınlatma metni `GET /legal/privacy-notice`'ten geliyor — istemciye gömülü
+değil, çünkü mağaza güncellemesi bekleyen bir metin iki hafta boyunca yanlış
+kalır. Uç **kimlik doğrulaması istemiyor**: ancak giriş yaptıktan sonra
+okunabilen bir aydınlatma metni, kaydolup olmamaya karar verirken okunamaz.
+Sürüm numarası orada, ve her onam kaydı hangi sürüme verildiğini yazıyor.
+
+Depoda tek kopya var (`docs/KVKK-AYDINLATMA-METNI.md`); `npm run legal:sync`
+onu backend imajının içine kopyalıyor ve CI ikisinin eşleştiğini denetliyor.
+Docker bağlamı `backend/` olduğu için elle ikinci bir kopya tutmanın alternatifi
+buydu — ve iki kez var olan bir aydınlatma metni, er geç kendisiyle çelişir.
 
 ## Periyodik imha — artık çalışıyor
 

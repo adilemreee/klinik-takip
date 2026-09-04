@@ -56,6 +56,11 @@ let package = Package(
         // The staff-side patient list and file.
         .target(name: "KlinikPatientsFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
 
+        .testTarget(
+            name: "KlinikConsentsFeatureTests",
+            dependencies: ["KlinikConsentsFeature"]
+        ),
+
         .testTarget(name: "KlinikAuthFeatureTests", dependencies: ["KlinikAuthFeature", "KlinikCore"]),
         // The patient's own home screen.
         .target(name: "KlinikHomeFeature", dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]),
@@ -170,6 +175,12 @@ let package = Package(
             dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
         ),
 
+        // Giving and withdrawing consent (KVKK, spec section 8).
+        .target(
+            name: "KlinikConsentsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .target(
             name: "KlinikApp",
             dependencies: [
@@ -179,7 +190,7 @@ let package = Package(
                 "KlinikPhotosFeature", "KlinikComplicationsFeature", "KlinikMessagingFeature",
                 "KlinikNotificationsFeature", "KlinikFollowUpFeature",
                 "KlinikAppointmentsFeature", "KlinikEmergencyFeature",
-                "KlinikMedicationsFeature",
+                "KlinikMedicationsFeature", "KlinikConsentsFeature",
             ]
         ),
 

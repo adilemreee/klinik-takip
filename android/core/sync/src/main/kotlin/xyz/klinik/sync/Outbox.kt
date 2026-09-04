@@ -87,3 +87,46 @@ class InMemoryOutboxStore : OutboxStore {
         storedConflicts.removeAll { it.id == id }
     }
 }
+
+/**
+ * A file whose upload was started and has not finished.
+ *
+ * Uploading is resumable against the server — it reports how many bytes it
+ * already has — but only while the app still knows which session belonged to
+ * which file. Held in memory that mapping dies with the process, and a patient
+ * who was uploading a 20 MB scan when Android reclaimed the app starts again
+ * from nothing, on a connection that was already struggling.
+ */
+data class PendingUpload(
+    /** The server's upload session. */
+    val id: String,
+    /** Where the file is on this device. */
+    val filePath: String,
+    val patientId: String? = null,
+    val originalName: String,
+    val totalBytes: Long,
+    val startedAt: Long,
+)
+
+/** Where unfinished uploads are remembered between launches. */
+interface UploadStore {
+    suspend fun unfinished(): List<PendingUpload>
+    suspend fun remember(upload: PendingUpload)
+    suspend fun forget(id: String)
+}
+
+/** In-memory store for tests and previews. */
+class InMemoryUploadStore : UploadStore {
+    private val uploads = mutableListOf<PendingUpload>()
+
+    override suspend fun unfinished(): List<PendingUpload> = uploads.sortedBy { it.startedAt }
+
+    override suspend fun remember(upload: PendingUpload) {
+        uploads.removeAll { it.id == upload.id }
+        uploads.add(upload)
+    }
+
+    override suspend fun forget(id: String) {
+        uploads.removeAll { it.id == id }
+    }
+}

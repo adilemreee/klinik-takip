@@ -28,6 +28,14 @@ let package = Package(
         .library(name: "KlinikAppointmentsFeature", targets: ["KlinikAppointmentsFeature"]),
         .library(name: "KlinikEmergencyFeature", targets: ["KlinikEmergencyFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
+        .library(name: "KlinikSyncStore", targets: ["KlinikSyncStore"]),
+    ],
+    // The only third-party dependency in the client. SQLite through Swift's C
+    // interop means manual statement lifetimes and finalisation on every error
+    // path, which is precisely the class of bug not worth hand-rolling in a
+    // health application; GRDB is the well-trodden wrapper for it.
+    dependencies: [
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
     ],
     targets: [
         // Generated from design/tokens.json, shared with Android (spec 3.2).
@@ -152,8 +160,17 @@ let package = Package(
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 
+        // The queue's home on disk. Separate from KlinikSync so the port and
+        // the sync logic stay free of any database at all, and so the
+        // in-memory store used by every other test carries no dependency.
+        .target(
+            name: "KlinikSyncStore",
+            dependencies: ["KlinikSync", .product(name: "GRDB", package: "GRDB.swift")]
+        ),
+
         .testTarget(name: "KlinikHomeFeatureTests", dependencies: ["KlinikHomeFeature", "KlinikCore"]),
         .testTarget(name: "KlinikSyncTests", dependencies: ["KlinikSync", "KlinikCore"]),
+        .testTarget(name: "KlinikSyncStoreTests", dependencies: ["KlinikSyncStore", "KlinikSync"]),
         .testTarget(name: "KlinikDesignTests", dependencies: ["KlinikDesign"]),
         .testTarget(name: "KlinikCoreTests", dependencies: ["KlinikCore"]),
         .testTarget(name: "KlinikAPITests", dependencies: ["KlinikAPI", "KlinikCore"]),

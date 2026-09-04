@@ -100,7 +100,6 @@ Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
 | Borç | Neden ertelendi | Nereye |
 |---|---|---|
 | SSH sertleştirmesi | Sunucuda çalışan kritik servislerin erişimini kesme riski | T7.2 |
-| Kalıcı yerel depo (GRDB / Room) | Senkronizasyon mantığı depodan bağımsız tasarlandı; kalıcılık ayrı bir iş. Yükleme oturumunun uygulama yeniden başlatılınca yaşaması da buna bağlı | T2.6 kalanı |
 | Cihaz katmanı: cihaz üstü OCR, belge tarama, fotoğraf overlay çekimi, APNs/FCM bildirim gösterimi, zengin bildirim eylemleri | Gerçek cihaz (ve push için sağlayıcı hesabı) gerektiriyor; sunucu tarafı hepsinde hazır | T3.3 + T3.5 + T4.2 + T4.3 kalanı |
 | İlaç etkileşim tablosu | **Klinikte:** başlangıç seti, hiçbir eczacı gözden geçirmedi. Mekanizma hazır; tabloyu klinik sahiplenmeli. Uyarı yokluğu güvenlik anlamına gelmiyor ve arayüz bunu yazıyor | — |
 | PROM anketi ve eşikleri | **Klinikte:** sorular şartnamenin listesinden, ifadeler bu depo için yazıldı; hiçbir klinisyen gözden geçirmedi. Alarm eşikleri savunulabilir yer tutucular. **Lisanslı ölçek (SF-36, FACE-Q…) bilerek konmadı** — telifli, ve değiştirilmiş bir ölçek normlarıyla karşılaştırılamaz | — |

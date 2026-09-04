@@ -30,6 +30,10 @@ include(":core:network")
 // Offline queue and synchronisation (spec M15).
 include(":core:sync")
 
+// The queue on disk. Plain JVM, because the SQLite driver it uses is
+// multiplatform: the same module builds here and runs on the device.
+include(":core:sync-store")
+
 // Sign-in and onboarding. The flow model holds no Android types, so the branch
 // only staff without a second factor ever reach is testable without a device.
 include(":feature:auth")

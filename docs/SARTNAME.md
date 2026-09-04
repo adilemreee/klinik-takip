@@ -422,12 +422,12 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T2.3 Giriş/onboarding akışları (her iki platform) ([GIRIS-AKISI](GIRIS-AKISI.md))
 - [x] T2.4 Hasta listesi + hasta detay ekranı (personel tarafı) ([HASTA-EKRANLARI](HASTA-EKRANLARI.md))
 - [x] T2.5 Hasta ana ekranı (hasta tarafı) ([HASTA-ANA-EKRANI](HASTA-ANA-EKRANI.md))
-- [ ] T2.6 Offline katmanı: outbox + senkronizasyon + çakışma çözümü **tamam ve testli**; kalıcı yerel DB (GRDB / Room) **eksik** — depolar şu an bellekte, yani uygulama kapanınca kuyruk kayboluyor. Tasarım: [OFFLINE-VE-CAKISMA](OFFLINE-VE-CAKISMA.md)
+- [x] T2.6 Offline katmanı: outbox + senkronizasyon + çakışma çözümü + **kalıcı yerel depo** ([OFFLINE-VE-CAKISMA](OFFLINE-VE-CAKISMA.md)) — kuyruk, çakışmalar ve **yarım kalan yüklemeler** artık diskte; iOS'ta GRDB, Android'de `androidx.sqlite` sürücüsü doğrudan (ilke: **ham API güvensizse kütüphane, güvenliyse değil**). Android'de sürücü dışarıdan veriliyor, yani **test edilen kod gönderilen kod** — emülatör gerekmiyor. Şema sürümlü; yeniden başlatma testi iki tarafta da gerçek (yaz, kapat, aynı dosyayı yeniden aç)
 - [~] T2.7 **Dil seti: AR (RTL), DE, RU** — **kapsam dışı bırakıldı (2026-09-04, proje sahibi kararı):** uygulamada TR ve EN yeterli. Altyapı hazır ve çok dilli; dil eklemek bir katalog dosyası eklemektir. §7'den bilinçli sapma, unutulmuş bir iş değil
 
 ### FAZ 3 — Klinik Modüller
 - [x] T3.1 Ölçümler ve VKİ + grafikler ([OLCUMLER](OLCUMLER.md))
-- [x] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi ([BELGE-KUYRUGU](BELGE-KUYRUGU.md)) — parçalı ve devam ettirilebilir yükleme dahil. Oturum kimliğinin uygulama yeniden başlatıldığında da yaşaması T2.6'nın kalıcı deposuna bağlı
+- [x] T3.2 Belge yükleme + kuyruk altyapısı (BullMQ) + job durum takibi ([BELGE-KUYRUGU](BELGE-KUYRUGU.md)) — parçalı ve devam ettirilebilir yükleme dahil. Oturum kimliği artık **uygulama yeniden başlatıldığında da yaşıyor** (T2.6 kalıcı deposu)
 - [ ] T3.3 OCR worker + lab sonucu yapılandırma + doktor onay ekranı ([OCR-VE-TAHLIL](OCR-VE-TAHLIL.md)) — sunucu tarafı OCR, yapılandırma, LOINC eşleştirme ve onay ekranı **tamam**; §3.2'nin birincil saydığı **cihaz üstü ön okuma (Vision / ML Kit) ve kamera ile belge tarama eksik**
 - [x] T3.4 Lab trend grafikleri, referans aralığı, kritik değer uyarısı ([OCR-VE-TAHLIL](OCR-VE-TAHLIL.md#trend-grafikleri-t34)) — bildirim gönderimi T4.2'de
 - [ ] T3.5 Fotoğraf modülü ([FOTOGRAF-MODULU](FOTOGRAF-MODULU.md)) — yükleme (EXIF temizleme, onam doğrulama), faz etiketleme, galeri ve kaydırmalı karşılaştırma **tamam**; **overlay ile kamera çekimi eksik** (sunucu referansı veriyor, kamera katmanı gerçek cihaz gerektiriyor)

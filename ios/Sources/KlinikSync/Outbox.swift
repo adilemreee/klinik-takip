@@ -128,3 +128,64 @@ public actor InMemoryOutboxStore: OutboxStore {
         storedConflicts.removeAll { $0.id == id }
     }
 }
+
+/// A file whose upload was started and has not finished.
+///
+/// Uploading is resumable against the server — it reports how many bytes it
+/// already has — but only if the app still knows which session belonged to
+/// which file. Held in memory, that mapping dies with the process, and a
+/// patient who was uploading a 20 MB scan when the phone killed the app starts
+/// again from nothing on a connection that was already struggling.
+public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
+    /// The server's upload session.
+    public let id: String
+    /// Where the file is on this device.
+    public let fileURL: URL
+    public let patientId: String?
+    public let originalName: String
+    public let totalBytes: Int
+    public let startedAt: Date
+
+    public init(
+        id: String,
+        fileURL: URL,
+        patientId: String? = nil,
+        originalName: String,
+        totalBytes: Int,
+        startedAt: Date = Date()
+    ) {
+        self.id = id
+        self.fileURL = fileURL
+        self.patientId = patientId
+        self.originalName = originalName
+        self.totalBytes = totalBytes
+        self.startedAt = startedAt
+    }
+}
+
+/// Where unfinished uploads are remembered between launches.
+public protocol UploadStore: Sendable {
+    func unfinished() async throws -> [PendingUpload]
+    func remember(_ upload: PendingUpload) async throws
+    func forget(id: String) async throws
+}
+
+/// In-memory store for tests and previews.
+public actor InMemoryUploadStore: UploadStore {
+    private var uploads: [PendingUpload] = []
+
+    public init() {}
+
+    public func unfinished() async throws -> [PendingUpload] {
+        uploads.sorted { $0.startedAt < $1.startedAt }
+    }
+
+    public func remember(_ upload: PendingUpload) async throws {
+        uploads.removeAll { $0.id == upload.id }
+        uploads.append(upload)
+    }
+
+    public func forget(id: String) async throws {
+        uploads.removeAll { $0.id == id }
+    }
+}

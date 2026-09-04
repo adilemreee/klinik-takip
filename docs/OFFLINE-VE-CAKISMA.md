@@ -100,3 +100,52 @@ En anlamlı üçü:
 - *"lets the first of two concurrent edits through and refuses the second"*
 - *"a conflict holds back later edits to the same record"*
 - *"nothing is ever silently lost"*
+
+## Kuyruk Artık Diskte (T2.6 kalanı)
+
+Senkronizasyon motorunun tuttuğu her şey **kullanıcının zaten yaptığı iştir**:
+sinyalsiz bir viziteden yazılmış bir düzenleme, birinin karar vermesini bekleyen
+bir çakışma, yarım kalmış bir yükleme.
+
+> Bellekte tutulduğunda hepsi, telefon uygulamayı geri aldığında ölür — ki bu
+> tam olarak kuyruğun dolu olmasına sebep olan bağlantının kötü olduğu andır.
+
+İki istemcide de tek bir SQLite dosyası, iki port (`OutboxStore`, `UploadStore`)
+ve sürümlenmiş şema var.
+
+### Kütüphane seçimi tutarlı bir ilkeye dayanıyor
+
+| | Seçim | Neden |
+|---|---|---|
+| iOS | **GRDB** | Swift'ten SQLite'a C köprüsü, her hata yolunda elle `finalize` ve işaretçi ömrü demek. Sağlık uygulamasında elle yazılmaya değmeyecek hata sınıfı |
+| Android | **`androidx.sqlite` sürücüsü doğrudan** (Room yok) | Kotlin'in SQLite API'si zaten güvenli — elle bellek yönetimi yok. Room'un ekleyeceği tek şey kod üretimi olurdu, ve port zaten tanımlı |
+
+İlke: **ham API güvensizse kütüphane, güvenliyse kütüphane değil.**
+
+### Test edilen kod, gönderilen koddur
+
+Android tarafında sürücü **dışarıdan veriliyor**. Testlerde `BundledSQLiteDriver`
+(JVM), cihazda aynı sürücünün Android varyantı — yani aynı SQL ifadeleri, aynı
+sınıf, yalnız sürücü farklı. Emülatör gerekmiyor, ve "testte çalışan başka bir
+şeydi" durumu yok.
+
+iOS tarafında testler macOS'ta gerçek SQLite dosyasına karşı çalışıyor.
+
+**Yeniden başlatma testi her iki tarafta da gerçek:** dosyaya yaz, mağazayı
+kapat, aynı dosyayla yenisini aç. Uygulamanın öldürülmesi budur.
+
+### Şema sürümlü
+
+"Varsa oluşturma" değil, kayıtlı sürüm (`user_version` / GRDB `DatabaseMigrator`).
+Yoksa sonradan eklenen bir kolon, temiz kurulumla güncelleme arasında sessizce
+farklı davranan bir tablo olurdu — ve ikinci açılışta kuyruğu baştan başlatan bir
+`CREATE TABLE` fark edilmez.
+
+### Yarım Kalan Yüklemeler
+
+Yükleme sunucuya karşı zaten devam ettirilebilir — sunucu kaç bayt aldığını
+söylüyor. Eksik olan **hangi oturumun hangi yerel dosyaya ait olduğu**: bellekte
+tutulduğunda süreçle birlikte ölüyor, ve 20 MB'lık bir tahlili yüklerken
+uygulaması kapanan hasta sıfırdan başlıyor — hem de zaten zorlanan bir bağlantıda.
+
+Artık aynı dosyada bir tabloda.

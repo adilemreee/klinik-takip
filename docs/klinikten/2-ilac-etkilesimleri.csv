@@ -1,0 +1,19 @@
+﻿bilesen_1;bilesen_2;siddet (CONTRAINDICATED/MAJOR/MODERATE/MINOR);klinisyene gosterilecek not;DURUM (onay/düzelt/sil);NOTUNUZ
+warfarin;acetylsalicylic-acid;MAJOR;"Kanama riski belirgin artar; birlikte kullanım yakın INR takibi gerektirir.";;
+warfarin;ibuprofen;MAJOR;NSAİİ ile birlikte kanama ve gastrointestinal ülser riski artar.;;
+warfarin;naproxen;MAJOR;NSAİİ ile birlikte kanama riski artar.;;
+warfarin;clarithromycin;MAJOR;"Klaritromisin varfarin etkisini artırır; INR yükselebilir.";;
+warfarin;metronidazole;MAJOR;Metronidazol varfarin etkisini belirgin artırır.;;
+warfarin;ciprofloxacin;MODERATE;"Siprofloksasin varfarin etkisini artırabilir; INR izlenmeli.";;
+clopidogrel;omeprazole;MODERATE;Omeprazol klopidogrelin etkinliğini azaltabilir.;;
+clopidogrel;acetylsalicylic-acid;MODERATE;"İkili antiagregan tedavi kanama riskini artırır; bilinçli verilmiş olabilir.";;
+enoxaparin;acetylsalicylic-acid;MAJOR;Antikoagülan ve antiagregan birlikte kanama riskini belirgin artırır.;;
+enoxaparin;ibuprofen;MAJOR;NSAİİ ile birlikte kanama riski artar.;;
+ibuprofen;naproxen;MODERATE;"İki NSAİİ birlikte; yarar artmaz, gastrointestinal risk artar.";;
+ibuprofen;acetylsalicylic-acid;MODERATE;İbuprofen aspirinin antiagregan etkisini azaltabilir.;;
+clarithromycin;simvastatin;CONTRAINDICATED;"Rabdomiyoliz riski; birlikte kullanılmamalıdır.";;
+tramadol;sertraline;MAJOR;Serotonin sendromu riski.;;
+tramadol;codeine;MODERATE;"İki opioid birlikte; solunum depresyonu riski artar.";;
+clarithromycin;oral-contraceptive;MINOR;"Oral kontraseptif etkinliği azalabilir; ek korunma önerilir.";;
+amoxicillin;oral-contraceptive;MINOR;"Oral kontraseptif etkinliği azalabilir; ek korunma önerilir.";;
+levothyroxine;omeprazole;MINOR;Mide asidi azalınca levotiroksin emilimi düşebilir.;;

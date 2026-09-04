@@ -95,7 +95,12 @@ Kutucuklu tam liste, her tamamlanan işin doküman bağlantısıyla birlikte:
 
 ### Devredilen borçlar
 
-Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
+Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli.
+
+> **Klinikten veya sizden veri bekleyenler için doldurulacak doküman:**
+> [KLINIKTEN-ISTENENLER](docs/KLINIKTEN-ISTENENLER.md) — her madde için hangi verinin
+> hangi formatta beklendiği, ve `docs/klinikten/` altında **mevcut başlangıç verisiyle
+> önceden doldurulmuş** beş CSV şablonu.
 
 | Borç | Neden ertelendi | Nereye |
 |---|---|---|

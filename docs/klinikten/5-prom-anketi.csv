@@ -1,0 +1,8 @@
+﻿soru_id;soru metni;tip;yon (higher-is-worse / higher-is-better);alarm esigi;zorunlu mu;DURUM (onay/düzelt/sil);NOTUNUZ
+pain;Son 24 saatte ağrınızı 0 (hiç yok) ile 10 (dayanılmaz) arasında nasıl değerlendirirsiniz?;SCALE_0_10;higher-is-worse;8;evet;;
+swelling;Şişlik ne kadar? 0 (hiç) — 10 (çok fazla);SCALE_0_10;higher-is-worse;8;hayır;;
+sleep;Uykunuz nasıl? 0 (hiç uyuyamıyorum) — 10 (çok iyi);SCALE_0_10;higher-is-better;2;hayır;;
+satisfaction;Kliniğimizi bir yakınınıza tavsiye etme ihtimaliniz nedir? 0 — 10;SCALE_0_10;higher-is-better;;hayır;;
+comment;Eklemek istediğiniz bir şey var mı?;TEXT;;;hayır;;
+;;;;;;;
+(kilometre taşları);7 | 30 | 90 | 180 gün;;;;;;

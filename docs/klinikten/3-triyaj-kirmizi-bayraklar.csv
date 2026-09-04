@@ -1,0 +1,16 @@
+﻿id;seviye (EMERGENCY/URGENT);aranan ifade kökleri (| ile ayrılmış);DURUM (onay/düzelt/sil);NOTUNUZ
+breathing;EMERGENCY;nefes alam | nefes almakta zorlan | nefes darlig | boguluyor | soluk alam | cannot breathe | can't breathe | trouble breathing | short of breath | shortness of breath;;
+chest-pain;EMERGENCY;gogus agri | gogsum agri | gogsume bask | kalbim sikis | chest pain | chest tightness;;
+uncontrolled-bleeding;EMERGENCY;kanama durm | kanamayi durdur | kan fiskir | cok kan kayb | bleeding will not stop | bleeding won't stop | heavy bleeding;;
+loss-of-consciousness;EMERGENCY;bayildim | bayilacak gibi | bilincini kayb | bilincim | kendimden gectim | fainted | passed out | blacked out;;
+seizure;EMERGENCY;nobet gecir | havale gecir | kasilma gecir | seizure | convulsion;;
+cyanosis;EMERGENCY;dudaklarim morar | parmaklarim morar | turning blue | lips are blue;;
+stroke-signs;EMERGENCY;konusamiyor | yuzum kay | agzim kay | felc | kolum tutmuyor | can't speak | face is drooping | slurred speech;;
+self-harm;EMERGENCY;intihar | kendime zarar | yasamak istemiyorum | olmek istiyorum | suicide | kill myself | harm myself;;
+wound-infection;URGENT;yarada akinti | yaradan akinti | yara iltihap | kotu koku | yara kizar | iltihapl | wound discharge | pus | foul smell | wound is red;;
+wound-dehiscence;URGENT;dikis acil | dikisler acil | yara acil | yaram acil | stitches opened | wound opened;;
+fever;URGENT;atesim 38 | atesim 39 | atesim 40 | yuksek ates | ates cikt | atesim var | high fever | temperature is 38 | temperature is 39;;
+possible-clot;URGENT;bacagim sis | baldirimda agri | bacagimda agri | tek bacag | calf pain | leg is swollen | one leg swollen;;
+persistent-vomiting;URGENT;kusmam durm | surekli kusuyor | hicbir sey tutam | su bile icemi | cannot keep anything down | vomiting blood | kan kusu;;
+no-urine;URGENT;idrar yapam | idrarim gelm | cannot urinate | not passing urine;;
+severe-pain;URGENT;dayanilmaz agri | siddetli agri | agri gecmiyor | agri kesici ise yaram | unbearable pain | severe pain | painkillers are not working;;

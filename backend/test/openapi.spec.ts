@@ -145,6 +145,7 @@ describe('the published API contract', () => {
         'auth',
         'briefing',
         'complications',
+        'consents',
         'documents',
         'emergency',
         'exports',

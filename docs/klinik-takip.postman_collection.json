@@ -1204,6 +1204,81 @@
           }
         },
         {
+          "name": "The consents you have given, including withdrawn ones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/consents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "consents"
+              ]
+            },
+            "description": "The consents you have given, including withdrawn ones"
+          }
+        },
+        {
+          "name": "Give a consent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/consents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "consents"
+              ]
+            },
+            "description": "Give a consent",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TREATMENT\",\n  \"version\": 1,\n  \"documentText\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Withdraw a consent; forward-only, the record is kept",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/consents/:consentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "consents",
+                ":consentId"
+              ],
+              "variable": [
+                {
+                  "key": "consentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Withdraw a consent; forward-only, the record is kept"
+          }
+        },
+        {
           "name": "Your conversation with the clinic",
           "request": {
             "method": "GET",
@@ -2505,6 +2580,105 @@
               ]
             },
             "description": "A patient's reports, newest first"
+          }
+        }
+      ]
+    },
+    {
+      "name": "consents",
+      "item": [
+        {
+          "name": "A patient's consents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/consents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "consents"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's consents"
+          }
+        },
+        {
+          "name": "Record a consent the patient signed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/consents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "consents"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Record a consent the patient signed",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"TREATMENT\",\n  \"version\": 1,\n  \"documentText\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Withdraw a consent on the patient's instruction",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/consents/:consentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "consents",
+                ":consentId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "key": "consentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Withdraw a consent on the patient's instruction"
           }
         }
       ]

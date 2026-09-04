@@ -6,6 +6,7 @@ import { AuthzModule } from './authz/authz.module';
 import { AuditModule } from './audit/audit.module';
 import { FilesModule } from './files/files.module';
 import { ComplicationsModule } from './complications/complications.module';
+import { ConsentsModule } from './consents/consents.module';
 import { DocumentsModule } from './documents/documents.module';
 import { PhotosModule } from './photos/photos.module';
 import { QueueModule } from './queue/queue.module';
@@ -55,6 +56,7 @@ import { ObservabilityModule } from './observability/observability.module';
     LabModule,
     PhotosModule,
     ComplicationsModule,
+    ConsentsModule,
     MessagingModule,
     NotificationsModule,
     FollowUpModule,

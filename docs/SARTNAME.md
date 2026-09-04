@@ -463,7 +463,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 ### FAZ 7 — Sertleştirme ve Yayın
 - [ ] T7.1 Yük testi (k6, 500 eşzamanlı) ve darboğaz optimizasyonu
 - [ ] T7.2 Güvenlik denetimi + OWASP Mobile kontrol listesi + sızma testi
-- [ ] T7.3 KVKK/GDPR dokümantasyonu, aydınlatma metni, onam akışları
+- [~] T7.3 KVKK/GDPR dokümantasyonu, aydınlatma metni, onam akışları — **taslaklar yazıldı, avukat incelemesi bekliyor** ([KVKK-AYDINLATMA-METNI](KVKK-AYDINLATMA-METNI.md) · [KVKK-ACIK-RIZA](KVKK-ACIK-RIZA.md) · [KVKK-SAKLAMA-IMHA](KVKK-SAKLAMA-IMHA.md) · [KVKK-UYGULAMA-NOTLARI](KVKK-UYGULAMA-NOTLARI.md)). Kurul'un 2026/347 kararı gereği aydınlatma ve açık rıza ayrı; `DATA_PROCESSING` onamı **kodda reddediliyor**. Onam alma/geri alma uçları yazıldı (7 entegrasyon testi) — daha önce onam yalnız okunuyordu, alınamıyordu. Kalan: periyodik imha işi, veri taşınabilirliği, uygulamada onam ekranı, VERBİS kaydı
 - [ ] T7.4 Erişilebilirlik denetimi (VoiceOver/TalkBack)
 - [ ] T7.5 Beta dağıtımı (TestFlight + Play Internal Testing), pilot hasta grubu
 - [ ] T7.6 App Store / Play Store yayın hazırlığı (gizlilik etiketleri, sağlık uygulaması gereksinimleri, ekran görüntüleri)

@@ -5,8 +5,13 @@ import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
 import xyz.klinik.feature.lab.ui.LabTrendStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
+import xyz.klinik.feature.appointments.ui.AppointmentStrings
+import xyz.klinik.feature.followup.ui.FollowUpStrings
+import xyz.klinik.feature.medications.ui.MedicationStrings
+import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
+import xyz.klinik.network.UiText
 import xyz.klinik.design.R as DesignR
 
 /**
@@ -109,3 +114,74 @@ fun Context.recordStrings(): RecordStrings = RecordStrings(
     typeName = { type -> stringForKey("measurement.type.${type.name}") },
     message = { key -> stringForKey(key) },
 )
+
+fun Context.medicationStrings(): MedicationStrings = MedicationStrings(
+    title = getString(DesignR.string.medication_title),
+    today = getString(DesignR.string.medication_today),
+    empty = getString(DesignR.string.medication_empty),
+    notFound = getString(DesignR.string.home_no_patient_file),
+    retry = getString(DesignR.string.common_retry),
+    adherence = getString(DesignR.string.medication_adherence),
+    noScoreYet = getString(DesignR.string.medication_no_score_yet),
+    streak = getString(DesignR.string.medication_streak),
+    taken = getString(DesignR.string.medication_taken),
+    snooze = getString(DesignR.string.medication_snooze),
+    skipped = getString(DesignR.string.medication_skipped),
+    nextDose = getString(DesignR.string.medication_next_dose),
+    awaitingApproval = getString(DesignR.string.medication_awaiting_approval),
+    stopped = getString(DesignR.string.medication_stopped),
+    statusName = { status -> stringForKey("medication.status.${status.name}") },
+    badgeName = { badge -> stringForKey("medication.badge.$badge") },
+    message = { key -> stringForKey(key) },
+)
+
+fun Context.followUpStrings(): FollowUpStrings = FollowUpStrings(
+    empty = getString(DesignR.string.follow_up_empty),
+    notFound = getString(DesignR.string.home_no_patient_file),
+    retry = getString(DesignR.string.common_retry),
+    nextVisit = getString(DesignR.string.follow_up_next_visit),
+    missedCount = getString(DesignR.string.follow_up_missed_count),
+    markAttended = getString(DesignR.string.follow_up_mark_attended),
+    markSkipped = getString(DesignR.string.follow_up_mark_skipped),
+    milestoneName = { milestone -> stringForKey("followUp.milestone.${milestone.label}", milestone.label) },
+    statusName = { status -> stringForKey("followUp.status.${status.name}") },
+    message = { text -> resolve(text) },
+)
+
+fun Context.appointmentStrings(): AppointmentStrings = AppointmentStrings(
+    empty = getString(DesignR.string.appointment_empty),
+    notFound = getString(DesignR.string.home_no_patient_file),
+    retry = getString(DesignR.string.common_retry),
+    next = getString(DesignR.string.appointment_next),
+    awaitingConfirmation = getString(DesignR.string.appointment_awaiting_confirmation),
+    confirm = getString(DesignR.string.appointment_confirm),
+    cancel = getString(DesignR.string.appointment_cancel),
+    typeName = { appointment -> stringForKey("appointment.type.${appointment.type.name}") },
+    statusName = { status -> stringForKey("appointment.status.${status.name}") },
+    message = { text -> resolve(text) },
+)
+
+fun Context.notificationStrings(): NotificationStrings = NotificationStrings(
+    title = getString(DesignR.string.notification_settings_title),
+    retry = getString(DesignR.string.common_retry),
+    fallbackNote = getString(DesignR.string.notification_fallback_note),
+    quietHours = getString(DesignR.string.notification_quiet_hours),
+    historyTitle = getString(DesignR.string.notification_history_title),
+    historyEmpty = getString(DesignR.string.notification_history_empty),
+    historyFallback = getString(DesignR.string.notification_history_fallback),
+    kindName = { kind -> stringForKey("notification.type.${kind.wire}") },
+    channelName = { channel -> stringForKey("notification.channel.${channel.name}") },
+    statusName = { status -> stringForKey("notification.status.${status.name}") },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * A [UiText] as text.
+ *
+ * The server's own wording is used where it sent any — it knows which field was
+ * wrong and our catalogue does not.
+ */
+fun Context.resolve(text: UiText): String = when (text) {
+    is UiText.Key -> stringForKey(text.key)
+    is UiText.Literal -> text.text
+}

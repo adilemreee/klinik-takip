@@ -42,15 +42,25 @@ class HomeActionCoverageTest {
     }
 
     @Test
-    fun `the actions that lead nowhere say why`() {
+    fun `the one action that leads nowhere says why`() {
         // A tile that does nothing is defensible; one that does nothing with no
         // recorded reason is how a gap becomes permanent.
         assertTrue(navigation.contains("EMERGENCY -> null"))
-        assertTrue(navigation.contains("MEDICATIONS -> null"))
+        // Matched on a fragment that survives comment wrapping: the assertion
+        // is that a reason is written down, not how it is laid out.
         assertTrue(
-            navigation.contains("arms the two-step confirmation") &&
-                navigation.contains("no Compose screen yet"),
-            "both null branches should carry the reason they are null",
+            navigation.contains("arms the two-step"),
+            "the null branch should carry the reason it is null",
         )
+    }
+
+    @Test
+    fun `every other action reaches a destination`() {
+        for (action in listOf("MESSAGES", "UPLOAD_DOCUMENT", "MEDICATIONS", "ADD_PHOTO")) {
+            assertTrue(
+                navigation.contains("HomeAction.$action -> PatientDestination."),
+                "$action is on the home screen and must lead somewhere",
+            )
+        }
     }
 }

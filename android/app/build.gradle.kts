@@ -95,6 +95,10 @@ dependencies {
     implementation(project(":feature:complications-ui"))
     implementation(project(":feature:lab-ui"))
     implementation(project(":feature:measurements-ui"))
+    implementation(project(":feature:medications-ui"))
+    implementation(project(":feature:followup-ui"))
+    implementation(project(":feature:appointments-ui"))
+    implementation(project(":feature:notifications-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

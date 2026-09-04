@@ -91,6 +91,28 @@ class StringCatalogueTest {
     }
 
     @Test
+    fun `every enum the screens look up by name has a string`() {
+        // These are resolved at runtime from the enum's own name, so a value
+        // added later with no string shows the raw key on a clinical screen.
+        // Grouped by prefix and checked for the exact count the enum has.
+        val expected = mapOf(
+            "followUp.status." to 5,
+            "appointment.type." to 4,
+            "appointment.status." to 5,
+            "notification.channel." to 5,
+            "notification.status." to 5,
+            "notification.type." to 7,
+            "medication.status." to 5,
+        )
+
+        for ((prefix, count) in expected) {
+            val found = lookup.keys.count { it.startsWith(prefix) }
+
+            assertEquals(count, found, "$prefix has $found strings, expected $count")
+        }
+    }
+
+    @Test
     fun `every role has a display string`() {
         // The role is shown to staff and to anyone the app has no home for; a
         // missing one leaves a blank where the account type should be.

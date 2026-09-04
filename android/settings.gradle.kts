@@ -73,6 +73,9 @@ include(":feature:messaging")
 // Notification preferences and the delivery log (spec M6).
 include(":feature:notifications")
 
+// The patient's medications and today's check-in (spec M9).
+include(":feature:medications")
+
 // The check-up calendar generated from the operation date (spec M6).
 include(":feature:followup")
 
@@ -99,6 +102,10 @@ if (androidSdkAvailable) {
     include(":feature:photos-ui")
     include(":feature:complications-ui")
     include(":feature:messaging-ui")
+    include(":feature:medications-ui")
+    include(":feature:followup-ui")
+    include(":feature:appointments-ui")
+    include(":feature:notifications-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

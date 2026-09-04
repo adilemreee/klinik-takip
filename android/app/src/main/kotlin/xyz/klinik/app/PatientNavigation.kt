@@ -18,17 +18,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import xyz.klinik.feature.appointments.AppointmentsModel
+import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.complications.MyComplicationsModel
 import xyz.klinik.feature.complications.ui.MyComplicationsScreen
 import xyz.klinik.feature.documents.DocumentsModel
 import xyz.klinik.feature.documents.ui.DocumentListScreen
+import xyz.klinik.feature.followup.FollowUpModel
+import xyz.klinik.feature.followup.ui.FollowUpScreen
 import xyz.klinik.feature.home.HomeAction
 import xyz.klinik.feature.lab.LabTrendModel
 import xyz.klinik.feature.lab.ui.LabTrendScreen
 import xyz.klinik.feature.measurements.MeasurementsModel
 import xyz.klinik.feature.measurements.ui.RecordMeasurementScreen
+import xyz.klinik.feature.medications.MedicationsModel
+import xyz.klinik.feature.medications.ui.MedicationsScreen
 import xyz.klinik.feature.messaging.ChatModel
 import xyz.klinik.feature.messaging.ui.ChatScreen
+import xyz.klinik.feature.notifications.NotificationSettingsModel
+import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
 import xyz.klinik.network.MeasurementSource
@@ -51,22 +59,24 @@ sealed interface PatientDestination {
     data object Measurements : PatientDestination
     data object LabResults : PatientDestination
     data object Complications : PatientDestination
+    data object Medications : PatientDestination
+    data object FollowUp : PatientDestination
+    data object Appointments : PatientDestination
+    data object NotificationSettings : PatientDestination
 }
 
 /**
  * The four home actions that lead somewhere.
  *
- * `EMERGENCY` deliberately does not: it arms the two-step confirmation in
- * place, and navigating away would put a screen transition between a patient
- * and the button they just pressed. `MEDICATIONS` has no Compose screen yet —
- * the iOS one exists, the Android one does not, and pretending otherwise with
- * an empty destination would be worse than a tile that says nothing happened.
+ * `EMERGENCY` is the only one that deliberately does not: it arms the two-step
+ * confirmation in place, and navigating away would put a screen transition
+ * between a patient and the button they just pressed.
  */
 fun destinationFor(action: HomeAction): PatientDestination? = when (action) {
     HomeAction.MESSAGES -> PatientDestination.Messages
     HomeAction.UPLOAD_DOCUMENT -> PatientDestination.Documents
     HomeAction.ADD_PHOTO -> PatientDestination.Photos
-    HomeAction.MEDICATIONS -> null
+    HomeAction.MEDICATIONS -> PatientDestination.Medications
     HomeAction.EMERGENCY -> null
 }
 
@@ -194,6 +204,76 @@ fun PatientDestinationScreen(
             )
         }
 
+        PatientDestination.Medications -> {
+            val model = remember { MedicationsModel(environment.medications) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            MedicationsScreen(
+                state = state,
+                strings = context.medicationStrings(),
+                onRetry = { scope.launch { model.load() } },
+                onCheckIn = { logId, action, minutes ->
+                    scope.launch { model.checkIn(logId, action, minutes) }
+                },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.FollowUp -> {
+            val model = remember { FollowUpModel(environment.followUp) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.refresh() }
+
+            FollowUpScreen(
+                state = state,
+                strings = context.followUpStrings(),
+                // A patient reads the calendar; staff mark a visit attended.
+                canMark = false,
+                nowIso = nowIso(),
+                onRetry = { scope.launch { model.refresh() } },
+                onMark = { _, _ -> },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.Appointments -> {
+            val model = remember { AppointmentsModel(environment.appointments) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.refresh() }
+
+            AppointmentsScreen(
+                state = state,
+                strings = context.appointmentStrings(),
+                canConfirm = false,
+                nowIso = nowIso(),
+                onRetry = { scope.launch { model.refresh() } },
+                onConfirm = {},
+                onCancel = { id -> scope.launch { model.cancel(id) } },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.NotificationSettings -> {
+            val model = remember { NotificationSettingsModel(environment.notifications) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            NotificationSettingsScreen(
+                state = state,
+                strings = context.notificationStrings(),
+                onRetry = { scope.launch { model.load() } },
+                onToggle = { kind, channel, on ->
+                    scope.launch { model.set(kind, channel, on) }
+                },
+                modifier = modifier,
+            )
+        }
+
         PatientDestination.Complications -> {
             val model = remember { MyComplicationsModel(environment.complications) }
             val state by model.state.collectAsStateWithLifecycle()
@@ -223,8 +303,12 @@ fun PatientOverflowMenu(onGo: (PatientDestination) -> Unit, onSignOut: () -> Uni
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             val items = listOf(
                 DesignR.string.menu_measurements to PatientDestination.Measurements,
+                DesignR.string.menu_follow_up to PatientDestination.FollowUp,
+                DesignR.string.menu_appointments to PatientDestination.Appointments,
                 DesignR.string.menu_lab_results to PatientDestination.LabResults,
                 DesignR.string.menu_complications to PatientDestination.Complications,
+                DesignR.string.menu_photos to PatientDestination.Photos,
+                DesignR.string.notification_settings_title to PatientDestination.NotificationSettings,
             )
 
             for ((label, destination) in items) {
@@ -247,3 +331,11 @@ fun PatientOverflowMenu(onGo: (PatientDestination) -> Unit, onSignOut: () -> Uni
         }
     }
 }
+
+/**
+ * Now, as ISO-8601.
+ *
+ * Read here rather than inside a screen: a screen that reads the clock cannot
+ * be tested at the boundary that matters — which visit counts as next.
+ */
+private fun nowIso(): String = java.time.Instant.now().toString()

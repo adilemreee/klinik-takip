@@ -31,6 +31,21 @@ export interface EmergencyNumber {
    * caveat, a known one does not.
    */
   source: 'country' | 'international';
+  /**
+   * 112, when the country's own number is something else.
+   *
+   * Not redundancy for its own sake. Compiling this table turned up rows where
+   * published sources disagree about which number reaches an ambulance —
+   * Morocco is one, where reputable sources give both 15 and 150. Resolving
+   * that from here would be guessing, and a guessed emergency number is the
+   * exact failure this table can have.
+   *
+   * 112 is the answer that does not depend on winning that argument: it works
+   * from any GSM handset almost everywhere and routes to the local service. So
+   * the card offers both, and a patient who reaches the wrong desk has a second
+   * number in front of them rather than a search to run one-handed.
+   */
+  alsoTry: string | null;
 }
 
 /**
@@ -90,13 +105,19 @@ export function emergencyNumberFor(country: string | null | undefined): Emergenc
   const known = NUMBERS[code];
 
   if (known && code.length === 2) {
-    return { number: known, countryCode: code, source: 'country' };
+    return {
+      number: known,
+      countryCode: code,
+      source: 'country',
+      alsoTry: known === INTERNATIONAL ? null : INTERNATIONAL,
+    };
   }
 
   return {
     number: INTERNATIONAL,
     countryCode: code.length === 2 ? code : '',
     source: 'international',
+    alsoTry: null,
   };
 }
 

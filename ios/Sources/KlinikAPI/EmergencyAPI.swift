@@ -32,6 +32,16 @@ public struct EmergencyNumber: Decodable, Sendable, Equatable {
     /// `country` when the server knew it, `international` when it guessed.
     public let source: String
 
+    /**
+     * A second number to try, or nil when the first one already is 112.
+     *
+     * Published sources disagree about which number reaches an ambulance in
+     * some countries. 112 does not depend on settling that: it works from any
+     * GSM handset almost everywhere. Somebody who reached the wrong desk should
+     * have the next number in front of them, not a search to run one-handed.
+     */
+    public let alsoTry: String?
+
     /// A guessed number needs the caveat next to it; a known one does not.
     public var isGuess: Bool { source != "country" }
 

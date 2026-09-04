@@ -62,6 +62,13 @@ export class EmergencyNumberDto {
 
   @ApiProperty({ enum: ['country', 'international'] })
   source!: 'country' | 'international';
+
+  @ApiProperty({
+    example: '112',
+    nullable: true,
+    description: 'A second number to try; null when the first one already is 112',
+  })
+  alsoTry!: string | null;
 }
 
 export class GuidanceStepDto {

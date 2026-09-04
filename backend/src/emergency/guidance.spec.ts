@@ -10,7 +10,7 @@ import { buildGuidance } from './guidance';
  */
 describe('the emergency number', () => {
   it('knows the country the clinic is in', () => {
-    expect(emergencyNumberFor('TR')).toEqual({ number: '112', countryCode: 'TR', source: 'country' });
+    expect(emergencyNumberFor('TR')).toEqual({ number: '112', countryCode: 'TR', source: 'country', alsoTry: null });
   });
 
   it('answers 999 for the United Kingdom, which is the number people there know', () => {
@@ -22,7 +22,7 @@ describe('the emergency number', () => {
   });
 
   it('accepts a lowercase code, because the column is free text', () => {
-    expect(emergencyNumberFor('de')).toEqual({ number: '112', countryCode: 'DE', source: 'country' });
+    expect(emergencyNumberFor('de')).toEqual({ number: '112', countryCode: 'DE', source: 'country', alsoTry: null });
   });
 
   /**
@@ -95,5 +95,29 @@ describe('the guidance card', () => {
         expect(card.emergencyNumber.number).not.toBe('');
       }
     }
+  });
+});
+
+describe('the second number', () => {
+  it('offers 112 alongside a country number that is not 112', () => {
+    // Published sources disagree about which number reaches an ambulance in
+    // some countries; 112 is the answer that does not depend on settling that.
+    const uk = emergencyNumberFor('GB');
+
+    expect(uk.number).toBe('999');
+    expect(uk.alsoTry).toBe('112');
+  });
+
+  it('does not repeat 112 to itself', () => {
+    // "Call 112, or try 112" reads as a broken screen at the worst moment.
+    expect(emergencyNumberFor('DE').alsoTry).toBeNull();
+  });
+
+  it('offers nothing extra when 112 was already the fallback', () => {
+    // An unknown country already gets 112 as the primary answer.
+    const unknown = emergencyNumberFor('ZZ');
+
+    expect(unknown.source).toBe('international');
+    expect(unknown.alsoTry).toBeNull();
   });
 });

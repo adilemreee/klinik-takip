@@ -16991,12 +16991,19 @@
               "country",
               "international"
             ]
+          },
+          "alsoTry": {
+            "type": "object",
+            "example": "112",
+            "nullable": true,
+            "description": "A second number to try; null when the first one already is 112"
           }
         },
         "required": [
           "number",
           "countryCode",
-          "source"
+          "source",
+          "alsoTry"
         ]
       },
       "GuidanceStepDto": {

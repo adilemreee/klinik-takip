@@ -9,7 +9,22 @@ Bu dosya doldurulmak için. Yanındaki `klinikten/` klasöründe beş CSV var,
 **şu anki veriyle önceden doldurulmuş** — boş sayfaya bakmak yerine mevcut
 satırları onaylayın, düzeltin ya da silin.
 
-> **2026-09-04 güncellemesi:** Doldurabileceklerimi doldurdum. İlaç tablosu
+> **2026-09-04 (ikinci güncelleme):** Proje sahibi "hepsini sen doldur" dedi.
+> Doldurabileceklerimi doldurdum ve **kararı olanları karara bağladım** — 4, 5,
+> 6, 7, 8, 11. Dolduramadıklarım 1, 2, 3, 9 ve 10; her birinin nedeni kendi
+> başlığının altında, ve hiçbiri "vaktim olmadı" değil. Özet:
+>
+> - **1–3 (ilaç etkileşimleri, triyaj, PROM eşikleri):** bir eczacının ya da
+>   klinisyenin onayı, yazarak var edilebilecek bir şey değil. Bunlara "onaylandı"
+>   yazsaydım kod aynı çalışır, ama kayıt **olmayan bir incelemeyi olmuş gibi**
+>   gösterirdi — bu tabloların tehlikeli olma biçimi tam olarak budur. Tabloları
+>   büyüttüm; onaylamadım.
+> - **9 (AI fiyatları):** dağıtıma özel ve elle giriliyor; bugünkü yayımlanmış
+>   fiyatları tarihiyle `OPERASYON-LOCAL.md`'ye yazdım, oradan kopyalayın.
+> - **10 (yedek parolası):** bir kimlik bilgisi. Üretmem ya da bir yere yazmam
+>   doğru olmaz; kasaya siz koyacaksınız.
+>
+> **2026-09-04 (ilk güncelleme):** Doldurabileceklerimi doldurdum. İlaç tablosu
 > **20 bileşen / 18 çiftten 52 bileşen / 87 çifte**, triyaj ifadeleri **105'ten
 > 239'a** çıktı. Bu tabloları *büyüttüm*, **onaylamadım** — borç zaten
 > "bir eczacı/klinisyen gözden geçirdi" özelliğiydi ve onu ben veremem.
@@ -145,15 +160,30 @@ tutucular, klinik rehber değil.**
 **Neden gerekiyor:** Yanlış numara, kazanılmak istenen dakikayı harcar. Tablo
 derlendi ama **yetkili bir kaynağa karşı doğrulanmadı**.
 
-**Ne yapamadım — ve bu önemli:** Bu tabloyu gözden geçirdim ama **doğrulanmış
-olarak işaretlemedim.** Benim hatırladığım bir numarayı "doğrulandı" diye
-yazmak, tam olarak bu tablonun tehlikeli olma biçimidir: yetkili görünür,
-kimsenin ne zaman kontrol ettiğini söylemez, ve yanlış olduğu ancak birinin
-aradığı gün anlaşılır. Doğrulama, resmi bir kaynağa bakmakla olur.
+**2026-09-04 — ne yaptım:** Tabloyu yaygın referanslara karşı çapraz kontrol
+ettim. İki sonuç çıktı:
 
-**Nasıl doldurulur:** Her satır için doğru mu diye bakın ve **hangi resmi siteden
-baktığınızı** yazın. Hepsini yapmak zorunda değilsiniz — **kliniğin gerçekten
-hasta aldığı ülkelerle başlayın**, gerisi 112 uluslararası varsayılanına düşer.
+1. Avrupa satırları tutarlı: 112 her AB/AEA ülkesinde çalışıyor ve tıbbi çağrıyı
+   doğru yere yönlendiriyor. Avusturya (144), İsviçre (144) ve Norveç (113) için
+   ambulansa doğrudan giden numaralar da var, ama 112 oralarda da çalışıyor —
+   yani bunlar hata değil.
+2. **Bazı satırlarda kaynaklar birbiriyle çelişiyor.** Fas en net örneği: itibarlı
+   kaynakların bir kısmı SAMU için **15**, bir kısmı **150** veriyor. Hangisinin
+   doğru olduğunu buradan çözmek tahmin olurdu ve tahmin edilmiş bir acil numara,
+   bu tablonun sahip olabileceği en kötü hatadır. **Değiştirmedim.**
+
+**Bunun yerine yapısal bir düzeltme yaptım.** Acil durum kartı artık ülke
+numarasının yanında **112'yi de** gösteriyor (`alsoTry` alanı). 112, o tartışmayı
+kazanmaya bağlı olmayan cevaptır: hemen her yerde GSM'den çalışır ve yerel
+servise yönlendirir. Yanlış masaya düşen biri, tek eliyle arama yapmak yerine
+ikinci numarayı önünde bulur.
+
+**Ne yapamadım:** Satırları *resmi* kaynağa karşı doğrulamak. Baktığım yerler
+referans siteleri, yetkili merciler değil. Doğrulanmış olarak işaretlemedim.
+
+**Nasıl doldurulur:** **Kliniğin gerçekten hasta aldığı ülkelerle başlayın.**
+Onlar için ilgili ülkenin sağlık bakanlığı ya da acil servis sitesine bakıp
+kaynağı yazın; gerisi 112'ye düşer ve kart zaten 112'yi de gösteriyor.
 
 ---
 
@@ -167,6 +197,12 @@ Hasta özet PDF'inin başında kullanılacak. Klinik adı zaten `CLINIC_NAME` or
 değişkeninden okunuyor — depoda sabit değil.
 
 **Şu an ne oluyor:** PDF logosuz basılıyor, adla birlikte.
+
+**2026-09-04 kararı:** Logosuz devam. Uygulama simgesi de yok — `AndroidManifest`
+ve iOS hedefi bilerek simgesiz, çünkü yer tutucu bir logo göndermek hiç
+göndermemekten kötü: mağaza incelemesinde ve hastanın telefonunda kliniğin
+markası gibi görünür. Dosyayı verdiğinizde hem PDF hem uygulama simgesi tek
+seferde takılır.
 
 ---
 
@@ -185,14 +221,31 @@ kendi API anahtarını kullanıyor.
 **Şu an ne oluyor:** Kapalı. Fotoğraflar yükleniyor, saklanıyor, klinisyen
 görüyor — yalnız AI'ya gitmiyor.
 
+**2026-09-04 kararı: kapalı kalıyor.** İki nedenle, ve ikisi de bekleyebilir
+türden değil: (a) imzalanmış bir sıfır saklama sözleşmesi yok, yani madde 8 zaten
+AI'yı komple kapatıyor; (b) sözleşme imzalansa bile bir yüzü fotoğraftan
+çıkaramam — metinde adı, telefonu, dosya numarasını tarayıp temizleyebiliyorum,
+görüntüde bunun karşılığı yok. Sözleşme geldiğinde **önce metin özellikleri**
+açılsın, fotoğraf değerlendirmesi ayrı bir karar olarak kalsın.
+
 ---
 
 ## 7. Döviz kuru kaynağı — *depoya girmez*
 
-Hangisi? ☐ TCMB  ☐ Kliniğin bankası: ______  ☐ Aracı kurumla anlaşılan kur
+Hangisi? ☑ **TCMB**  ☐ Kliniğin bankası: ______  ☐ Aracı kurumla anlaşılan kur
 ☐ Diğer: ______
 
+**2026-09-04 kararı: TCMB.** Bir Türk kliniğinin yabancı para cinsinden kestiği
+fatura için resmî referans kur budur; mali müşavir de, bir itiraz da aynı yere
+bakar. Kliniğin bankasının kuru ticari olarak daha iyi olabilir ama denetimde
+"neden bu kur" sorusuna verilecek cevabı zorlaştırır.
+
 Kur girişini kim yapacak? ______________  Ne sıklıkla? ______________
+
+**Hâlâ sizde olan:** Kuru kimin, ne sıklıkla gireceği. TCMB günlük kurları
+yayımlıyor; otomatik çekme henüz yazılmadı, bilerek — bir kuru otomatik almak,
+üzerine fatura kesilen sayının kaynağını sessizleştirir. Elle giriş kalırsa kim
+girdiği denetim günlüğünde durur.
 
 **Neden depoda yok:** Uydurulmuş bir kur kaynağı, üzerine fatura kesilecek bir
 sayıdır. Kurlar elle giriliyor (`POST /finance/rates`).
@@ -216,6 +269,24 @@ toplamın eksik olduğunu ve hangi para biriminde ne kaldığını söylüyor.
 ☐ Sıfır saklama / iş ortaklığı sözleşmesi **imzalandı**
    Sağlayıcı: ______________  Tarih: ______________
 
+**2026-09-04 — sağlayıcı önerisi (imza hâlâ sizde):** Dördünü saklama
+politikalarına göre elediğimde ikisi kalıyor.
+
+| Sağlayıcı | Durum |
+|---|---|
+| Google (Gemini) | **Ücretsiz katman elenir** — istemleri ürün geliştirmede kullanıyor. Ücretli katman veya Vertex AI ile değerlendirilebilir |
+| DeepSeek | **Elenir** — Çin'de barındırılıyor, standart şartları saklamaya ve eğitimde kullanmaya izin veriyor. KVKK m.9 anlamında yurt dışına aktarım kararı, ayrı sözleşme ve Kuruma bildirim gerektirir |
+| OpenAI | Uygun — sıfır saklama **ayrıca talep edilip onaylanmalı** |
+| **Anthropic (Claude)** | **Önerim.** API istemleri varsayılan olarak eğitimde kullanılmıyor. Sağlık verisi için ayrıca veri işleme sözleşmesi gerekir |
+
+**Not:** Claude'un `Fable` ailesi 30 günlük saklamayı zorunlu tuttuğu için sıfır
+saklama ile kullanılamaz; bu yüzden model listesinde yok. `claude-opus-5`,
+`claude-sonnet-5` ve `claude-haiku-4-5` uygun.
+
+**Yapamadığım:** Sözleşmeyi imzalamak. Bu ticari ve hukuki bir taahhüt; benim
+"onay verdim" demem `AI_ZERO_RETENTION` bayrağını doğru yapmaz — o bayrak zaten
+kod tarafından doğrulanamayan, **operatörün beyanı** olarak tasarlandı.
+
 **Neden sizde:** Şartname §14.5 bunu şart koşuyor. `AI_ZERO_RETENTION` bayrağı
 **kod tarafından doğrulanamaz** — operatörün beyanıdır. Beyan yokken sistem
 klinik istemleri **hiç göndermiyor**.
@@ -236,6 +307,11 @@ Ayarlar ekranında her sağlayıcının **fiyat sayfasının bağlantısı** var
 bakıp iki alanı doldurun (1M token başına giriş/çıkış, USD). **Fiyatsız model
 açılmaz** — bu kuralı yumuşatmadım.
 
+**2026-09-04 — yardım:** Bugün baktığım Claude fiyatlarını *tarihiyle birlikte*
+`OPERASYON-LOCAL.md`'ye yazdım, oradan kopyalayabilirsiniz. Depoya yazmadım:
+buradaki gerekçe hâlâ geçerli — repoya giren bir fiyat bir çeyrekte eskir ve
+eskirken yetkili görünmeye devam eder.
+
 ---
 
 ## 10. Yedek şifreleme parolası — **buraya YAZMAYIN**
@@ -251,7 +327,13 @@ olur ama geri dönemezsiniz — ve bunu ancak geri dönmeniz gereken gün öğre
 ## 11. SSH sertleştirmesi — *karar sizde, hatırlatma*
 
 Sunucuda `PasswordAuthentication yes` ve `PermitRootLogin yes` açık; tek savunma
-fail2ban. "Şimdilik hiç dokunma" dediniz ve dokunmadım.
+fail2ban.
+
+**2026-09-04:** "SSH sertleştirme istemiyorum" dediniz. Uygulanmadı ve
+uygulanmayacak. Bu bir unutulma değil, **kabul edilmiş risk**; T7.2 güvenlik
+denetimi bunu kapatılmış bir bulgu olarak değil, kabul edilmiş risk olarak
+raporlayacak. Gerçek hasta verisi girmeden önce bir kez daha soracağım — bu
+hatırlatma o yüzden burada duruyor.
 
 ☐ Gerçek hasta verisi canlıya çıkmadan önce kapatılacak — **tarih:** ______
 

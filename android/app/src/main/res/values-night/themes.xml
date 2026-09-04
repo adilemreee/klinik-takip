@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The dark counterpart. See values/themes.xml for why this is a
+         qualifier rather than a DayNight parent. -->
+    <style name="Theme.Klinik" parent="android:Theme.Material.NoActionBar" />
+</resources>

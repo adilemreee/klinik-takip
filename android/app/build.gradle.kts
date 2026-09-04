@@ -46,7 +46,7 @@ android {
         // advertised on the store listing and offered in the system language
         // picker — promising a Turkish clinic app in languages nobody here can
         // support.
-        localeFilters += listOf("tr", "en")
+        localeFilters.addAll(listOf("tr", "en"))
     }
 
     buildFeatures {

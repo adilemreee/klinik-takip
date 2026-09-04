@@ -24,7 +24,6 @@
         android:theme="@style/Theme.Klinik"
         android:networkSecurityConfig="@xml/network_security_config"
         android:allowBackup="false"
-        android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules">
 
         <activity

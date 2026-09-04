@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Compose draws everything; this exists so the window before the first frame
-      is not the platform default, which flashes a light background at somebody
-      opening the app in a dark room.
+      Compose draws everything; this theme exists only for the window before the
+      first frame. Without a night variant that window is light, which flashes
+      white at somebody opening the app in a dark room.
+
+      The platform has no `Theme.Material.DayNight`, and `Theme.DeviceDefault.DayNight`
+      needs API 29 while this app supports 26 — so the two variants are selected
+      by the resource qualifier instead, which works on every supported version.
     -->
-    <style name="Theme.Klinik" parent="android:Theme.Material.DayNight.NoActionBar" />
+    <style name="Theme.Klinik" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

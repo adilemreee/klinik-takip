@@ -1,0 +1,5 @@
+# The fill-in templates are opened in Excel by a pharmacist and a clinician, not
+# by a text editor. CRLF and the byte-order mark are what make a Turkish Excel
+# open them on a double click with the accents intact; normalising the line
+# endings would quietly undo half of that.
+docs/klinikten/*.csv -text

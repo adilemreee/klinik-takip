@@ -1,5 +1,6 @@
 import SwiftUI
 import KlinikAPI
+import KlinikAppointmentsFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikDesign
@@ -28,6 +29,7 @@ public enum StaffDestination: Hashable, Sendable {
     case photos(patientId: String)
     case followUp(patientId: String)
     case conversation(patientId: String)
+    case appointments(patientId: String)
     /// Across all patients, not one — the point of a triage queue.
     case complicationQueue
     case notificationSettings
@@ -134,6 +136,13 @@ struct StaffPatientsView: View {
                 canUseTemplates: true
             )
 
+        case .appointments(let patientId):
+            // Staff confirm a requested slot; a patient only asks and cancels.
+            AppointmentsScreen(
+                model: AppointmentsModel(api: environment.appointments, patientId: patientId),
+                canConfirm: true
+            )
+
         case .complicationQueue:
             ComplicationQueueView(model: ComplicationQueueModel(api: environment.complications))
 
@@ -191,6 +200,7 @@ struct PatientFileView: View {
             (L10n.string("menu.labResults"), .labTrend(patientId: patientId)),
             (L10n.string("menu.photos"), .photos(patientId: patientId)),
             (L10n.string("menu.followUp"), .followUp(patientId: patientId)),
+            (L10n.string("menu.appointments"), .appointments(patientId: patientId)),
         ]
     }
 }

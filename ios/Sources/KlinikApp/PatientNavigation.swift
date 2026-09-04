@@ -1,5 +1,6 @@
 import SwiftUI
 import KlinikAPI
+import KlinikAppointmentsFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikDesign
@@ -29,6 +30,7 @@ public enum PatientDestination: Hashable, Sendable {
     case followUp
     case labResults
     case complications
+    case appointments
     case notificationSettings
 }
 
@@ -92,6 +94,7 @@ struct PatientHomeView: View {
             Button(L10n.string("menu.followUp")) { path.append(.followUp) }
             Button(L10n.string("menu.labResults")) { path.append(.labResults) }
             Button(L10n.string("menu.complications")) { path.append(.complications) }
+            Button(L10n.string("menu.appointments")) { path.append(.appointments) }
             Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
 
             Divider()
@@ -166,6 +169,9 @@ struct PatientHomeView: View {
 
         case .complications:
             MyComplicationsView(model: MyComplicationsModel(api: environment.complications))
+
+        case .appointments:
+            AppointmentsScreen(model: AppointmentsModel(api: environment.appointments))
 
         case .notificationSettings:
             NotificationSettingsScreen(

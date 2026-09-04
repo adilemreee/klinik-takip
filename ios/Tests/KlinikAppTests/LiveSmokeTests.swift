@@ -1,5 +1,6 @@
 import XCTest
 import KlinikAPI
+import KlinikAppointmentsFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikDocumentsFeature
@@ -170,6 +171,10 @@ final class LiveSmokeTests: XCTestCase {
         let complications = MyComplicationsModel(api: environment.complications)
         await complications.load()
         assertNotFailed(await complications.currentState().phase, "complications")
+
+        let appointments = AppointmentsModel(api: environment.appointments)
+        await appointments.refresh()
+        assertNotFailed(await appointments.currentState().phase, "appointments")
 
         let notifications = NotificationSettingsModel(api: environment.notifications)
         await notifications.load()

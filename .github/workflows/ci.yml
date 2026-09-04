@@ -214,6 +214,7 @@ jobs:
           # means rather than reacting to anything else under ios/ or android/.
           GENERATED="ios/Sources/KlinikDesign/Tokens.generated.swift \
             android/core/design/src/main/kotlin/xyz/klinik/design/Tokens.generated.kt \
+            android/core/design/src/main/kotlin/xyz/klinik/design/Strings.generated.kt \
             android/core/design/src/main/res/values/strings.xml \
             android/core/design/src/main/res/values-en/strings.xml"
           if ! git diff --quiet -- $GENERATED; then

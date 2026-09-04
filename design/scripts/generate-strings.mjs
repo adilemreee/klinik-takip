@@ -92,6 +92,56 @@ function generate() {
 
     console.log(`${androidDir}/strings.xml: ${Object.keys(entries).length} strings`);
   }
+
+  generateKotlinLookup();
+}
+
+/**
+ * A compiled key → resource id map for Android.
+ *
+ * The models emit dotted keys (`error.timedOut`) because they are shared with
+ * iOS, and something has to turn one into a string. `Resources.getIdentifier`
+ * was the obvious way and is the wrong one: it takes a package name, and a
+ * build with an `applicationIdSuffix` has an application id that is not the
+ * resource package — so every key silently resolves to nothing and the app
+ * shows raw keys to a debug tester. It is also defeated by resource shrinking,
+ * and Android marks it discouraged for exactly these reasons.
+ *
+ * A generated map has none of those problems, and one further advantage: it is
+ * compiled. A key with no string behind it fails the build instead of appearing
+ * on a screen.
+ */
+function generateKotlinLookup() {
+  const source = resolve(root, 'ios/Sources/KlinikCore/Resources/tr.lproj/Localizable.strings');
+  const keys = Object.keys(parseStrings(readFileSync(source, 'utf8'))).sort();
+
+  const lines = [
+    '// Generated from ios/Sources/KlinikCore/Resources — do not edit.',
+    '// Regenerate with: node design/scripts/generate-strings.mjs',
+    'package xyz.klinik.design',
+    '',
+    '/**',
+    ' * Every catalogue key, by the dotted name the shared models use.',
+    ' *',
+    ' * Generated rather than looked up by name at runtime: `getIdentifier` takes a',
+    ' * package name, and a build with an `applicationIdSuffix` has an application',
+    ' * id that is not the resource package — so every key would silently resolve to',
+    ' * nothing. Being a map of real ids also means a key with no string behind it',
+    ' * fails the build rather than reaching a screen.',
+    ' */',
+    'public val klinikStringIds: Map<String, Int> = mapOf(',
+    ...keys.map((key) => `    "${key}" to R.string.${toAndroidName(key)},`),
+    ')',
+  ];
+
+  const target = resolve(
+    root,
+    'android/core/design/src/main/kotlin/xyz/klinik/design/Strings.generated.kt',
+  );
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, `${lines.join('\n')}\n`);
+
+  console.log(`Strings.generated.kt: ${keys.length} keys`);
 }
 
 // argv[1] is absent when this module is imported through `node -e`, so it is

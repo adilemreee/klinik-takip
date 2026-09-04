@@ -33,6 +33,11 @@ import xyz.klinik.feature.patients.PatientListModel
 import xyz.klinik.feature.patients.ui.PatientListScreen
 import xyz.klinik.network.messageKey
 import xyz.klinik.shell.RootRoute
+// Design-system resources live in their own R class, not the app's: since AGP
+// 8 the R class is non-transitive, so a library's resources are namespaced to
+// that library rather than merged into every module that depends on it. Only
+// `app_name`, declared here, is in the app's own R.
+import xyz.klinik.design.R as DesignR
 
 /**
  * The app's only navigation decision (T2.3–T2.5).
@@ -68,7 +73,7 @@ private fun LaunchScreen(failureKey: String?, onRetry: () -> Unit) {
         if (failureKey == null) {
             CircularProgressIndicator()
             Text(
-                text = stringResource(R.string.app_starting),
+                text = stringResource(DesignR.string.app_starting),
                 color = klinikColor("textSecondary"),
                 modifier = Modifier.padding(top = 16.dp),
             )
@@ -76,7 +81,7 @@ private fun LaunchScreen(failureKey: String?, onRetry: () -> Unit) {
             // The server is unreachable and the app would otherwise look
             // frozen. Both the reason and a way out.
             Text(
-                text = stringResource(R.string.app_identity_failed),
+                text = stringResource(DesignR.string.app_identity_failed),
                 color = klinikColor("textPrimary"),
                 textAlign = TextAlign.Center,
             )
@@ -87,7 +92,7 @@ private fun LaunchScreen(failureKey: String?, onRetry: () -> Unit) {
                 modifier = Modifier.padding(top = 8.dp),
             )
             Button(onClick = onRetry, modifier = Modifier.padding(top = 24.dp)) {
-                Text(stringResource(R.string.app_retry))
+                Text(stringResource(DesignR.string.app_retry))
             }
         }
     }
@@ -112,7 +117,7 @@ private fun SignInRoute(environment: AppEnvironment, model: RootViewModel, expir
             // difference between "you were away a while" and "your account is
             // gone", and only one of those is true.
             Text(
-                text = stringResource(R.string.auth_session_expired),
+                text = stringResource(DesignR.string.auth_session_expired),
                 color = klinikColor("textSecondary"),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
@@ -179,7 +184,7 @@ private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
             horizontalAlignment = Alignment.End,
         ) {
             TextButton(onClick = model::signOut) {
-                Text(stringResource(R.string.auth_sign_out))
+                Text(stringResource(DesignR.string.auth_sign_out))
             }
         }
 
@@ -201,7 +206,7 @@ private fun UnsupportedRoute(route: RootRoute.Unsupported, model: RootViewModel)
 
     Centred {
         Text(
-            text = stringResource(R.string.app_role_unsupported),
+            text = stringResource(DesignR.string.app_role_unsupported),
             color = klinikColor("textPrimary"),
             textAlign = TextAlign.Center,
         )
@@ -211,7 +216,7 @@ private fun UnsupportedRoute(route: RootRoute.Unsupported, model: RootViewModel)
             modifier = Modifier.padding(top = 8.dp),
         )
         TextButton(onClick = model::signOut, modifier = Modifier.padding(top = 24.dp)) {
-            Text(stringResource(R.string.auth_sign_out))
+            Text(stringResource(DesignR.string.auth_sign_out))
         }
     }
 }

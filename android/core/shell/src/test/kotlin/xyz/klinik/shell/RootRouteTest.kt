@@ -188,16 +188,16 @@ class RootRouteTest {
 
     @Test
     fun `every role has a display string key`() {
-        // The home screen looks the role up in strings.xml by this key; a role
-        // added later with no string shows a blank chip.
+        // Both clients look the role up by this key; a role added later with no
+        // string shows the raw key where the account type should be.
         val expected = setOf(
-            "role_super_admin",
-            "role_doctor",
-            "role_nurse",
-            "role_coordinator",
-            "role_finance",
-            "role_patient",
-            "role_caregiver",
+            "role.SUPER_ADMIN",
+            "role.DOCTOR",
+            "role.NURSE",
+            "role.COORDINATOR",
+            "role.FINANCE",
+            "role.PATIENT",
+            "role.CAREGIVER",
         )
         assertEquals(expected, UserRole.entries.map { it.stringKey }.toSet())
     }

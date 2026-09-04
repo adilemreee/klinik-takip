@@ -25,15 +25,17 @@ import kotlin.test.fail
  * a check that only runs in CI is a check nobody runs before pushing.
  */
 class StringCatalogueTest {
-    private val strings: Map<String, String> by lazy {
+    private val designModule: File by lazy {
         // Test working directories differ between Gradle and IDEs, so the
         // repository layout is found rather than assumed.
-        val resources = generateSequence(File(".").absoluteFile) { it.parentFile }
-            .map { File(it, "core/design/src/main/res") }
+        generateSequence(File(".").absoluteFile) { it.parentFile }
+            .map { File(it, "core/design/src/main") }
             .firstOrNull { it.isDirectory }
-            ?: fail("core/design/src/main/res not found from ${File(".").absolutePath}")
+            ?: fail("core/design/src/main not found from ${File(".").absolutePath}")
+    }
 
-        val file = File(resources, "values/strings.xml")
+    private val strings: Map<String, String> by lazy {
+        val file = File(designModule, "res/values/strings.xml")
         assertTrue(file.isFile, "${file.path} is missing")
 
         Regex("""<string name="([a-z_0-9]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
@@ -43,13 +45,25 @@ class StringCatalogueTest {
     }
 
     private val english: Map<String, String> by lazy {
-        val resources = generateSequence(File(".").absoluteFile) { it.parentFile }
-            .map { File(it, "core/design/src/main/res") }
-            .first { it.isDirectory }
-
         Regex("""<string name="([a-z_0-9]+)">(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
-            .findAll(File(resources, "values-en/strings.xml").readText())
+            .findAll(File(designModule, "res/values-en/strings.xml").readText())
             .associate { it.groupValues[1] to it.groupValues[2] }
+    }
+
+    /**
+     * The generated dotted-key lookup the app actually reads at runtime.
+     *
+     * Read as text because it lives in an Android module this one cannot depend
+     * on — the point of being a plain JVM test.
+     */
+    private val lookup: Map<String, String> by lazy {
+        val file = File(designModule, "kotlin/xyz/klinik/design/Strings.generated.kt")
+        assertTrue(file.isFile, "${file.path} is missing; run design/scripts/generate-strings.mjs")
+
+        Regex("""^\s*"([^"]+)" to R\.string\.([a-z_0-9]+),$""", RegexOption.MULTILINE)
+            .findAll(file.readText())
+            .associate { it.groupValues[1] to it.groupValues[2] }
+            .also { assertTrue(it.size > 100, "only ${it.size} keys parsed; the format changed") }
     }
 
     @Test
@@ -70,7 +84,7 @@ class StringCatalogueTest {
         val unresolved = errors
             .map { it.messageKey() }
             .distinct()
-            .filterNot { resourceName(it) in strings }
+            .filterNot { it in lookup }
             .sorted()
 
         assertTrue(unresolved.isEmpty(), "no string for: ${unresolved.joinToString()}")
@@ -82,7 +96,7 @@ class StringCatalogueTest {
         // missing one leaves a blank where the account type should be.
         val missing = UserRole.entries
             .map { it.stringKey }
-            .filterNot { it in strings }
+            .filterNot { it in lookup }
             .sorted()
 
         assertTrue(missing.isEmpty(), "no string for: ${missing.joinToString()}")
@@ -129,19 +143,25 @@ class StringCatalogueTest {
     }
 
     @Test
-    fun `the key to resource name rule matches the catalogue`() {
-        // The rule the app applies at runtime, and the one the generator
-        // applies when it writes the XML. If the two ever drift, every dotted
-        // key resolves to nothing and the app shows raw keys throughout.
-        assertEquals("error_timed_out", resourceName("error.timedOut"))
-        assertEquals("error_server", resourceName("error.server"))
-        assertEquals("auth_error_invalid_credentials", resourceName("auth.error.invalidCredentials"))
-        assertEquals("home_action_upload_document", resourceName("home.action.uploadDocument"))
+    fun `the generated lookup maps dotted keys onto the resources`() {
+        // The dotted key is what the shared models emit; the resource name is
+        // what Android has. The generator bridges them, and if it ever stopped
+        // camel-casing correctly every affected key would point at a resource
+        // that does not exist — which is a compile error in the app, but this
+        // says which rule broke.
+        assertEquals("error_timed_out", lookup["error.timedOut"])
+        assertEquals("error_server", lookup["error.server"])
+        assertEquals("auth_error_invalid_credentials", lookup["auth.error.invalidCredentials"])
+        assertEquals("home_action_upload_document", lookup["home.action.uploadDocument"])
     }
 
-    /** The same transformation `Context.stringForKey` applies. */
-    private fun resourceName(key: String): String = key
-        .replace('.', '_')
-        .replace(Regex("([a-z0-9])([A-Z])"), "$1_$2")
-        .lowercase()
+    @Test
+    fun `the generated lookup covers the whole catalogue`() {
+        // Anything in the XML and not in the map is a string the app cannot
+        // reach by key, and anything in the map and not in the XML would not
+        // compile.
+        val missing = strings.keys - lookup.values.toSet()
+
+        assertTrue(missing.isEmpty(), "not reachable by key: ${missing.sorted().joinToString()}")
+    }
 }

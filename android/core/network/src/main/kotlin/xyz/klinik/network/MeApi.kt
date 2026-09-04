@@ -23,8 +23,14 @@ enum class UserRole {
     CAREGIVER,
     ;
 
-    /** The `strings.xml` key for this role's display name, e.g. `role_doctor`. */
-    val stringKey: String get() = "role_${name.lowercase()}"
+    /**
+     * This role's key in the shared string catalogue, e.g. `role.DOCTOR`.
+     *
+     * Dotted and upper-cased because the catalogue is the iOS one and both
+     * clients read the same keys; Android's own resource name (`role_doctor`)
+     * is derived from it by the generator, not written by hand.
+     */
+    val stringKey: String get() = "role.$name"
 }
 
 @Serializable

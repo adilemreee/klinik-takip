@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Compose draws everything; this exists so the window before the first frame
+      is not the platform default, which flashes a light background at somebody
+      opening the app in a dark room.
+    -->
+    <style name="Theme.Klinik" parent="android:Theme.Material.DayNight.NoActionBar" />
+</resources>

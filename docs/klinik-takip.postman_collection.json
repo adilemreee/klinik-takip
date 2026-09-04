@@ -817,6 +817,24 @@
       "name": "me",
       "item": [
         {
+          "name": "The signed-in account: role, name and patient file if any",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/identity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "identity"
+              ]
+            },
+            "description": "The signed-in account: role, name and patient file if any"
+          }
+        },
+        {
           "name": "Everything the patient home screen needs, in one call",
           "request": {
             "method": "GET",

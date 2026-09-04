@@ -1,0 +1,12 @@
+// Where the app talks to.
+//
+// A placeholder on purpose. This repository is public, so the clinic's own
+// hostnames are not in it; the real values live in the untracked
+// `Local.xcconfig` beside this file and in docs/OPERASYON-LOCAL.md.
+//
+// `.invalid` is reserved by RFC 2606 and never resolves, so a build that was
+// never told where to talk fails visibly on its first request instead of
+// silently reaching whatever happens to answer.
+KLINIK_API_BASE_URL = https:/$()/api.invalid
+
+#include? "Local.xcconfig"

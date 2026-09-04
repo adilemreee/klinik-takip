@@ -1878,6 +1878,73 @@
         ]
       }
     },
+    "/me/identity": {
+      "get": {
+        "operationId": "MeController_identity",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The signed-in account: role, name and patient file if any",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/me/summary": {
       "get": {
         "operationId": "MeController_summary",
@@ -13189,6 +13256,47 @@
         "required": [
           "staffId",
           "role"
+        ]
+      },
+      "IdentityDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "DOCTOR",
+              "NURSE",
+              "COORDINATOR",
+              "FINANCE",
+              "PATIENT",
+              "CAREGIVER"
+            ]
+          },
+          "displayName": {
+            "type": "string",
+            "description": "For the greeting; falls back to the account's own e-mail"
+          },
+          "patientId": {
+            "type": "object",
+            "nullable": true,
+            "description": "The patient file this account is. Null for staff"
+          },
+          "isStaff": {
+            "type": "boolean",
+            "description": "Whether the account belongs to the clinic rather than a patient"
+          }
+        },
+        "required": [
+          "userId",
+          "role",
+          "displayName",
+          "patientId",
+          "isStaff"
         ]
       },
       "HomePatientDto": {

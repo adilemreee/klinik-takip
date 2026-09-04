@@ -50,6 +50,9 @@
 "patient.search" = "Hasta ara";
 "patient.searchHint" = "Ad, soyad veya dosya numarası";
 "patient.empty" = "Henüz hasta yok.";
+"patient.country" = "Ülke";
+"patient.city" = "Şehir";
+"patient.notFound" = "Hasta bulunamadı";
 
 /* Ana ekran (Şartname §7: en fazla 5 birincil eylem) */
 "home.title" = "Merhaba";
@@ -536,3 +539,20 @@
 "ai.missing.apiKey" = "API anahtarı girilmedi";
 "ai.missing.inputPricePerMTok" = "Giriş fiyatı girilmedi";
 "ai.missing.outputPricePerMTok" = "Çıkış fiyatı girilmedi";
+
+"role.SUPER_ADMIN" = "Sistem sahibi";
+"role.DOCTOR" = "Doktor";
+"role.NURSE" = "Hemşire";
+"role.COORDINATOR" = "Koordinatör";
+"role.FINANCE" = "Finans";
+"role.PATIENT" = "Hasta";
+"role.CAREGIVER" = "Refakatçi";
+
+"app.identityFailed" = "Kim olduğunuz alınamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+"app.retry" = "Tekrar dene";
+"app.roleUnsupported" = "Bu hesap türü için bu uygulamada henüz bir ekran yok.";
+"app.starting" = "Açılıyor…";
+"app.staffTitle" = "Hastalar";
+"app.storageUnavailable" = "Bu cihazda çevrimdışı kayıt açılamadı. Girdikleriniz uygulama kapanınca kaybolabilir.";
+"auth.sessionExpired" = "Oturumunuzun süresi doldu, tekrar giriş yapın.";
+"auth.signOut" = "Çıkış yap";

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Patient data never travels in the clear. Cleartext is off everywhere, with one
+  exception carved out for a debug build talking to a laptop or an SSH tunnel —
+  and that exception lives in the debug manifest, not here.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

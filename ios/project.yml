@@ -1,0 +1,66 @@
+# The app target, generated rather than committed.
+#
+# An .xcodeproj is a large generated file that conflicts on every branch and
+# tells a reader nothing. This says the same thing in thirty lines, and
+# `xcodegen generate` rebuilds the project from it — so what is reviewed is
+# this, and what is built is derived from it.
+name: Klinik
+options:
+  bundleIdPrefix: xyz.klinik
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  Klinik:
+    path: .
+
+targets:
+  Klinik:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/Sources
+    dependencies:
+      - package: Klinik
+        product: KlinikApp
+    info:
+      path: App/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Klinik
+        # Turkish is the base language (spec section 7). Without these two the
+        # app declares itself English-only, iOS never even asks for Turkish,
+        # and a Turkish clinic opens an English app — with the tr.lproj sitting
+        # unused inside the very bundle it just ignored.
+        CFBundleDevelopmentRegion: tr
+        CFBundleLocalizations:
+          - tr
+          - en
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        # Resolved from Config/Base.xcconfig, which includes an untracked
+        # Local.xcconfig. This repository is public, so the clinic's hostnames
+        # are not in it; a build that was never told where to talk points at a
+        # reserved name that never resolves, and fails visibly rather than
+        # guessing.
+        KlinikAPIBaseURL: $(KLINIK_API_BASE_URL)
+        # The clinic app asks for these; each string is what the person is
+        # actually being asked for, not a generic sentence.
+        NSCameraUsageDescription: Yara ve kontrol fotoğraflarını çekmek için kameraya erişilir.
+        NSPhotoLibraryUsageDescription: Var olan bir fotoğrafı klinikle paylaşmak için galeriye erişilir.
+        NSMicrophoneUsageDescription: Sesli mesaj göndermek için mikrofona erişilir.
+        NSFaceIDUsageDescription: Uygulamayı güvenli şekilde açmak için kullanılır.
+        NSLocationWhenInUseUsageDescription: Acil durum bildirimine konumunuzu eklemek için kullanılır. Konum beklenmez; alarm hemen gider.
+        # Development builds are pointed at a tunnel on localhost; a release
+        # build talks to the clinic's own host over TLS and nothing else.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "6.0"
+        GENERATE_INFOPLIST_FILE: NO

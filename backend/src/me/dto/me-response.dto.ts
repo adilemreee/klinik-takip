@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 
 class HomePatientDto {
   @ApiProperty({ format: 'uuid' })
@@ -49,4 +50,18 @@ export class PatientHomeSummaryDto {
 
   @ApiProperty({ description: 'Mandatory pre-op documents not yet uploaded (spec M17)' })
   missingDocuments!: number;
+}
+
+export class IdentityDto {
+  @ApiProperty({ format: 'uuid' }) userId!: string;
+  @ApiProperty({ enum: Role }) role!: Role;
+  @ApiProperty({ description: "For the greeting; falls back to the account's own e-mail" })
+  displayName!: string;
+  @ApiProperty({
+    nullable: true,
+    description: 'The patient file this account is. Null for staff',
+  })
+  patientId!: string | null;
+  @ApiProperty({ description: 'Whether the account belongs to the clinic rather than a patient' })
+  isStaff!: boolean;
 }

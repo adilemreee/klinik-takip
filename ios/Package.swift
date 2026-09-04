@@ -29,6 +29,7 @@ let package = Package(
         .library(name: "KlinikEmergencyFeature", targets: ["KlinikEmergencyFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
         .library(name: "KlinikSyncStore", targets: ["KlinikSyncStore"]),
+        .library(name: "KlinikApp", targets: ["KlinikApp"]),
     ],
     // The only third-party dependency in the client. SQLite through Swift's C
     // interop means manual statement lifetimes and finalisation on every error
@@ -160,6 +161,21 @@ let package = Package(
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 
+        // The shell: what the app shows and how the pieces are wired together.
+        // A library rather than the app target itself, so the routing decision
+        // is testable from the command line without a simulator.
+        .target(
+            name: "KlinikApp",
+            dependencies: [
+                "KlinikAPI", "KlinikCore", "KlinikDesign", "KlinikSync", "KlinikSyncStore",
+                "KlinikAuthFeature", "KlinikHomeFeature", "KlinikPatientsFeature",
+                "KlinikMeasurementsFeature", "KlinikDocumentsFeature", "KlinikLabFeature",
+                "KlinikPhotosFeature", "KlinikComplicationsFeature", "KlinikMessagingFeature",
+                "KlinikNotificationsFeature", "KlinikFollowUpFeature",
+                "KlinikAppointmentsFeature", "KlinikEmergencyFeature",
+            ]
+        ),
+
         // The queue's home on disk. Separate from KlinikSync so the port and
         // the sync logic stay free of any database at all, and so the
         // in-memory store used by every other test carries no dependency.
@@ -171,6 +187,7 @@ let package = Package(
         .testTarget(name: "KlinikHomeFeatureTests", dependencies: ["KlinikHomeFeature", "KlinikCore"]),
         .testTarget(name: "KlinikSyncTests", dependencies: ["KlinikSync", "KlinikCore"]),
         .testTarget(name: "KlinikSyncStoreTests", dependencies: ["KlinikSyncStore", "KlinikSync"]),
+        .testTarget(name: "KlinikAppTests", dependencies: ["KlinikApp", "KlinikAPI", "KlinikCore"]),
         .testTarget(name: "KlinikDesignTests", dependencies: ["KlinikDesign"]),
         .testTarget(name: "KlinikCoreTests", dependencies: ["KlinikCore"]),
         .testTarget(name: "KlinikAPITests", dependencies: ["KlinikAPI", "KlinikCore"]),

@@ -1,8 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AppointmentStatus, MedicationLogStatus } from '@prisma/client';
+import { AppointmentStatus, MedicationLogStatus, Role } from '@prisma/client';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
+
+/**
+ * Who is signed in, for the app to decide what to show them.
+ *
+ * The composition root's one question. Without it the client would have to
+ * decode the access token to find the role — which works right up until the
+ * token format changes, and puts a security decision in a place with no way to
+ * verify it.
+ */
+export interface Identity {
+  userId: string;
+  role: Role;
+  /** For the greeting. Falls back to the account's own e-mail. */
+  displayName: string;
+  /** The patient file this account *is*, for a patient. Null for staff. */
+  patientId: string | null;
+  /** Whether this account belongs to the clinic rather than to a patient. */
+  isStaff: boolean;
+}
 
 export interface PatientHomeSummary {
   patient: {
@@ -39,6 +58,46 @@ export class MeService {
     private readonly prisma: PrismaService,
     private readonly access: PatientAccessService,
   ) {}
+
+  /**
+   * The signed-in account, with nothing that needs a permission to read.
+   *
+   * Deliberately open to every authenticated user: it answers "who am I",
+   * which is the one thing a client has to know before it can know what it may
+   * ask for. It returns nothing about anybody else.
+   */
+  async identity(user: AuthenticatedUser): Promise<Identity> {
+    const row = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        role: true,
+        email: true,
+        phone: true,
+        staffProfile: { select: { firstName: true, lastName: true } },
+        patient: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+
+    if (!row) throw new NotFoundException('Account not found');
+
+    const staffName = row.staffProfile
+      ? `${row.staffProfile.firstName} ${row.staffProfile.lastName}`.trim()
+      : null;
+    const patientName = row.patient
+      ? `${row.patient.firstName} ${row.patient.lastName}`.trim()
+      : null;
+
+    return {
+      userId: row.id,
+      role: row.role,
+      // An account with neither profile is still nameable; a blank greeting is
+      // a screen that looks broken.
+      displayName: staffName || patientName || row.email || row.phone || 'Kullanıcı',
+      patientId: row.patient?.id ?? null,
+      isStaff: row.role !== Role.PATIENT && row.role !== Role.CAREGIVER,
+    };
+  }
 
   async summary(user: AuthenticatedUser): Promise<PatientHomeSummary> {
     const scope = await this.access.scopeFilter(user);

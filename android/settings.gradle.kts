@@ -34,6 +34,10 @@ include(":core:sync")
 // multiplatform: the same module builds here and runs on the device.
 include(":core:sync-store")
 
+// What the app shows and to whom. Plain JVM so the routing decision is tested
+// on a laptop rather than on a device.
+include(":core:shell")
+
 // Sign-in and onboarding. The flow model holds no Android types, so the branch
 // only staff without a second factor ever reach is testable without a device.
 include(":feature:auth")
@@ -95,6 +99,9 @@ if (androidSdkAvailable) {
     include(":feature:photos-ui")
     include(":feature:complications-ui")
     include(":feature:messaging-ui")
+
+    // The installable app. Last, because it depends on all of them.
+    include(":app")
 } else {
     logger.lifecycle("Android SDK not found — building JVM modules only (:core:network).")
 }

@@ -115,6 +115,11 @@ public struct MeAPI: Sendable {
         self.client = client
     }
 
+    /// So an extension in another file can reach the client without exposing it.
+    func send<T: Decodable & Sendable>(_ endpoint: Endpoint, as type: T.Type) async throws -> T {
+        try await client.send(endpoint, as: type)
+    }
+
     public func summary() async throws -> PatientHomeSummary {
         try await client.send(
             Endpoint(method: .get, path: "me/summary"),

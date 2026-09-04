@@ -1,0 +1,7 @@
+# Copy to `local.properties` (untracked) and fill in the real hosts.
+#
+# sdk.dir is set by Android Studio; the two below are this project's own.
+# The repository is public, so the clinic's hostnames live here and in
+# docs/OPERASYON-LOCAL.md, never in a committed file.
+klinik.apiBaseUrl.debug=https://klinikapi-staging.example.invalid
+klinik.apiBaseUrl.release=https://klinikapi.example.invalid

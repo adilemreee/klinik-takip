@@ -113,5 +113,4 @@ Bunlar unutulmuş değil, bilinçli olarak ertelenmiştir ve sahibi belli:
 | AI sağlayıcı sözleşmesi (sıfır saklama / iş ortaklığı) | **Sizde:** §14.5 gereği; `AI_ZERO_RETENTION` kod tarafından doğrulanamaz, operatörün beyanıdır. Beyan yokken klinik istemler gönderilmiyor | — |
 | AI model fiyatları | **Sizde:** milyon token başına giriş/çıkış fiyatı yapılandırmadan geliyor; depoya konan bir tablo bir çeyrekte eskir ve yine de inanılır | — |
 | Acil numara tablosunun doğrulanması | **Klinikte:** ülke → acil numara eşlemesi operasyonel veridir, yetkili bir kaynağa karşı doğrulanmadı. Yanlış numara, kazanılmak istenen dakikayı harcar | — |
-| `audit_logs` partition'lama | Tablo büyümeden önce gerekmiyor | Faz 7 öncesi |
 | Yedek şifreleme parolasının kasaya alınması | **Sizde:** parola sunucu dışında saklanmalı, yoksa off-site yedekler açılamaz | — |

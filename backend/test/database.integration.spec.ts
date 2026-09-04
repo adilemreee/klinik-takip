@@ -98,8 +98,55 @@ describe('database schema', () => {
       await expect(prisma.$executeRawUnsafe('TRUNCATE audit_logs')).rejects.toThrow(/append-only/);
     });
 
+    it('rejects TRUNCATE of a single partition, which the parent trigger misses', async () => {
+      // The table is partitioned by month, and a statement-level trigger on the
+      // parent does not fire for `TRUNCATE audit_logs_2026_09`. Without a guard
+      // on each partition, one statement empties a month of history.
+      const [partition] = await prisma.$queryRaw<{ relname: string }[]>`
+        SELECT c.relname FROM pg_class c
+        JOIN pg_inherits i ON i.inhrelid = c.oid
+        JOIN pg_class p ON p.oid = i.inhparent
+        WHERE p.relname = 'audit_logs' AND c.relname <> 'audit_logs_default'
+        LIMIT 1
+      `;
+
+      expect(partition).toBeDefined();
+      await expect(
+        prisma.$executeRawUnsafe(`TRUNCATE "${partition!.relname}"`),
+      ).rejects.toThrow(/append-only/);
+    });
+
+    it('is partitioned, with a default partition so a write can never fail', async () => {
+      const [parent] = await prisma.$queryRaw<{ relkind: string }[]>`
+        SELECT relkind FROM pg_class WHERE relname = 'audit_logs'
+      `;
+      const [fallback] = await prisma.$queryRaw<{ n: bigint }[]>`
+        SELECT count(*) AS n FROM pg_class WHERE relname = 'audit_logs_default'
+      `;
+
+      expect(parent!.relkind).toBe('p');
+      expect(Number(fallback!.n)).toBe(1);
+    });
+
+    it('guards every partition, including ones made later', async () => {
+      // A month created next year by the sweep must carry the same rule as the
+      // ones created by the migration.
+      const unguarded = await prisma.$queryRaw<{ relname: string }[]>`
+        SELECT c.relname FROM pg_class c
+        JOIN pg_inherits i ON i.inhrelid = c.oid
+        JOIN pg_class p ON p.oid = i.inhparent
+        WHERE p.relname = 'audit_logs'
+          AND NOT EXISTS (
+            SELECT 1 FROM pg_trigger t
+            WHERE t.tgrelid = c.oid AND t.tgname LIKE '%no_truncate'
+          )
+      `;
+
+      expect(unguarded).toEqual([]);
+    });
+
     it('leaves the record intact after every attempt', async () => {
-      const row = await prisma.auditLog.findUnique({ where: { id: insertedId } });
+      const row = await prisma.auditLog.findFirst({ where: { id: insertedId } });
 
       expect(row?.entityType).toBe('patients');
     });

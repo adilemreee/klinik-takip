@@ -1803,7 +1803,7 @@ enum AuditAction {
 /// Reads are logged too: with health data, who *looked* at a file matters as
 /// much as who changed it.
 model AuditLog {
-  id         String      @id @default(uuid(7)) @db.Uuid
+  id         String      @default(uuid(7)) @db.Uuid
   actorId    String?     @map("actor_id") @db.Uuid
   actorRole  Role?       @map("actor_role")
   action     AuditAction
@@ -1821,6 +1821,11 @@ model AuditLog {
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
+  /// Composite because the table is range-partitioned by month and a
+  /// partitioned table's primary key has to contain the partition key. `id` is
+  /// still a UUIDv7 and still unique on its own; this is a requirement of
+  /// partitioning, not a change of meaning.
+  @@id([id, createdAt])
   /// "What did this user touch?" and "who touched this patient?" are the two
   /// questions an audit review actually asks (spec M13).
   @@index([actorId, createdAt])

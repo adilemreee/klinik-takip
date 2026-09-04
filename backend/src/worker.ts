@@ -40,6 +40,7 @@ import { startMetricsServer } from './observability/metrics.server';
 import { runWorker } from './queue/job-runner';
 import { JOBS, QUEUES } from './queue/queue.constants';
 import { QueueService } from './queue/queue.service';
+import { auditPartitionSweep } from './audit/audit-partitions';
 import { attachWorkerLogging } from './worker-bootstrap';
 
 /**
@@ -115,6 +116,7 @@ async function bootstrap(): Promise<void> {
       [JOBS.briefingSweep]: briefingSweep(prisma, permissions, briefing, notifications),
       [JOBS.medicationSweep]: medicationSweep(prisma, careTeam, notifications),
       [JOBS.surveySweep]: surveySweep(prisma, app.get(SurveysService), notifications),
+      [JOBS.auditPartitionSweep]: auditPartitionSweep(prisma),
     },
     connection: queues.connection,
     prisma,
@@ -179,6 +181,10 @@ async function bootstrap(): Promise<void> {
   // Hourly. A questionnaire is a date, not a moment: an hour late asking about
   // last week costs nothing, and asking twice costs the patient's attention.
   await queues.schedule(QUEUES.notifications, JOBS.surveySweep, 60 * 60 * 1000);
+  // Daily rather than monthly: a worker that happened to be restarting at
+  // midnight on the 1st must not be the reason a year of audit history ends up
+  // in one heap.
+  await queues.schedule(QUEUES.notifications, JOBS.auditPartitionSweep, 24 * 60 * 60 * 1000);
 
   // The starter questionnaire, if it is not already there. Never an update:
   // a template version is frozen once anybody has answered it.

@@ -89,14 +89,44 @@ Tablo append-only ve okumalar da kaydediliyor. İkisi birlikte, **hiç küçülm
 demek. Kaba tahmin: günde 100 bin okuma → yılda ~36 milyon satır → satır başına ~500 bayt
 ile **yılda ~18 GB**.
 
-§13 en az 2 yıl saklama istiyor; hiç silmediğimiz için bunu fazlasıyla karşılıyoruz. Ama
-büyüme sınırsız ve bir planı olmalı. Uygulanmadı, çünkü şu an veri yok ve erken bölümleme
-gereksiz karmaşıklık olurdu. Faz 7 öncesinde ele alınacak seçenekler:
+§13 en az 2 yıl saklama istiyor; hiç silmediğimiz için bunu fazlasıyla karşılıyoruz.
 
-1. **Aya göre bölümleme** (`PARTITION BY RANGE (created_at)`) — eski bölümler ayrı
-   diskte veya sıkıştırılmış tutulabilir, sorgular yalnız ilgili bölüme dokunur.
-2. **Yasal saklama süresi dolan bölümlerin arşivlenmesi** — bölüm ayırma (`DETACH`) silme
-   değildir, dolayısıyla append-only garantisini bozmaz.
+**Tablo aya göre bölümlenmiş durumda** (`PARTITION BY RANGE (created_at)`). Tablo onlarca
+satırlıkken yapıldı, çünkü alternatifi sonra yapmaktı: yıllarca denetim geçmişi biriktikten
+sonra dönüştürmek ya kesinti ya da tek satırını bile kaybetmemesi gereken bir tabloda
+çevrimiçi kopyalama demek.
+
+Aralık `created_at` üzerinde, çünkü tablo böyle okunuyor (bir inceleme bir dönemi sorar) ve
+böyle emekliye ayrılıyor: saklama süresi dolan bir ay `DETACH` ile ayrılır — `DELETE`
+zaten append-only tetikleyicisi tarafından reddedilirdi.
+
+### Üç ayrıntı, üçü de sessizce bozulabilirdi
+
+**Varsayılan bölüm (`audit_logs_default`) var**, böylece bir `INSERT` bölüm yok diye asla
+başarısız olamaz. Kaçınılan hata çok belirli: hata veren bir denetim yazımı, ya kaydettiği
+işlemi geri alır ya da kaydını kaybeder. İkisi de bu tabloda kabul edilemez.
+
+**Aylar önceden üretiliyor** (`audit-partition-sweep`, günlük). Varsayılan bölüm bir emniyet
+ağı, plan değil: **bir satır oraya düştüğü anda, ait olduğu ayın bölümü artık
+oluşturulamaz** — PostgreSQL reddeder. Süpürge ayda bir değil günde bir çalışıyor, çünkü
+ayın 1'inde gece yarısı yeniden başlayan bir worker bir yıllık geçmişin tek yığına
+düşmesinin sebebi olmamalı. Varsayılan bölümde satır görülürse **hata seviyesinde**
+loglanıyor.
+
+**Her bölümün kendi TRUNCATE tetikleyicisi var.** Satır seviyesindeki UPDATE/DELETE
+tetikleyicileri ebeveynden miras alınıyor, ama TRUNCATE tetikleyicileri **alınmıyor** —
+`TRUNCATE audit_logs_2027_03` tek başına bir ayı boşaltırdı. Bölüm oluşturan fonksiyon
+tetikleyiciyi de ekliyor, ve bunun testi var.
+
+### Birincil anahtar değişti
+
+Bölümlenmiş bir tablonun birincil anahtarı bölüm anahtarını içermek zorunda, o yüzden
+`(id, created_at)`. `id` hâlâ UUIDv7 ve pratikte tek başına benzersiz; bu bölümlemenin
+gereği, anlamın değişmesi değil.
+
+Denetim listesinin sayfalaması bu yüzden Prisma'nın `cursor`'ı yerine **anahtar filtresine**
+(`id < cursor`) geçti: UUIDv7 zaten zaman sıralı, ve çağıranın sayfa çevirmek için geri bir
+zaman damgası göndermesi gerekmemeli.
 
 Disk kullanımı Grafana'da izlenmeli; eşik aşılınca alarm.
 

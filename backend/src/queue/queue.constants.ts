@@ -90,6 +90,11 @@ export const JOBS = {
   exportRender: 'export-render',
 
   /**
+   * Builds next month's audit-log partition before next month (section 13).
+   */
+  auditPartitionSweep: 'audit-partition-sweep',
+
+  /**
    * Asks the questionnaires that have come due and closes the window on the
    * ones nobody answered (spec M18).
    */

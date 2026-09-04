@@ -155,14 +155,15 @@ describe('audit trail', () => {
 
       const [entry] = await entriesFor(actorId);
 
-      await expect(
-        prisma.auditLog.update({ where: { id: entry!.id }, data: { entityType: 'tampered' } }),
-      ).rejects.toThrow(/append-only/);
-      await expect(
-        prisma.auditLog.delete({ where: { id: entry!.id } }),
-      ).rejects.toThrow(/append-only/);
+      // The key is composite because the table is partitioned by month.
+      const key = { id_createdAt: { id: entry!.id, createdAt: entry!.createdAt } };
 
-      const after = await prisma.auditLog.findUnique({ where: { id: entry!.id } });
+      await expect(
+        prisma.auditLog.update({ where: key, data: { entityType: 'tampered' } }),
+      ).rejects.toThrow(/append-only/);
+      await expect(prisma.auditLog.delete({ where: key })).rejects.toThrow(/append-only/);
+
+      const after = await prisma.auditLog.findUnique({ where: key });
       expect(after?.entityType).toBe('patients');
     });
   });

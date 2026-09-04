@@ -46,15 +46,18 @@ export class AuditController {
       entityType: query.entityType,
       createdAt:
         query.from || query.to ? { gte: query.from, lte: query.to } : undefined,
+      // Ids are UUIDv7, so ordering by id is ordering by time and paging is a
+      // plain "older than this one". Expressed as a filter rather than Prisma's
+      // `cursor`, which needs a whole unique key — and this table's key became
+      // (id, created_at) when it was partitioned by month. A caller should not
+      // have to send a timestamp back to turn a page.
+      ...(query.cursor ? { id: { lt: query.cursor } } : {}),
     };
 
-    // Ids are UUIDv7, so ordering by id is ordering by time — one index, no
-    // secondary sort key, and a stable cursor even when rows share a timestamp.
     const rows = await this.prisma.auditLog.findMany({
       where,
       orderBy: { id: 'desc' },
       take: limit + 1,
-      ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
     });
 
     const hasMore = rows.length > limit;

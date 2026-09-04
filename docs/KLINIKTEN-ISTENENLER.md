@@ -6,8 +6,14 @@ onaylamadığı etkileşim tablosu, doğrulanmamış bir acil numara ya da uydur
 bir AI fiyatı, **doğru görünen ve olmayan** şeylerdir.
 
 Bu dosya doldurulmak için. Yanındaki `klinikten/` klasöründe beş CSV var,
-**şu anki başlangıç verisiyle önceden doldurulmuş** — boş sayfaya bakmak yerine
-mevcut satırları onaylayın, düzeltin ya da silin.
+**şu anki veriyle önceden doldurulmuş** — boş sayfaya bakmak yerine mevcut
+satırları onaylayın, düzeltin ya da silin.
+
+> **2026-09-04 güncellemesi:** Doldurabileceklerimi doldurdum. İlaç tablosu
+> **20 bileşen / 18 çiftten 52 bileşen / 87 çifte**, triyaj ifadeleri **105'ten
+> 239'a** çıktı. Bu tabloları *büyüttüm*, **onaylamadım** — borç zaten
+> "bir eczacı/klinisyen gözden geçirdi" özelliğiydi ve onu ben veremem.
+> Aşağıda her maddede ne yaptığımı ve neyi yapamadığımı ayrı ayrı yazdım.
 
 > **CSV'ler noktalı virgülle ayrılmıştır ve BOM taşır**, yani Türkçe Excel'de
 > çift tıklayınca düzgün açılır. Türkçe karakterler bozuk görünüyorsa dosyayı
@@ -43,6 +49,22 @@ görmedi**.
 her yanıt tanımadığı ilaçları ve kaç çift karşılaştırdığını söylüyor, ve arayüzde
 sabit bir uyarı var: *"Uyarı olmaması güvenli olduğu anlamına gelmez."*
 
+**Ne yaptım:** Tabloyu bu kliniğin gerçekten yaptığı ameliyatlara göre
+genişlettim — DOAC'lar (Xarelto, Eliquis, Pradaxa), ameliyat sonrası ağrı
+kesiciler (diklofenak, metamizol, morfin, petidin), peri-operatif antibiyotik ve
+antifungaller, bariatrik sonrası reflü/bulantı ilaçları (pantoprazol,
+ondansetron, metoklopramid), hastanın **zaten kullanarak geldiği** ilaçlar
+(SSRI'lar, amiodaron, digoksin, tamoksifen, izotretinoin, semaglutid/Ozempic) ve
+ilaç saymadığı iki bitkisel: **sarı kantaron ve ginkgo**.
+
+Eklediğim kural sınıfları: serotonin sendromu yolları, QT uzatan kombinasyonlar,
+statin + makrolid/antifungal, SSRI'nın kanama riski, NSAİİ + kortikosteroid,
+ACE/ARB + spironolakton.
+
+**Ne yapamadım:** Bunların hiçbirini bir eczacı görmedi. Tablo büyüdü, güvenilir
+*olmadı* — ve büyüdüğü için daha yetkili görünüyor, ki bu tek başına bir risk.
+Başlıktaki uyarı yerinde duruyor.
+
 **Nasıl doldurulur:**
 - `1-ilac-bilesenleri.csv` → her bileşenin **hastanın yazacağı** isimleri. Marka
   adları önemli: hasta "Augmentin" yazar, "amoksisilin/klavulanik asit" değil.
@@ -69,6 +91,19 @@ listesi, modelin bozulduğu gün geriye kalan tek şeydir.
 
 **Şu an ne oluyor:** 15 bayrak var (8 `EMERGENCY`, 7 `URGENT`). Model triyaj
 seviyesini **yükseltebilir ama asla düşüremez** — yani bu liste bir tabandır.
+
+**Ne yaptım:** İfade kapsamını 105'ten 239'a çıkardım. **Kategorileri
+değiştirmedim** — hangi durumun acil sayılacağı klinik içerik ve olduğu gibi
+duruyor. Eklediğim şey dilbilimsel: hastanın gerçekten yazdığı biçimler
+("nefesim daralıyor", "dikişim attı", "her yediğimi çıkarıyorum", "ağrım 10",
+"göğsümde baskı"), ve İngilizce karşılıkları.
+
+Genişletilmiş ağı gerçekçi mesajlara karşı denedim: 12 acil/öncelikli mesajın
+hepsi yakalandı, ve *"Yara yerim güzel iyileşiyor, dikişler duruyor"* gibi içinde
+"dikiş" geçen sıradan bir mesaj **yanlış alarm üretmedi**.
+
+**Ne yapamadım:** Kategorilerin doğruluğu — hangi şikâyetin `EMERGENCY`, hangisinin
+`URGENT` olduğu — hâlâ klinik bir karar.
 
 **Nasıl doldurulur:**
 - "kökler" hastanın yazabileceği ifadelerin **başlangıçlarıdır** ("nefes alam" →
@@ -109,6 +144,12 @@ tutucular, klinik rehber değil.**
 
 **Neden gerekiyor:** Yanlış numara, kazanılmak istenen dakikayı harcar. Tablo
 derlendi ama **yetkili bir kaynağa karşı doğrulanmadı**.
+
+**Ne yapamadım — ve bu önemli:** Bu tabloyu gözden geçirdim ama **doğrulanmış
+olarak işaretlemedim.** Benim hatırladığım bir numarayı "doğrulandı" diye
+yazmak, tam olarak bu tablonun tehlikeli olma biçimidir: yetkili görünür,
+kimsenin ne zaman kontrol ettiğini söylemez, ve yanlış olduğu ancak birinin
+aradığı gün anlaşılır. Doğrulama, resmi bir kaynağa bakmakla olur.
 
 **Nasıl doldurulur:** Her satır için doğru mu diye bakın ve **hangi resmi siteden
 baktığınızı** yazın. Hepsini yapmak zorunda değilsiniz — **kliniğin gerçekten

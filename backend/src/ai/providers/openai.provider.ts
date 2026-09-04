@@ -2,6 +2,7 @@ import {
   MAX_IMAGE_BYTES,
   ProviderError,
   type AIMessage,
+  type AIProviderName,
   type AIProvider,
   type ContentBlock,
   type FetchLike,
@@ -11,6 +12,20 @@ import {
 import { parseRetryAfter } from '../retry';
 
 const ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+
+/**
+ * What a provider speaking this protocol differs in.
+ *
+ * DeepSeek implements OpenAI's API, so it is this class with another base URL.
+ * Keeping that a parameter rather than a copy is the point of the seam: two
+ * copies of a request body drift, and the one that drifts is the one nobody
+ * has a key for in development.
+ */
+export interface OpenAICompatible {
+  endpoint: string;
+  /** The name in an error a person reads. */
+  label: string;
+}
 
 interface OpenAIResponse {
   model?: string;
@@ -28,16 +43,17 @@ interface OpenAIResponse {
  * the seam is in the right place.
  */
 export class OpenAIProvider implements AIProvider {
-  readonly name = 'openai' as const;
+  readonly name: AIProviderName = 'openai';
 
   constructor(
     readonly model: string,
     private readonly apiKey: string,
     private readonly fetchImpl: FetchLike,
+    private readonly compatible: OpenAICompatible = { endpoint: ENDPOINT, label: 'OpenAI' },
   ) {}
 
   async complete(request: ProviderRequest, signal: AbortSignal): Promise<ProviderResponse> {
-    const response = await this.fetchImpl(ENDPOINT, {
+    const response = await this.fetchImpl(this.compatible.endpoint, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -54,14 +70,17 @@ export class OpenAIProvider implements AIProvider {
       }),
       signal,
     }).catch((error: unknown) => {
-      throw new ProviderError(`Could not reach OpenAI: ${String(error)}`, null);
+      throw new ProviderError(
+        `Could not reach ${this.compatible.label}: ${String(error)}`,
+        null,
+      );
     });
 
     const raw = await response.text();
 
     if (!response.ok) {
       throw new ProviderError(
-        `OpenAI refused the request: ${messageFrom(raw)}`,
+        `${this.compatible.label} refused the request: ${messageFrom(raw)}`,
         response.status,
         parseRetryAfter(response.headers.get('retry-after')),
       );

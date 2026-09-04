@@ -2,6 +2,25 @@
 <!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
+    <string name="ai_missing_api_key">No API key entered</string>
+    <string name="ai_missing_input_price_per_mtok">No input price entered</string>
+    <string name="ai_missing_model">No model chosen</string>
+    <string name="ai_missing_output_price_per_mtok">No output price entered</string>
+    <string name="ai_missing_provider">No provider chosen</string>
+    <string name="ai_settings_api_key">API key</string>
+    <string name="ai_settings_api_key_stored">Stored key: •••• {last4}</string>
+    <string name="ai_settings_api_key_write_only">Once saved, the key is never shown again.</string>
+    <string name="ai_settings_budget">Monthly budget (USD)</string>
+    <string name="ai_settings_clear">Turn the AI layer off</string>
+    <string name="ai_settings_not_clinical_ready">The provider is ready but there is no zero-retention declaration — clinical prompts are refused.</string>
+    <string name="ai_settings_price">Price (USD per million tokens)</string>
+    <string name="ai_settings_price_hint">Check the provider\'s pricing page; an unpriced model is not enabled.</string>
+    <string name="ai_settings_test">Test the connection</string>
+    <string name="ai_settings_test_failed">Could not connect</string>
+    <string name="ai_settings_test_ok">The connection works ({model})</string>
+    <string name="ai_settings_title">AI provider</string>
+    <string name="ai_settings_zero_retention">A zero-retention agreement is in place with this provider</string>
+    <string name="ai_settings_zero_retention_cleared">The provider changed; the declaration was cleared and must be made again.</string>
     <string name="analytics_average">Average fee</string>
     <string name="analytics_capacity_unconfigured">No working hours configured, so occupancy cannot be calculated.</string>
     <string name="analytics_channels_title">Channels</string>

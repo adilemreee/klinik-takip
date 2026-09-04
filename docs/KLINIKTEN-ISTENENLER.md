@@ -163,6 +163,15 @@ toplamın eksik olduğunu ve hangi para biriminde ne kaldığını söylüyor.
 
 ## 8. AI sağlayıcı sözleşmesi — *depoya girmez*
 
+> **Artık dört seçenek var ve seçimi uygulamadan yapıyorsunuz:** Anthropic
+> (Claude), OpenAI (GPT), Google (Gemini), DeepSeek. Ayarlar → yapay zekâ
+> sağlayıcısı: sağlayıcıyı ve modeli seçin, API anahtarını girin, fiyatı yazın.
+> Anahtar şifrelenerek saklanır ve bir daha gösterilmez.
+>
+> **Sağlayıcıyı değiştirdiğinizde bu beyan sıfırlanır** — dört servisin şartları
+> aynı değil, özellikle Google'ın ücretsiz katmanı ve DeepSeek (Çin'de
+> barındırılıyor). Her sağlayıcının uyarısı ekranda yazılı.
+
 ☐ Sıfır saklama / iş ortaklığı sözleşmesi **imzalandı**
    Sağlayıcı: ______________  Tarih: ______________
 
@@ -175,14 +184,16 @@ klinik istemleri **hiç göndermiyor**.
 
 ---
 
-## 9. AI model fiyatları — *depoya girmez*
+## 9. AI model fiyatları — *ayarlar ekranından*
 
-| | Giriş (1M token) | Çıkış (1M token) | Para birimi |
-|---|---|---|---|
-| Kullanılacak model: ______ | | | |
+**Bunu ben dolduramam ve doldurmamalıyım.** Bütçe koruması verdiğiniz sayıya
+karşı gerçek para harcıyor; benim hatırladığım bir fiyat, doğru görünen ve
+kimsenin ne zaman baktığını söylemeyen bir sayı olurdu — tam olarak bu projede
+boyunca kaçındığım şey.
 
-**Neden depoda yok:** Depoya konan bir fiyat tablosu bir çeyrekte eskir ve yine
-de inanılır. Bütçe uyarısı bu sayılara göre çalışıyor.
+Ayarlar ekranında her sağlayıcının **fiyat sayfasının bağlantısı** var. Oradan
+bakıp iki alanı doldurun (1M token başına giriş/çıkış, USD). **Fiyatsız model
+açılmaz** — bu kuralı yumuşatmadım.
 
 ---
 

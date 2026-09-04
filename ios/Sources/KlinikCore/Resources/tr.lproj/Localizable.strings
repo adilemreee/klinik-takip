@@ -516,3 +516,23 @@
 "survey.finding.severe" = "Eşiği aştı";
 "survey.thanks" = "Teşekkürler, kaydedildi.";
 "survey.patientNote" = "Yanıtlarınız ekibinizin görebileceği kayıtlara işlenir.";
+
+"ai.settings.title" = "Yapay zekâ sağlayıcısı";
+"ai.settings.apiKey" = "API anahtarı";
+"ai.settings.apiKeyStored" = "Kayıtlı anahtar: •••• {last4}";
+"ai.settings.apiKeyWriteOnly" = "Anahtar kaydedildikten sonra bir daha gösterilmez.";
+"ai.settings.test" = "Bağlantıyı dene";
+"ai.settings.testOk" = "Bağlantı çalışıyor ({model})";
+"ai.settings.testFailed" = "Bağlantı kurulamadı";
+"ai.settings.clear" = "Yapay zekâyı kapat";
+"ai.settings.price" = "Fiyat (1M token başına, USD)";
+"ai.settings.priceHint" = "Sağlayıcının fiyat sayfasından bakın; fiyatsız model açılmaz.";
+"ai.settings.budget" = "Aylık bütçe (USD)";
+"ai.settings.zeroRetention" = "Bu sağlayıcıyla sıfır saklama sözleşmesi var";
+"ai.settings.zeroRetentionCleared" = "Sağlayıcı değişti; beyan sıfırlandı, yeniden onaylayın.";
+"ai.settings.notClinicalReady" = "Sağlayıcı hazır ama sıfır saklama beyanı yok — klinik istemler gönderilmiyor.";
+"ai.missing.provider" = "Sağlayıcı seçilmedi";
+"ai.missing.model" = "Model seçilmedi";
+"ai.missing.apiKey" = "API anahtarı girilmedi";
+"ai.missing.inputPricePerMTok" = "Giriş fiyatı girilmedi";
+"ai.missing.outputPricePerMTok" = "Çıkış fiyatı girilmedi";

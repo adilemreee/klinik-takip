@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  type OnApplicationBootstrap,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AiJobType, Prisma, ProcessingStatus } from '@prisma/client';
 import { instantAt, localDate } from '../common/local-calendar';
@@ -14,8 +20,12 @@ import {
 import { budgetUsedFraction, costUsd, withinBudget, type Pricing, type TokenUsage } from './cost';
 import { OpenAIEmbeddingProvider, type EmbeddingProvider } from './embeddings';
 import { findLeaks, type Identifiers, type Leak } from './pseudonymise';
+import { AiSettingsService } from './ai-settings.service';
 import { AnthropicProvider } from './providers/anthropic.provider';
+import { DeepSeekProvider } from './providers/deepseek.provider';
+import { GeminiProvider } from './providers/gemini.provider';
 import { OpenAIProvider } from './providers/openai.provider';
+import type { SelectableProvider } from './ai-provider';
 import { UnconfiguredProvider } from './providers/unconfigured.provider';
 import { backoffMs, shouldRetry, MAX_ATTEMPTS } from './retry';
 
@@ -114,7 +124,7 @@ export interface UsageReport {
  * answer, and it refuses by default.
  */
 @Injectable()
-export class AIService implements OnModuleInit {
+export class AIService implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new Logger(AIService.name);
 
   private provider: AIProvider = new UnconfiguredProvider();
@@ -129,6 +139,7 @@ export class AIService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService<Env, true>,
+    private readonly settings: AiSettingsService,
     /** Injected so the providers can be exercised without a network. */
     @Inject(AI_FETCH) private readonly fetchImpl: FetchLike,
   ) {}
@@ -139,6 +150,108 @@ export class AIService implements OnModuleInit {
     this.zeroRetention = this.config.get('AI_ZERO_RETENTION', { infer: true });
     this.budgetUsd = this.config.get('AI_MONTHLY_BUDGET_USD', { infer: true }) ?? null;
 
+    // The environment is the bootstrap and it is read synchronously, so a
+    // deployment with AI_* set is configured before anything can ask.
+    this.configureFromEnvironment();
+    this.configureEmbeddings();
+  }
+
+  /**
+   * What the clinic saved wins over the environment.
+   *
+   * Started here and **not awaited**, which is deliberate. This reads the
+   * database, and Nest waits for `onApplicationBootstrap` before the process
+   * begins serving — so awaiting it would mean a slow or unreachable database
+   * stops the application from booting at all, including the health probes
+   * that would tell somebody why.
+   *
+   * The cost of not waiting is a moment after boot in which the environment's
+   * provider is used instead of the saved one, or none is. That is a cost this
+   * system is built to absorb: everything works with the AI layer switched
+   * off, which is the whole point of section 14.
+   */
+  onApplicationBootstrap(): void {
+    void this.reload();
+  }
+
+  /**
+   * Sends the provider a trivial prompt to see whether the key works.
+   *
+   * Nothing clinical: the prompt is the word "ping", so this is usable before
+   * the zero-retention declaration exists and cannot itself be the thing that
+   * leaks something. It deliberately bypasses the budget and the leak scan,
+   * because it is not a clinical call — and it costs a handful of tokens,
+   * which is cheaper than a clinician discovering the key is wrong through a
+   * failed lab summary.
+   */
+  async testConnection(): Promise<{ ok: boolean; model: string | null; error: string | null }> {
+    if (!this.provider || this.provider.name === 'unconfigured') {
+      return { ok: false, model: null, error: 'No provider is configured' };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const response = await this.provider.complete(
+        {
+          system: 'Reply with the single word: ok',
+          messages: [{ role: 'user', content: 'ping' }],
+          maxOutputTokens: 16,
+        },
+        controller.signal,
+      );
+
+      return { ok: true, model: response.model, error: null };
+    } catch (error) {
+      return {
+        ok: false,
+        model: null,
+        // The provider's own words, already truncated by ProviderError.
+        error: error instanceof Error ? error.message : String(error),
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
+   * Re-reads the AI configuration, preferring what the clinic saved.
+   *
+   * Called at boot and after the settings change. A failure here leaves the
+   * previous provider in place rather than half-applying a new one: a
+   * half-applied provider is a key pointing at the wrong service.
+   */
+  async reload(): Promise<void> {
+    const saved = await this.settings.resolved().catch((error: unknown) => {
+      // The AI layer stays as the environment left it. A settings table that
+      // cannot be read is a problem to fix, not a reason to stop answering.
+      this.logger.error(`Could not read AI settings: ${String(error)}`);
+      return null;
+    });
+
+    if (saved) {
+      this.zeroRetention = saved.zeroRetention;
+      this.budgetUsd = saved.monthlyBudgetUsd;
+      this.pricing = {
+        inputPerMillionUsd: saved.inputPricePerMTok,
+        outputPerMillionUsd: saved.outputPricePerMTok,
+      };
+      this.provider = build(saved.provider, saved.model, saved.apiKey, this.fetchImpl);
+
+      this.logger.log(
+        `AI layer enabled from settings: ${saved.provider} ${saved.model}` +
+          (saved.zeroRetention
+            ? ''
+            : ' — WITHOUT a zero-retention declaration, so clinical prompts will be refused'),
+      );
+      return;
+    }
+
+    // Nothing saved: whatever the environment configured at boot stands.
+  }
+
+  private configureFromEnvironment(): void {
     const name = this.config.get('AI_PROVIDER', { infer: true });
     const apiKey = this.config.get('AI_API_KEY', { infer: true });
     const model = this.config.get('AI_MODEL', { infer: true });
@@ -163,17 +276,12 @@ export class AIService implements OnModuleInit {
     }
 
     this.pricing = { inputPerMillionUsd: inputPrice, outputPerMillionUsd: outputPrice };
-    this.provider =
-      name === 'anthropic'
-        ? new AnthropicProvider(model, apiKey, this.fetchImpl)
-        : new OpenAIProvider(model, apiKey, this.fetchImpl);
+    this.provider = build(name, model, apiKey, this.fetchImpl);
 
     this.logger.log(
       `AI layer enabled: ${name} ${model}` +
         (this.zeroRetention ? '' : ' — WITHOUT zero-retention, so clinical prompts will be refused'),
     );
-
-    this.configureEmbeddings();
   }
 
   /**
@@ -583,5 +691,29 @@ export class AIService implements OnModuleInit {
       const timer = setTimeout(resolve, ms);
       timer.unref?.();
     });
+  }
+}
+
+/**
+ * The one place a provider name becomes a provider.
+ *
+ * A switch rather than a registry: four cases that a reader can hold in their
+ * head beat an indirection that has to be followed to find out what happens.
+ */
+function build(
+  name: SelectableProvider,
+  model: string,
+  apiKey: string,
+  fetchImpl: FetchLike,
+): AIProvider {
+  switch (name) {
+    case 'anthropic':
+      return new AnthropicProvider(model, apiKey, fetchImpl);
+    case 'openai':
+      return new OpenAIProvider(model, apiKey, fetchImpl);
+    case 'gemini':
+      return new GeminiProvider(model, apiKey, fetchImpl);
+    case 'deepseek':
+      return new DeepSeekProvider(model, apiKey, fetchImpl);
   }
 }

@@ -1956,6 +1956,111 @@
             },
             "description": "This month's AI spend, tokens and refusals"
           }
+        },
+        {
+          "name": "Selectable AI providers, their models and their retention terms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "providers"
+              ]
+            },
+            "description": "Selectable AI providers, their models and their retention terms"
+          }
+        },
+        {
+          "name": "The AI configuration, with the key redacted to its last four",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "settings"
+              ]
+            },
+            "description": "The AI configuration, with the key redacted to its last four"
+          }
+        },
+        {
+          "name": "Set the provider, model, key, price and retention declaration",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "settings"
+              ]
+            },
+            "description": "Set the provider, model, key, price and retention declaration",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"anthropic\",\n  \"model\": \"claude-sonnet-5\",\n  \"apiKey\": \"\",\n  \"inputPricePerMTok\": \"3.00\",\n  \"outputPricePerMTok\": \"15.00\",\n  \"monthlyBudgetUsd\": {},\n  \"zeroRetentionConfirmed\": false,\n  \"zeroRetentionNote\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Clear the configuration, which switches the AI layer off",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "settings"
+              ]
+            },
+            "description": "Clear the configuration, which switches the AI layer off"
+          }
+        },
+        {
+          "name": "Check the saved key against the provider",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai/settings/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "settings",
+                "test"
+              ]
+            },
+            "description": "Check the saved key against the provider"
+          }
         }
       ]
     },

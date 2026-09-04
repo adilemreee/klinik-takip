@@ -2,8 +2,8 @@ import type { TokenUsage } from './cost';
 
 /**
  * The seam the specification asks for (section 3.4): the provider is
- * swappable, so nothing above this line knows whether it is talking to
- * Anthropic or OpenAI.
+ * swappable, so nothing above this line knows which of the four it is talking
+ * to.
  *
  * It is deliberately narrow. A thin interface is what makes it swappable — the
  * moment a caller reaches for something only one provider has, the abstraction
@@ -12,7 +12,17 @@ import type { TokenUsage } from './cost';
  * pseudonymisation, the budget, retries, the audit trail.
  */
 
-export type AIProviderName = 'anthropic' | 'openai' | 'unconfigured';
+export type AIProviderName =
+  | 'anthropic'
+  | 'openai'
+  | 'gemini'
+  | 'deepseek'
+  | 'unconfigured';
+
+/** The four a clinic can choose between, in the order a settings screen lists them. */
+export const SELECTABLE_PROVIDERS = ['anthropic', 'openai', 'gemini', 'deepseek'] as const;
+
+export type SelectableProvider = (typeof SELECTABLE_PROVIDERS)[number];
 
 /**
  * A piece of a message.

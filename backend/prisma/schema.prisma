@@ -1734,6 +1734,58 @@ model SurveyResponse {
   @@map("survey_responses")
 }
 
+/// Which model service the AI layer talks to (spec 3.4, 14.5).
+enum AiProviderName {
+  ANTHROPIC
+  OPENAI
+  GEMINI
+  DEEPSEEK
+}
+
+/// The AI layer's runtime configuration (spec 3.4, T5.1).
+///
+/// In the database rather than only in environment variables because the doctor
+/// chooses the provider and enters the key, and neither should need a deploy.
+/// One row: this is a clinic-wide choice, not a per-user one.
+///
+/// The key is encrypted at rest and **never returned by any endpoint** — a
+/// settings screen shows the last four characters so somebody can tell which
+/// key is in there, which is the only question a screen actually needs to
+/// answer about it.
+model AiSetting {
+  /// Always "singleton". A table that can hold two answers to "which provider"
+  /// eventually holds two answers.
+  id String @id @default("singleton")
+
+  provider AiProviderName?
+  model    String?
+
+  /// AES-GCM, through EncryptionService. Not readable by a database dump alone.
+  apiKeyEncrypted String? @map("api_key_encrypted")
+  /// The last four characters, so a screen can identify the key without it.
+  apiKeyLast4     String? @map("api_key_last4")
+
+  /// Cost accounting is mandatory, so an unpriced model is not enabled.
+  inputPricePerMTok  Decimal? @map("input_price_per_mtok") @db.Decimal(12, 6)
+  outputPricePerMTok Decimal? @map("output_price_per_mtok") @db.Decimal(12, 6)
+
+  /// Spec 14.5. **Per provider**, not global: Anthropic, OpenAI, Google and
+  /// DeepSeek do not offer the same terms, and a declaration made about one of
+  /// them says nothing about the next. Changing the provider clears this.
+  zeroRetentionConfirmed Boolean   @default(false) @map("zero_retention_confirmed")
+  /// Who confirmed it and against which agreement. The flag alone is not a record.
+  zeroRetentionNote      String?   @map("zero_retention_note")
+  zeroRetentionAt        DateTime? @map("zero_retention_at") @db.Timestamptz
+
+  /// Null means no ceiling, which is a decision rather than an oversight.
+  monthlyBudgetUsd Decimal? @map("monthly_budget_usd") @db.Decimal(12, 2)
+
+  updatedById String?  @map("updated_by_id") @db.Uuid
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("ai_settings")
+}
+
 enum ConsentType {
   TREATMENT
   DATA_PROCESSING

@@ -13,6 +13,7 @@ import {
 } from '@prisma/client';
 import { generateSync } from 'otplib';
 import request from 'supertest';
+import type { AiSettingsService } from '../src/ai/ai-settings.service';
 import { AIService } from '../src/ai/ai.service';
 import type { FetchLike } from '../src/ai/ai-provider';
 import { AppModule } from '../src/app.module';
@@ -162,7 +163,12 @@ describe('AI lab reports', () => {
       get: (key: string) => values[key],
     } as unknown as ConfigService<Env, true>;
 
-    const ai = new AIService(prisma as unknown as PrismaService, config, fetchImpl);
+    // The AI layer prefers what the clinic saved. These tests configure it
+    // from the environment and never reach onApplicationBootstrap, so the
+    // settings are never consulted; the stub is here for the constructor.
+    const settings = { resolved: () => Promise.resolve(null) } as unknown as AiSettingsService;
+
+    const ai = new AIService(prisma as unknown as PrismaService, config, settings, fetchImpl);
     ai.onModuleInit();
 
     return new AIReportsService(

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { EncryptionService } from '../crypto/encryption.service';
 import type { FetchLike } from './ai-provider';
 import { AIController } from './ai.controller';
+import { AiSettingsService } from './ai-settings.service';
 import { AI_FETCH, AIService } from './ai.service';
 
 /**
@@ -20,7 +22,13 @@ import { AI_FETCH, AIService } from './ai.service';
       useValue: ((input, init) => globalThis.fetch(input, init)) satisfies FetchLike,
     },
     AIService,
+    AiSettingsService,
+    // Provided here rather than by importing AuthModule: it is stateless, it
+    // reads one key from configuration, and a second instance costs nothing.
+    // Making the AI layer depend on the authentication module to encrypt a
+    // string would be a worse trade.
+    EncryptionService,
   ],
-  exports: [AIService],
+  exports: [AIService, AiSettingsService],
 })
 export class AIModule {}

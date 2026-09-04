@@ -4605,6 +4605,350 @@
         ]
       }
     },
+    "/ai/providers": {
+      "get": {
+        "operationId": "AIController_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AiProviderInfoDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Selectable AI providers, their models and their retention terms",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/settings": {
+      "get": {
+        "operationId": "AIController_settingsView",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The AI configuration, with the key redacted to its last four",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "operationId": "AIController_updateSettings",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAiSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the provider, model, key, price and retention declaration",
+        "tags": [
+          "ai"
+        ]
+      },
+      "delete": {
+        "operationId": "AIController_clearSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear the configuration, which switches the AI layer off",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/ai/settings/test": {
+      "post": {
+        "operationId": "AIController_testConnection",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConnectionTestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check the saved key against the provider",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/me/complications": {
       "post": {
         "operationId": "MyComplicationsController_report",
@@ -13917,6 +14261,200 @@
           "failed",
           "tokensIn",
           "tokensOut"
+        ]
+      },
+      "AiProviderInfoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "anthropic",
+              "openai",
+              "gemini",
+              "deepseek"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "models": {
+            "description": "Suggested models. Not a closed list",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricingUrl": {
+            "type": "string",
+            "description": "Where the operator reads the current price"
+          },
+          "consoleUrl": {
+            "type": "string",
+            "description": "Where the operator gets a key"
+          },
+          "retentionNote": {
+            "type": "string",
+            "description": "What the clinic has to satisfy itself about before clinical prompts are allowed"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "models",
+          "pricingUrl",
+          "consoleUrl",
+          "retentionNote"
+        ]
+      },
+      "AiSettingsDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "anthropic",
+              "openai",
+              "gemini",
+              "deepseek"
+            ]
+          },
+          "model": {
+            "type": "object",
+            "nullable": true
+          },
+          "apiKeyLast4": {
+            "type": "object",
+            "nullable": true,
+            "description": "The last four characters. The key itself is never returned"
+          },
+          "hasApiKey": {
+            "type": "boolean"
+          },
+          "inputPricePerMTok": {
+            "type": "object",
+            "nullable": true
+          },
+          "outputPricePerMTok": {
+            "type": "object",
+            "nullable": true
+          },
+          "zeroRetentionConfirmed": {
+            "type": "boolean",
+            "description": "Per provider. Cleared whenever the provider changes (spec 14.5)"
+          },
+          "zeroRetentionNote": {
+            "type": "object",
+            "nullable": true
+          },
+          "zeroRetentionAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "monthlyBudgetUsd": {
+            "type": "object",
+            "nullable": true
+          },
+          "ready": {
+            "type": "boolean",
+            "description": "Whether the AI layer would run with what is saved"
+          },
+          "missing": {
+            "description": "What is missing, in the order to fix it",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updatedAt": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "provider",
+          "model",
+          "apiKeyLast4",
+          "hasApiKey",
+          "inputPricePerMTok",
+          "outputPricePerMTok",
+          "zeroRetentionConfirmed",
+          "zeroRetentionNote",
+          "zeroRetentionAt",
+          "monthlyBudgetUsd",
+          "ready",
+          "missing",
+          "updatedAt"
+        ]
+      },
+      "UpdateAiSettingsDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "anthropic",
+              "openai",
+              "gemini",
+              "deepseek"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "example": "claude-sonnet-5"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Write-only. Omit to leave the stored key alone; it is never returned"
+          },
+          "inputPricePerMTok": {
+            "type": "string",
+            "example": "3.00",
+            "description": "USD per million input tokens"
+          },
+          "outputPricePerMTok": {
+            "type": "string",
+            "example": "15.00",
+            "description": "USD per million output tokens"
+          },
+          "monthlyBudgetUsd": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null means no ceiling"
+          },
+          "zeroRetentionConfirmed": {
+            "type": "boolean",
+            "description": "Spec 14.5. Applies to the provider selected here; changing the provider clears it"
+          },
+          "zeroRetentionNote": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Which agreement, signed when and by whom. The flag alone is not a record"
+          }
+        }
+      },
+      "AiConnectionTestDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "Whether the saved key reached the provider"
+          },
+          "model": {
+            "type": "object",
+            "nullable": true
+          },
+          "error": {
+            "type": "object",
+            "nullable": true,
+            "description": "The provider's own words, truncated"
+          }
+        },
+        "required": [
+          "ok",
+          "model",
+          "error"
         ]
       },
       "ReportComplicationDto": {

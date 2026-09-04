@@ -177,3 +177,80 @@ tiyatro olurdu. Onlar yapısal olarak uygulanıyor ve yerleri sonraki görevler:
 
 Bu görev bunların üstünde duracağı zemini kuruyor: tek kapı, kesin muhasebe,
 denetlenebilir kayıt ve çağıranın yanıt sanamayacağı bir red.
+
+
+## Sağlayıcı Seçimi (dört servis, çalışma zamanında)
+
+Doktor hangi servisi kullanacağını **uygulamadan seçiyor** ve anahtarı orada
+giriyor. Dört seçenek var: Anthropic (Claude), OpenAI (GPT), Google (Gemini),
+DeepSeek.
+
+`GET /ai/providers` katalogu veriyor — modeller, anahtarın alınacağı sayfa,
+fiyat sayfası ve **her sağlayıcı için veri saklama uyarısı**. Ekran bu
+katalogdan kuruluyor, kendi listesini taşımıyor; yoksa sunucunun kabul ettiğiyle
+ekranın gösterdiği ayrışır.
+
+### Anahtar girer, çıkmaz
+
+Anahtar `EncryptionService` ile şifrelenip saklanıyor ve **hiçbir uç onu geri
+döndürmüyor**. Ekran son dört karakteri görüyor — bir ekranın anahtar hakkında
+gerçekten sorduğu tek soru budur: *hangisi*.
+
+Denetim günlüğüne de girmiyor. Denetim kaydını ayarlar ekranından daha çok kişi
+okur.
+
+Fiyat değiştirmek için anahtarı yeniden yazmak gerekmiyor: gövdede `apiKey` yoksa
+kayıtlı anahtara dokunulmuyor.
+
+### Sıfır saklama beyanı sağlayıcıya ait
+
+Bu, tek bir global bayrak olmaktan çıktı. Dört servis **aynı şartları
+sunmuyor**:
+
+| Sağlayıcı | Dikkat edilmesi gereken |
+|---|---|
+| Anthropic | API varsayılan olarak eğitimde kullanmıyor; sağlık verisi için ayrı sözleşme gerekir |
+| OpenAI | Varsayılan olarak eğitimde kullanmıyor ama bir süre saklıyor; sıfır saklama ayrıca talep edilmeli |
+| Google | **Ücretsiz katman** istemleri ürün geliştirmede kullanır — hasta verisi için uygun değil |
+| DeepSeek | **API Çin'de barındırılıyor**, standart şartlar saklama ve eğitimde kullanıma izin veriyor — KVKK/GDPR açısından yurt dışına aktarım kararı |
+
+Bu yüzden **sağlayıcıyı değiştirmek beyanı sıfırlıyor.** Anthropic hakkında
+verilmiş bir beyan DeepSeek hakkında hiçbir şey söylemez, ve onu taşımak
+kimsenin vermediği bir onayı kaydetmek olurdu. Testi var.
+
+Beyan yokken sistem çalışır, sadece **klinik istem göndermez** — §14'ün baştan
+beri yaptığı şey.
+
+### Fiyat: depoda yok, bilerek
+
+Katalogda model kimlikleri ve **fiyat sayfasının bağlantısı** var; fiyatın
+kendisi yok. Bütçe koruması verilen sayıya karşı gerçek para harcıyor, ve depoya
+yazılmış bir fiyat bir çeyrekte eskirken hâlâ yetkili görünür — dahası
+*inanılır*, çünkü ayarlar ekranında durur ve kimsenin ne zaman baktığını
+söylemez.
+
+Fiyatsız model **açılmıyor**. Bu kural yumuşatılmadı.
+
+### Bağlantı testi
+
+`POST /ai/settings/test` sağlayıcıya "ping" gönderiyor. Klinik hiçbir şey
+içermiyor, dolayısıyla sıfır saklama beyanından **önce** kullanılabilir.
+Alternatifi, anahtarın yanlış olduğunu lab özeti başarısız olan klinisyenden
+öğrenmek.
+
+### Yetki
+
+Hepsi `permissions.manage` — varsayılan olarak yalnız `SUPER_ADMIN`. Bu ayar
+hastaya yakın metnin **nereye gittiğine** ve ne kadara mal olacağına karar
+veriyor.
+
+### Önyükleme sırası
+
+Ortam değişkenleri `onModuleInit`'te **eşzamanlı** okunuyor; klinikte kayıtlı
+ayar `onApplicationBootstrap`'ta ve **beklenmeden** yükleniyor.
+
+Beklemek, yavaş ya da erişilemez bir veritabanının uygulamanın hiç açılmamasına
+— sağlık problarının bile cevap verememesine — sebep olması demekti.
+Beklememenin bedeli, açılıştan sonraki kısa bir an için ortamdaki sağlayıcının
+(ya da hiçbirinin) kullanılması. Bu sistem tam olarak bunu absorbe etmek üzere
+kurulu: AI kapalıyken her şey çalışır.

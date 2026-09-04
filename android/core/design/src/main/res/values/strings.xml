@@ -2,6 +2,25 @@
 <!-- Generated from ios/Sources/KlinikCore/Resources — do not edit.
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
+    <string name="ai_missing_api_key">API anahtarı girilmedi</string>
+    <string name="ai_missing_input_price_per_mtok">Giriş fiyatı girilmedi</string>
+    <string name="ai_missing_model">Model seçilmedi</string>
+    <string name="ai_missing_output_price_per_mtok">Çıkış fiyatı girilmedi</string>
+    <string name="ai_missing_provider">Sağlayıcı seçilmedi</string>
+    <string name="ai_settings_api_key">API anahtarı</string>
+    <string name="ai_settings_api_key_stored">Kayıtlı anahtar: •••• {last4}</string>
+    <string name="ai_settings_api_key_write_only">Anahtar kaydedildikten sonra bir daha gösterilmez.</string>
+    <string name="ai_settings_budget">Aylık bütçe (USD)</string>
+    <string name="ai_settings_clear">Yapay zekâyı kapat</string>
+    <string name="ai_settings_not_clinical_ready">Sağlayıcı hazır ama sıfır saklama beyanı yok — klinik istemler gönderilmiyor.</string>
+    <string name="ai_settings_price">Fiyat (1M token başına, USD)</string>
+    <string name="ai_settings_price_hint">Sağlayıcının fiyat sayfasından bakın; fiyatsız model açılmaz.</string>
+    <string name="ai_settings_test">Bağlantıyı dene</string>
+    <string name="ai_settings_test_failed">Bağlantı kurulamadı</string>
+    <string name="ai_settings_test_ok">Bağlantı çalışıyor ({model})</string>
+    <string name="ai_settings_title">Yapay zekâ sağlayıcısı</string>
+    <string name="ai_settings_zero_retention">Bu sağlayıcıyla sıfır saklama sözleşmesi var</string>
+    <string name="ai_settings_zero_retention_cleared">Sağlayıcı değişti; beyan sıfırlandı, yeniden onaylayın.</string>
     <string name="analytics_average">Ortalama ücret</string>
     <string name="analytics_capacity_unconfigured">Çalışma saatleri tanımlı değil; doluluk oranı hesaplanamıyor.</string>
     <string name="analytics_channels_title">Kanallar</string>

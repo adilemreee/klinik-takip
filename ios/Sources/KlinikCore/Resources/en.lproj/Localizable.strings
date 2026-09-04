@@ -516,3 +516,23 @@
 "survey.finding.severe" = "Past the threshold";
 "survey.thanks" = "Thank you, that is recorded.";
 "survey.patientNote" = "Your answers go into the records your team can see.";
+
+"ai.settings.title" = "AI provider";
+"ai.settings.apiKey" = "API key";
+"ai.settings.apiKeyStored" = "Stored key: •••• {last4}";
+"ai.settings.apiKeyWriteOnly" = "Once saved, the key is never shown again.";
+"ai.settings.test" = "Test the connection";
+"ai.settings.testOk" = "The connection works ({model})";
+"ai.settings.testFailed" = "Could not connect";
+"ai.settings.clear" = "Turn the AI layer off";
+"ai.settings.price" = "Price (USD per million tokens)";
+"ai.settings.priceHint" = "Check the provider's pricing page; an unpriced model is not enabled.";
+"ai.settings.budget" = "Monthly budget (USD)";
+"ai.settings.zeroRetention" = "A zero-retention agreement is in place with this provider";
+"ai.settings.zeroRetentionCleared" = "The provider changed; the declaration was cleared and must be made again.";
+"ai.settings.notClinicalReady" = "The provider is ready but there is no zero-retention declaration — clinical prompts are refused.";
+"ai.missing.provider" = "No provider chosen";
+"ai.missing.model" = "No model chosen";
+"ai.missing.apiKey" = "No API key entered";
+"ai.missing.inputPricePerMTok" = "No input price entered";
+"ai.missing.outputPricePerMTok" = "No output price entered";

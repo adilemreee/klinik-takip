@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { AiJobType, PrismaClient, ProcessingStatus } from '@prisma/client';
+import type { AiSettingsService } from '../src/ai/ai-settings.service';
 import { AIService, type AIRequest } from '../src/ai/ai.service';
 import type { FetchLike } from '../src/ai/ai-provider';
 import { Env } from '../src/config/env.schema';
@@ -69,7 +70,12 @@ const serviceWith = (
     get: (key: string) => values[key as keyof typeof values],
   } as unknown as ConfigService<Env, true>;
 
-  const service = new AIService(prisma as unknown as PrismaService, config, fetchImpl);
+  // The AI layer prefers what the clinic saved. These tests configure it
+  // from the environment and never reach onApplicationBootstrap, so the
+  // settings are never consulted; the stub is here for the constructor.
+  const settings = { resolved: () => Promise.resolve(null) } as unknown as AiSettingsService;
+
+  const service = new AIService(prisma as unknown as PrismaService, config, settings, fetchImpl);
   service.onModuleInit();
 
   return service;

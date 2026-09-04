@@ -25,8 +25,12 @@ enum FilePicker {
         guard let presenter = topViewController() else { return nil }
 
         return await withCheckedContinuation { continuation in
+            // Exactly what the server accepts for a document — see
+            // DOCUMENT_MIME_TYPES in backend/src/files/file-type.ts. Offering
+            // more means a patient chooses a file, waits for the upload, and is
+            // then told the type is not allowed.
             let picker = UIDocumentPickerViewController(
-                forOpeningContentTypes: [.pdf, .image, .plainText, .commaSeparatedText, .data],
+                forOpeningContentTypes: [.pdf, .jpeg, .png, .heic],
                 asCopy: true
             )
             let delegate = PickerDelegate { result in

@@ -43,6 +43,7 @@ import xyz.klinik.feature.notifications.NotificationSettingsModel
 import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
+import xyz.klinik.network.DocumentType
 import xyz.klinik.network.MeasurementSource
 import xyz.klinik.network.MeasurementSubject
 import xyz.klinik.network.RecordSubject
@@ -136,15 +137,31 @@ fun PatientDestinationScreen(
 
             LaunchedEffect(Unit) { model.load() }
 
+            val pick = rememberFilePicker { picked ->
+                if (picked == null) return@rememberFilePicker
+
+                scope.launch {
+                    model.upload(
+                        path = picked.path,
+                        filename = picked.filename,
+                        // Filed as OTHER unless the patient says otherwise. An
+                        // unknown type is not guessed: a lab report filed as a
+                        // passport never reaches the OCR pipeline.
+                        type = DocumentType.OTHER,
+                        contentType = picked.contentType,
+                    )
+                    // The copy has served its purpose either way; a failed
+                    // upload leaves the error on screen, not the file on disk.
+                    discard(picked)
+                }
+            }
+
             DocumentListScreen(
                 state = state,
                 strings = context.documentStrings(),
                 canUpload = true,
                 onRetry = { scope.launch { model.load() } },
-                // The picker is device work that arrives with the camera and
-                // file layers; the button is present and does nothing rather
-                // than absent, so the gap is visible.
-                onUpload = {},
+                onUpload = pick,
                 onLoadMore = { scope.launch { model.loadMore() } },
                 modifier = modifier,
             )

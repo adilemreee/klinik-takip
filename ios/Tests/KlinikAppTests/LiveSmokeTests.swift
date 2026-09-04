@@ -201,7 +201,7 @@ final class LiveSmokeTests: XCTestCase {
         try await environment.session.signIn(with: try XCTUnwrap(response.tokens()))
 
         // An 8×8 JPEG. The point is the round trip, not the picture.
-        let jpeg = try XCTUnwrap(Data(base64Encoded: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwC5RRRXCfQn/9k="))
+        let jpeg = try smokeJPEG()
 
         let file = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -231,6 +231,58 @@ final class LiveSmokeTests: XCTestCase {
             String(describing: reloaded.phase).hasPrefix("failed"),
             "the gallery would not reload after an upload"
         )
+    }
+
+    /**
+     * Uploading a document to the patient's own file, against the real server.
+     *
+     * Separate from the photo test because it takes a different route — the
+     * `me/documents` endpoint, and the resumable session for anything large.
+     * Both are paths a patient uses from a hotel on bad wifi.
+     */
+    @MainActor
+    func testUploadsADocumentToItsOwnFile() async throws {
+        let config = try configuration()
+        let environment = AppEnvironment(baseURL: config.baseURL)
+
+        let response = try await environment.auth.login(
+            LoginRequest(identifier: config.identifier, password: config.password)
+        )
+        try await environment.session.signIn(with: try XCTUnwrap(response.tokens()))
+
+        // A JPEG, because the server sniffs the bytes rather than trusting the
+        // Content-Type header, and a document must be one of the types it
+        // accepts — see DOCUMENT_MIME_TYPES.
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("jpg")
+        try smokeJPEG().write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let documents = DocumentsModel(
+            api: environment.documents,
+            resumable: environment.resumable,
+            subject: .me
+        )
+
+        let uploaded = await documents.upload(fileURL: file, type: .other, contentType: "image/jpeg")
+        let state = await documents.currentState()
+
+        XCTAssertTrue(uploaded, "upload failed: \(state.uploadError ?? "no message")")
+
+        await documents.load()
+        let reloaded = await documents.currentState()
+
+        XCTAssertFalse(
+            String(describing: reloaded.phase).hasPrefix("failed"),
+            "the list would not reload after an upload"
+        )
+    }
+
+    /// The smallest thing the server will accept as an image. The point of
+    /// both upload tests is the round trip, not the picture.
+    private func smokeJPEG() throws -> Data {
+        try XCTUnwrap(Data(base64Encoded: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwC5RRRXCfQn/9k="))
     }
 
     /// A phase describing a failure, with the message the user would have read.

@@ -14,7 +14,7 @@ Bir Xcode projesi aynı şeyleri kanıtlamak için simülatör isterdi.
 | `KlinikCore` | Oturum, Keychain, hata modeli, yerelleştirme |
 | `KlinikAPI` | Ağ katmanı, kimlik doğrulama çağrıları |
 
-Uygulama hedefi (SwiftUI ekranları) T2.3'te geliyor.
+Uygulama hedefi artık var: [`ios/App/`](../ios/App/), `project.yml`'den xcodegen ile üretiliyor. Bkz. [UYGULAMA-KABUGU](UYGULAMA-KABUGU.md).
 
 ## Tasarım Tokenları İki Platformda Ortak
 

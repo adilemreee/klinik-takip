@@ -422,6 +422,7 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T2.3 Giriş/onboarding akışları (her iki platform) ([GIRIS-AKISI](GIRIS-AKISI.md))
 - [x] T2.4 Hasta listesi + hasta detay ekranı (personel tarafı) ([HASTA-EKRANLARI](HASTA-EKRANLARI.md))
 - [x] T2.5 Hasta ana ekranı (hasta tarafı) ([HASTA-ANA-EKRANI](HASTA-ANA-EKRANI.md))
+- [x] **Uygulama kabuğu** — T2.3–T2.5 ekranları vardı ama kurulup açılabilen bir uygulama yoktu ([UYGULAMA-KABUGU](UYGULAMA-KABUGU.md)). iOS uygulama hedefi + Android `:app` modülü, rol bazlı yönlendirme (`GET /me/identity`), Android'in eksik olan gerçek ağ katmanı, keystore'da şifreli token'lar. Hostname'ler depoda değil
 - [x] T2.6 Offline katmanı: outbox + senkronizasyon + çakışma çözümü + **kalıcı yerel depo** ([OFFLINE-VE-CAKISMA](OFFLINE-VE-CAKISMA.md)) — kuyruk, çakışmalar ve **yarım kalan yüklemeler** artık diskte; iOS'ta GRDB, Android'de `androidx.sqlite` sürücüsü doğrudan (ilke: **ham API güvensizse kütüphane, güvenliyse değil**). Android'de sürücü dışarıdan veriliyor, yani **test edilen kod gönderilen kod** — emülatör gerekmiyor. Şema sürümlü; yeniden başlatma testi iki tarafta da gerçek (yaz, kapat, aynı dosyayı yeniden aç)
 - [~] T2.7 **Dil seti: AR (RTL), DE, RU** — **kapsam dışı bırakıldı (2026-09-04, proje sahibi kararı):** uygulamada TR ve EN yeterli. Altyapı hazır ve çok dilli; dil eklemek bir katalog dosyası eklemektir. §7'den bilinçli sapma, unutulmuş bir iş değil
 

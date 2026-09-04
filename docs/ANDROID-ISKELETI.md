@@ -7,7 +7,9 @@
 | Modül | Tür | Nerede doğrulanıyor |
 |---|---|---|
 | `core:network` | Saf Kotlin/JVM | Yerelde ve CI'da — SDK gerektirmiyor |
+| `core:shell` | Saf Kotlin/JVM | Yerelde ve CI'da — kim nereye gider kararı |
 | `core:design` | Android kütüphanesi (Compose) | Yalnız CI'da |
+| `:app` | Android uygulaması | Yalnız CI'da — [UYGULAMA-KABUGU](UYGULAMA-KABUGU.md) |
 
 Oturum, ağ ve hata yönetimi hiçbir Android bağımlılığı taşımıyor; iOS istemcisinin
 Xcode projesi yerine Swift paketi olmasının sebebiyle aynı sebep — **komut satırından

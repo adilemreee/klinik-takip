@@ -241,6 +241,12 @@ model Patient {
 
   firstName String   @map("first_name")
   lastName  String   @map("last_name")
+
+  /// Name and file number, lower-cased and with Turkish letters folded to
+  /// ASCII, so "Ayse Yilmaz" finds "Ayşe Yılmaz". Written by the application —
+  /// see `foldForSearch`; never set by a caller.
+  searchText String @default("") @map("search_text")
+
   birthDate DateTime @map("birth_date") @db.Date
   sex       Sex
 

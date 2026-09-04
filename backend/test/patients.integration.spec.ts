@@ -136,6 +136,64 @@ describe('patient records', () => {
     });
   });
 
+  describe('search', () => {
+    it('finds a Turkish name typed without its diacritics', async () => {
+      // The failure this replaces: a coordinator on a keyboard without a
+      // Turkish layout searched "Yilmaz", got nothing, and had every reason to
+      // conclude the patient was not in the system.
+      const doctor = await makeUser(Role.DOCTOR);
+      await create(doctor, { firstName: 'Ayşe', lastName: 'Yılmaz' });
+
+      const plain = await patients.search(doctor, { q: 'yilmaz' });
+      const accented = await patients.search(doctor, { q: 'yılmaz' });
+
+      expect(plain.items.map((p) => p.lastName)).toContain('Yılmaz');
+      expect(accented.items.map((p) => p.lastName)).toContain('Yılmaz');
+    });
+
+    it('finds a diacritic name typed with its diacritics too', async () => {
+      const doctor = await makeUser(Role.DOCTOR);
+      await create(doctor, { firstName: 'Çağlar', lastName: 'Öztürk' });
+
+      for (const term of ['ozturk', 'öztürk', 'caglar', 'çağlar', 'OZTURK']) {
+        const found = await patients.search(doctor, { q: term });
+
+        expect(found.items.map((p) => p.lastName)).toContain('Öztürk');
+      }
+    });
+
+    it('still finds by file number', async () => {
+      const doctor = await makeUser(Role.DOCTOR);
+      const patient = await create(doctor);
+
+      const found = await patients.search(doctor, { q: patient.mrn });
+
+      expect(found.items.map((p) => p.id)).toContain(patient.id);
+    });
+
+    it('follows a corrected spelling', async () => {
+      // A name fixed after a typo must be findable by the correction, not only
+      // by the mistake.
+      const doctor = await makeUser(Role.DOCTOR);
+      const patient = await create(doctor, { firstName: 'Aysse', lastName: 'Yilmaz' });
+
+      await patients.update(doctor, patient.id, { firstName: 'Ayşe' });
+
+      const found = await patients.search(doctor, { q: 'ayse' });
+
+      expect(found.items.map((p) => p.id)).toContain(patient.id);
+    });
+
+    it('does not match somebody else', async () => {
+      const doctor = await makeUser(Role.DOCTOR);
+      await create(doctor, { firstName: 'Ayşe', lastName: 'Yılmaz' });
+
+      const found = await patients.search(doctor, { q: 'zzzznobody' });
+
+      expect(found.items).toHaveLength(0);
+    });
+  });
+
   describe('scoped reads', () => {
     it('lets a doctor open any file', async () => {
       const doctor = await makeUser(Role.DOCTOR);

@@ -84,6 +84,21 @@ export const envSchema = z.object({
   UPLOAD_MAX_BYTES: z.coerce.number().int().positive().default(20 * 1024 * 1024),
 
   /**
+   * Requests per IP per minute, and the window.
+   *
+   * The default is the production rule and is not generous on purpose: this is
+   * what stands between one script and every patient's screen being slow.
+   *
+   * Configurable because a load test comes from one address, and with the
+   * production limit it measures the rate limiter rather than the application
+   * — 500 patients are 500 addresses, a load generator is one. Raising it is a
+   * deliberate act, in an isolated environment, and it leaves a trace in the
+   * environment rather than in a temporarily edited source file.
+   */
+  THROTTLE_LIMIT: z.coerce.number().int().positive().default(120),
+  THROTTLE_TTL_MS: z.coerce.number().int().positive().default(60_000),
+
+  /**
    * Largest accepted photo. Lower than a document because a photo is read into
    * memory to have its metadata stripped, and one request per concurrent
    * upload at the document limit is a different amount of memory.

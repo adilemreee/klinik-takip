@@ -5,6 +5,7 @@ import type { AuthenticatedUser } from '../auth/decorators/current-user.decorato
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
 import { generateMrn } from './mrn';
+import { foldForSearch, patientSearchText } from './search-folding';
 import { VersionConflictException } from './version-conflict';
 import {
   AssignStaffDto,
@@ -55,11 +56,15 @@ export class PatientsService {
 
       try {
         return await this.prisma.$transaction(async (tx) => {
+          const firstName = dto.firstName.trim();
+          const lastName = dto.lastName.trim();
+
           const patient = await tx.patient.create({
             data: {
               mrn,
-              firstName: dto.firstName.trim(),
-              lastName: dto.lastName.trim(),
+              firstName,
+              lastName,
+              searchText: patientSearchText({ firstName, lastName, mrn }),
               birthDate: dto.birthDate,
               sex: dto.sex,
               country: dto.country.toUpperCase(),
@@ -138,16 +143,15 @@ export class PatientsService {
 
     if (dto.q) {
       const term = dto.q.trim();
-      // ILIKE '%term%' is served by the trigram GIN indexes; staff search on
-      // partial and misspelled names, and in health tourism the spelling on
-      // file often differs from what is typed (spec M2).
-      filters.push({
-        OR: [
-          { firstName: { contains: term, mode: 'insensitive' } },
-          { lastName: { contains: term, mode: 'insensitive' } },
-          { mrn: { contains: term, mode: 'insensitive' } },
-        ],
-      });
+
+      // Matched against the folded column so "Ayse Yilmaz" finds "Ayşe Yılmaz".
+      // ILIKE is case-insensitive and not accent-insensitive, and a coordinator
+      // on a keyboard without a Turkish layout getting no results reads as
+      // "this patient is not in the system" (spec M2).
+      //
+      // `contains` on the folded column is served by its trigram GIN index, so
+      // this stays an index scan rather than folding every row at query time.
+      filters.push({ searchText: { contains: foldForSearch(term) } });
     }
 
     if (dto.status) {
@@ -216,12 +220,19 @@ export class PatientsService {
         throw new VersionConflictException('patients', expectedVersion, before.version, before);
       }
 
+      const firstName = dto.firstName?.trim() ?? before.firstName;
+      const lastName = dto.lastName?.trim() ?? before.lastName;
+
       const patient = await tx.patient.update({
         where: { id },
         data: {
           ...dto,
-          firstName: dto.firstName?.trim(),
-          lastName: dto.lastName?.trim(),
+          firstName,
+          lastName,
+          // Recomputed from the names as they will be, not as they were: a
+          // corrected spelling that leaves the search column behind is a
+          // patient findable only by the mistake.
+          searchText: patientSearchText({ firstName, lastName, mrn: before.mrn }),
           country: dto.country?.toUpperCase(),
           version: { increment: 1 },
         },

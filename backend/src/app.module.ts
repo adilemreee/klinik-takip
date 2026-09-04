@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import type { Env } from './config/env.schema';
 import { AuthModule } from './auth/auth.module';
 import { AuthzModule } from './authz/authz.module';
 import { AuditModule } from './audit/audit.module';
@@ -44,7 +46,16 @@ import { ObservabilityModule } from './observability/observability.module';
     // Application-level rate limiting. Cloudflare handles edge WAF and volumetric
     // limits; this protects specific endpoints (login, OTP) from abuse that gets
     // past the edge. See docs/SUNUCU-NOTLARI.md.
-    ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 120 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => [
+        {
+          name: 'default',
+          ttl: config.get('THROTTLE_TTL_MS', { infer: true }),
+          limit: config.get('THROTTLE_LIMIT', { infer: true }),
+        },
+      ],
+    }),
     HealthModule,
     AuthModule,
     AuthzModule,

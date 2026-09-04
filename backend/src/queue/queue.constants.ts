@@ -94,6 +94,9 @@ export const JOBS = {
    */
   auditPartitionSweep: 'audit-partition-sweep',
 
+  /** Destroying what has outlived its purpose (KVKK m.7). */
+  retentionSweep: 'retention-sweep',
+
   /**
    * Asks the questionnaires that have come due and closes the window on the
    * ones nobody answered (spec M18).

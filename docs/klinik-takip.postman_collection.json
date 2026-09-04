@@ -817,6 +817,24 @@
       "name": "me",
       "item": [
         {
+          "name": "Your own data, in a form you can take elsewhere",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/data-export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "data-export"
+              ]
+            },
+            "description": "Your own data, in a form you can take elsewhere"
+          }
+        },
+        {
           "name": "The signed-in account: role, name and patient file if any",
           "request": {
             "method": "GET",

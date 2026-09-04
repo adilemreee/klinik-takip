@@ -41,6 +41,7 @@ import { runWorker } from './queue/job-runner';
 import { JOBS, QUEUES } from './queue/queue.constants';
 import { QueueService } from './queue/queue.service';
 import { auditPartitionSweep } from './audit/audit-partitions';
+import { retentionSweep } from './retention/retention';
 import { attachWorkerLogging } from './worker-bootstrap';
 
 /**
@@ -117,6 +118,7 @@ async function bootstrap(): Promise<void> {
       [JOBS.medicationSweep]: medicationSweep(prisma, careTeam, notifications),
       [JOBS.surveySweep]: surveySweep(prisma, app.get(SurveysService), notifications),
       [JOBS.auditPartitionSweep]: auditPartitionSweep(prisma),
+      [JOBS.retentionSweep]: retentionSweep(prisma),
     },
     connection: queues.connection,
     prisma,
@@ -185,6 +187,10 @@ async function bootstrap(): Promise<void> {
   // midnight on the 1st must not be the reason a year of audit history ends up
   // in one heap.
   await queues.schedule(QUEUES.notifications, JOBS.auditPartitionSweep, 24 * 60 * 60 * 1000);
+  // Daily. The policy says "periodically"; daily means a record never outlives
+  // its purpose by more than a day, and the sweep is cheap because it deletes
+  // what the previous run already could not find.
+  await queues.schedule(QUEUES.notifications, JOBS.retentionSweep, 24 * 60 * 60 * 1000);
 
   // The starter questionnaire, if it is not already there. Never an update:
   // a template version is frozen once anybody has answered it.

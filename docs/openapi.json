@@ -1878,6 +1878,73 @@
         ]
       }
     },
+    "/me/data-export": {
+      "get": {
+        "operationId": "MeController_dataExport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your own data, in a form you can take elsewhere",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/me/identity": {
       "get": {
         "operationId": "MeController_identity",
@@ -14369,6 +14436,161 @@
         "required": [
           "staffId",
           "role"
+        ]
+      },
+      "PortablePatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sex": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "city": {
+            "type": "object",
+            "nullable": true
+          },
+          "nationality": {
+            "type": "object",
+            "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "firstName",
+          "lastName",
+          "birthDate",
+          "sex",
+          "country",
+          "preferredLanguage",
+          "status",
+          "createdAt"
+        ]
+      },
+      "DataExportDto": {
+        "type": "object",
+        "properties": {
+          "exportedAt": {
+            "type": "string",
+            "description": "When this file was produced"
+          },
+          "format": {
+            "type": "string",
+            "example": "klinik-portability-1",
+            "description": "Format identifier"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/PortablePatientDto"
+          },
+          "medicalProfile": {
+            "type": "object",
+            "nullable": true
+          },
+          "measurements": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "labResults": {
+            "description": "Confirmed results only; an unreviewed OCR reading is not a lab result",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "photos": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "appointments": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "medications": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "complications": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "surveyResponses": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "notIncluded": {
+            "description": "What this file deliberately leaves out, and it says so in the file",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "exportedAt",
+          "format",
+          "patient",
+          "measurements",
+          "documents",
+          "labResults",
+          "photos",
+          "appointments",
+          "medications",
+          "complications",
+          "consents",
+          "surveyResponses",
+          "notIncluded"
         ]
       },
       "IdentityDto": {

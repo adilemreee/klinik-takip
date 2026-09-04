@@ -46,8 +46,9 @@ değil. Bir denetim günlüğünde seçmeli silme, günlüğün amacını ortada
 Altı ayda bir, `[SORUMLU]` tarafından. Süresi dolan kayıtlar tespit edilir,
 imha edilir ve imha tutanağı tutulur.
 
-**Bugünkü durum: otomatik periyodik imha işi henüz yazılmadı.** Denetim günlüğü
-bölümlemesi ve yumuşak silme altyapısı hazır; süresi dolanları tarayıp imha eden
-zamanlanmış iş T7 kapsamında yazılacak. Gerçek hasta verisi girmeden önce
-tamamlanmalıdır — bu belgeyi yazıp işi yazmamak, politikası olan ama uygulamayan
-bir klinik demektir.
+**Bugünkü durum: iş yazıldı ve günde bir kez koşuyor** (`retentionSweep`).
+Ayrıntısı ve neye bilerek dokunmadığı [KVKK-UYGULAMA-NOTLARI](KVKK-UYGULAMA-NOTLARI.md)'nda.
+
+Kalan: imha tutanağının otomatik üretilmesi. Şu an her koşu log'a düşüyor —
+kaç kayıt, hangi türden — ama bu bir tutanak değil, bir log satırı. Denetimde
+istenirse log'dan çıkarılabilir; kalıcı bir tutanak tablosu T7'de.

@@ -82,11 +82,45 @@ Dürüstlük gereği, bu belgenin tarif ettiği ama sistemin **yapmadığı** ş
 
 | Eksik | Sonucu | Ne zaman |
 |---|---|---|
-| Periyodik imha işi | süresi dolan kayıtlar kendiliğinden silinmiyor | T7 |
-| Veri taşınabilirliği dışa aktarımı (m.11) | hasta verisini makine okunur alamıyor | T7 |
 | Uygulamada onam ekranı | uçlar var, arayüz yok | T2.6 devamı |
 | VERBİS kaydı | klinik tarafından yapılacak | klinik |
 | Standart sözleşme + Kuruma bildirim | yurt dışı sağlayıcı kullanılacaksa zorunlu | klinik + avukat |
+
+## Periyodik imha — artık çalışıyor
+
+`retentionSweep` günde bir kez koşuyor. Yok ettikleri: yarım kalmış yükleme
+oturumları (7 gün), AI iş kayıtları (90 gün), üretilmiş dışa aktarımlar (30 gün),
+gönderilmiş bildirimler (365 gün), iptal/süresi dolmuş cihaz oturumları (90 gün).
+
+**Üçüne bilerek dokunmuyor** ve her biri testle sabitlendi:
+
+- **Klinik kayıtlar** — mevzuatın asgari saklama süresi her amaç testinin
+  üstündedir. Kimse açmadı diye silinen bir hasta dosyası, kliniğin tutmakla
+  yükümlü olduğu kanıtı yok etmek olurdu.
+- **Denetim günlüğü** — veritabanı seviyesinde salt-ekleme; süresi dolması bir
+  bölüm düşürmedir, satır silme değil. Denetim günlüğünde seçmeli silme günlüğün
+  kendisini anlamsızlaştırır.
+- **Onam kayıtları** — geri alma ileriye etkilidir; rızanın var olduğunu ispat
+  yükü veri sorumlusundadır ve silinmiş bir satır hiçbir şey ispat etmez.
+
+Hiçbir şey yok etmediğinde de kayıt düşüyor: bir imha takviminin gösterilebilir
+olması gerekir, ve "koştu, bir şey bulmadı" bunun kanıtıdır.
+
+## Veri taşınabilirliği — artık var
+
+`GET /me/data-export`, hastanın kendi verisini yapılandırılmış JSON olarak
+veriyor. PDF değil: hak *veriyi almak*, ve bir PDF kanunun kastettiği anlamda
+taşınabilir değil — okumak için zaten hasta özeti PDF'i var.
+
+İki sınır bilerek çizildi ve dosyanın **içinde** yazıyor (`notIncluded`), çünkü
+dosya konuşmadan uzun yaşar:
+
+- **Yalnız onaylanmış tahliller.** İncelenmemiş bir OCR okuması tahlil sonucu
+  değildir; hastanın yanında klinikten çıkan bir dosyada olması, inceleme
+  adımının engellemek için var olduğu şeyin en kötü hâlidir.
+- **Personelin mesleki notları ve klinik içi triyaj verisi yok.** Bunlar
+  yardımsever olmamak için değil, başkalarının verisini hastanın kendi verisi
+  başlığı altında teslim etmemek için dışarıda.
 
 **Sunucudaki açık:** parola ile root SSH girişi açık. Klinik sahibi 2026-09-04'te
 kapatmama kararı verdi; T7.2 bunu kapatılmış bir bulgu olarak değil, **kabul

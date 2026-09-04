@@ -44,17 +44,22 @@ export const PROVIDERS: Record<SelectableProvider, ProviderInfo> = {
   anthropic: {
     id: 'anthropic',
     label: 'Anthropic (Claude)',
-    models: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5-20251001'],
+    // 2026-09-04'te sağlayıcı belgelerinden doğrulandı. Kimlikler tarih eki
+    // ALMAZ — 'claude-haiku-4-5-20251001' gibi bir sürüm damgası 404 döner.
+    models: ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'],
     pricingUrl: 'https://www.anthropic.com/pricing',
     consoleUrl: 'https://console.anthropic.com/',
     retentionNote:
       'Anthropic API varsayılan olarak istemleri model eğitimi için kullanmaz. ' +
-      'Sağlık verisi için ayrıca bir iş ortaklığı/veri işleme sözleşmesi gerekir.',
+      'Sağlık verisi için ayrıca bir iş ortaklığı/veri işleme sözleşmesi gerekir. ' +
+      'NOT: Claude Fable ailesi (claude-fable-5-1) 30 günlük saklama zorunlu ' +
+      'tuttuğu için sıfır saklama ile KULLANILAMAZ; bu yüzden listede yok.',
   },
   openai: {
     id: 'openai',
     label: 'OpenAI (GPT)',
-    models: ['gpt-5', 'gpt-5-mini', 'gpt-4.1', 'gpt-4o'],
+    // 2026-09-04'te developers.openai.com/api/docs/models'ten doğrulandı.
+    models: ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
     pricingUrl: 'https://openai.com/api/pricing/',
     consoleUrl: 'https://platform.openai.com/api-keys',
     retentionNote:
@@ -64,7 +69,9 @@ export const PROVIDERS: Record<SelectableProvider, ProviderInfo> = {
   gemini: {
     id: 'gemini',
     label: 'Google (Gemini)',
-    models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
+    // 2026-09-04'te ai.google.dev/gemini-api/docs/models'ten doğrulandı.
+    // Yalnız kararlı sürümler; preview/experimental hasta verisiyle kullanılmaz.
+    models: ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-2.5-pro'],
     pricingUrl: 'https://ai.google.dev/pricing',
     consoleUrl: 'https://aistudio.google.com/apikey',
     retentionNote:
@@ -75,7 +82,8 @@ export const PROVIDERS: Record<SelectableProvider, ProviderInfo> = {
   deepseek: {
     id: 'deepseek',
     label: 'DeepSeek',
-    models: ['deepseek-chat', 'deepseek-reasoner'],
+    // 2026-09-04'te api-docs.deepseek.com'dan doğrulandı.
+    models: ['deepseek-v4-pro', 'deepseek-v4-flash'],
     pricingUrl: 'https://api-docs.deepseek.com/quick_start/pricing',
     consoleUrl: 'https://platform.deepseek.com/api_keys',
     retentionNote:

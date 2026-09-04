@@ -101,7 +101,16 @@ export function retentionSweep(prisma: PrismaService): JobHandler {
 
   return async (): Promise<void> => {
     const outcome = await sweepExpired(prisma);
-    const total = Object.values(outcome).reduce((sum, count) => sum + count, 0);
+    // Typed rather than Object.values, which widens to any under the project's
+    // type-aware lint and would hide a field added later that is not a count.
+    const counts: number[] = [
+      outcome.uploadSessions,
+      outcome.aiJobs,
+      outcome.exports,
+      outcome.notifications,
+      outcome.deviceSessions,
+    ];
+    const total = counts.reduce((sum, count) => sum + count, 0);
 
     // Logged even when nothing was destroyed. A destruction schedule has to be
     // demonstrable, and "it ran and found nothing" is the evidence for the

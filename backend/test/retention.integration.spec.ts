@@ -18,7 +18,7 @@ describe('retention sweep', () => {
 
   const service = prisma as unknown as PrismaService;
   const NOW = new Date('2026-09-04T12:00:00Z');
-  const daysAgo = (days: number) => new Date(NOW.getTime() - days * 86_400_000);
+  const daysAgo = (days: number): Date => new Date(NOW.getTime() - days * 86_400_000);
 
   const makePatient = async (): Promise<string> => {
     const user = await prisma.user.create({
@@ -145,14 +145,12 @@ describe('retention sweep', () => {
     // be demonstrable.
     const outcome = await sweepExpired(service, NOW);
 
-    expect(outcome).toEqual(
-      expect.objectContaining({
-        uploadSessions: expect.any(Number),
-        aiJobs: expect.any(Number),
-        exports: expect.any(Number),
-        notifications: expect.any(Number),
-        deviceSessions: expect.any(Number),
-      }),
-    );
+    // Every field present and a number. Asserted field by field rather than
+    // with expect.any, which the project's type-aware lint reads as `any`.
+    expect(typeof outcome.uploadSessions).toBe('number');
+    expect(typeof outcome.aiJobs).toBe('number');
+    expect(typeof outcome.exports).toBe('number');
+    expect(typeof outcome.notifications).toBe('number');
+    expect(typeof outcome.deviceSessions).toBe('number');
   });
 });

@@ -300,6 +300,7 @@ sonuç WebSocket/push ile bildirilir.
 - Yaşlı kullanıcılar için: Dynamic Type / font ölçekleme desteği, minimum 44×44pt dokunma alanı, yüksek kontrast, koyu mod.
 - Erişilebilirlik: VoiceOver / TalkBack tam desteği, renk körlüğü güvenli palet (kritik bilgi yalnız renkle anlatılmaz — ikon + metin de olur).
 - **Çok dil:** TR, EN, AR (RTL desteği!), DE, RU başlangıç seti. Tüm metinler dış kaynak dosyalarında, koda gömülü metin yok.
+  > **Kapsam kararı (2026-09-04, proje sahibi):** uygulamada **yalnız TR ve EN** olacak; AR/DE/RU yapılmayacak. Altyapı çok dilli kalıyor (tek katalog, dış kaynak dosyaları, `preferredLanguage`), yani dil eklemek bir katalog dosyası eklemek. Sağlık turizmi bağlamında bunun anlamı: Türkçe okumayan hasta taburculuk ve acil metinlerini **İngilizce** görür — kırılma değil, kliniğin bildiği bir anlaşılırlık kararı.
 - Boş durumlar, yükleniyor iskeletleri (skeleton), hata durumları ve **çevrimdışı durumu** her ekranda tasarlanır.
 - Doktor paneli yoğun bilgi içerebilir ama **hiyerarşi net** olmalı: kritik olan üstte ve kırmızı, rutin altta ve nötr.
 - Native hissiyat: iOS'ta iOS kalıpları (SF Symbols, sheet, swipe), Android'de Material 3. **Tek tasarımı iki platforma zorla giydirme.**
@@ -416,13 +417,13 @@ Netlik için: ödeme altyapısı entegrasyonu (sanal POS), e-Nabız/MHRS entegra
 - [x] T1.7 OpenAPI dokümanı + Postman koleksiyonu ([API-SOZLESMESI](API-SOZLESMESI.md) · [openapi.json](openapi.json))
 
 ### FAZ 2 — Mobil İskeletler
-- [x] T2.1 iOS proje kurulumu: mimari, ağ katmanı, tasarım sistemi, i18n ([IOS-ISKELETI](IOS-ISKELETI.md)) — i18n altyapısı tamam, **diller eksik**: aşağıdaki T2.7'ye bakın
+- [x] T2.1 iOS proje kurulumu: mimari, ağ katmanı, tasarım sistemi, i18n ([IOS-ISKELETI](IOS-ISKELETI.md)) — i18n altyapısı tamam; dil seti TR + EN ile sınırlandı (T2.7'ye bakın)
 - [x] T2.2 Android proje kurulumu: aynı kapsam ([ANDROID-ISKELETI](ANDROID-ISKELETI.md)) — aynı not
 - [x] T2.3 Giriş/onboarding akışları (her iki platform) ([GIRIS-AKISI](GIRIS-AKISI.md))
 - [x] T2.4 Hasta listesi + hasta detay ekranı (personel tarafı) ([HASTA-EKRANLARI](HASTA-EKRANLARI.md))
 - [x] T2.5 Hasta ana ekranı (hasta tarafı) ([HASTA-ANA-EKRANI](HASTA-ANA-EKRANI.md))
 - [ ] T2.6 Offline katmanı: outbox + senkronizasyon + çakışma çözümü **tamam ve testli**; kalıcı yerel DB (GRDB / Room) **eksik** — depolar şu an bellekte, yani uygulama kapanınca kuyruk kayboluyor. Tasarım: [OFFLINE-VE-CAKISMA](OFFLINE-VE-CAKISMA.md)
-- [ ] T2.7 **Dil seti: AR (RTL), DE, RU** — §7 bunları başlangıç setinde istiyor; şu an yalnız TR ve EN var. Metinlerin tamamı zaten dış kaynak dosyalarında ve tek katalogdan üretiliyor, dolayısıyla eksik olan çeviriler ve **Arapça için RTL yerleşimi**. *(Şartnamenin task listesinde yoktu; §7 ile liste arasındaki boşluğu kapatmak için eklendi.)*
+- [~] T2.7 **Dil seti: AR (RTL), DE, RU** — **kapsam dışı bırakıldı (2026-09-04, proje sahibi kararı):** uygulamada TR ve EN yeterli. Altyapı hazır ve çok dilli; dil eklemek bir katalog dosyası eklemektir. §7'den bilinçli sapma, unutulmuş bir iş değil
 
 ### FAZ 3 — Klinik Modüller
 - [x] T3.1 Ölçümler ve VKİ + grafikler ([OLCUMLER](OLCUMLER.md))

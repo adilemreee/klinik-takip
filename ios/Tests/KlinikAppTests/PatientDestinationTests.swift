@@ -36,7 +36,10 @@ final class PatientDestinationTests: XCTestCase {
         XCTAssertEqual(PatientHomeView.destination(for: .messages), .messages)
         XCTAssertEqual(PatientHomeView.destination(for: .uploadDocument), .documents)
         XCTAssertEqual(PatientHomeView.destination(for: .medications), .medications)
-        XCTAssertEqual(PatientHomeView.destination(for: .addPhoto), .photos)
+        // The tile adds a photograph; it does not open the gallery. Somebody
+        // who tapped "add" and got a list of what they already have has to find
+        // the way forward themselves.
+        XCTAssertEqual(PatientHomeView.destination(for: .addPhoto), .addPhoto)
     }
 
     @MainActor

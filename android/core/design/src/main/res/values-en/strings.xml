@@ -427,6 +427,7 @@
     <string name="patient_not_found">Patient not found</string>
     <string name="patient_search">Search patients</string>
     <string name="patient_search_hint">Name, surname or file number</string>
+    <string name="photo_add">Add a photo</string>
     <string name="photo_after">After</string>
     <string name="photo_assessment_clean">Nothing observed</string>
     <string name="photo_assessment_disclaimer">This is a pre-assessment, not a diagnosis. It was produced by AI.</string>
@@ -436,10 +437,14 @@
     <string name="photo_assessment_title">Pre-assessment</string>
     <string name="photo_before">Before</string>
     <string name="photo_body_area">Body area</string>
+    <string name="photo_body_area_hint">Which area? (e.g. abdomen, chest)</string>
+    <string name="photo_camera_unavailable">This device has no camera; you can choose from the library.</string>
+    <string name="photo_capture">Capture</string>
     <string name="photo_category_after">After</string>
     <string name="photo_category_before">Before</string>
     <string name="photo_category_complication">Complication</string>
     <string name="photo_category_wound">Wound</string>
+    <string name="photo_choose_category">What is this photo for?</string>
     <string name="photo_clinical_use_only">Clinical use only</string>
     <string name="photo_compare">Compare</string>
     <string name="photo_compare_slider">Comparison slider</string>
@@ -449,8 +454,11 @@
     <string name="photo_finding_redness">Redness</string>
     <string name="photo_finding_swelling">Swelling</string>
     <string name="photo_finding_wound_open">Wound edges apart</string>
+    <string name="photo_need_body_area">Name the area so the photos can be compared.</string>
     <string name="photo_no_body_area">No body area given</string>
     <string name="photo_overlay_hint">Line the previous photo up and shoot from the same angle and distance.</string>
+    <string name="photo_uploaded">Sent</string>
+    <string name="photo_uploading">Sending…</string>
     <string name="report_doctor_view">Clinical interpretation</string>
     <string name="report_generated_at">Generated</string>
     <string name="report_hold_action">Approve, do not send</string>

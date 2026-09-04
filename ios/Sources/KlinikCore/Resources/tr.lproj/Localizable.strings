@@ -2,6 +2,14 @@
 
 /* Genel */
 "common.retry" = "Tekrar dene";
+"photo.add" = "Fotoğraf ekle";
+"photo.capture" = "Çek";
+"photo.chooseCategory" = "Bu fotoğraf ne için?";
+"photo.bodyAreaHint" = "Hangi bölge? (örn. karın, göğüs)";
+"photo.uploading" = "Gönderiliyor…";
+"photo.uploaded" = "Gönderildi";
+"photo.needBodyArea" = "Karşılaştırma yapılabilmesi için bölgeyi yazın.";
+"photo.cameraUnavailable" = "Bu cihazda kamera yok; galeriden seçebilirsiniz.";
 "menu.complicationQueue" = "Şikayet kuyruğu";
 "menu.labReview" = "Tahlil onayı";
 "menu.photos" = "Fotoğraflar";

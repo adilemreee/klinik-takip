@@ -26,6 +26,7 @@ public enum PatientDestination: Hashable, Sendable {
     case documents
     case medications
     case photos
+    case addPhoto
     case measurements
     case followUp
     case labResults
@@ -83,13 +84,14 @@ struct PatientHomeView: View {
         case .messages: return .messages
         case .uploadDocument: return .documents
         case .medications: return .medications
-        case .addPhoto: return .photos
+        case .addPhoto: return .addPhoto
         case .emergency: return nil
         }
     }
 
     private var menu: some View {
         Menu {
+            Button(L10n.string("menu.photos")) { path.append(.photos) }
             Button(L10n.string("menu.measurements")) { path.append(.measurements) }
             Button(L10n.string("menu.followUp")) { path.append(.followUp) }
             Button(L10n.string("menu.labResults")) { path.append(.labResults) }
@@ -147,6 +149,19 @@ struct PatientHomeView: View {
                 }
             )
 
+        case .addPhoto:
+            AddPhotoView(
+                model: PhotoGalleryModel(api: environment.photos, subject: .me),
+                capture: { reference in
+                    // The reference is downloaded here rather than inside the
+                    // capture screen: it needs a signed URL, and those are
+                    // short-lived on purpose.
+                    let image = await referenceImage(for: reference, photos: environment.photos)
+
+                    return await PhotoCapture.present(reference: reference, referenceImage: image)
+                }
+            )
+
         case .measurements:
             RecordMeasurementView(
                 model: MeasurementsModel(
@@ -196,4 +211,24 @@ struct NoPatientFileView: View {
         }
         .padding(Tokens.Spacing.xl)
     }
+}
+
+/**
+ * The reference photograph's bytes, for the capture overlay.
+ *
+ * Nil whenever anything is missing — no reference, no link, a download that
+ * failed. A capture with no guide is the normal case for the first photograph
+ * of an area; a capture that refuses to open because the guide could not be
+ * fetched would be worse than one without it.
+ */
+@MainActor
+func referenceImage(for reference: ClinicalPhoto?, photos: PhotosAPI) async -> Data? {
+    guard
+        let reference,
+        let link = try? await photos.link(photoId: reference.id),
+        let url = URL(string: link.url),
+        let (data, _) = try? await URLSession.shared.data(from: url)
+    else { return nil }
+
+    return data
 }

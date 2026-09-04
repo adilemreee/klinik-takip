@@ -427,6 +427,7 @@
     <string name="patient_not_found">Hasta bulunamadı</string>
     <string name="patient_search">Hasta ara</string>
     <string name="patient_search_hint">Ad, soyad veya dosya numarası</string>
+    <string name="photo_add">Fotoğraf ekle</string>
     <string name="photo_after">Sonrası</string>
     <string name="photo_assessment_clean">Bulgu görülmedi</string>
     <string name="photo_assessment_disclaimer">Bu bir ön değerlendirmedir, tanı değildir. Yapay zeka tarafından üretilmiştir.</string>
@@ -436,10 +437,14 @@
     <string name="photo_assessment_title">Ön değerlendirme</string>
     <string name="photo_before">Öncesi</string>
     <string name="photo_body_area">Vücut bölgesi</string>
+    <string name="photo_body_area_hint">Hangi bölge? (örn. karın, göğüs)</string>
+    <string name="photo_camera_unavailable">Bu cihazda kamera yok; galeriden seçebilirsiniz.</string>
+    <string name="photo_capture">Çek</string>
     <string name="photo_category_after">Sonrası</string>
     <string name="photo_category_before">Öncesi</string>
     <string name="photo_category_complication">Komplikasyon</string>
     <string name="photo_category_wound">Yara</string>
+    <string name="photo_choose_category">Bu fotoğraf ne için?</string>
     <string name="photo_clinical_use_only">Yalnızca klinik kullanım</string>
     <string name="photo_compare">Karşılaştır</string>
     <string name="photo_compare_slider">Karşılaştırma kaydırıcısı</string>
@@ -449,8 +454,11 @@
     <string name="photo_finding_redness">Kızarıklık</string>
     <string name="photo_finding_swelling">Şişlik</string>
     <string name="photo_finding_wound_open">Yara kenarları ayrık</string>
+    <string name="photo_need_body_area">Karşılaştırma yapılabilmesi için bölgeyi yazın.</string>
     <string name="photo_no_body_area">Bölge belirtilmemiş</string>
     <string name="photo_overlay_hint">Önceki fotoğrafın izini kullanarak aynı açı ve mesafeden çekin.</string>
+    <string name="photo_uploaded">Gönderildi</string>
+    <string name="photo_uploading">Gönderiliyor…</string>
     <string name="report_doctor_view">Klinik yorum</string>
     <string name="report_generated_at">Oluşturulma</string>
     <string name="report_hold_action">Onayla, hastaya gönderme</string>

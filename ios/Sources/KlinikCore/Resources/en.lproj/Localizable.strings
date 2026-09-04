@@ -2,6 +2,14 @@
 
 /* Common */
 "common.retry" = "Try again";
+"photo.add" = "Add a photo";
+"photo.capture" = "Capture";
+"photo.chooseCategory" = "What is this photo for?";
+"photo.bodyAreaHint" = "Which area? (e.g. abdomen, chest)";
+"photo.uploading" = "Sending…";
+"photo.uploaded" = "Sent";
+"photo.needBodyArea" = "Name the area so the photos can be compared.";
+"photo.cameraUnavailable" = "This device has no camera; you can choose from the library.";
 "menu.complicationQueue" = "Complaint queue";
 "menu.labReview" = "Lab review";
 "menu.photos" = "Photos";

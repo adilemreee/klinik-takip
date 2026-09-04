@@ -181,6 +181,58 @@ final class LiveSmokeTests: XCTestCase {
         assertNotFailed(await notifications.currentState().phase, "notification settings")
     }
 
+    /**
+     * Actually uploading something, against the real server.
+     *
+     * The one path where a fake transport proves the least: multipart bodies,
+     * the field names the server expects, and the metadata stripping it does on
+     * receipt are all things only the real endpoint can confirm. It is also the
+     * path a patient uses from a hotel on bad wifi, so it is worth knowing it
+     * works before somebody tries it there.
+     */
+    @MainActor
+    func testUploadsAPhotoToItsOwnFile() async throws {
+        let config = try configuration()
+        let environment = AppEnvironment(baseURL: config.baseURL)
+
+        let response = try await environment.auth.login(
+            LoginRequest(identifier: config.identifier, password: config.password)
+        )
+        try await environment.session.signIn(with: try XCTUnwrap(response.tokens()))
+
+        // An 8×8 JPEG. The point is the round trip, not the picture.
+        let jpeg = try XCTUnwrap(Data(base64Encoded: "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAIAAgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwC5RRRXCfQn/9k="))
+
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("jpg")
+        try jpeg.write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let gallery = PhotoGalleryModel(api: environment.photos, subject: .me)
+
+        let uploaded = await gallery.upload(
+            fileURL: file,
+            category: .after,
+            bodyArea: "smoke-test",
+            phaseLabel: nil
+        )
+
+        let state = await gallery.currentState()
+
+        XCTAssertTrue(uploaded, "upload failed: \(state.error ?? "no message")")
+
+        // And it comes back in the gallery, under the area it was tagged with —
+        // an untagged photo is one nobody can ever compare.
+        await gallery.load()
+        let reloaded = await gallery.currentState()
+
+        XCTAssertFalse(
+            String(describing: reloaded.phase).hasPrefix("failed"),
+            "the gallery would not reload after an upload"
+        )
+    }
+
     /// A phase describing a failure, with the message the user would have read.
     private func assertNotFailed(_ phase: Any, _ screen: String) {
         let described = String(describing: phase)

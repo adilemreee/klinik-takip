@@ -57,6 +57,14 @@ COPY prisma ./prisma
 # The legal texts the API serves; kept in step with docs/ by npm run legal:sync.
 COPY legal ./legal
 
+# The privacy notice has to survive the image build, and once it did not: a
+# `**/*.md` line in .dockerignore emptied this directory while leaving it there,
+# so the endpoint answered 404 and nothing failed until somebody asked for the
+# notice. Asserted here rather than in a test, because a test runs against a
+# checkout and this is a property of the image.
+RUN test -s legal/KVKK-AYDINLATMA-METNI.md || \
+    (echo "legal/ is empty — check .dockerignore" && exit 1)
+
 # node:22-alpine ships an unprivileged `node` user. Never run as root — this
 # process handles special-category health data (spec section 8).
 USER node

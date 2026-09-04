@@ -8,3 +8,7 @@ coverage
 .gitignore
 test/**/*.snap
 **/*.md
+# …except the legal texts, which the API serves. Without this the image gets an
+# empty legal/ directory and the privacy notice answers 404 — a notice nobody
+# can read, which is the one failure this endpoint exists to prevent.
+!legal/*.md

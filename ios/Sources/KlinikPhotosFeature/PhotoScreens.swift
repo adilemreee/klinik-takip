@@ -267,6 +267,9 @@ struct SignedImage: View {
             Tokens.Palette.surface.resolve(for: scheme)
             Image(systemName: icon)
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                // A stand-in for a photograph that has not loaded. The photo's
+                // own row carries the description; this is the empty frame.
+                .accessibilityHidden(true)
         }
     }
 }

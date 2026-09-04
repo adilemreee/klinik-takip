@@ -131,8 +131,11 @@ struct LaunchView: View {
                 Text(L10n.string("app.identityFailed"))
                     .multilineTextAlignment(.center)
                 Button(L10n.string("app.retry")) { Task { await retry() } }
+                    .buttonStyle(.borderedProminent)
+                    .frame(minHeight: Tokens.minimumTouchTarget)
             } else {
                 ProgressView()
+                    .accessibilityLabel(L10n.string("app.starting"))
             }
         }
         .padding(Tokens.Spacing.xl)

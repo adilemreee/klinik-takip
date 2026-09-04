@@ -212,6 +212,12 @@ jobs:
       # A string present in one language or on one platform and missing
       # elsewhere shows up as English mid-sentence in a Turkish screen, or as a
       # raw key in front of a patient.
+      # Four mechanical accessibility failures a script can see. The ones it
+      # cannot — reading order, label wording, focus — need a person with
+      # VoiceOver, and docs/ERISILEBILIRLIK.md says which those are.
+      - name: Check accessibility
+        run: node design/scripts/check-accessibility.mjs
+
       - name: Check string catalogues agree
         run: node design/scripts/check-strings.mjs
 

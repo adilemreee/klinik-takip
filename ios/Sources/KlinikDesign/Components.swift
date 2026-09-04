@@ -167,7 +167,10 @@ public struct PrimaryButton: View {
                     .opacity(isBusy ? 0 : 1)
 
                 if isBusy {
-                    ProgressView()
+                    // Hidden rather than labelled: the button keeps its own
+                    // title while it works, and two announcements for one
+                    // control is worse than one.
+                    ProgressView().accessibilityHidden(true)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
@@ -206,6 +209,9 @@ public struct ErrorBanner: View {
             HStack(alignment: .top, spacing: Tokens.Spacing.sm) {
                 Image(systemName: state.iconName)
                     .foregroundStyle(state.color.resolve(for: scheme))
+                    // The message beside it says the same thing. Left in the
+                    // tree, a reader announces "image" before every error.
+                    .accessibilityHidden(true)
 
                 Text(message)
                     .font(Tokens.Typography.bodyRelative)
@@ -270,6 +276,8 @@ public struct SearchField: View {
         HStack(spacing: Tokens.Spacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                // The field's own placeholder already says what it is for.
+                .accessibilityHidden(true)
 
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
@@ -312,6 +320,7 @@ public struct MessageState: View {
             Image(systemName: icon)
                 .font(.system(size: 40))
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                .accessibilityHidden(true)
 
             Text(text)
                 .font(Tokens.Typography.bodyRelative)

@@ -136,6 +136,9 @@ struct ActionTile: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: action.iconName)
                         .font(.system(size: 28))
+                        // The tile's title carries the meaning; the icon
+                        // repeats it as "image" to a screen reader.
+                        .accessibilityHidden(true)
 
                     if let badge {
                         Text("\(badge)")
@@ -211,13 +214,14 @@ struct EmergencySheet: View {
                     .frame(minHeight: Tokens.minimumTouchTarget)
 
             case .sending:
-                ProgressView()
+                ProgressView().accessibilityHidden(true)
                 Text(L10n.string("emergency.sending"))
 
             case .sent:
                 Image(systemName: Tokens.State.labNormal.iconName)
                     .font(.system(size: 44))
                     .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
+                    .accessibilityHidden(true)
                 Text(L10n.string("emergency.sent"))
                     .multilineTextAlignment(.center)
                 PrimaryButton(title: L10n.string("common.close"), isBusy: false, isEnabled: true) {
@@ -230,6 +234,7 @@ struct EmergencySheet: View {
                 Image(systemName: Tokens.State.labCritical.iconName)
                     .font(.system(size: 44))
                     .foregroundStyle(Tokens.Palette.critical.resolve(for: scheme))
+                    .accessibilityHidden(true)
 
                 Text(message)
                     .multilineTextAlignment(.center)

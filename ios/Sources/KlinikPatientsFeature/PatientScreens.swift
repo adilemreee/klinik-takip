@@ -66,6 +66,7 @@ public struct PatientListView: View {
                     HStack {
                         Spacer()
                         ProgressView()
+                            .accessibilityLabel(L10n.string("common.loading"))
                         Spacer()
                     }
                     // Loading the next page when the footer appears, rather than

@@ -166,6 +166,8 @@ struct ClosedBanner: View {
     var body: some View {
         HStack(spacing: Tokens.Spacing.sm) {
             Image(systemName: "clock")
+                // The text beside it already says when the clinic reopens.
+                .accessibilityHidden(true)
 
             Text(text)
                 .font(Tokens.Typography.calloutRelative)

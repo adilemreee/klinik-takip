@@ -86,7 +86,7 @@ public struct AddPhotoView: View {
 
                 if state.uploading {
                     HStack(spacing: Tokens.Spacing.md) {
-                        ProgressView()
+                        ProgressView().accessibilityHidden(true)
                         Text(L10n.string("photo.uploading"))
                             .font(Tokens.Typography.bodyRelative)
                     }

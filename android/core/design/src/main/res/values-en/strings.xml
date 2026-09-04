@@ -68,6 +68,7 @@
     <string name="assistant_title">Clinic assistant</string>
     <string name="auth_error_account_inactive">Your account is not active. Please contact your clinic.</string>
     <string name="auth_error_account_locked">Too many attempts. Try again in a little while.</string>
+    <string name="auth_error_account_locked_for">Too many attempts. Try again in %d minutes.</string>
     <string name="auth_error_invalid_credentials">E-mail or password is incorrect.</string>
     <string name="auth_error_mfa_invalid">That code is not right. Wait for the next one and try again.</string>
     <string name="auth_error_password_too_weak">That password is not strong enough.</string>

@@ -79,13 +79,19 @@ export class AuthService {
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       await this.recordAuth(AuditAction.LOGIN_FAILED, user, device, 'locked');
-      throw new UnauthorizedException(AuthError.ACCOUNT_LOCKED);
+      throw this.lockedOut(user.lockedUntil);
     }
 
     if (!(await verifyPassword(user.passwordHash, password))) {
-      await this.registerFailedAttempt(user);
+      const lockedUntil = await this.registerFailedAttempt(user);
       await this.recordAuth(AuditAction.LOGIN_FAILED, user, device, 'bad_password');
-      throw new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
+
+      // The attempt that trips the lock says so, rather than "wrong password"
+      // followed by a lock on the next try. Somebody who has just been locked
+      // out needs to know that now, not after typing it correctly once more.
+      throw lockedUntil
+        ? this.lockedOut(lockedUntil)
+        : new UnauthorizedException(AuthError.INVALID_CREDENTIALS);
     }
 
     if (user.status !== UserStatus.ACTIVE) {
@@ -108,9 +114,17 @@ export class AuthService {
       );
 
       if (!result.valid) {
-        await this.registerFailedAttempt(user);
+        const lockedUntil = await this.registerFailedAttempt(user);
         await this.recordAuth(AuditAction.LOGIN_FAILED, user, device, 'bad_totp');
-        throw new UnauthorizedException(AuthError.MFA_INVALID);
+
+        // A mistyped code counts the same as a mistyped password: both are
+        // guesses at a credential, and six digits is a space worth defending.
+        // It does mean somebody enrolling for the first time, copying a secret
+        // while the codes rotate, can lock themselves out — so the message has
+        // to say for how long.
+        throw lockedUntil
+          ? this.lockedOut(lockedUntil)
+          : new UnauthorizedException(AuthError.MFA_INVALID);
       }
 
       // Burn this time step so the same code cannot be presented again.
@@ -284,23 +298,47 @@ export class AuthService {
     });
   }
 
-  private async registerFailedAttempt(user: User): Promise<void> {
+  /**
+   * The lockout, with the wait in it.
+   *
+   * "Try again in a little while" leaves somebody guessing, and the server
+   * knows the answer exactly. The duration is a fixed policy constant rather
+   * than a secret, and this error already only reaches an account that exists —
+   * an unknown address gets INVALID_CREDENTIALS — so saying it reveals nothing
+   * a lockout has not already revealed.
+   */
+  private lockedOut(lockedUntil: Date): UnauthorizedException {
+    const seconds = Math.max(1, Math.ceil((lockedUntil.getTime() - Date.now()) / 1000));
+
+    return new UnauthorizedException({
+      statusCode: 401,
+      message: AuthError.ACCOUNT_LOCKED,
+      error: 'Unauthorized',
+      retryAfterSeconds: seconds,
+    });
+  }
+
+  /** Returns when the account became locked, or null if it is not. */
+  private async registerFailedAttempt(user: User): Promise<Date | null> {
     const maxAttempts = this.config.get('LOGIN_MAX_ATTEMPTS', { infer: true });
     const lockoutMinutes = this.config.get('LOGIN_LOCKOUT_MINUTES', { infer: true });
     const attempts = user.failedLoginAttempts + 1;
+    const lockedUntil =
+      attempts >= maxAttempts ? new Date(Date.now() + lockoutMinutes * 60_000) : null;
 
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         failedLoginAttempts: attempts,
-        lockedUntil:
-          attempts >= maxAttempts ? new Date(Date.now() + lockoutMinutes * 60_000) : undefined,
+        lockedUntil: lockedUntil ?? undefined,
       },
     });
 
-    if (attempts >= maxAttempts) {
+    if (lockedUntil) {
       this.logger.warn(`Account ${user.id} locked after ${attempts} failed attempts`);
     }
+
+    return lockedUntil;
   }
 
   private async clearFailedAttempts(user: User): Promise<void> {

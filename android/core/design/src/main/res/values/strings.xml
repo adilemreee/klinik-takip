@@ -68,6 +68,7 @@
     <string name="assistant_title">Klinik asistanı</string>
     <string name="auth_error_account_inactive">Hesabınız aktif değil. Kliniğinizle görüşün.</string>
     <string name="auth_error_account_locked">Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.</string>
+    <string name="auth_error_account_locked_for">Çok fazla deneme yapıldı. %d dakika sonra tekrar deneyin.</string>
     <string name="auth_error_invalid_credentials">E-posta veya parola hatalı.</string>
     <string name="auth_error_mfa_invalid">Kod doğru değil. Yeni kodu bekleyip tekrar deneyin.</string>
     <string name="auth_error_password_too_weak">Parola yeterince güçlü değil.</string>

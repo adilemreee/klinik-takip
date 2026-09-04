@@ -2,6 +2,7 @@
 
 /* Common */
 "common.retry" = "Try again";
+"auth.error.accountLockedFor" = "Too many attempts. Try again in %d minutes.";
 "consent.title" = "My permissions";
 "consent.noticeTitle" = "Privacy notice";
 "consent.noticeBody" = "Explains why your data is processed, on what legal basis, and what your rights are. This is not a consent; telling us you have read it is enough.";

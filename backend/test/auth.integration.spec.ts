@@ -135,6 +135,40 @@ describe('authentication', () => {
       );
     });
 
+    it('says how long the lock lasts', async () => {
+      // "Try again in a little while" leaves somebody guessing at the one thing
+      // the server knows exactly — and the wait is fifteen minutes, which is
+      // long enough that guessing wrong means guessing again.
+      const user = await makeUser(Role.PATIENT);
+
+      for (let i = 0; i < 5; i += 1) {
+        await auth.login(user.email, 'wrong-password-x', undefined, device).catch(() => undefined);
+      }
+
+      const refused = await auth
+        .login(user.email, PASSWORD, undefined, device)
+        .catch((error: unknown) => error);
+
+      const body = (refused as { getResponse: () => { retryAfterSeconds?: number } }).getResponse();
+
+      expect(body.retryAfterSeconds).toBeGreaterThan(0);
+      expect(body.retryAfterSeconds).toBeLessThanOrEqual(15 * 60);
+    });
+
+    it('tells the attempt that trips the lock that it tripped it', async () => {
+      // Otherwise it reports "wrong password", the person types it correctly,
+      // and only then learns they are locked out.
+      const user = await makeUser(Role.PATIENT);
+
+      for (let i = 0; i < 4; i += 1) {
+        await auth.login(user.email, 'wrong-password-x', undefined, device).catch(() => undefined);
+      }
+
+      await expect(
+        auth.login(user.email, 'wrong-password-x', undefined, device),
+      ).rejects.toThrow('ACCOUNT_LOCKED');
+    });
+
     it('clears the failure counter after a successful login', async () => {
       const user = await makeUser(Role.PATIENT);
 

@@ -36,7 +36,16 @@ public enum L10n {
             return string("error.forbidden")
         case .server, .unknown, .decoding, .rateLimited:
             return string("error.server")
-        case .auth(let code, _):
+        case .auth(let code, let body):
+            // A lockout with a number in it. "Try again in a little while"
+            // leaves somebody guessing at the one thing the server knows
+            // exactly, and guessing wrong means guessing again.
+            if code == .accountLocked, let seconds = body.retryAfterSeconds {
+                let minutes = max(1, Int((Double(seconds) / 60).rounded(.up)))
+
+                return String(format: string("auth.error.accountLockedFor"), minutes)
+            }
+
             return string(key(for: code))
         case .unauthorized:
             // Outside the sign-in screen a 401 means the session ended, not

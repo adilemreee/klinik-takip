@@ -78,6 +78,7 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "assistant.title" to R.string.assistant_title,
     "auth.error.accountInactive" to R.string.auth_error_account_inactive,
     "auth.error.accountLocked" to R.string.auth_error_account_locked,
+    "auth.error.accountLockedFor" to R.string.auth_error_account_locked_for,
     "auth.error.invalidCredentials" to R.string.auth_error_invalid_credentials,
     "auth.error.mfaInvalid" to R.string.auth_error_mfa_invalid,
     "auth.error.passwordTooWeak" to R.string.auth_error_password_too_weak,

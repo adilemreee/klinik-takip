@@ -6,20 +6,30 @@ public struct ErrorResponse: Codable, Sendable, Equatable {
     public let message: String
     public let error: String?
 
+    /// How long a lockout has left. Present only on ACCOUNT_LOCKED.
+    public let retryAfterSeconds: Int?
+
     private enum CodingKeys: String, CodingKey {
-        case statusCode, message, error
+        case statusCode, message, error, retryAfterSeconds
     }
 
-    public init(statusCode: Int, message: String, error: String? = nil) {
+    public init(
+        statusCode: Int,
+        message: String,
+        error: String? = nil,
+        retryAfterSeconds: Int? = nil
+    ) {
         self.statusCode = statusCode
         self.message = message
         self.error = error
+        self.retryAfterSeconds = retryAfterSeconds
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         statusCode = try container.decodeIfPresent(Int.self, forKey: .statusCode) ?? 0
         error = try container.decodeIfPresent(String.self, forKey: .error)
+        retryAfterSeconds = try container.decodeIfPresent(Int.self, forKey: .retryAfterSeconds)
 
         // Validation failures arrive as an array of messages; everything else
         // as a single string. Both reach the UI as one field.

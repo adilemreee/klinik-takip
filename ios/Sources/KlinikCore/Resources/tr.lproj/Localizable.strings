@@ -2,6 +2,7 @@
 
 /* Genel */
 "common.retry" = "Tekrar dene";
+"auth.error.accountLockedFor" = "Çok fazla deneme yapıldı. %d dakika sonra tekrar deneyin.";
 "consent.title" = "İzinlerim";
 "consent.noticeTitle" = "Aydınlatma metni";
 "consent.noticeBody" = "Verilerinizin hangi amaçla, hangi hukuki sebebe dayanarak işlendiğini ve haklarınızı açıklar. Bu bir onay değildir; okuduğunuzu bildirmeniz yeterlidir.";

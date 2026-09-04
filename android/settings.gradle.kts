@@ -76,6 +76,9 @@ include(":feature:notifications")
 // The patient's medications and today's check-in (spec M9).
 include(":feature:medications")
 
+// Giving and withdrawing consent (KVKK, spec section 8).
+include(":feature:consents")
+
 // The check-up calendar generated from the operation date (spec M6).
 include(":feature:followup")
 
@@ -106,6 +109,7 @@ if (androidSdkAvailable) {
     include(":feature:followup-ui")
     include(":feature:appointments-ui")
     include(":feature:notifications-ui")
+    include(":feature:consents-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

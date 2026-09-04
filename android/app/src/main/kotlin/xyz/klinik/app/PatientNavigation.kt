@@ -1,5 +1,7 @@
 package xyz.klinik.app
 
+import android.content.Intent
+import androidx.core.net.toUri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DropdownMenu
@@ -22,6 +24,8 @@ import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.complications.MyComplicationsModel
 import xyz.klinik.feature.complications.ui.MyComplicationsScreen
+import xyz.klinik.feature.consents.ConsentsModel
+import xyz.klinik.feature.consents.ui.ConsentsScreen
 import xyz.klinik.feature.documents.DocumentsModel
 import xyz.klinik.feature.documents.ui.DocumentListScreen
 import xyz.klinik.feature.followup.FollowUpModel
@@ -63,6 +67,7 @@ sealed interface PatientDestination {
     data object FollowUp : PatientDestination
     data object Appointments : PatientDestination
     data object NotificationSettings : PatientDestination
+    data object Consents : PatientDestination
 }
 
 /**
@@ -257,6 +262,28 @@ fun PatientDestinationScreen(
             )
         }
 
+        PatientDestination.Consents -> {
+            val model = remember { ConsentsModel(environment.consents) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            ConsentsScreen(
+                state = state,
+                strings = context.consentStrings(),
+                onRetry = { scope.launch { model.load() } },
+                onOpenNotice = {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, environment.privacyNoticeUrl.toUri()),
+                    )
+                },
+                onChange = { type, give ->
+                    scope.launch { if (give) model.give(type) else model.withdraw(type) }
+                },
+                modifier = modifier,
+            )
+        }
+
         PatientDestination.NotificationSettings -> {
             val model = remember { NotificationSettingsModel(environment.notifications) }
             val state by model.state.collectAsStateWithLifecycle()
@@ -308,6 +335,7 @@ fun PatientOverflowMenu(onGo: (PatientDestination) -> Unit, onSignOut: () -> Uni
                 DesignR.string.menu_lab_results to PatientDestination.LabResults,
                 DesignR.string.menu_complications to PatientDestination.Complications,
                 DesignR.string.menu_photos to PatientDestination.Photos,
+                DesignR.string.consent_title to PatientDestination.Consents,
                 DesignR.string.notification_settings_title to PatientDestination.NotificationSettings,
             )
 

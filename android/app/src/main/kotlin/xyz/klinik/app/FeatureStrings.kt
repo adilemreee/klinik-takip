@@ -6,6 +6,7 @@ import xyz.klinik.feature.documents.ui.DocumentStrings
 import xyz.klinik.feature.lab.ui.LabTrendStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
 import xyz.klinik.feature.appointments.ui.AppointmentStrings
+import xyz.klinik.feature.consents.ui.ConsentStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
 import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
@@ -185,3 +186,23 @@ fun Context.resolve(text: UiText): String = when (text) {
     is UiText.Key -> stringForKey(text.key)
     is UiText.Literal -> text.text
 }
+
+fun Context.consentStrings(): ConsentStrings = ConsentStrings(
+    noticeTitle = getString(DesignR.string.consent_notice_title),
+    noticeBody = getString(DesignR.string.consent_notice_body),
+    noticeRead = getString(DesignR.string.consent_notice_read),
+    noticeAcknowledged = getString(DesignR.string.consent_notice_acknowledged),
+    consentsTitle = getString(DesignR.string.consent_consents_title),
+    optionalNote = getString(DesignR.string.consent_optional_note),
+    give = getString(DesignR.string.consent_give),
+    withdraw = getString(DesignR.string.consent_withdraw),
+    given = getString(DesignR.string.consent_given),
+    notGiven = getString(DesignR.string.consent_not_given),
+    withdrawnAt = getString(DesignR.string.consent_withdrawn_at),
+    forwardOnly = getString(DesignR.string.consent_forward_only),
+    notFound = getString(DesignR.string.home_no_patient_file),
+    retry = getString(DesignR.string.common_retry),
+    typeName = { type -> stringForKey(type.stringKey) },
+    explanation = { type -> stringForKey(type.explanationKey) },
+    message = { key -> stringForKey(key) },
+)

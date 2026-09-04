@@ -99,6 +99,7 @@ dependencies {
     implementation(project(":feature:followup-ui"))
     implementation(project(":feature:appointments-ui"))
     implementation(project(":feature:notifications-ui"))
+    implementation(project(":feature:consents-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

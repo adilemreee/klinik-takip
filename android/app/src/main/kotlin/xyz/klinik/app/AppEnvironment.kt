@@ -12,6 +12,7 @@ import xyz.klinik.network.ApiConfiguration
 import xyz.klinik.network.AuthApi
 import xyz.klinik.network.AppointmentsApi
 import xyz.klinik.network.ComplicationsApi
+import xyz.klinik.network.ConsentsApi
 import xyz.klinik.network.FollowUpApi
 import xyz.klinik.network.DocumentsApi
 import xyz.klinik.network.LabApi
@@ -81,6 +82,16 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val followUp: FollowUpApi by lazy { FollowUpApi(client) }
     val appointments: AppointmentsApi by lazy { AppointmentsApi(client) }
     val notifications: NotificationsApi by lazy { NotificationsApi(client) }
+    val consents: ConsentsApi by lazy { ConsentsApi(client) }
+
+    /**
+     * Where the privacy notice lives.
+     *
+     * Served rather than compiled in: it changes with the clinic's legal
+     * review, and a notice that needs a store release to correct is one that
+     * stays wrong for a fortnight.
+     */
+    val privacyNoticeUrl: String get() = configuration.baseUrl.trimEnd('/') + "/legal/privacy-notice"
 
     /** Chunked upload, shared by every screen that can attach a file. */
     val resumable: ResumableUpload by lazy { ResumableUpload(client) }

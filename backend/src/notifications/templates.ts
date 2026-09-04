@@ -42,6 +42,16 @@ export const NOTIFICATION_TYPES = {
 
   /** A requested export has finished rendering (spec M12). */
   exportReady: 'export.ready',
+
+  /** A short questionnaire has come due (spec M18). */
+  surveyDue: 'survey.due',
+  /**
+   * A patient's own answers have gone the wrong way, or crossed a threshold.
+   * To the assigned team, never to the whole clinic.
+   */
+  surveyWorsening: 'survey.worsening',
+  /** A very satisfied patient, invited to say so publicly. Optional, once. */
+  surveyReviewInvite: 'survey.review',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
@@ -200,6 +210,43 @@ const TEMPLATES: Record<NotificationType, Template> = {
     urgent: false,
     mandatory: false,
     fallback: [NotificationChannel.EMAIL],
+  },
+  'survey.due': {
+    title: { tr: 'Kısa bir soru formu', en: 'A short questionnaire' },
+    body: {
+      tr: 'Nasıl olduğunuzu birkaç soruda anlatır mısınız? Bir dakika sürer.',
+      en: 'Could you tell us how you are in a few questions? It takes a minute.',
+    },
+    actions: [{ id: 'open-survey', labelKey: 'notification.action.openSurvey' }],
+    urgent: false,
+    mandatory: false,
+    fallback: [],
+  },
+  'survey.worsening': {
+    title: { tr: 'Hasta bildirimi kötüleşti', en: 'A patient reported worse' },
+    body: {
+      tr: 'Bir hastanın kendi bildirdiği yanıtları öncekinden kötü. Bakmanız gerekiyor.',
+      en: "A patient's own answers are worse than last time. Please take a look.",
+    },
+    actions: [{ id: 'open-patient', labelKey: 'notification.action.openPatient' }],
+    // Worth seeing today, not worth waking anybody: this is a questionnaire
+    // answer, not an emergency, and the emergency button exists for that.
+    urgent: false,
+    mandatory: false,
+    fallback: [NotificationChannel.EMAIL],
+  },
+  'survey.review': {
+    title: { tr: 'Teşekkürler', en: 'Thank you' },
+    body: {
+      tr: 'Memnun kaldığınıza sevindik. İsterseniz deneyiminizi paylaşabilirsiniz.',
+      en: 'We are glad you are happy. If you like, you can share your experience.',
+    },
+    actions: [{ id: 'open-review', labelKey: 'notification.action.openReview' }],
+    // Never urgent and never mandatory: an invitation the patient can ignore
+    // without the app asking again.
+    urgent: false,
+    mandatory: false,
+    fallback: [],
   },
   'export.ready': {
     title: { tr: 'Dosyanız hazır', en: 'Your export is ready' },

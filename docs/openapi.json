@@ -6735,6 +6735,238 @@
         ]
       }
     },
+    "/me/surveys": {
+      "get": {
+        "operationId": "MySurveysController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PendingSurveyDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Questionnaires waiting for me",
+        "tags": [
+          "surveys"
+        ]
+      }
+    },
+    "/me/surveys/{id}": {
+      "post": {
+        "operationId": "MySurveysController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitSurveyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer one",
+        "tags": [
+          "surveys"
+        ]
+      }
+    },
+    "/patients/{id}/surveys": {
+      "get": {
+        "operationId": "PatientSurveysController_forPatient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientSurveyViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A patient's reported outcomes over time",
+        "tags": [
+          "surveys"
+        ]
+      }
+    },
     "/appointments/calendar": {
       "get": {
         "operationId": "AppointmentsController_calendar",
@@ -14215,7 +14447,10 @@
               "emergency.triggered",
               "emergency.escalated",
               "emergency.acknowledged",
-              "export.ready"
+              "export.ready",
+              "survey.due",
+              "survey.worsening",
+              "survey.review"
             ]
           },
           "channel": {
@@ -14451,6 +14686,237 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "SurveyQuestionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SCALE_0_10",
+              "YES_NO",
+              "TEXT"
+            ]
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "higher-is-worse",
+              "higher-is-better"
+            ],
+            "description": "Which way is bad. Stated per question so no alert can be inverted"
+          },
+          "alarmAt": {
+            "type": "number",
+            "description": "A clinician sees this answer whatever the trend"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "type"
+        ]
+      },
+      "PendingSurveyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true
+          },
+          "milestoneDays": {
+            "type": "number",
+            "description": "Days after the operation this one is about"
+          },
+          "scheduledFor": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "After this it can no longer be answered"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurveyQuestionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "milestoneDays",
+          "scheduledFor",
+          "expiresAt",
+          "questions"
+        ]
+      },
+      "SubmitSurveyDto": {
+        "type": "object",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "description": "Answers keyed by question id. A value that does not fit its question is refused rather than coerced — a blank must not become a nought",
+            "example": {
+              "pain": 4,
+              "swelling": 2,
+              "sleep": 7,
+              "satisfaction": 9,
+              "comment": "İyiyim"
+            }
+          }
+        },
+        "required": [
+          "answers"
+        ]
+      },
+      "SurveyFindingDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "worsened",
+              "severe"
+            ]
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "questionText": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          },
+          "previous": {
+            "type": "number",
+            "description": "The same question last time"
+          }
+        },
+        "required": [
+          "kind",
+          "questionId",
+          "questionText",
+          "value"
+        ]
+      },
+      "SubmitResultDto": {
+        "type": "object",
+        "properties": {
+          "findings": {
+            "description": "What the clinic was told about. The patient is never shown a clinical reading",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurveyFindingDto"
+            }
+          },
+          "invited": {
+            "type": "boolean",
+            "description": "Whether a review invitation was sent"
+          }
+        },
+        "required": [
+          "findings",
+          "invited"
+        ]
+      },
+      "SurveyPointDto": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "milestoneDays": {
+            "type": "number"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "values": {
+            "type": "object",
+            "description": "Question id to answer, for the chart"
+          },
+          "answeredCount": {
+            "type": "number"
+          },
+          "questionCount": {
+            "type": "number"
+          },
+          "partial": {
+            "type": "boolean",
+            "description": "Too little answered to sit beside a full response. Still shown, marked"
+          }
+        },
+        "required": [
+          "assignmentId",
+          "milestoneDays",
+          "submittedAt",
+          "values",
+          "answeredCount",
+          "questionCount",
+          "partial"
+        ]
+      },
+      "PatientSurveyViewDto": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "object"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurveyPointDto"
+            }
+          },
+          "latestFindings": {
+            "description": "From the most recent response only",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurveyFindingDto"
+            }
+          },
+          "hasTrend": {
+            "type": "boolean",
+            "description": "False while there is one response: a line needs two points"
+          },
+          "pending": {
+            "description": "Asked and not yet answered",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "template",
+          "series",
+          "latestFindings",
+          "hasTrend",
+          "pending"
         ]
       },
       "AppointmentDto": {

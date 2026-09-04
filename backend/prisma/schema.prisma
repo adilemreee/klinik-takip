@@ -291,6 +291,8 @@ model Patient {
   aiReports         AiReport[]
   financeRecords    FinanceRecord[]
   exports           Export[]
+  surveyAssignments SurveyAssignment[]
+  surveyResponses   SurveyResponse[]
   consents          Consent[]
   emergencyEvents   EmergencyEvent[]
   promResponses     PromResponse[]
@@ -1613,6 +1615,123 @@ model Export {
   /// The sweep that deletes expired objects.
   @@index([expiresAt])
   @@map("exports")
+}
+
+/// How an answer is given (spec M18).
+enum SurveyAnswerType {
+  /// A 0-10 visual analogue scale — pain, swelling, satisfaction.
+  SCALE_0_10
+  /// Yes or no.
+  YES_NO
+  /// Free text, never scored.
+  TEXT
+}
+
+enum SurveyStatus {
+  /// Scheduled, not yet due.
+  PENDING
+  /// The patient has been asked.
+  SENT
+  COMPLETED
+  /// The window closed. A late answer about last week is not last week's answer.
+  EXPIRED
+}
+
+/// A questionnaire, frozen at a version (spec M18).
+///
+/// Versioned because a score means nothing without the questions it came from:
+/// editing a question in place would silently rescore every answer ever given
+/// to the old wording, and a trend line would move because somebody fixed a
+/// typo.
+model SurveyTemplate {
+  id      String @id @default(uuid(7)) @db.Uuid
+  /// Stable across versions, e.g. "postop-weekly".
+  code    String
+  version Int
+
+  title       String
+  description String?
+
+  /// The questions, frozen with the version. Shape is validated in code
+  /// (`survey.ts`), not by the column.
+  questions Json
+
+  /// Days after the operation this questionnaire is asked at.
+  milestoneDays Int[] @map("milestone_days")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  assignments SurveyAssignment[]
+
+  @@unique([code, version])
+  @@index([code, isActive])
+  @@map("survey_templates")
+}
+
+/// One questionnaire owed by one patient at one milestone (spec M18).
+model SurveyAssignment {
+  id         String  @id @default(uuid(7)) @db.Uuid
+  patientId  String  @map("patient_id") @db.Uuid
+  templateId String  @map("template_id") @db.Uuid
+  surgeryId  String? @map("surgery_id") @db.Uuid
+
+  /// Days after the operation, kept on the row so a report can group by
+  /// milestone without recomputing it from two dates.
+  milestoneDays Int      @map("milestone_days")
+  scheduledFor  DateTime @map("scheduled_for") @db.Timestamptz
+
+  status SurveyStatus @default(PENDING)
+  sentAt DateTime?    @map("sent_at") @db.Timestamptz
+
+  /// After this the questionnaire is not asked for any more. A pain score
+  /// given three weeks late is not a record of that week.
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  patient  Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  template SurveyTemplate  @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  response SurveyResponse?
+
+  /// One questionnaire per patient per milestone.
+  @@unique([patientId, templateId, milestoneDays])
+  @@index([status, scheduledFor])
+  @@index([patientId, scheduledFor])
+  @@map("survey_assignments")
+}
+
+/// What the patient answered (spec M18).
+model SurveyResponse {
+  id           String @id @default(uuid(7)) @db.Uuid
+  assignmentId String @unique @map("assignment_id") @db.Uuid
+  patientId    String @map("patient_id") @db.Uuid
+
+  /// The version answered against, so a score can always be read back against
+  /// the questions that produced it.
+  templateCode    String @map("template_code")
+  templateVersion Int    @map("template_version")
+
+  /// Answers keyed by question id.
+  answers Json
+
+  /// Scored in code and stored, so a trend query does not rescore history.
+  scores Json
+
+  /// How much of the questionnaire was answered. A score from four of ten
+  /// questions is not comparable to one from ten, and the reader has to see
+  /// which they are looking at.
+  answeredCount Int @map("answered_count")
+  questionCount Int @map("question_count")
+
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+
+  assignment SurveyAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  patient    Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  /// The trend chart reads one patient in time order.
+  @@index([patientId, submittedAt])
+  @@map("survey_responses")
 }
 
 enum ConsentType {

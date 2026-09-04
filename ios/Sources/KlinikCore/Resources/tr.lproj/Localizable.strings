@@ -502,3 +502,17 @@
 "export.format.XLSX" = "Excel (XLSX)";
 "export.columns" = "Kolonlar";
 "export.columnUnavailable" = "Bu kolonu dışa aktarma yetkiniz yok";
+
+"notification.action.openSurvey" = "Formu aç";
+"notification.action.openPatient" = "Hastayı aç";
+"notification.action.openReview" = "Değerlendir";
+"survey.title" = "Kısa değerlendirme";
+"survey.submit" = "Gönder";
+"survey.milestone" = "Ameliyattan {days} gün sonra";
+"survey.closed" = "Bu formun süresi doldu";
+"survey.partial" = "Bu yanıtta {answered}/{total} soru cevaplanmış";
+"survey.noTrend" = "Eğilim için en az iki yanıt gerekiyor";
+"survey.finding.worsened" = "Öncekine göre kötüleşti";
+"survey.finding.severe" = "Eşiği aştı";
+"survey.thanks" = "Teşekkürler, kaydedildi.";
+"survey.patientNote" = "Yanıtlarınız ekibinizin görebileceği kayıtlara işlenir.";

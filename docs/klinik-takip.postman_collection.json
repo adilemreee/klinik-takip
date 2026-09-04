@@ -2694,6 +2694,93 @@
       ]
     },
     {
+      "name": "surveys",
+      "item": [
+        {
+          "name": "Questionnaires waiting for me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/surveys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "surveys"
+              ]
+            },
+            "description": "Questionnaires waiting for me"
+          }
+        },
+        {
+          "name": "Answer one",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/surveys/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "surveys",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Answer one",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": {\n    \"pain\": 4,\n    \"swelling\": 2,\n    \"sleep\": 7,\n    \"satisfaction\": 9,\n    \"comment\": \"İyiyim\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "A patient's reported outcomes over time",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/surveys",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "surveys"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's reported outcomes over time"
+          }
+        }
+      ]
+    },
+    {
       "name": "appointments",
       "item": [
         {

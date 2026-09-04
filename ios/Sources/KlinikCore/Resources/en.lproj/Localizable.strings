@@ -502,3 +502,17 @@
 "export.format.XLSX" = "Excel (XLSX)";
 "export.columns" = "Columns";
 "export.columnUnavailable" = "You may not export this column";
+
+"notification.action.openSurvey" = "Open the form";
+"notification.action.openPatient" = "Open the patient";
+"notification.action.openReview" = "Leave a review";
+"survey.title" = "Short questionnaire";
+"survey.submit" = "Send";
+"survey.milestone" = "{days} days after the operation";
+"survey.closed" = "This questionnaire has closed";
+"survey.partial" = "{answered} of {total} questions answered";
+"survey.noTrend" = "A trend needs at least two responses";
+"survey.finding.worsened" = "Worse than last time";
+"survey.finding.severe" = "Past the threshold";
+"survey.thanks" = "Thank you, that is recorded.";
+"survey.patientNote" = "Your answers go into the records your team can see.";

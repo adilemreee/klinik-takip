@@ -90,6 +90,12 @@ export const JOBS = {
   exportRender: 'export-render',
 
   /**
+   * Asks the questionnaires that have come due and closes the window on the
+   * ones nobody answered (spec M18).
+   */
+  surveySweep: 'survey-sweep',
+
+  /**
    * Deletes export objects past their expiry.
    *
    * Not housekeeping: a full patient summary sitting in object storage forever

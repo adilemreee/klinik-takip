@@ -5,10 +5,11 @@ import {
   MyFollowUpController,
   PatientFollowUpController,
 } from './followup.controller';
+import { SurveysModule } from '../surveys/surveys.module';
 import { FollowUpService } from './followup.service';
 
 @Module({
-  imports: [MeasurementsModule],
+  imports: [MeasurementsModule, SurveysModule],
   controllers: [PatientFollowUpController, MilestonesController, MyFollowUpController],
   providers: [FollowUpService],
   exports: [FollowUpService],

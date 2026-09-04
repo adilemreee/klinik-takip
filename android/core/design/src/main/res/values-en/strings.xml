@@ -349,6 +349,9 @@
     <string name="notification_action_open_file">Open the file</string>
     <string name="notification_action_open_lab">View result</string>
     <string name="notification_action_open_medication">Open the medication</string>
+    <string name="notification_action_open_patient">Open the patient</string>
+    <string name="notification_action_open_review">Leave a review</string>
+    <string name="notification_action_open_survey">Open the form</string>
     <string name="notification_action_snooze">Snooze 1 hour</string>
     <string name="notification_action_taken">Taken</string>
     <string name="notification_action_upload_document">Upload document</string>
@@ -422,6 +425,16 @@
     <string name="sessions_sign_out">Sign out</string>
     <string name="sessions_sign_out_everywhere">Sign out everywhere</string>
     <string name="sessions_title">My devices</string>
+    <string name="survey_closed">This questionnaire has closed</string>
+    <string name="survey_finding_severe">Past the threshold</string>
+    <string name="survey_finding_worsened">Worse than last time</string>
+    <string name="survey_milestone">{days} days after the operation</string>
+    <string name="survey_no_trend">A trend needs at least two responses</string>
+    <string name="survey_partial">{answered} of {total} questions answered</string>
+    <string name="survey_patient_note">Your answers go into the records your team can see.</string>
+    <string name="survey_submit">Send</string>
+    <string name="survey_thanks">Thank you, that is recorded.</string>
+    <string name="survey_title">Short questionnaire</string>
     <string name="triage_flagged_by_rules">Flagged by the keyword screen</string>
     <string name="triage_level_emergency">Emergency</string>
     <string name="triage_level_info">Information</string>

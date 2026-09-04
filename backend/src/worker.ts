@@ -15,6 +15,8 @@ import { exportRender, exportSweep } from './exports/exports.processor';
 import { ExportsService } from './exports/exports.service';
 import { PatientListBuilder } from './exports/patient-list.builder';
 import { PatientSummaryBuilder } from './exports/patient-summary.builder';
+import { surveySeed, surveySweep } from './surveys/surveys.processor';
+import { SurveysService } from './surveys/surveys.service';
 import { EmergencyService } from './emergency/emergency.service';
 import { followUpSweep } from './followup/followup.processor';
 import { FollowUpService } from './followup/followup.service';
@@ -112,6 +114,7 @@ async function bootstrap(): Promise<void> {
       [JOBS.emergencyEscalation]: emergencyEscalation(emergency),
       [JOBS.briefingSweep]: briefingSweep(prisma, permissions, briefing, notifications),
       [JOBS.medicationSweep]: medicationSweep(prisma, careTeam, notifications),
+      [JOBS.surveySweep]: surveySweep(prisma, app.get(SurveysService), notifications),
     },
     connection: queues.connection,
     prisma,
@@ -173,6 +176,13 @@ async function bootstrap(): Promise<void> {
   // Daily. Expiry is measured in days, and a file that outlives its week by a
   // few hours is not the risk — one that outlives it by a month is.
   await queues.schedule(QUEUES.exports, JOBS.exportSweep, 24 * 60 * 60 * 1000);
+  // Hourly. A questionnaire is a date, not a moment: an hour late asking about
+  // last week costs nothing, and asking twice costs the patient's attention.
+  await queues.schedule(QUEUES.notifications, JOBS.surveySweep, 60 * 60 * 1000);
+
+  // The starter questionnaire, if it is not already there. Never an update:
+  // a template version is frozen once anybody has answered it.
+  await surveySeed(app.get(SurveysService))({} as never);
 
   // Jobs recorded but never dispatched — the process died between the commit
   // and the enqueue. Small window, real consequence: a document nobody ever

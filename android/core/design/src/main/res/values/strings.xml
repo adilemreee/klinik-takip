@@ -349,6 +349,9 @@
     <string name="notification_action_open_file">Dosyayı aç</string>
     <string name="notification_action_open_lab">Sonucu incele</string>
     <string name="notification_action_open_medication">İlacı aç</string>
+    <string name="notification_action_open_patient">Hastayı aç</string>
+    <string name="notification_action_open_review">Değerlendir</string>
+    <string name="notification_action_open_survey">Formu aç</string>
     <string name="notification_action_snooze">1 saat ertele</string>
     <string name="notification_action_taken">İçtim</string>
     <string name="notification_action_upload_document">Belge yükle</string>
@@ -422,6 +425,16 @@
     <string name="sessions_sign_out">Çıkış yap</string>
     <string name="sessions_sign_out_everywhere">Tüm cihazlardan çık</string>
     <string name="sessions_title">Cihazlarım</string>
+    <string name="survey_closed">Bu formun süresi doldu</string>
+    <string name="survey_finding_severe">Eşiği aştı</string>
+    <string name="survey_finding_worsened">Öncekine göre kötüleşti</string>
+    <string name="survey_milestone">Ameliyattan {days} gün sonra</string>
+    <string name="survey_no_trend">Eğilim için en az iki yanıt gerekiyor</string>
+    <string name="survey_partial">Bu yanıtta {answered}/{total} soru cevaplanmış</string>
+    <string name="survey_patient_note">Yanıtlarınız ekibinizin görebileceği kayıtlara işlenir.</string>
+    <string name="survey_submit">Gönder</string>
+    <string name="survey_thanks">Teşekkürler, kaydedildi.</string>
+    <string name="survey_title">Kısa değerlendirme</string>
     <string name="triage_flagged_by_rules">Anahtar kelime taraması işaretledi</string>
     <string name="triage_level_emergency">Çok acil</string>
     <string name="triage_level_info">Bilgi</string>

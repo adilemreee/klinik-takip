@@ -9,6 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
+import { SurveysService } from '../surveys/surveys.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NOTIFICATION_TYPES } from '../notifications/templates';
 import { planMilestones } from './schedule';
@@ -36,6 +37,7 @@ export class FollowUpService {
     private readonly access: PatientAccessService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly surveys: SurveysService,
   ) {}
 
   /**
@@ -65,7 +67,7 @@ export class FollowUpService {
       input.timezone,
     );
 
-    return this.prisma.$transaction(async (tx) => {
+    const schedule = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.followUpSchedule.findFirst({
         where: { patientId },
         include: { milestones: true },
@@ -133,6 +135,27 @@ export class FollowUpService {
         }),
       };
     });
+
+    // The questionnaires follow from the same date (spec M18). Outside the
+    // transaction on purpose: the check-up schedule is the clinically load-
+    // bearing half, and it must not be rolled back because a questionnaire
+    // template is missing. A failure here is logged and visible, and calling
+    // this endpoint again fixes it.
+    try {
+      await this.surveys.scheduleForSurgery(
+        patientId,
+        input.surgeryId ?? null,
+        input.surgeryDate,
+        undefined,
+        input.timezone,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Follow-up saved but questionnaires were not scheduled for ${patientId}: ${String(error)}`,
+      );
+    }
+
+    return schedule;
   }
 
   async forPatient(

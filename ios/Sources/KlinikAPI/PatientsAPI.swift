@@ -58,11 +58,69 @@ public struct PatientSearch: Sendable, Equatable {
     }
 }
 
+/**
+ * A new patient file (spec M2).
+ *
+ * The file number is not here: the server allocates it. A client that could
+ * choose one could collide with an existing file, and the number is what a
+ * clinic writes on paper.
+ */
+public struct NewPatient: Encodable, Sendable {
+    public let firstName: String
+    public let lastName: String
+    public let birthDate: Date
+    /// `FEMALE`, `MALE` or `OTHER` — the server's enum.
+    public let sex: String
+    /// ISO 3166-1 alpha-2. Drives the language and the discharge advice.
+    public let country: String
+    public let city: String?
+    public let nationality: String?
+    public let preferredLanguage: String?
+    public let referralSource: String?
+    public let assignedDoctorId: String?
+
+    public init(
+        firstName: String,
+        lastName: String,
+        birthDate: Date,
+        sex: String,
+        country: String,
+        city: String? = nil,
+        nationality: String? = nil,
+        preferredLanguage: String? = nil,
+        referralSource: String? = nil,
+        assignedDoctorId: String? = nil
+    ) {
+        self.firstName = firstName
+        self.lastName = lastName
+        self.birthDate = birthDate
+        self.sex = sex
+        self.country = country
+        self.city = city
+        self.nationality = nationality
+        self.preferredLanguage = preferredLanguage
+        self.referralSource = referralSource
+        self.assignedDoctorId = assignedDoctorId
+    }
+}
+
 public struct PatientsAPI: Sendable {
     private let client: APIClient
 
     public init(client: APIClient) {
         self.client = client
+    }
+
+    /// Opens a file. The server allocates the file number and returns it.
+    public func create(_ patient: NewPatient) async throws -> Patient {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "patients",
+                body: try JSONEncoder.klinik.encode(patient)
+            ),
+            as: Patient.self
+        )
     }
 
     public func search(_ search: PatientSearch) async throws -> PatientPage {

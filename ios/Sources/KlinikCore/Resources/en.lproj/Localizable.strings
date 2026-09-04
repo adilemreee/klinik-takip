@@ -2,6 +2,22 @@
 
 /* Common */
 "common.retry" = "Try again";
+"patient.new" = "New patient";
+"patient.firstName" = "First name";
+"patient.lastName" = "Last name";
+"patient.birthDate" = "Date of birth";
+"patient.sex" = "Sex";
+"patient.sex.FEMALE" = "Female";
+"patient.sex.MALE" = "Male";
+"patient.sex.OTHER" = "Other";
+"patient.countryHint" = "Country (TR, DE, GB…)";
+"patient.cityHint" = "City (optional)";
+"patient.referralHint" = "Where did they come from? (optional)";
+"patient.create" = "Open file";
+"patient.created" = "File opened";
+"patient.mrnAssigned" = "File number";
+"patient.needName" = "First and last name are required.";
+"patient.needCountry" = "The country code must be two letters (e.g. TR).";
 "auth.error.accountLockedFor" = "Too many attempts. Try again in %d minutes.";
 "consent.title" = "My permissions";
 "consent.noticeTitle" = "Privacy notice";

@@ -2,6 +2,22 @@
 
 /* Genel */
 "common.retry" = "Tekrar dene";
+"patient.new" = "Yeni hasta";
+"patient.firstName" = "Ad";
+"patient.lastName" = "Soyad";
+"patient.birthDate" = "Doğum tarihi";
+"patient.sex" = "Cinsiyet";
+"patient.sex.FEMALE" = "Kadın";
+"patient.sex.MALE" = "Erkek";
+"patient.sex.OTHER" = "Diğer";
+"patient.countryHint" = "Ülke (TR, DE, GB…)";
+"patient.cityHint" = "Şehir (isteğe bağlı)";
+"patient.referralHint" = "Nereden geldi? (isteğe bağlı)";
+"patient.create" = "Dosya aç";
+"patient.created" = "Dosya açıldı";
+"patient.mrnAssigned" = "Dosya numarası";
+"patient.needName" = "Ad ve soyad gerekli.";
+"patient.needCountry" = "Ülke kodu iki harf olmalı (örn. TR).";
 "auth.error.accountLockedFor" = "Çok fazla deneme yapıldı. %d dakika sonra tekrar deneyin.";
 "consent.title" = "İzinlerim";
 "consent.noticeTitle" = "Aydınlatma metni";

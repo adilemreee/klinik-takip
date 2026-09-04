@@ -33,6 +33,7 @@ public enum StaffDestination: Hashable, Sendable {
     /// Across all patients, not one — the point of a triage queue.
     case complicationQueue
     case notificationSettings
+    case newPatient
 }
 
 /// The staff side of the app: the patient list and everything under a file.
@@ -63,6 +64,10 @@ struct StaffPatientsView: View {
 
     private var menu: some View {
         Menu {
+            Button(L10n.string("patient.new")) { path.append(.newPatient) }
+
+            Divider()
+
             Button(L10n.string("menu.complicationQueue")) { path.append(.complicationQueue) }
             Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
 
@@ -145,6 +150,16 @@ struct StaffPatientsView: View {
 
         case .complicationQueue:
             ComplicationQueueView(model: ComplicationQueueModel(api: environment.complications))
+
+        case .newPatient:
+            NewPatientView(
+                model: NewPatientModel(api: environment.patients),
+                onCreated: { _ in
+                    // The list reloads when it comes back into view; opening
+                    // the new file straight away would take somebody away from
+                    // the number they are about to write down.
+                }
+            )
 
         case .notificationSettings:
             NotificationSettingsScreen(

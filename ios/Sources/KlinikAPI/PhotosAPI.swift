@@ -112,7 +112,7 @@ public struct PhotosAPI: Sendable {
     }
 
     public func gallery(
-        patientId: String,
+        subject: RecordSubject,
         category: PhotoCategory? = nil,
         bodyArea: String? = nil
     ) async throws -> [GalleryGroup] {
@@ -121,7 +121,7 @@ public struct PhotosAPI: Sendable {
         if let bodyArea { query["bodyArea"] = bodyArea }
 
         return try await client.send(
-            Endpoint(method: .get, path: "patients/\(patientId)/photos", query: query),
+            Endpoint(method: .get, path: subject.base("photos"), query: query),
             as: [GalleryGroup].self
         )
     }
@@ -129,13 +129,13 @@ public struct PhotosAPI: Sendable {
     /// The photo a new capture should be lined up against, or nil for the first
     /// of its body area.
     public func overlayReference(
-        patientId: String,
+        subject: RecordSubject,
         bodyArea: String
     ) async throws -> ClinicalPhoto? {
         let photo = try await client.send(
             Endpoint(
                 method: .get,
-                path: "patients/\(patientId)/photos/overlay",
+                path: subject.base("photos/overlay"),
                 query: ["bodyArea": bodyArea]
             ),
             as: OptionalPhoto.self
@@ -153,7 +153,7 @@ public struct PhotosAPI: Sendable {
     }
 
     public func upload(
-        patientId: String,
+        subject: RecordSubject,
         fileURL: URL,
         category: PhotoCategory,
         bodyArea: String?,
@@ -170,7 +170,7 @@ public struct PhotosAPI: Sendable {
         if let consentId { fields["consentId"] = consentId }
 
         return try await client.upload(
-            Endpoint(method: .post, path: "patients/\(patientId)/photos"),
+            Endpoint(method: .post, path: subject.base("photos")),
             multipart: MultipartBody(
                 fields: fields,
                 fileURL: fileURL,

@@ -26,6 +26,8 @@ import type { Request } from 'express';
 import { Audit } from '../audit/decorators/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
+import { RequireAnyPermission } from '../authz/decorators/require-permissions.decorator';
+import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { Env } from '../config/env.schema';
 import { DocumentsService } from './documents.service';
@@ -170,5 +172,92 @@ export class DocumentsController {
     @Param('documentId', ParseUUIDPipe) documentId: string,
   ): Promise<void> {
     return this.documents.remove(user, documentId);
+  }
+}
+
+/**
+ * A patient's own documents (spec M2).
+ *
+ * Its own route for the same reason `me/summary` has one: the staff routes
+ * require `documents.read`, and giving that permission to patients would bring
+ * every patient's file within reach of every patient. This asks only for
+ * `self.read`, resolves the caller's own file, and hands the same service the
+ * same scope check it always applies.
+ */
+@ApiTags('me')
+@ApiBearerAuth()
+@Controller('me/documents')
+export class MyDocumentsController {
+  constructor(
+    private readonly documents: DocumentsService,
+    private readonly measurements: MeasurementsService,
+    private readonly config: ConfigService<Env, true>,
+  ) {}
+
+  @Get()
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'Your documents, newest first' })
+  @ApiOkResponse({ type: DocumentPageDto })
+  @ApiStandardErrors()
+  async list(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListDocumentsDto,
+  ): Promise<DocumentPageDto> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.documents.list(user, patientId, query);
+  }
+
+  /**
+   * Uploading is one of the five things the patient home screen offers
+   * (spec §7), so it cannot be staff-only.
+   */
+  @Post()
+  @RequireAnyPermission('self.write')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload one of your own documents' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        type: {
+          type: 'string',
+          enum: Object.values(DocumentType),
+          default: DocumentType.OTHER,
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({ type: UploadedDocumentDto })
+  @ApiStandardErrors()
+  async upload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: Request,
+  ): Promise<UploadedDocumentDto> {
+    const patientId = await this.measurements.ownPatientId(user);
+    const part = await firstFilePart(
+      request,
+      this.config.get('UPLOAD_MAX_BYTES', { infer: true }),
+    );
+
+    const type =
+      part.fields.type && (Object.values(DocumentType) as string[]).includes(part.fields.type)
+        ? (part.fields.type as DocumentType)
+        : DocumentType.OTHER;
+
+    const { document, jobId } = await this.documents.upload(user, patientId, part, type);
+
+    return {
+      id: document.id,
+      type: document.type,
+      originalName: document.originalName,
+      mime: document.mime,
+      size: document.size,
+      ocrStatus: document.ocrStatus,
+      createdAt: document.createdAt,
+      jobId,
+    };
   }
 }

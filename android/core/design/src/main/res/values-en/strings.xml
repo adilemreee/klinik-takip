@@ -111,6 +111,7 @@
     <string name="common_done">Done</string>
     <string name="common_loading">Loading…</string>
     <string name="common_minutes_short">min</string>
+    <string name="common_more">More</string>
     <string name="common_retry">Try again</string>
     <string name="common_save">Save</string>
     <string name="common_send">Send</string>
@@ -215,6 +216,7 @@
     <string name="export_summary_title">Patient summary</string>
     <string name="export_title">Exports</string>
     <string name="export_truncated">This file contains only {rows} of {matched} records; narrow the filter.</string>
+    <string name="file_pick_failed">The file could not be selected.</string>
     <string name="finance_ageing_current">0–29 days</string>
     <string name="finance_ageing_d30">30–59 days</string>
     <string name="finance_ageing_d60">60–89 days</string>
@@ -338,6 +340,7 @@
     <string name="medication_badge_four_weeks">4 weeks</string>
     <string name="medication_badge_one_week">1 week</string>
     <string name="medication_badge_three_days">3 days</string>
+    <string name="medication_empty">No medications recorded yet.</string>
     <string name="medication_next_dose">Next dose</string>
     <string name="medication_no_score_yet">No dose is due yet</string>
     <string name="medication_skipped">Skipped</string>
@@ -352,6 +355,17 @@
     <string name="medication_taken">Taken</string>
     <string name="medication_title">My medication</string>
     <string name="medication_today">Today\'s doses</string>
+    <string name="menu_appointments">Appointments</string>
+    <string name="menu_complication_queue">Complaint queue</string>
+    <string name="menu_complications">My complaints</string>
+    <string name="menu_documents">My documents</string>
+    <string name="menu_follow_up">Check-up calendar</string>
+    <string name="menu_lab_results">My lab results</string>
+    <string name="menu_lab_review">Lab review</string>
+    <string name="menu_measurements">My measurements</string>
+    <string name="menu_messages">Messages</string>
+    <string name="menu_patients">Patients</string>
+    <string name="menu_photos">Photos</string>
     <string name="message_attachment">Attachment</string>
     <string name="message_clinic_closed">The clinic\'s inbox is closed right now. Your message will be queued.</string>
     <string name="message_compose">Your message</string>
@@ -389,6 +403,7 @@
     <string name="notification_channel_whatsapp">WhatsApp</string>
     <string name="notification_fallback_note">This was sent in place of an attempt that did not reach you.</string>
     <string name="notification_history_empty">Nothing has been sent yet.</string>
+    <string name="notification_history_fallback">Sent through a fallback channel</string>
     <string name="notification_history_title">Notifications sent</string>
     <string name="notification_quiet_hours">Quiet hours</string>
     <string name="notification_quiet_hours_hint">Non-urgent notifications wait during these hours; they are not cancelled.</string>

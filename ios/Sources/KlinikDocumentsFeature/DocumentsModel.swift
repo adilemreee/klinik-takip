@@ -38,7 +38,7 @@ public struct DocumentsState: Sendable, Equatable {
 public actor DocumentsModel {
     private let api: DocumentsAPI
     private let resumable: ResumableUpload
-    private let patientId: String
+    private let subject: RecordSubject
     private let pageSize: Int
 
     /**
@@ -56,13 +56,13 @@ public actor DocumentsModel {
     public init(
         api: DocumentsAPI,
         resumable: ResumableUpload,
-        patientId: String,
+        subject: RecordSubject,
         pageSize: Int = 25,
         resumableThreshold: Int = ResumableUpload.chunkSize
     ) {
         self.api = api
         self.resumable = resumable
-        self.patientId = patientId
+        self.subject = subject
         self.pageSize = pageSize
         self.resumableThreshold = resumableThreshold
     }
@@ -113,7 +113,7 @@ public actor DocumentsModel {
                 try await sendResumable(fileURL: fileURL, type: type)
             } else {
                 _ = try await api.upload(
-                    patientId: patientId,
+                    subject: subject,
                     fileURL: fileURL,
                     type: type,
                     contentType: contentType
@@ -144,7 +144,7 @@ public actor DocumentsModel {
         guard state.hasUnsettledWork else { return }
 
         do {
-            let page = try await api.list(patientId: patientId, limit: pageSize)
+            let page = try await api.list(subject: subject, limit: pageSize)
             merge(page.items)
         } catch {
             // A failed poll is not worth interrupting the screen for: the list
@@ -170,7 +170,7 @@ public actor DocumentsModel {
     /// still owes.
     private func sendResumable(fileURL: URL, type: DocumentType) async throws {
         let session = try await resumable.begin(
-            patientId: patientId,
+            subject: subject,
             type: type,
             originalName: fileURL.lastPathComponent
         )
@@ -201,7 +201,7 @@ public actor DocumentsModel {
     private func fetchPage(cursor: String?) async {
         do {
             let page = try await api.list(
-                patientId: patientId,
+                subject: subject,
                 cursor: cursor,
                 limit: pageSize
             )

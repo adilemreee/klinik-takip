@@ -111,6 +111,7 @@
     <string name="common_done">Tamam</string>
     <string name="common_loading">Yükleniyor…</string>
     <string name="common_minutes_short">dk</string>
+    <string name="common_more">Daha fazla</string>
     <string name="common_retry">Tekrar dene</string>
     <string name="common_save">Kaydet</string>
     <string name="common_send">Gönder</string>
@@ -215,6 +216,7 @@
     <string name="export_summary_title">Hasta özet raporu</string>
     <string name="export_title">Dışa aktarımlar</string>
     <string name="export_truncated">Bu dosya {matched} kayıttan yalnız {rows} tanesini içeriyor; filtreyi daraltın.</string>
+    <string name="file_pick_failed">Dosya seçilemedi.</string>
     <string name="finance_ageing_current">0–29 gün</string>
     <string name="finance_ageing_d30">30–59 gün</string>
     <string name="finance_ageing_d60">60–89 gün</string>
@@ -338,6 +340,7 @@
     <string name="medication_badge_four_weeks">4 hafta</string>
     <string name="medication_badge_one_week">1 hafta</string>
     <string name="medication_badge_three_days">3 gün</string>
+    <string name="medication_empty">Henüz ilaç kaydı yok.</string>
     <string name="medication_next_dose">Sonraki doz</string>
     <string name="medication_no_score_yet">Henüz doz zamanı gelmedi</string>
     <string name="medication_skipped">Atladım</string>
@@ -352,6 +355,17 @@
     <string name="medication_taken">İçtim</string>
     <string name="medication_title">İlaçlarım</string>
     <string name="medication_today">Bugünün dozları</string>
+    <string name="menu_appointments">Randevular</string>
+    <string name="menu_complication_queue">Şikayet kuyruğu</string>
+    <string name="menu_complications">Şikayetlerim</string>
+    <string name="menu_documents">Belgelerim</string>
+    <string name="menu_follow_up">Kontrol takvimi</string>
+    <string name="menu_lab_results">Tahlil sonuçlarım</string>
+    <string name="menu_lab_review">Tahlil onayı</string>
+    <string name="menu_measurements">Ölçümlerim</string>
+    <string name="menu_messages">Mesajlar</string>
+    <string name="menu_patients">Hastalar</string>
+    <string name="menu_photos">Fotoğraflar</string>
     <string name="message_attachment">Ek dosya</string>
     <string name="message_clinic_closed">Klinik şu anda mesaj kutusunu kapalı tutuyor. Mesajınız sıraya alınacak.</string>
     <string name="message_compose">Mesajınız</string>
@@ -389,6 +403,7 @@
     <string name="notification_channel_whatsapp">WhatsApp</string>
     <string name="notification_fallback_note">Bu bildirim, ulaşılamayan bir denemenin yerine gönderildi.</string>
     <string name="notification_history_empty">Henüz bildirim gönderilmedi.</string>
+    <string name="notification_history_fallback">Yedek kanaldan gönderildi</string>
     <string name="notification_history_title">Gönderilen bildirimler</string>
     <string name="notification_quiet_hours">Sessiz saatler</string>
     <string name="notification_quiet_hours_hint">Bu saatler arasında acil olmayan bildirimler bekletilir, iptal edilmez.</string>

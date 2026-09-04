@@ -2663,6 +2663,83 @@
         ]
       }
     },
+    "/me/documents/uploads": {
+      "post": {
+        "operationId": "MyBeginUploadController_begin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BeginUploadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open a resumable upload for one of your own documents",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/patients/{id}/documents/uploads": {
       "post": {
         "operationId": "BeginUploadController_begin",
@@ -3069,6 +3146,210 @@
         "summary": "Assemble the parts and file the document",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/me/documents": {
+      "get": {
+        "operationId": "MyDocumentsController_list",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Id of the last item on the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "LAB",
+                "IMAGING",
+                "REPORT",
+                "CONSENT",
+                "INVOICE",
+                "PASSPORT",
+                "ECG",
+                "OTHER"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your documents, newest first",
+        "tags": [
+          "me"
+        ]
+      },
+      "post": {
+        "operationId": "MyDocumentsController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "LAB",
+                      "IMAGING",
+                      "REPORT",
+                      "CONSENT",
+                      "INVOICE",
+                      "PASSPORT",
+                      "ECG",
+                      "OTHER"
+                    ],
+                    "default": "OTHER"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedDocumentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload one of your own documents",
+        "tags": [
+          "me"
         ]
       }
     },
@@ -3514,6 +3795,87 @@
         "summary": "Soft-delete; the bytes stay for the retention period",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/me/lab-results/trends": {
+      "get": {
+        "operationId": "MyLabController_trends",
+        "parameters": [
+          {
+            "name": "since",
+            "required": false,
+            "in": "query",
+            "description": "Only results measured at or after this moment",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AnalyteTrendDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your confirmed results as per-analyte series",
+        "tags": [
+          "me"
         ]
       }
     },
@@ -4003,6 +4365,289 @@
         "summary": "Discard something OCR read that is not a result",
         "tags": [
           "lab"
+        ]
+      }
+    },
+    "/me/photos/overlay": {
+      "get": {
+        "operationId": "MyPhotosController_overlay",
+        "parameters": [
+          {
+            "name": "bodyArea",
+            "required": true,
+            "in": "query",
+            "description": "The body area the new photo will show",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Null when there is nothing to line up against",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The reference photo for a consistent new capture",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/photos": {
+      "get": {
+        "operationId": "MyPhotosController_gallery",
+        "parameters": [
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "BEFORE",
+                "AFTER",
+                "COMPLICATION",
+                "WOUND"
+              ]
+            }
+          },
+          {
+            "name": "bodyArea",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GalleryGroupDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your before/after gallery, grouped by body area",
+        "tags": [
+          "me"
+        ]
+      },
+      "post": {
+        "operationId": "MyPhotosController_upload",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "category"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "BEFORE",
+                      "AFTER",
+                      "COMPLICATION",
+                      "WOUND"
+                    ]
+                  },
+                  "bodyArea": {
+                    "type": "string"
+                  },
+                  "phaseLabel": {
+                    "type": "string",
+                    "example": "post-op M1"
+                  },
+                  "takenAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "consentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload one of your own photos; metadata is removed before storing",
+        "tags": [
+          "me"
         ]
       }
     },
@@ -13923,96 +14568,6 @@
           "createdAt"
         ]
       },
-      "LabResultDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "analyteCode": {
-            "type": "object",
-            "nullable": true,
-            "description": "LOINC, where it could be mapped"
-          },
-          "analyteName": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string"
-          },
-          "refLow": {
-            "type": "object",
-            "nullable": true
-          },
-          "refHigh": {
-            "type": "object",
-            "nullable": true
-          },
-          "flag": {
-            "type": "string",
-            "enum": [
-              "LOW",
-              "NORMAL",
-              "HIGH",
-              "CRITICAL"
-            ],
-            "nullable": true,
-            "description": "Null when there is no range"
-          },
-          "measuredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ocrConfidence": {
-            "type": "object",
-            "nullable": true,
-            "description": "The engine's confidence, 0..1"
-          },
-          "verifiedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "analyteCode",
-          "analyteName",
-          "value",
-          "unit",
-          "refLow",
-          "refHigh",
-          "flag",
-          "measuredAt",
-          "ocrConfidence",
-          "verifiedAt"
-        ]
-      },
-      "ReviewItemDto": {
-        "type": "object",
-        "properties": {
-          "result": {
-            "$ref": "#/components/schemas/LabResultDto"
-          },
-          "needsAttention": {
-            "type": "boolean",
-            "description": "The engine was unsure; look at this one first"
-          },
-          "awaitingMapping": {
-            "type": "boolean",
-            "description": "The printed name has no code yet"
-          }
-        },
-        "required": [
-          "result",
-          "needsAttention",
-          "awaitingMapping"
-        ]
-      },
       "TrendPointDto": {
         "type": "object",
         "properties": {
@@ -14116,6 +14671,96 @@
           "points",
           "reference",
           "latestFlag"
+        ]
+      },
+      "LabResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "analyteCode": {
+            "type": "object",
+            "nullable": true,
+            "description": "LOINC, where it could be mapped"
+          },
+          "analyteName": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "refLow": {
+            "type": "object",
+            "nullable": true
+          },
+          "refHigh": {
+            "type": "object",
+            "nullable": true
+          },
+          "flag": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "NORMAL",
+              "HIGH",
+              "CRITICAL"
+            ],
+            "nullable": true,
+            "description": "Null when there is no range"
+          },
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ocrConfidence": {
+            "type": "object",
+            "nullable": true,
+            "description": "The engine's confidence, 0..1"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "analyteCode",
+          "analyteName",
+          "value",
+          "unit",
+          "refLow",
+          "refHigh",
+          "flag",
+          "measuredAt",
+          "ocrConfidence",
+          "verifiedAt"
+        ]
+      },
+      "ReviewItemDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/LabResultDto"
+          },
+          "needsAttention": {
+            "type": "boolean",
+            "description": "The engine was unsure; look at this one first"
+          },
+          "awaitingMapping": {
+            "type": "boolean",
+            "description": "The printed name has no code yet"
+          }
+        },
+        "required": [
+          "result",
+          "needsAttention",
+          "awaitingMapping"
         ]
       },
       "VerifyLabResultDto": {

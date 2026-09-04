@@ -75,7 +75,7 @@ final class LabTrendModelTests: XCTestCase {
             transport: transport,
             session: session
         )
-        return LabTrendModel(api: LabAPI(client: client), patientId: "p1")
+        return LabTrendModel(api: LabAPI(client: client), subject: .patient(id: "p1"))
     }
 
     func testLoadsTrendsAndSelectsTheFirst() async {

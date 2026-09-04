@@ -50,13 +50,13 @@ public struct GalleryState: Sendable, Equatable {
 /// The before/after gallery (spec M7).
 public actor PhotoGalleryModel {
     private let api: PhotosAPI
-    private let patientId: String
+    private let subject: RecordSubject
 
     private(set) public var state = GalleryState()
 
-    public init(api: PhotosAPI, patientId: String) {
+    public init(api: PhotosAPI, subject: RecordSubject) {
         self.api = api
-        self.patientId = patientId
+        self.subject = subject
     }
 
     public func currentState() -> GalleryState { state }
@@ -65,7 +65,7 @@ public actor PhotoGalleryModel {
         state.phase = .loading
 
         do {
-            let groups = try await api.gallery(patientId: patientId, category: category)
+            let groups = try await api.gallery(subject: subject, category: category)
             state.groups = groups
             state.selectedArea = groups.first?.id
             state.phase = groups.isEmpty ? .empty : .loaded
@@ -86,7 +86,7 @@ public actor PhotoGalleryModel {
 
     /// The photo a new capture lines up against, for the translucent guide.
     public func overlayReference(bodyArea: String) async -> ClinicalPhoto? {
-        try? await api.overlayReference(patientId: patientId, bodyArea: bodyArea)
+        try? await api.overlayReference(subject: subject, bodyArea: bodyArea)
     }
 
     @discardableResult
@@ -104,7 +104,7 @@ public actor PhotoGalleryModel {
 
         do {
             _ = try await api.upload(
-                patientId: patientId,
+                subject: subject,
                 fileURL: fileURL,
                 category: category,
                 bodyArea: bodyArea,

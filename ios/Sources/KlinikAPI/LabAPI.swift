@@ -122,12 +122,12 @@ public struct LabAPI: Sendable {
     }
 
     /// Confirmed results as per-analyte series, ready to chart.
-    public func trends(patientId: String, since: Date? = nil) async throws -> [AnalyteTrend] {
+    public func trends(subject: RecordSubject, since: Date? = nil) async throws -> [AnalyteTrend] {
         var query: [String: String] = [:]
         if let since { query["since"] = ISO8601DateFormatter().string(from: since) }
 
         return try await client.send(
-            Endpoint(method: .get, path: "patients/\(patientId)/lab-results/trends", query: query),
+            Endpoint(method: .get, path: subject.base("lab-results/trends"), query: query),
             as: [AnalyteTrend].self
         )
     }

@@ -285,3 +285,81 @@ final class APIClientTests: XCTestCase {
         }
     }
 }
+
+/**
+ * Endpoints that answer 200 with an empty body to mean "there is none".
+ *
+ * Found by running the client against the real server: a patient with no
+ * check-up schedule got "something went wrong", because empty data is not
+ * valid JSON and the decode threw.
+ */
+final class EmptyBodyDecodingTests: XCTestCase {
+    private struct Schedule: Decodable, Sendable, Equatable {
+        let id: String
+    }
+
+    private func client(returning body: String) async throws -> APIClient {
+        let transport = RecordingTransport(responses: [
+            HTTPResponse(status: 200, body: Data(body.utf8)),
+        ])
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: StubRefresher())
+
+        try await session.signIn(
+            with: SessionTokens(
+                accessToken: "a",
+                refreshToken: "r",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+
+        return APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: transport,
+            session: session
+        )
+    }
+
+    func testAnEmptyBodyDecodesAsNothing() async throws {
+        let result = try await (client(returning: "")).send(
+            Endpoint(method: .get, path: "me/follow-up"),
+            as: Schedule?.self
+        )
+
+        XCTAssertNil(result, "an empty body means there is none, not a failure")
+    }
+
+    func testALiteralNullAlsoDecodesAsNothing() async throws {
+        let result = try await (client(returning: "null")).send(
+            Endpoint(method: .get, path: "me/follow-up"),
+            as: Schedule?.self
+        )
+
+        XCTAssertNil(result)
+    }
+
+    func testAnEmptyBodyWhereAValueIsRequiredIsStillAnError() async throws {
+        // The substitution must not paper over a genuinely missing payload:
+        // a screen that needs a value and silently gets none is worse than one
+        // that says the request failed.
+        do {
+            _ = try await (client(returning: "")).send(
+                Endpoint(method: .get, path: "patients/1"),
+                as: Schedule.self
+            )
+            XCTFail("an empty body should not satisfy a non-optional response")
+        } catch let error as APIError {
+            guard case .decoding = error else {
+                return XCTFail("expected a decoding error, got \(error)")
+            }
+        }
+    }
+
+    func testABodyIsStillDecodedNormally() async throws {
+        let result = try await (client(returning: #"{"id":"s1"}"#)).send(
+            Endpoint(method: .get, path: "me/follow-up"),
+            as: Schedule?.self
+        )
+
+        XCTAssertEqual(result, Schedule(id: "s1"))
+    }
+}

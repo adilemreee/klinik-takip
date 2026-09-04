@@ -164,6 +164,12 @@ let package = Package(
         // The shell: what the app shows and how the pieces are wired together.
         // A library rather than the app target itself, so the routing decision
         // is testable from the command line without a simulator.
+        // The patient's medications and today's check-in (spec M9).
+        .target(
+            name: "KlinikMedicationsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         .target(
             name: "KlinikApp",
             dependencies: [
@@ -173,6 +179,7 @@ let package = Package(
                 "KlinikPhotosFeature", "KlinikComplicationsFeature", "KlinikMessagingFeature",
                 "KlinikNotificationsFeature", "KlinikFollowUpFeature",
                 "KlinikAppointmentsFeature", "KlinikEmergencyFeature",
+                "KlinikMedicationsFeature",
             ]
         ),
 

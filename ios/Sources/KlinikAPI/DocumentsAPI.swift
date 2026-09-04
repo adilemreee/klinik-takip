@@ -91,7 +91,7 @@ public struct DocumentsAPI: Sendable {
     }
 
     public func list(
-        patientId: String,
+        subject: RecordSubject,
         type: DocumentType? = nil,
         cursor: String? = nil,
         limit: Int? = nil
@@ -102,20 +102,20 @@ public struct DocumentsAPI: Sendable {
         if let limit { query["limit"] = String(limit) }
 
         return try await client.send(
-            Endpoint(method: .get, path: "patients/\(patientId)/documents", query: query),
+            Endpoint(method: .get, path: subject.base("documents"), query: query),
             as: DocumentPage.self
         )
     }
 
     /// Streams the file from disk; nothing is held in memory (see MultipartBody).
     public func upload(
-        patientId: String,
+        subject: RecordSubject,
         fileURL: URL,
         type: DocumentType,
         contentType: String = "application/octet-stream"
     ) async throws -> UploadedDocument {
         try await client.upload(
-            Endpoint(method: .post, path: "patients/\(patientId)/documents"),
+            Endpoint(method: .post, path: subject.base("documents")),
             multipart: MultipartBody(
                 fields: ["type": type.rawValue],
                 fileURL: fileURL,

@@ -960,6 +960,250 @@
           }
         },
         {
+          "name": "Open a resumable upload for one of your own documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/me/documents/uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "documents",
+                "uploads"
+              ]
+            },
+            "description": "Open a resumable upload for one of your own documents",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"LAB\",\n  \"originalName\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Your documents, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": "Id of the last item on the previous page",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Your documents, newest first"
+          }
+        },
+        {
+          "name": "Upload one of your own documents",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "documents"
+              ]
+            },
+            "description": "Upload one of your own documents",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "type",
+                  "type": "text",
+                  "value": "OTHER"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Your confirmed results as per-analyte series",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/lab-results/trends",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "lab-results",
+                "trends"
+              ],
+              "query": [
+                {
+                  "key": "since",
+                  "value": "",
+                  "description": "Only results measured at or after this moment",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Your confirmed results as per-analyte series"
+          }
+        },
+        {
+          "name": "The reference photo for a consistent new capture",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/photos/overlay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "photos",
+                "overlay"
+              ],
+              "query": [
+                {
+                  "key": "bodyArea",
+                  "value": "",
+                  "description": "The body area the new photo will show",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "The reference photo for a consistent new capture"
+          }
+        },
+        {
+          "name": "Your before/after gallery, grouped by body area",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "photos"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "bodyArea",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Your before/after gallery, grouped by body area"
+          }
+        },
+        {
+          "name": "Upload one of your own photos; metadata is removed before storing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "photos"
+              ]
+            },
+            "description": "Upload one of your own photos; metadata is removed before storing",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "category",
+                  "type": "text",
+                  "value": "BEFORE"
+                },
+                {
+                  "key": "bodyArea",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "key": "phaseLabel",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "key": "takenAt",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "key": "note",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "key": "consentId",
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Your conversation with the clinic",
           "request": {
             "method": "GET",

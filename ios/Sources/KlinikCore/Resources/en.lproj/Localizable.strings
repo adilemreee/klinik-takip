@@ -2,6 +2,21 @@
 
 /* Common */
 "common.retry" = "Try again";
+"menu.complicationQueue" = "Complaint queue";
+"menu.labReview" = "Lab review";
+"menu.photos" = "Photos";
+"medication.empty" = "No medications recorded yet.";
+"notification.historyFallback" = "Sent through a fallback channel";
+"file.pickFailed" = "The file could not be selected.";
+"common.more" = "More";
+"menu.measurements" = "My measurements";
+"menu.followUp" = "Check-up calendar";
+"menu.labResults" = "My lab results";
+"menu.complications" = "My complaints";
+"menu.appointments" = "Appointments";
+"menu.patients" = "Patients";
+"menu.documents" = "My documents";
+"menu.messages" = "Messages";
 "common.cancel" = "Cancel";
 "common.done" = "Done";
 "common.close" = "Close";

@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TesseractEngine } from '../ocr/tesseract.engine';
-import { LabResultsController, PatientLabController } from './lab.controller';
+import { LabResultsController, MyLabController, PatientLabController } from './lab.controller';
+import { MeasurementsModule } from '../measurements/measurements.module';
 import { LabService } from './lab.service';
 
 @Module({
-  controllers: [PatientLabController, LabResultsController],
+  imports: [MeasurementsModule],
+  controllers: [MyLabController, PatientLabController, LabResultsController],
   providers: [LabService, TesseractEngine],
   exports: [LabService, TesseractEngine],
 })

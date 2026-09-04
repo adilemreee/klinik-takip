@@ -4,6 +4,8 @@ import { AuditAction, LabResult } from '@prisma/client';
 import { Audit } from '../audit/decorators/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
+import { RequireAnyPermission } from '../authz/decorators/require-permissions.decorator';
+import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import {
   AnalyteTrendDto,
@@ -116,5 +118,39 @@ export class LabResultsController {
     @Param('resultId', ParseUUIDPipe) resultId: string,
   ): Promise<void> {
     return this.lab.discard(user, resultId);
+  }
+}
+
+/**
+ * A patient's own confirmed results (spec M16).
+ *
+ * Only what a clinician has verified reaches this route — the service filters
+ * on `verifiedAt`. An unreviewed OCR reading shown to a patient as a lab result
+ * is the exact failure the review step exists to prevent.
+ *
+ * Its own controller because the staff route needs `medical.read`, and a
+ * patient holding that could read any patient's results.
+ */
+@ApiTags('me')
+@ApiBearerAuth()
+@Controller('me/lab-results')
+export class MyLabController {
+  constructor(
+    private readonly lab: LabService,
+    private readonly measurements: MeasurementsService,
+  ) {}
+
+  @Get('trends')
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'Your confirmed results as per-analyte series' })
+  @ApiOkResponse({ type: [AnalyteTrendDto] })
+  @ApiStandardErrors()
+  async trends(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: TrendQueryDto,
+  ): Promise<AnalyteTrend[]> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.lab.trends(user, patientId, query.since);
   }
 }

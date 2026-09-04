@@ -39,14 +39,14 @@ public struct ResumableUpload: Sendable {
     }
 
     public func begin(
-        patientId: String,
+        subject: RecordSubject,
         type: DocumentType,
         originalName: String?
     ) async throws -> UploadSession {
         try await client.send(
             Endpoint(
                 method: .post,
-                path: "patients/\(patientId)/documents/uploads",
+                path: subject.base("documents/uploads"),
                 body: try JSONEncoder.klinik.encode(
                     BeginBody(type: type.rawValue, originalName: originalName)
                 )

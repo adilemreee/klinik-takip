@@ -77,7 +77,7 @@ final class PhotoGalleryModelTests: XCTestCase {
             transport: transport,
             session: session
         )
-        return PhotoGalleryModel(api: PhotosAPI(client: client), patientId: "p1")
+        return PhotoGalleryModel(api: PhotosAPI(client: client), subject: .patient(id: "p1"))
     }
 
     func testLoadsTheGalleryGroupedByBodyArea() async {

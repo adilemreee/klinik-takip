@@ -23,6 +23,19 @@ public final class AppEnvironment {
     public let me: MeAPI
     public let patients: PatientsAPI
     public let emergency: EmergencyAPI
+    public let messaging: MessagingAPI
+    public let documents: DocumentsAPI
+    public let measurements: MeasurementsAPI
+    public let photos: PhotosAPI
+    public let complications: ComplicationsAPI
+    public let lab: LabAPI
+    public let followUp: FollowUpAPI
+    public let appointments: AppointmentsAPI
+    public let notifications: NotificationsAPI
+    public let medications: MedicationsAPI
+
+    /// Chunked upload, shared by every screen that can attach a file.
+    public let resumable: ResumableUpload
 
     /// The offline queue's home on disk. Nil only if the file cannot be opened,
     /// which is reported rather than papered over — see `storeFailure`.
@@ -45,6 +58,17 @@ public final class AppEnvironment {
         me = MeAPI(client: client)
         patients = PatientsAPI(client: client)
         emergency = EmergencyAPI(client: client)
+        messaging = MessagingAPI(client: client)
+        documents = DocumentsAPI(client: client)
+        measurements = MeasurementsAPI(client: client)
+        photos = PhotosAPI(client: client)
+        complications = ComplicationsAPI(client: client)
+        lab = LabAPI(client: client)
+        followUp = FollowUpAPI(client: client)
+        appointments = AppointmentsAPI(client: client)
+        notifications = NotificationsAPI(client: client)
+        medications = MedicationsAPI(client: client)
+        resumable = ResumableUpload(client: client)
 
         // A queue that cannot be opened must not take the app down with it:
         // everything still works online, and the failure is surfaced rather

@@ -71,38 +71,15 @@ public struct RootView: View {
     }
 
     private func patientHome(patientId: String?) -> some View {
-        NavigationStack {
-            HomeScreen(
-                model: HomeModel(api: environment.me),
-                emergency: EmergencyModel(
-                    trigger: APIEmergencyTrigger(api: environment.emergency)
-                ),
-                onSelect: { _ in
-                    // The destinations for these actions are the feature
-                    // screens; wiring them is the next slice of work and is
-                    // deliberately not faked here.
-                }
-            )
-            .toolbar { signOutButton }
-        }
+        PatientHomeView(
+            environment: environment,
+            patientId: patientId,
+            signOut: { await signOut() }
+        )
     }
 
     private var staffHome: some View {
-        NavigationStack {
-            PatientListView(
-                model: PatientListModel(api: environment.patients),
-                onSelect: { _ in }
-            )
-            .toolbar { signOutButton }
-        }
-    }
-
-    private var signOutButton: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            Button(L10n.string("auth.signOut")) {
-                Task { await signOut() }
-            }
-        }
+        StaffPatientsView(environment: environment, signOut: { await signOut() })
     }
 
     // MARK: - State

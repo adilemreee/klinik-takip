@@ -80,10 +80,27 @@ public actor APIClient {
         let data = try await sendRaw(endpoint)
 
         do {
-            return try JSONDecoder.klinik.decode(Response.self, from: data)
+            return try JSONDecoder.klinik.decode(Response.self, from: emptyAsNull(data))
         } catch {
             throw APIError.decoding(String(describing: error))
         }
+    }
+
+    /**
+     * An empty body, read as `null`.
+     *
+     * Several endpoints answer 200 with nothing in it to mean "there is none" —
+     * a patient with no check-up schedule yet, no open emergency. Empty data is
+     * not valid JSON, so decoding it throws, and the screen shows "something
+     * went wrong" to somebody whose only problem is that they have no schedule.
+     *
+     * Substituting `null` puts the decision where it belongs, in the type: an
+     * optional Response decodes to nil, and a Response that is *not* optional
+     * still throws — because an empty body where a value was required really is
+     * an error.
+     */
+    private func emptyAsNull(_ data: Data) -> Data {
+        data.isEmpty ? Data("null".utf8) : data
     }
 
     /// For the endpoints that answer 204.

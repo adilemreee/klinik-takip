@@ -25,6 +25,8 @@ import type { Request } from 'express';
 import { Audit } from '../audit/decorators/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
+import { RequireAnyPermission } from '../authz/decorators/require-permissions.decorator';
+import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { firstFilePart } from '../documents/multipart';
 import { PhotoAssessmentService, type AssessmentResult } from './assessment.service';
@@ -188,5 +190,104 @@ export class PhotosController {
     @Param('photoId', ParseUUIDPipe) photoId: string,
   ): Promise<void> {
     return this.photos.remove(user, photoId);
+  }
+}
+
+/**
+ * A patient's own photographs (spec M7).
+ *
+ * Separate from the staff route for the reason `me/summary` is: those need
+ * `photos.read`/`photos.write`, and a patient holding those could reach any
+ * patient's photographs. This asks for `self.*` and resolves the caller's own
+ * file; the service applies the same scope check it always does.
+ */
+@ApiTags('me')
+@ApiBearerAuth()
+@Controller('me/photos')
+export class MyPhotosController {
+  constructor(
+    private readonly photos: PhotosService,
+    private readonly measurements: MeasurementsService,
+  ) {}
+
+  /**
+   * The photo a new capture lines up against (spec M7).
+   *
+   * The patient takes their own follow-up photographs, so the guide that keeps
+   * angle and distance comparable has to be reachable by them — a before/after
+   * pair shot from two different angles compares nothing.
+   */
+  @Get('overlay')
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'The reference photo for a consistent new capture' })
+  @ApiOkResponse({ type: PhotoDto, description: 'Null when there is nothing to line up against' })
+  @ApiStandardErrors()
+  async overlay(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: OverlayQueryDto,
+  ): Promise<Photo | null> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.photos.overlayReference(user, patientId, query.bodyArea);
+  }
+
+  @Get()
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'Your before/after gallery, grouped by body area' })
+  @ApiOkResponse({ type: [GalleryGroupDto] })
+  @ApiStandardErrors()
+  async gallery(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ListPhotosDto,
+  ): Promise<GalleryGroup[]> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.photos.gallery(user, patientId, query);
+  }
+
+  /**
+   * "Add a photo" is one of the five actions on the patient home screen
+   * (spec §7), so it cannot require a staff permission.
+   */
+  @Post()
+  @RequireAnyPermission('self.write')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload one of your own photos; metadata is removed before storing' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file', 'category'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        category: { type: 'string', enum: Object.values(PhotoCategory) },
+        bodyArea: { type: 'string' },
+        phaseLabel: { type: 'string', example: 'post-op M1' },
+        takenAt: { type: 'string', format: 'date-time' },
+        note: { type: 'string' },
+        consentId: { type: 'string', format: 'uuid' },
+      },
+    },
+  })
+  @ApiCreatedResponse({ type: PhotoDto })
+  @ApiStandardErrors()
+  async upload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: Request,
+  ): Promise<Photo> {
+    const patientId = await this.measurements.ownPatientId(user);
+    const part = await firstFilePart(request, 64 * 1024 * 1024);
+
+    if (!(Object.values(PhotoCategory) as string[]).includes(part.fields.category ?? '')) {
+      throw new BadRequestException(`Unknown photo category: ${part.fields.category}`);
+    }
+
+    return this.photos.upload(user, patientId, part, {
+      category: part.fields.category as PhotoCategory,
+      bodyArea: part.fields.bodyArea,
+      phaseLabel: part.fields.phaseLabel,
+      takenAt: part.fields.takenAt ? new Date(part.fields.takenAt) : undefined,
+      note: part.fields.note,
+      consentId: part.fields.consentId,
+    });
   }
 }

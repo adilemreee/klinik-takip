@@ -2,6 +2,21 @@
 
 /* Genel */
 "common.retry" = "Tekrar dene";
+"menu.complicationQueue" = "Şikayet kuyruğu";
+"menu.labReview" = "Tahlil onayı";
+"menu.photos" = "Fotoğraflar";
+"medication.empty" = "Henüz ilaç kaydı yok.";
+"notification.historyFallback" = "Yedek kanaldan gönderildi";
+"file.pickFailed" = "Dosya seçilemedi.";
+"common.more" = "Daha fazla";
+"menu.measurements" = "Ölçümlerim";
+"menu.followUp" = "Kontrol takvimi";
+"menu.labResults" = "Tahlil sonuçlarım";
+"menu.complications" = "Şikayetlerim";
+"menu.appointments" = "Randevular";
+"menu.patients" = "Hastalar";
+"menu.documents" = "Belgelerim";
+"menu.messages" = "Mesajlar";
 "common.cancel" = "Vazgeç";
 "common.done" = "Tamam";
 "common.close" = "Kapat";

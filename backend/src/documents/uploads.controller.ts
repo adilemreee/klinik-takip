@@ -26,6 +26,8 @@ import {
 import type { Request } from 'express';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { RequirePermissions } from '../authz/decorators/require-permissions.decorator';
+import { RequireAnyPermission } from '../authz/decorators/require-permissions.decorator';
+import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import {
   BeginUploadDto,
@@ -62,6 +64,45 @@ export class BeginUploadController {
   }
 }
 
+/**
+ * A patient opening a resumable upload for their own file.
+ *
+ * A phone on hotel wifi is the case resumable uploads exist for, and the
+ * patient is the one on it. The staff route needs `documents.write`, which a
+ * patient must not have.
+ */
+@ApiTags('me')
+@ApiBearerAuth()
+@Controller('me/documents/uploads')
+export class MyBeginUploadController {
+  constructor(
+    private readonly uploads: ResumableUploadService,
+    private readonly measurements: MeasurementsService,
+  ) {}
+
+  @Post()
+  @RequireAnyPermission('self.write')
+  @ApiOperation({ summary: 'Open a resumable upload for one of your own documents' })
+  @ApiCreatedResponse({ type: UploadSessionDto })
+  @ApiStandardErrors()
+  async begin(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: BeginUploadDto,
+  ): Promise<UploadSessionDto> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.uploads.begin(user, patientId, dto.type, dto.originalName);
+  }
+}
+
+/**
+ * Chunks and completion, addressed by session id.
+ *
+ * These accept `self.write` as well as `documents.write`: the session already
+ * names a patient, and the service resolves it and applies the same scope check
+ * as everywhere else — so a patient can finish an upload they opened, and still
+ * cannot touch anybody else's.
+ */
 @ApiTags('documents')
 @ApiBearerAuth()
 @Controller('documents/uploads')
@@ -69,7 +110,7 @@ export class UploadsController {
   constructor(private readonly uploads: ResumableUploadService) {}
 
   @Get(':sessionId')
-  @RequirePermissions('documents.write')
+  @RequireAnyPermission('documents.write', 'self.write')
   @ApiOperation({ summary: 'Where to resume from' })
   @ApiOkResponse({ type: UploadSessionDto })
   @ApiStandardErrors()
@@ -85,7 +126,7 @@ export class UploadsController {
    * parser touches it, so nothing is buffered and nothing reaches disk.
    */
   @Patch(':sessionId')
-  @RequirePermissions('documents.write')
+  @RequireAnyPermission('documents.write', 'self.write')
   @ApiConsumes('application/octet-stream')
   @ApiQuery({ name: 'offset', description: 'Must equal the server\'s receivedBytes' })
   @ApiBody({ schema: { type: 'string', format: 'binary' } })
@@ -102,7 +143,7 @@ export class UploadsController {
   }
 
   @Post(':sessionId/complete')
-  @RequirePermissions('documents.write')
+  @RequireAnyPermission('documents.write', 'self.write')
   @ApiOperation({ summary: 'Assemble the parts and file the document' })
   @ApiCreatedResponse({ type: UploadedDocumentDto })
   @ApiStandardErrors()
@@ -127,7 +168,7 @@ export class UploadsController {
 
   @Delete(':sessionId')
   @HttpCode(204)
-  @RequirePermissions('documents.write')
+  @RequireAnyPermission('documents.write', 'self.write')
   @ApiOperation({ summary: 'Give up on an upload and release its parts' })
   @ApiNoContentResponse()
   @ApiStandardErrors()

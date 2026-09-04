@@ -111,7 +111,7 @@ final class DocumentsModelTests: XCTestCase {
         return DocumentsModel(
             api: DocumentsAPI(client: client),
             resumable: ResumableUpload(client: client),
-            patientId: "p1",
+            subject: .patient(id: "p1"),
             // Everything in these tests is small; the resumable path has its
             // own suite.
             resumableThreshold: Int.max

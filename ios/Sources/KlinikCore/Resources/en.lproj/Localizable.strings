@@ -756,3 +756,5 @@
 "message.attaching" = "Uploading…";
 "message.photoAttached" = "Photograph — tap to open";
 "message.fileAttached" = "File — tap to open";
+"connection.showingCached" = "You are offline — showing what was last seen at %@.";
+"connection.unreachable" = "The clinic cannot be reached. Check your connection.";

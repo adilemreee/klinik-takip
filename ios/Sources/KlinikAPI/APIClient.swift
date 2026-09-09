@@ -66,11 +66,29 @@ public actor APIClient {
     private let configuration: APIConfiguration
     private let transport: HTTPTransport
     private let session: SessionManager
+    /// Optional on purpose: every test constructs a client, and none of them
+    /// should have to think about disk.
+    private let cache: ResponseCache?
+    private let connection: ConnectionObserver?
 
-    public init(configuration: APIConfiguration, transport: HTTPTransport, session: SessionManager) {
+    public init(
+        configuration: APIConfiguration,
+        transport: HTTPTransport,
+        session: SessionManager,
+        cache: ResponseCache? = nil,
+        connection: ConnectionObserver? = nil
+    ) {
         self.configuration = configuration
         self.transport = transport
         self.session = session
+        self.cache = cache
+        self.connection = connection
+    }
+
+    /// Called when the session ends. A cache that outlived a sign-out would
+    /// show one user's record to the next person on the device.
+    public func forgetCachedResponses() async {
+        await cache?.clear()
     }
 
     public func send<Response: Decodable & Sendable>(
@@ -135,9 +153,43 @@ public actor APIClient {
         }
     }
 
+    /**
+     * A read, with the last known answer behind it (spec M15).
+     *
+     * The cache is consulted only when the network itself failed — never to
+     * skip a request, and never on a 4xx. A server that says "no" is an answer;
+     * a server that cannot be reached is not, and that is the only case where
+     * showing yesterday's copy beats showing an error.
+     *
+     * Writes are not cached and never fall back: replaying a stale answer to a
+     * `POST` would tell somebody their message was sent when it was not.
+     */
     private func sendRaw(_ endpoint: Endpoint) async throws -> Data {
-        let response = try await perform(endpoint, retryAfterRefresh: true)
-        return response.body
+        let cacheable = endpoint.method == .get && cache != nil
+
+        do {
+            let response = try await perform(endpoint, retryAfterRefresh: true)
+
+            if cacheable {
+                await cache?.store(response.body, for: key(for: endpoint))
+                await connection?.reachedServer()
+            }
+
+            return response.body
+        } catch let error as APIError where cacheable && error.isConnectivity {
+            guard let cached = await cache?.load(for: key(for: endpoint)) else {
+                await connection?.couldNotReachServer()
+                throw error
+            }
+
+            await connection?.servedFromCache(storedAt: cached.storedAt)
+
+            return cached.body
+        }
+    }
+
+    private func key(for endpoint: Endpoint) -> String {
+        cacheKey(method: endpoint.method, path: endpoint.path, query: endpoint.query)
     }
 
     private func perform(

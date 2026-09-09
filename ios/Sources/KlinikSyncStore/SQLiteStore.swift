@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+import KlinikAPI
 import KlinikSync
 
 /**
@@ -94,6 +95,18 @@ public actor SQLiteStore {
                 table.column("originalName", .text).notNull()
                 table.column("totalBytes", .integer).notNull()
                 table.column("startedAt", .datetime).notNull()
+            }
+        }
+
+        // The last successful answer to each read, so a device with no signal
+        // shows what it last saw rather than an error (spec M15). Clinical
+        // data, so it lives in the same protected store as the outbox and is
+        // emptied on sign-out.
+        migrator.registerMigration("v2-response-cache") { database in
+            try database.create(table: "cachedResponse") { table in
+                table.primaryKey("key", .text)
+                table.column("body", .blob).notNull()
+                table.column("storedAt", .datetime).notNull()
             }
         }
 
@@ -295,5 +308,68 @@ public struct SQLiteUploadStore: UploadStore {
 
     public func forget(id: String) async throws {
         _ = try await store.write { try UploadRow.deleteOne($0, key: id) }
+    }
+}
+
+
+// MARK: - Cached responses
+
+private struct CachedResponseRow: Codable, FetchableRecord, PersistableRecord {
+    static let databaseTableName = "cachedResponse"
+
+    var key: String
+    var body: Data
+    var storedAt: Date
+}
+
+/**
+ * The response cache, on disk.
+ *
+ * Entries older than the maximum age are neither served nor kept. A month-old
+ * copy of somebody's medication plan is not "offline support"; it is a wrong
+ * answer with a date on it, and the screen would present it in the same
+ * sentence as a fresh one.
+ */
+public actor SQLiteResponseCache: ResponseCache {
+    private let database: SQLiteStore
+    private let maximumAge: TimeInterval
+
+    /// A week: long enough to cover a flight and a hotel with no wifi, short
+    /// enough that nothing clinical is shown from a previous admission.
+    public init(store: SQLiteStore, maximumAge: TimeInterval = 7 * 24 * 60 * 60) {
+        self.database = store
+        self.maximumAge = maximumAge
+    }
+
+    public func store(_ body: Data, for key: String) async {
+        // A cache is a convenience; a write that fails must not fail the read
+        // that triggered it.
+        try? await database.write { connection in
+            try CachedResponseRow(key: key, body: body, storedAt: Date()).save(connection)
+        }
+    }
+
+    public func load(for key: String) async -> CachedResponse? {
+        let row = try? await database.read { connection in
+            try CachedResponseRow.fetchOne(connection, key: key)
+        }
+
+        guard let found = row else { return nil }
+
+        guard Date().timeIntervalSince(found.storedAt) <= maximumAge else {
+            try? await database.write { connection in
+                _ = try CachedResponseRow.deleteOne(connection, key: key)
+            }
+
+            return nil
+        }
+
+        return CachedResponse(body: found.body, storedAt: found.storedAt)
+    }
+
+    public func clear() async {
+        try? await database.write { connection in
+            _ = try CachedResponseRow.deleteAll(connection)
+        }
     }
 }

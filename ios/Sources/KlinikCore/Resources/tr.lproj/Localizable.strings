@@ -756,3 +756,5 @@
 "message.attaching" = "Yükleniyor…";
 "message.photoAttached" = "Fotoğraf — açmak için dokunun";
 "message.fileAttached" = "Dosya — açmak için dokunun";
+"connection.showingCached" = "Çevrimdışısınız — %@ tarihindeki son bilgiler gösteriliyor.";
+"connection.unreachable" = "Kliniğe ulaşılamıyor. Bağlantınızı kontrol edin.";

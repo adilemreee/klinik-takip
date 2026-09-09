@@ -27,8 +27,16 @@ public struct RootView: View {
     }
 
     public var body: some View {
-        content
-            .task { await start() }
+        VStack(spacing: 0) {
+            // Above everything and on every screen, because the spec asks for
+            // the offline state to be designed into all of them (section 7) and
+            // one bar in the shell is how that stays true of screens nobody has
+            // written yet.
+            FreshnessBanner(freshness: environment.connection.freshness)
+
+            content
+        }
+        .task { await start() }
     }
 
     @ViewBuilder
@@ -115,6 +123,10 @@ public struct RootView: View {
 
     private func signOut() async {
         await environment.session.signOut()
+        // The cache holds one person's clinical record. Left behind, the next
+        // account on this device would be shown it the first time the network
+        // dropped.
+        await environment.client.forgetCachedResponses()
         identity = nil
         sessionState = .signedOut
     }

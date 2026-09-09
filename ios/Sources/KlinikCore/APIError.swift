@@ -77,6 +77,17 @@ public enum APIError: Error, Sendable, Equatable {
     case decoding(String)
     case unknown(status: Int)
 
+    /**
+     * Whether the clinic was unreachable, as opposed to unwilling.
+     *
+     * The distinction decides whether a stale copy may be shown: a server that
+     * answered "no" gave an answer, and replacing it with yesterday's "yes"
+     * would be the client overruling the clinic.
+     */
+    public var isConnectivity: Bool {
+        self == .offline || self == .timedOut
+    }
+
     /// Whether retrying the same request unchanged could plausibly succeed.
     public var isRetryable: Bool {
         switch self {

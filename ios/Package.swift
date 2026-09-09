@@ -243,7 +243,9 @@ let package = Package(
         // in-memory store used by every other test carries no dependency.
         .target(
             name: "KlinikSyncStore",
-            dependencies: ["KlinikSync", .product(name: "GRDB", package: "GRDB.swift")]
+            dependencies: [
+                "KlinikSync", "KlinikAPI", .product(name: "GRDB", package: "GRDB.swift"),
+            ]
         ),
 
         .testTarget(name: "KlinikHomeFeatureTests", dependencies: ["KlinikHomeFeature", "KlinikCore"]),

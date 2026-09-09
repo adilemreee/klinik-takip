@@ -41,6 +41,10 @@ public final class AppEnvironment {
     /// Chunked upload, shared by every screen that can attach a file.
     public let resumable: ResumableUpload
 
+    /// Whether reads are reaching the clinic, for the bar at the top of every
+    /// screen (spec M15).
+    public let connection: ConnectionState
+
     /// The offline queue's home on disk. Nil only if the file cannot be opened,
     /// which is reported rather than papered over — see `storeFailure`.
     public let outbox: OutboxStore
@@ -67,7 +71,23 @@ public final class AppEnvironment {
             refresher: HTTPTokenRefresher(baseURL: baseURL, transport: transport)
         )
 
-        client = APIClient(configuration: configuration, transport: transport, session: session)
+        connection = ConnectionState()
+
+        // The store is opened before the client, because the client's response
+        // cache lives in it. A store that cannot be opened costs the offline
+        // fallback and nothing else — everything still works online.
+        let opened = AppEnvironment.openStore()
+        outbox = opened.outbox
+        uploads = opened.uploads
+        storeFailure = opened.failure
+
+        client = APIClient(
+            configuration: configuration,
+            transport: transport,
+            session: session,
+            cache: opened.cache,
+            connection: connection.observer
+        )
 
         auth = AuthAPI(client: client)
         me = MeAPI(client: client)
@@ -89,19 +109,35 @@ public final class AppEnvironment {
         assistant = AssistantAPI(client: client)
         resumable = ResumableUpload(client: client)
 
-        // A queue that cannot be opened must not take the app down with it:
-        // everything still works online, and the failure is surfaced rather
-        // than swallowed, because silently losing offline edits is the exact
-        // thing the persistent store was built to stop.
+    }
+
+    /**
+     * The persistent store, or memory if it cannot be opened.
+     *
+     * A queue that cannot be opened must not take the app down with it:
+     * everything still works online, and the failure is surfaced rather than
+     * swallowed, because silently losing offline edits is the exact thing the
+     * persistent store was built to stop.
+     */
+    private static func openStore() -> (
+        outbox: OutboxStore, uploads: UploadStore, cache: ResponseCache, failure: String?
+    ) {
         do {
             let store = try SQLiteStore(url: try SQLiteStore.defaultURL())
-            outbox = SQLiteOutboxStore(store: store)
-            uploads = SQLiteUploadStore(store: store)
-            storeFailure = nil
+
+            return (
+                SQLiteOutboxStore(store: store),
+                SQLiteUploadStore(store: store),
+                SQLiteResponseCache(store: store),
+                nil
+            )
         } catch {
-            outbox = InMemoryOutboxStore()
-            uploads = InMemoryUploadStore()
-            storeFailure = String(describing: error)
+            return (
+                InMemoryOutboxStore(),
+                InMemoryUploadStore(),
+                InMemoryResponseCache(),
+                String(describing: error)
+            )
         }
     }
 }

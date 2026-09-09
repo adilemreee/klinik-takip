@@ -103,19 +103,38 @@ zincirinin anlaşamadığı şeylerden biri. O yüzden çıkarıma bırakmayın:
 static var isAvailable: Bool { VNDocumentCameraViewController.isSupported }
 ```
 
-**Push etmeden önce:** `swift build && swift test` yetmez, ikisi de macOS için
-derler. Şunlar da çalıştırılmalı:
+### Kural: `guard` ile bayrağı kaldırmak arasına `await` koymayın
+
+Bir aktörde (veya `@MainActor` bir tipte) yeniden girişi engelleyen bayrak, kontrolle
+**aynı senkron adımda** kaldırılmalı:
+
+```swift
+// Yanlış: ikinci çağıran, birincisi askıdayken guard'dan geçer
+guard !isSyncing else { return }
+let count = await engine.pending().count
+isSyncing = true
+
+// Doğru
+guard !isSyncing else { return }
+isSyncing = true
+defer { isSyncing = false }
+let count = await engine.pending().count
+```
+
+Bu kuyruğu iki kez göndertti ve testte yakalandı. Aktör yeniden girişlidir; `await`
+sırayı bırakır.
+
+**Push etmeden önce:** `swift build && swift test` yetmez — ikisi de macOS için
+derler ve `#if os(iOS)` dalları hiç derlenmez. Uygulamanın kendisi derlenmeli:
 
 ```bash
-# iOS dallarını (VisionKit, HealthKit, LocalAuthentication, UIKit) derler
-swift build --package-path ios \
-  -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
-  -Xswiftc -target -Xswiftc arm64-apple-ios17.0-simulator
-
-# Kliniğin kuracağı uygulamanın kendisi
 cd ios && xcodegen generate && xcodebuild -project Klinik.xcodeproj \
   -scheme Klinik -destination 'generic/platform=iOS Simulator' build
 ```
 
-CI artık ikisini de yapıyor, ama bunu yerelde yakalamak bir turu geri
-kazandırır.
+CI artık bunu yapıyor, ama yerelde yakalamak bir turu geri kazandırır.
+
+> **Not:** burada bir zamanlar `swift build -Xswiftc -sdk …` komutu da yazıyordu.
+> **Çalışmıyor** — sysroot macOS'ta kalıyor ve `cannot load underlying module for
+> 'UIKit'` veriyor. Denendi, doğrulandı, kaldırıldı. Paketi iOS SDK'sına karşı
+> derlemenin yolu `xcodebuild`.

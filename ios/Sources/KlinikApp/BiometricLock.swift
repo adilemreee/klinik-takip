@@ -114,10 +114,18 @@ public final class BiometricLock {
             return true
         }
 
-        let passed = (try? await context.evaluatePolicy(
-            policy,
-            localizedReason: L10n.string("biometrics.reason")
-        )) ?? false
+        // Completion handler rather than `async`, as everywhere else a framework
+        // object would otherwise be sent across an actor boundary: `LAContext`
+        // is not `Sendable` in every SDK this is built against, and only the
+        // `Bool` needs to cross.
+        let passed: Bool = await withCheckedContinuation { continuation in
+            context.evaluatePolicy(
+                policy,
+                localizedReason: L10n.string("biometrics.reason")
+            ) { success, _ in
+                continuation.resume(returning: success)
+            }
+        }
 
         if passed { isLocked = false }
 

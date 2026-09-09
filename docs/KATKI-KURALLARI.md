@@ -58,13 +58,38 @@ ihtimalle daha yenisi var. İkisi her şeyde aynı fikirde değil ve fark tek
 yönlü: **yeni sürüm daha çok şeyi kabul ediyor.** Yerelde derlenen bir kod
 CI'da kırılabilir; tersi olmaz.
 
-İki kez başımıza geldi:
+Üç kez başımıza geldi, ve üçü de aynı şeyin farklı yüzü:
 
 - `Bool?` üzerinde `switch` — 6.3 kapsayıcı sayıyor, 6.1 saymıyor. `if/else`
   ikisinde de çalışıyor.
 - Bir `View`'ın `static` üyesi — `View` örtük olarak main actor'a bağlı ve 6.1
   bunu statik üyelere de taşıyor. Testten çağrılan her böyle fonksiyon
   `nonisolated` olmalı; zaten saf fonksiyonlar oldukları için doğru olan da bu.
+- **Bir çerçeve nesnesi üzerinde `await`.** `UNUserNotificationCenter`,
+  `HKHealthStore`, `LAContext`, `VNDocumentCameraScan`, `UIImage` — hiçbiri her
+  SDK'da `Sendable` değil, ve üzerlerinde `await` etmek nesnenin kendisini bir
+  aktör sınırından geçirmek demek.
+
+### Kural: çerçeve nesnesi üzerinde `await` etmeyin
+
+Bunun yerine tamamlama bloklu (completion handler) sürümü `withCheckedContinuation`
+ile sarın; sınırı yalnız sonuç geçsin:
+
+```swift
+// Hayır — merkezin kendisi geçiyor
+let granted = try await centre.requestAuthorization(options: [.alert])
+
+// Evet — yalnız Bool geçiyor
+let granted: Bool = await withCheckedContinuation { continuation in
+    centre.requestAuthorization(options: [.alert]) { granted, _ in
+        continuation.resume(returning: granted)
+    }
+}
+```
+
+Bu biçim her iki araç zincirinde de doğru derleniyor ve zaten daha dürüst: ne
+geçtiğini okuyan görüyor. Aynı sebeple bir delege, elindeki çerçeve nesnesini
+değil, ondan çıkardığı veriyi (`[Data]`, `Bool`) geri vermeli.
 
 **Push etmeden önce:** `swift build && swift test` yetmez, ikisi de macOS için
 derler. Şunlar da çalıştırılmalı:

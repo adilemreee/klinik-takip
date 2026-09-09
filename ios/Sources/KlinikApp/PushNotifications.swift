@@ -51,8 +51,15 @@ public final class PushRegistrar: NSObject {
         centre.delegate = self
         centre.setNotificationCategories(PushRegistrar.categories)
 
-        let granted = (try? await centre.requestAuthorization(options: [.alert, .badge, .sound]))
-            ?? false
+        // The completion-handler form rather than the `async` one. Awaiting a
+        // method on the centre hands the object itself across an actor
+        // boundary, and it is not `Sendable` in every SDK this is built
+        // against — only the `Bool` crosses here.
+        let granted: Bool = await withCheckedContinuation { continuation in
+            centre.requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+                continuation.resume(returning: granted)
+            }
+        }
 
         guard granted else { return }
 

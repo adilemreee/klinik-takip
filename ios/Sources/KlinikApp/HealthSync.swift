@@ -104,11 +104,17 @@ public final class HealthSync {
         let store = HKHealthStore()
         let wanted = HealthSync.readTypes
 
-        do {
-            try await store.requestAuthorization(toShare: [], read: wanted)
-        } catch {
-            return .denied
+        // Completion handler rather than `async`, for the same reason as the
+        // notification centre: awaiting a method on the store sends the store,
+        // and `HKHealthStore` is not `Sendable` in every SDK this is built
+        // against. Only the outcome crosses.
+        let allowed: Bool = await withCheckedContinuation { continuation in
+            store.requestAuthorization(toShare: [], read: wanted) { granted, _ in
+                continuation.resume(returning: granted)
+            }
         }
+
+        guard allowed else { return .denied }
 
         // A month at most on a first run: a decade of weights arriving at once
         // would bury the post-operative curve the chart exists to show. The

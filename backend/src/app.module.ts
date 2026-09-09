@@ -37,6 +37,7 @@ import { TravelModule } from './travel/travel.module';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { InfraModule } from './infra/infra.module';
+import { IdempotencyModule } from './common/idempotency/idempotency.module';
 import { ObservabilityModule } from './observability/observability.module';
 
 @Module({
@@ -44,6 +45,9 @@ import { ObservabilityModule } from './observability/observability.module';
     AppConfigModule,
     ObservabilityModule,
     InfraModule,
+    // Before the feature modules: a repeated write must be recognised as one
+    // before it reaches the handler that would do it again (spec M15).
+    IdempotencyModule,
     // Application-level rate limiting. Cloudflare handles edge WAF and volumetric
     // limits; this protects specific endpoints (login, OTP) from abuse that gets
     // past the edge. See docs/SUNUCU-NOTLARI.md.

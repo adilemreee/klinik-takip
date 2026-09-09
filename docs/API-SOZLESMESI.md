@@ -98,6 +98,21 @@ diğer uçlar çalışır. Personel hesaplarında araya 2FA kurulum adımı gire
 - **Hata gövdesi tek şekilde** (`ErrorResponseDto`), böylece istemci hataları tek yerde
   işler.
 
+## `Idempotency-Key` (şemada değil, kasıtlı)
+
+Değiştiren her istek (`POST`/`PATCH`/`PUT`/`DELETE`) opsiyonel bir `Idempotency-Key`
+başlığı taşıyabiliyor. Taşıyorsa sunucu o anahtarla yapılan işi hatırlıyor ve ikinci
+denemede **işi tekrar yapmadan** ilk yanıtı döndürüyor (`Idempotent-Replay: true`).
+
+Çevrimdışı yazma kuyruğu bunun için var: telefon, hiç ulaşmayan bir istekle ulaşıp
+işlenen ama yanıtı dönüş yolunda kaybolan isteği birbirinden ayıramaz. Ayrıntı ve
+hata kodları: [OFFLINE-VE-CAKISMA.md](OFFLINE-VE-CAKISMA.md).
+
+**Neden OpenAPI şemasında yok:** başlık global bir interceptor'da, okumalarda ise
+yok sayılıyor. `addGlobalParameters` ile eklemek onu `GET` uçlarında da ilan ederdi —
+yani sözleşme, sistemin yapmadığı bir şeyi söylerdi. Eksik bir sözleşme, yanlış bir
+sözleşmeden iyidir.
+
 ## Geliştirme Sırasında Tarayıcıdan
 
 `APP_ENV` production değilken `/docs` altında Swagger UI sunuluyor. Production'da

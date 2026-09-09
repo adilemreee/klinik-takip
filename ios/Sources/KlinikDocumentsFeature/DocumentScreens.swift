@@ -18,6 +18,8 @@ public struct DocumentListView: View {
     @State private var chosenType: DocumentType = .lab
     @State private var previewing: PreviewedDocument?
     @State private var scanned: ScanResult?
+    /// Why a document failed, fetched when somebody taps the failed row.
+    @State private var failure: String?
 
     /// - Parameter pickFile: supplied by the app shell, which owns the document
     ///   picker. Kept out of here so the screen stays testable and does not
@@ -43,6 +45,14 @@ public struct DocumentListView: View {
         .task { await pollWhileProcessing() }
         .sheet(item: $previewing) { document in
             DocumentPreview(url: document.url)
+        }
+        .alert(
+            L10n.string("document.failedTitle"),
+            isPresented: .constant(failure != nil)
+        ) {
+            Button(L10n.string("common.close")) { failure = nil }
+        } message: {
+            Text(failure ?? "")
         }
         .sheet(item: $scanned) { result in
             ScanReviewSheet(result: result, type: chosenType) {
@@ -102,7 +112,14 @@ public struct DocumentListView: View {
             List {
                 ForEach(state.documents) { document in
                     Button {
-                        Task { await open(document) }
+                        Task {
+                            if document.ocrStatus == .failed {
+                                failure = await model.failureReason(for: document.id)
+                                    ?? L10n.string("document.failedNoReason")
+                            } else {
+                                await open(document)
+                            }
+                        }
                     } label: {
                         DocumentRow(document: document, isOpening: state.openingId == document.id)
                     }

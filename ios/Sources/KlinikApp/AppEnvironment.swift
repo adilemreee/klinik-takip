@@ -44,6 +44,7 @@ public final class AppEnvironment {
     public let audit: AuditAPI
     public let protocols: ProtocolsAPI
     public let travel: TravelAPI
+    public let aiSettings: AISettingsAPI
 
     /// Chunked upload, shared by every screen that can attach a file.
     public let resumable: ResumableUpload
@@ -121,6 +122,7 @@ public final class AppEnvironment {
         audit = AuditAPI(client: client)
         protocols = ProtocolsAPI(client: client)
         travel = TravelAPI(client: client)
+        aiSettings = AISettingsAPI(client: client)
         resumable = ResumableUpload(client: client)
 
     }

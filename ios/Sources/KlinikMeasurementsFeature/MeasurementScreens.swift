@@ -6,11 +6,43 @@ import KlinikDesign
 
 /// Which curve the chart is showing. Two axes with different units cannot share
 /// one plot without one of them becoming unreadable, so they take turns.
-public enum ChartSeries: String, CaseIterable, Sendable {
+public enum ChartSeries: String, CaseIterable, Sendable, Identifiable {
     case weight
     case bmi
+    case bloodPressure
+    case pulse
+    case temperature
+    case spo2
+    case glucose
+    case waist
 
-    var titleKey: String { self == .weight ? "measurement.weight" : "measurement.bmi" }
+    public var id: String { rawValue }
+
+    /// The two the composed body chart carries; the rest are fetched one at a
+    /// time, because a doctor reading a fever curve is not also reading a
+    /// weight and plotting both would make neither legible.
+    var isBodyChart: Bool { self == .weight || self == .bmi }
+
+    var measurementType: MeasurementType? {
+        switch self {
+        case .weight: return .weight
+        case .bmi: return nil
+        case .bloodPressure: return .bloodPressure
+        case .pulse: return .pulse
+        case .temperature: return .temperature
+        case .spo2: return .spo2
+        case .glucose: return .glucose
+        case .waist: return .waist
+        }
+    }
+
+    var titleKey: String {
+        switch self {
+        case .weight: return "measurement.weight"
+        case .bmi: return "measurement.bmi"
+        default: return "measurement.type.\(measurementType?.rawValue ?? "")"
+        }
+    }
 }
 
 public struct BodyChartView: View {
@@ -25,6 +57,9 @@ public struct BodyChartView: View {
 
     @State private var state = MeasurementsState()
     @State private var series: ChartSeries = .weight
+    /// Fetched per kind, because only weight and BMI arrive with the composed
+    /// body chart.
+    @State private var otherSeries: [MeasurementPoint] = []
     @State private var recording = false
     @State private var syncing = false
     @State private var syncMessage: String?
@@ -120,22 +155,36 @@ public struct BodyChartView: View {
     @ViewBuilder
     private func loaded(_ chart: BodyChart) -> some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
-            Picker("", selection: $series) {
-                ForEach(ChartSeries.allCases, id: \.self) { option in
+            // A menu rather than a segmented control: eight readings do not
+            // fit across a phone, and the two that squeeze in would be the two
+            // somebody happened to put first.
+            Picker(L10n.string("measurement.series"), selection: $series) {
+                ForEach(ChartSeries.allCases) { option in
                     Text(L10n.string(option.titleKey)).tag(option)
                 }
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
+            .frame(minHeight: Tokens.minimumTouchTarget)
             .accessibilityLabel(L10n.string("measurement.series"))
+            .onChange(of: series) { _, chosen in
+                Task { await loadSeries(chosen) }
+            }
 
-            curve(for: chart)
-                .frame(height: 240)
+            if series.isBodyChart {
+                curve(for: chart)
+                    .frame(height: 240)
+            } else {
+                otherCurve
+                    .frame(height: 240)
+            }
 
             if series == .bmi, let latest = chart.bmi.last {
                 BmiCategoryBadge(category: latest.category, value: latest.bmi)
             }
 
-            LatestReadingSummary(chart: chart, series: series)
+            if series.isBodyChart {
+                LatestReadingSummary(chart: chart, series: series)
+            }
 
             Spacer()
 
@@ -150,6 +199,49 @@ public struct BodyChartView: View {
             }
         }
         .padding(Tokens.Spacing.lg)
+    }
+
+    /**
+     * The readings the body chart does not carry.
+     *
+     * Blood pressure draws two lines — systolic and diastolic — because one of
+     * them alone is not a blood pressure.
+     */
+    @ViewBuilder
+    private var otherCurve: some View {
+        if otherSeries.isEmpty {
+            MessageState(icon: "chart.xyaxis.line", text: L10n.string("measurement.emptySeries"))
+        } else {
+            Chart {
+                ForEach(otherSeries) { point in
+                    LineMark(
+                        x: .value(L10n.string("measurement.date"), point.measuredAt),
+                        y: .value(L10n.string(series.titleKey), point.value)
+                    )
+                    .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+
+                    if let secondary = point.secondaryValue {
+                        LineMark(
+                            x: .value(L10n.string("measurement.date"), point.measuredAt),
+                            y: .value(L10n.string("measurement.diastolic"), secondary),
+                            series: .value("", "diastolic")
+                        )
+                        .foregroundStyle(Tokens.Palette.info.resolve(for: scheme))
+                    }
+                }
+            }
+            .chartYAxis { AxisMarks(position: .leading) }
+            .accessibilityLabel(L10n.string(series.titleKey))
+        }
+    }
+
+    private func loadSeries(_ chosen: ChartSeries) async {
+        guard let type = chosen.measurementType, !chosen.isBodyChart else {
+            otherSeries = []
+            return
+        }
+
+        otherSeries = await model.series(type)
     }
 
     /// The curve, with the clinic's goal drawn across it when one is set.

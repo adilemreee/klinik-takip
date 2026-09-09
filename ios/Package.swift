@@ -39,6 +39,7 @@ let package = Package(
         .library(name: "KlinikAuditFeature", targets: ["KlinikAuditFeature"]),
         .library(name: "KlinikProtocolsFeature", targets: ["KlinikProtocolsFeature"]),
         .library(name: "KlinikTravelFeature", targets: ["KlinikTravelFeature"]),
+        .library(name: "KlinikAISettingsFeature", targets: ["KlinikAISettingsFeature"]),
         .library(name: "KlinikApp", targets: ["KlinikApp"]),
     ],
     // The only third-party dependency in the client. SQLite through Swift's C
@@ -271,6 +272,12 @@ let package = Package(
             dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
         ),
 
+        // Which model the clinic uses, and on what terms (spec section 3.4).
+        .target(
+            name: "KlinikAISettingsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 
@@ -308,6 +315,7 @@ let package = Package(
                 "KlinikAssistantFeature", "KlinikAnalyticsFeature",
                 "KlinikFinanceFeature", "KlinikExportsFeature", "KlinikSurveysFeature",
                 "KlinikAuditFeature", "KlinikProtocolsFeature", "KlinikTravelFeature",
+                "KlinikAISettingsFeature",
             ]
         ),
 

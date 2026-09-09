@@ -137,6 +137,47 @@ public final class FinanceModel {
         return false
     }
 
+    /**
+     * Reverses a payment (spec M11).
+     *
+     * The row stays and stops counting — the server's design, and the right
+     * one: a payment that was entered and undone is part of what happened, and
+     * a ledger that forgets its corrections is a ledger nobody can audit. The
+     * reason is required for the same reason.
+     */
+    public func reverse(paymentId: String, reason: String) async -> Bool {
+        let trimmed = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else {
+            state.error = L10n.string("finance.reverseNeedsReason")
+            return false
+        }
+
+        state.busyId = paymentId
+        state.error = nil
+
+        defer { state.busyId = nil }
+
+        do {
+            let updated = try await api.reversePayment(paymentId, reason: trimmed)
+
+            if let index = state.records.firstIndex(where: { $0.id == updated.id }) {
+                state.records[index] = updated
+            }
+
+            state.outstanding = try? await api.outstanding(currency: state.currency)
+            state.collections = try? await thisMonthsCollections()
+
+            return true
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return false
+    }
+
     private func thisMonthsCollections() async throws -> CollectionReport {
         let calendar = Calendar.current
         let now = Date()

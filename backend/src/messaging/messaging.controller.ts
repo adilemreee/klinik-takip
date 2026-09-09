@@ -34,6 +34,7 @@ import {
   AttachmentUrlDto,
   ClinicStateDto,
   ConversationDto,
+  InboxEntryDto,
   CreateQuickReplyDto,
   MessagePageDto,
   MessagePageQueryDto,
@@ -41,7 +42,7 @@ import {
   SendMessageDto,
   SentMessageDto,
 } from './dto/message.dto';
-import { MessagePage, MessagingService, SentMessage } from './messaging.service';
+import { InboxEntry, MessagePage, MessagingService, SentMessage } from './messaging.service';
 
 @ApiTags('messaging')
 @ApiBearerAuth()
@@ -67,9 +68,9 @@ export class ConversationsController {
   @Get()
   @RequirePermissions('messages.read')
   @ApiOperation({ summary: 'Conversations to look at, most recent first' })
-  @ApiOkResponse({ type: [ConversationDto] })
+  @ApiOkResponse({ type: [InboxEntryDto] })
   @ApiStandardErrors()
-  async inbox(@CurrentUser() user: AuthenticatedUser): Promise<Conversation[]> {
+  async inbox(@CurrentUser() user: AuthenticatedUser): Promise<InboxEntry[]> {
     return this.messaging.inbox(user);
   }
 

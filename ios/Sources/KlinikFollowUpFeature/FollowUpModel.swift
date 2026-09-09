@@ -28,19 +28,57 @@ public struct FollowUpState: Sendable, Equatable {
 public actor FollowUpModel {
     private let api: FollowUpAPI
     private let load: @Sendable (FollowUpAPI) async throws -> FollowUpSchedule?
+    /// Nil on the patient's own copy, which may read and mark but not build.
+    private let patientId: String?
 
     private(set) public var state = FollowUpState()
 
     /// The patient's own schedule.
     public init(api: FollowUpAPI) {
         self.api = api
+        self.patientId = nil
         self.load = { try await $0.mine() }
     }
 
     /// A named patient's schedule, for staff.
     public init(api: FollowUpAPI, patientId: String) {
         self.api = api
+        self.patientId = patientId
         self.load = { try await $0.forPatient(patientId) }
+    }
+
+    /**
+     * Builds the schedule from the operation date (spec M6).
+     *
+     * D1, W1, M1, M2, M3, M6, Y1 come from the server's template for the
+     * procedure — the client sends a date and takes what comes back rather than
+     * generating milestones of its own, because which ones a procedure needs is
+     * a clinical decision the template carries.
+     *
+     * Staff only: `patientId` is nil on a patient's own copy, and a patient
+     * generating their own follow-up plan would be deciding when to be seen.
+     */
+    public func generate(surgeryDate: Date) async -> Bool {
+        guard let patientId else { return false }
+
+        state.error = nil
+
+        do {
+            state.schedule = try await api.generate(
+                patientId: patientId,
+                surgeryDate: surgeryDate,
+                timezone: TimeZone.current.identifier
+            )
+            state.phase = .loaded
+
+            return true
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return false
     }
 
     public func currentState() -> FollowUpState { state }

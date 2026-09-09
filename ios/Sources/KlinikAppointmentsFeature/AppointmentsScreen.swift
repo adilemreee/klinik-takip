@@ -14,6 +14,7 @@ public struct AppointmentsScreen: View {
     @State private var state = AppointmentsState()
     @State private var calendarFile: URL?
     @State private var exporting = false
+    @State private var booking = false
 
     public init(model: AppointmentsModel, canConfirm: Bool = false) {
         self.model = model
@@ -30,6 +31,15 @@ public struct AppointmentsScreen: View {
         // Staff read the same appointments from the calendar screen; the file
         // is the patient's own, so the button is theirs.
         .toolbar {
+            if canConfirm {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { booking = true } label: {
+                        Label(L10n.string("appointment.book"), systemImage: "plus")
+                    }
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                }
+            }
+
             if !canConfirm {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -53,6 +63,20 @@ public struct AppointmentsScreen: View {
         }
         .sheet(item: $calendarFile) { url in
             ShareSheet(url: url)
+        }
+        .sheet(isPresented: $booking) {
+            BookAppointmentSheet { type, at, minutes, location, note in
+                let ok = await model.book(
+                    type: type,
+                    at: at,
+                    durationMinutes: minutes,
+                    location: location,
+                    note: note
+                )
+                state = await model.currentState()
+
+                if ok { booking = false }
+            }
         }
     }
 
@@ -253,3 +277,92 @@ struct ShareSheet: View {
     var body: some View { Text(url.lastPathComponent) }
 }
 #endif
+
+
+/// The clinic putting an appointment in its own diary (spec M10).
+struct BookAppointmentSheet: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dismiss) private var dismiss
+
+    let submit: (AppointmentType, Date, Int, String?, String?) async -> Void
+
+    @State private var type: AppointmentType = .control
+    @State private var scheduledAt = Date().addingTimeInterval(86_400)
+    @State private var minutes = 30
+    @State private var location = ""
+    @State private var note = ""
+    @State private var busy = false
+
+    var body: some View {
+        FormScaffold(title: L10n.string("appointment.book")) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
+                VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
+                    Text(L10n.string("appointment.type"))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    Picker(L10n.string("appointment.type"), selection: $type) {
+                        ForEach(AppointmentType.allCases, id: \.self) { option in
+                            Text(option.localizedName).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                }
+
+                DatePicker(
+                    L10n.string("appointment.when"),
+                    selection: $scheduledAt,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .font(Tokens.Typography.bodyRelative)
+                .frame(minHeight: Tokens.minimumTouchTarget)
+
+                Stepper(
+                    "\(L10n.string("appointment.duration")): \(minutes) \(L10n.string("common.minutesShort"))",
+                    value: $minutes,
+                    in: 10...240,
+                    step: 10
+                )
+                .font(Tokens.Typography.bodyRelative)
+                .frame(minHeight: Tokens.minimumTouchTarget)
+
+                LabelledField(
+                    label: L10n.string("appointment.location"),
+                    text: $location,
+                    isSecure: false,
+                    contentType: .plain,
+                    keyboard: .default
+                )
+
+                LabelledField(
+                    label: L10n.string("appointment.note"),
+                    text: $note,
+                    isSecure: false,
+                    contentType: .plain,
+                    keyboard: .default
+                )
+
+                PrimaryButton(
+                    title: L10n.string("appointment.book"),
+                    isBusy: busy,
+                    isEnabled: !busy
+                ) {
+                    busy = true
+                    await submit(
+                        type,
+                        scheduledAt,
+                        minutes,
+                        location.isEmpty ? nil : location,
+                        note.isEmpty ? nil : note
+                    )
+                    busy = false
+                }
+
+                Button(L10n.string("common.cancel")) { dismiss() }
+                    .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+            }
+        }
+    }
+}

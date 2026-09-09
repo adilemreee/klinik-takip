@@ -196,3 +196,41 @@ export class CreateQuickReplyDto {
   @IsInt()
   sortOrder?: number;
 }
+
+
+/** Who a conversation is with, on a list that crosses patients. */
+export class InboxPatientDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '2026-K7RMPX' })
+  mrn!: string;
+
+  @ApiProperty({ example: 'Ayşe Yılmaz' })
+  fullName!: string;
+}
+
+export class InboxLastMessageDto {
+  @ApiPropertyOptional({ nullable: true, description: 'Null for an attachment with no text' })
+  body!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  sentAt!: Date;
+
+  @ApiProperty({ enum: MessageType })
+  type!: MessageType;
+}
+
+export class InboxEntryDto {
+  @ApiProperty({ type: ConversationDto })
+  conversation!: ConversationDto;
+
+  @ApiProperty({ type: InboxPatientDto })
+  patient!: InboxPatientDto;
+
+  @ApiPropertyOptional({ type: InboxLastMessageDto, nullable: true })
+  lastMessage!: InboxLastMessageDto | null;
+
+  @ApiProperty({ description: 'Approximate: enough to decide whether to open the row' })
+  unread!: number;
+}

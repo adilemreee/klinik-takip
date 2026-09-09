@@ -141,17 +141,6 @@ public struct LabAPI: Sendable {
     }
 
     /// Confirmed results only — what a trend may be drawn from.
-    public func verified(patientId: String, analyteCode: String? = nil) async throws -> [LabResult] {
-        try await client.send(
-            Endpoint(
-                method: .get,
-                path: "patients/\(patientId)/lab-results",
-                query: analyteCode.map { ["analyteCode": $0] } ?? [:]
-            ),
-            as: [LabResult].self
-        )
-    }
-
     public func verify(resultId: String, correction: LabCorrection) async throws -> LabResult {
         try await client.send(
             Endpoint(

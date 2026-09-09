@@ -8,6 +8,7 @@ public enum StaffHomeTarget: Sendable, Equatable {
     case patient(id: String, name: String)
     case emergencyQueue
     case pendingReports
+    case flaggedPhotos
 }
 
 public enum StaffHomePhase: Sendable, Equatable {
@@ -24,6 +25,9 @@ public struct StaffHomeState: Sendable, Equatable {
     /// Nil when this account may not review reports — a different thing from
     /// zero, and the screen shows nothing rather than an empty promise.
     public var pendingReportCount: Int?
+    /// Nil when this account may not see photographs at all — a different
+    /// thing from none being flagged.
+    public var flaggedPhotoCount: Int?
 
     public init() {}
 
@@ -38,7 +42,7 @@ public struct StaffHomeState: Sendable, Equatable {
 /**
  * The doctor's morning (spec M2 "hasta özeti", M5 "günlük doktor brifingi").
  *
- * Three reads, and only one of them may fail the screen. The briefing is the
+ * Four reads, and only one of them may fail the screen. The briefing is the
  * page; the emergency queue and the report queue are things a given account may
  * not be allowed to see at all — a coordinator has no `reports.review` — and a
  * 403 on one of those must not blank a nurse's agenda. So the secondary reads
@@ -49,17 +53,20 @@ public final class StaffHomeModel {
     private let briefing: BriefingAPI
     private let emergency: EmergencyAPI
     private let reports: ReportsAPI
+    private let photos: PhotosAPI
 
     private var state = StaffHomeState()
 
     public init(
         briefing: BriefingAPI,
         emergency: EmergencyAPI,
-        reports: ReportsAPI
+        reports: ReportsAPI,
+        photos: PhotosAPI
     ) {
         self.briefing = briefing
         self.emergency = emergency
         self.reports = reports
+        self.photos = photos
     }
 
     public func currentState() -> StaffHomeState { state }
@@ -70,13 +77,15 @@ public final class StaffHomeModel {
         async let briefingResult = briefingOrError()
         async let emergencyResult = optional { try await emergency.queue() }
         async let reportsResult = optional { try await reports.pending() }
+        async let photosResult = optional { try await photos.flagged() }
 
-        let (loaded, emergencies, pending) = await (
-            briefingResult, emergencyResult, reportsResult
+        let (loaded, emergencies, pending, flagged) = await (
+            briefingResult, emergencyResult, reportsResult, photosResult
         )
 
         state.emergencies = (emergencies ?? []).sorted { $0.waitingMinutes > $1.waitingMinutes }
         state.pendingReportCount = pending?.count
+        state.flaggedPhotoCount = flagged?.count
 
         switch loaded {
         case .arrived(let briefing):

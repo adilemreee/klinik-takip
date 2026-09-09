@@ -199,6 +199,23 @@ public actor DocumentsModel {
         return nil
     }
 
+    /**
+     * Why processing failed, when it did.
+     *
+     * The list already shows *that* a document failed; a status with no reason
+     * is the thing somebody re-uploads three times. The job rows carry the
+     * attempt count and the error, which is what answers "is it worth trying
+     * again".
+     */
+    public func failureReason(for documentId: String) async -> String? {
+        guard let jobs = try? await api.jobs(documentId: documentId) else { return nil }
+
+        return jobs
+            .filter { $0.status == .failed }
+            .compactMap(\.error)
+            .first
+    }
+
     public func remove(documentId: String) async {
         do {
             try await api.remove(documentId: documentId)

@@ -51,6 +51,19 @@ public actor MeasurementsModel {
 
     public func currentState() -> MeasurementsState { state }
 
+    /**
+     * One reading's history, for the kinds the body chart does not draw.
+     *
+     * Weight and BMI share a composed response because they are drawn together
+     * against a goal line. Blood pressure, pulse, temperature, SpO₂, glucose
+     * and waist are each their own series — a doctor looking at a fever curve
+     * is not also looking at a weight — so they are fetched one at a time, when
+     * somebody asks for that one.
+     */
+    public func series(_ type: MeasurementType) async -> [MeasurementPoint] {
+        (try? await api.series(for: subject, type: type)) ?? []
+    }
+
     public func load() async {
         state.phase = .loading
         await reload()

@@ -9,13 +9,19 @@ public struct FollowUpScreen: View {
 
     private let model: FollowUpModel
     private let canMark: Bool
+    /// Staff build the schedule from the operation date; a patient does not
+    /// decide when they are seen.
+    private let canGenerate: Bool
 
     @State private var state = FollowUpState()
+    @State private var generating = false
+    @State private var surgeryDate = Date()
 
     /// - Parameter canMark: staff mark a visit attended; a patient only reads.
-    public init(model: FollowUpModel, canMark: Bool = false) {
+    public init(model: FollowUpModel, canMark: Bool = false, canGenerate: Bool = false) {
         self.model = model
         self.canMark = canMark
+        self.canGenerate = canGenerate
     }
 
     public var body: some View {
@@ -24,6 +30,49 @@ public struct FollowUpScreen: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.refresh() } }
+    }
+
+    /**
+     * Building the plan, from the one thing it depends on.
+     *
+     * The milestones themselves — D1, W1, M1, M3, M6, Y1 — come from the
+     * server's template for the procedure. This asks for the operation date and
+     * nothing else: which milestones a procedure needs is a clinical decision,
+     * and a client that composed its own list would be making it.
+     */
+    private var buildSchedule: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
+                ErrorBanner(message: state.error)
+
+                Card(tone: .info) {
+                    Text(L10n.string("followUp.generateHint"))
+                        .font(Tokens.Typography.bodyRelative)
+                        .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                DatePicker(
+                    L10n.string("followUp.surgeryDate"),
+                    selection: $surgeryDate,
+                    displayedComponents: .date
+                )
+                .font(Tokens.Typography.bodyRelative)
+                .frame(minHeight: Tokens.minimumTouchTarget)
+
+                PrimaryButton(
+                    title: L10n.string("followUp.generate"),
+                    isBusy: generating,
+                    isEnabled: !generating
+                ) {
+                    generating = true
+                    _ = await model.generate(surgeryDate: surgeryDate)
+                    state = await model.currentState()
+                    generating = false
+                }
+            }
+            .padding(Tokens.Spacing.lg)
+        }
     }
 
     @ViewBuilder
@@ -35,7 +84,11 @@ public struct FollowUpScreen: View {
             Spacer()
 
         case .none:
-            MessageState(icon: "calendar", text: L10n.string("followUp.empty"))
+            if canGenerate {
+                buildSchedule
+            } else {
+                MessageState(icon: "calendar", text: L10n.string("followUp.empty"))
+            }
 
         case .notFound:
             MessageState(icon: "questionmark.folder", text: L10n.string("error.notFound"))

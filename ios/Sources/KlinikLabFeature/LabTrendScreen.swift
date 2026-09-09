@@ -9,11 +9,17 @@ public struct LabTrendScreen: View {
     @Environment(\.colorScheme) private var scheme
 
     private let model: LabTrendModel
+    private let canInterpret: Bool
 
     @State private var state = LabTrendState()
+    @State private var interpreting = false
+    @State private var interpretationQueued = false
 
-    public init(model: LabTrendModel) {
+    /// - Parameter canInterpret: staff may ask the AI layer for a reading; a
+    ///   patient may not, because there is nobody on their side to sign one off.
+    public init(model: LabTrendModel, canInterpret: Bool = false) {
         self.model = model
+        self.canInterpret = canInterpret
     }
 
     public var body: some View {
@@ -75,8 +81,47 @@ public struct LabTrendScreen: View {
 
                     TrendSummary(trend: trend)
                 }
+
+                interpretation
             }
             .padding(Tokens.Spacing.lg)
+        }
+    }
+
+    /**
+     * Asking the AI layer to read these results (spec M5).
+     *
+     * The answer does not appear here. It goes into the review queue, where a
+     * clinician signs it off before a patient sees anything — and a screen that
+     * printed the text as soon as it arrived would route around the one rule
+     * that makes asking for it safe.
+     */
+    @ViewBuilder
+    private var interpretation: some View {
+        if canInterpret {
+            ErrorBanner(message: state.error)
+
+            if interpretationQueued {
+                Card(tone: .success) {
+                    Label(L10n.string("lab.interpretQueued"), systemImage: "checkmark.circle")
+                        .font(Tokens.Typography.calloutRelative)
+                        .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Button(L10n.string("lab.interpret")) {
+                    Task {
+                        interpreting = true
+                        interpretationQueued = await model.requestInterpretation()
+                        state = await model.currentState()
+                        interpreting = false
+                    }
+                }
+                .font(Tokens.Typography.calloutRelative)
+                .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+                .disabled(interpreting)
+            }
         }
     }
 

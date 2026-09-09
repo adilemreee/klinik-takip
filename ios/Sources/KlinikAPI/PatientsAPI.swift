@@ -132,9 +132,6 @@ public struct PatientsAPI: Sendable {
         )
     }
 
-    public func detail(id: String) async throws -> Patient {
-        try await client.send(Endpoint(method: .get, path: "patients/\(id)"), as: Patient.self)
-    }
 }
 
 // MARK: - Patient-facing

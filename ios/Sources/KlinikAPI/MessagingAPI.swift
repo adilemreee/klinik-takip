@@ -85,6 +85,44 @@ public struct Conversation: Decodable, Sendable, Equatable, Identifiable {
     public let lastMessageAt: Date?
 }
 
+/// One row of the clinician's inbox (spec M3).
+///
+/// Carries the name, the last thing said and the unread count, because an
+/// inbox of ids and timestamps is a list somebody has to open every row of.
+public struct InboxEntry: Decodable, Sendable, Equatable, Identifiable {
+    public let conversation: Conversation
+    public let patient: InboxPatient
+    public let lastMessage: InboxLastMessage?
+    /// Approximate by design — enough to decide whether to open the row.
+    public let unread: Int
+
+    public var id: String { conversation.id }
+
+    public struct InboxPatient: Decodable, Sendable, Equatable {
+        public let id: String
+        public let mrn: String
+        public let fullName: String
+    }
+
+    public struct InboxLastMessage: Decodable, Sendable, Equatable {
+        /// Null for an attachment with no text.
+        public let body: String?
+        public let sentAt: Date
+        public let type: MessageType
+    }
+
+    /// What the row shows under the name.
+    public var preview: String {
+        guard let lastMessage else { return "" }
+
+        if let body = lastMessage.body, !body.isEmpty { return body }
+
+        return L10n.string(
+            lastMessage.type == .image ? "message.photoAttached" : "message.fileAttached"
+        )
+    }
+}
+
 public struct Attachment: Decodable, Sendable {
     /// Send this with the message.
     public let mediaKey: String
@@ -128,8 +166,8 @@ public struct MessagingAPI: Sendable {
         )
     }
 
-    public func inbox() async throws -> [Conversation] {
-        try await client.send(Endpoint(method: .get, path: "conversations"), as: [Conversation].self)
+    public func inbox() async throws -> [InboxEntry] {
+        try await client.send(Endpoint(method: .get, path: "conversations"), as: [InboxEntry].self)
     }
 
     public func messages(

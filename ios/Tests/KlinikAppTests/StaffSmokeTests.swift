@@ -1,10 +1,15 @@
 import XCTest
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikAnalyticsFeature
+import KlinikAuditFeature
+import KlinikAuthFeature
 import KlinikBriefingFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikEmergencyFeature
+import KlinikExportsFeature
+import KlinikFinanceFeature
 import KlinikDocumentsFeature
 import KlinikFollowUpFeature
 import KlinikLabFeature
@@ -13,7 +18,10 @@ import KlinikMedicationsFeature
 import KlinikMessagingFeature
 import KlinikPatientsFeature
 import KlinikPhotosFeature
+import KlinikProtocolsFeature
 import KlinikReportsFeature
+import KlinikSurveysFeature
+import KlinikTravelFeature
 @testable import KlinikApp
 
 /**
@@ -79,7 +87,8 @@ final class StaffSmokeTests: XCTestCase {
         let agenda = StaffHomeModel(
             briefing: environment.briefing,
             emergency: environment.emergency,
-            reports: environment.reports
+            reports: environment.reports,
+            photos: environment.photos
         )
         await agenda.load()
         assertNotFailed(agenda.currentState().phase, "agenda")
@@ -91,6 +100,47 @@ final class StaffSmokeTests: XCTestCase {
         let reports = ReportReviewModel(api: environment.reports)
         await reports.load()
         assertNotFailed(reports.currentState().phase, "report review")
+
+        // The clinic-wide screens, which do not need a patient chosen first.
+        let calendar = CalendarModel(api: environment.appointments)
+        await calendar.load()
+        assertNotFailed(calendar.currentState().phase, "calendar")
+
+        let analytics = AnalyticsModel(api: environment.analytics)
+        await analytics.load()
+        assertNotFailed(analytics.currentState().phase, "analytics")
+
+        let finance = FinanceModel(api: environment.finance)
+        await finance.load()
+        assertNotFailed(finance.currentState().phase, "finance")
+
+        let agencies = AgenciesModel(api: environment.finance)
+        await agencies.load()
+        assertNotFailed(agencies.currentState().phase, "agencies")
+
+        let exports = ExportsModel(api: environment.exports)
+        await exports.load()
+        assertNotFailed(exports.currentState().phase, "exports")
+
+        let audit = AuditModel(api: environment.audit)
+        await audit.load()
+        assertNotFailed(audit.currentState().phase, "audit")
+
+        let protocols = ProtocolsModel(api: environment.protocols)
+        await protocols.load()
+        assertNotFailed(protocols.currentState().phase, "assistant sources")
+
+        let inbox = InboxModel(api: environment.messaging)
+        await inbox.load()
+        assertNotFailed(inbox.currentState().phase, "inbox")
+
+        let flagged = FlaggedPhotosModel(api: environment.photos)
+        await flagged.load()
+        assertNotFailed(flagged.currentState().phase, "flagged photos")
+
+        let devices = AccountModel(api: environment.auth)
+        await devices.load()
+        assertNotFailed(devices.currentState().phase, "account")
 
         // The list, through the model the screen actually uses.
         let list = PatientListModel(api: environment.patients)
@@ -150,6 +200,14 @@ final class StaffSmokeTests: XCTestCase {
         let medications = PrescribingModel(api: environment.medications, patientId: patient.id)
         await medications.load()
         assertNotFailed(medications.currentState().phase, "medications")
+
+        let surveys = SurveyTrendModel(api: environment.surveys, patientId: patient.id)
+        await surveys.load()
+        assertNotFailed(surveys.currentPhase(), "survey trend")
+
+        let travel = TravelModel(api: environment.travel, patientId: patient.id)
+        await travel.load()
+        assertNotFailed(travel.currentState().phase, "travel plan")
 
         let queue = ComplicationQueueModel(api: environment.complications)
         await queue.load()

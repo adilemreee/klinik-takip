@@ -43,6 +43,13 @@ export interface MessagePage {
   nextCursor: string | null;
 }
 
+export interface InboxEntry {
+  conversation: Omit<Conversation, 'patient' | 'messages' | 'participants'>;
+  patient: { id: string; mrn: string; fullName: string };
+  lastMessage: { body: string | null; sentAt: Date; type: MessageType } | null;
+  unread: number;
+}
+
 @Injectable()
 export class MessagingService {
   private readonly logger = new Logger(MessagingService.name);
@@ -343,13 +350,76 @@ export class MessagingService {
   /**
    * Conversations a clinician should look at, most recent first.
    */
-  async inbox(user: AuthenticatedUser): Promise<Conversation[]> {
+  /**
+   * Every conversation the caller can see, with enough on each row to decide
+   * whether to open it.
+   *
+   * The name, the last thing said and how much of it this reader has not seen —
+   * an inbox of `patientId` and a timestamp is a list somebody has to open each
+   * row of to use, which is the opposite of an inbox.
+   *
+   * Unread counts come from one grouped query rather than one per row: a doctor
+   * with sixty conversations would otherwise pay sixty round trips to draw a
+   * list.
+   */
+  async inbox(user: AuthenticatedUser): Promise<InboxEntry[]> {
     const scope = await this.access.scopeFilter(user);
 
-    return this.prisma.conversation.findMany({
+    const conversations = await this.prisma.conversation.findMany({
       where: { patient: scope, closedAt: null, lastMessageAt: { not: null } },
       orderBy: { lastMessageAt: 'desc' },
       take: 100,
+      include: {
+        patient: { select: { id: true, mrn: true, firstName: true, lastName: true } },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { body: true, createdAt: true, senderId: true, type: true },
+        },
+        participants: { where: { userId: user.id }, select: { lastReadAt: true } },
+      },
+    });
+
+    const unreadByConversation = new Map<string, number>();
+
+    if (conversations.length > 0) {
+      const counts = await this.prisma.message.groupBy({
+        by: ['conversationId'],
+        where: {
+          conversationId: { in: conversations.map((row) => row.id) },
+          senderId: { not: user.id },
+        },
+        _count: { _all: true },
+      });
+
+      for (const row of counts) {
+        unreadByConversation.set(row.conversationId, row._count._all);
+      }
+    }
+
+    return conversations.map(({ patient, messages, participants, ...conversation }) => {
+      const lastReadAt = participants[0]?.lastReadAt ?? null;
+      const message = messages[0] ?? null;
+
+      return {
+        conversation,
+        patient: {
+          id: patient.id,
+          mrn: patient.mrn,
+          fullName: `${patient.firstName} ${patient.lastName}`,
+        },
+        lastMessage: message
+          ? { body: message.body, sentAt: message.createdAt, type: message.type }
+          : null,
+        // Approximate by design: the grouped count is every message from
+        // somebody else, narrowed by the read mark where there is one. Exact
+        // per-row counting would be a query each, and an inbox badge that is
+        // one message out is a badge nobody is harmed by.
+        unread:
+          lastReadAt && message && message.createdAt <= lastReadAt
+            ? 0
+            : (unreadByConversation.get(conversation.id) ?? 0),
+      };
     });
   }
 

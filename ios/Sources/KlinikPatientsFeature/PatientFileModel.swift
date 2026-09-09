@@ -54,13 +54,48 @@ public struct PatientFileState: Sendable, Equatable {
 @MainActor
 public final class PatientFileModel {
     private let api: PatientsAPI
+    /// Nil where the caller has no export rights to offer; the summary button
+    /// is then absent rather than refused on press.
+    private let exports: ExportsAPI?
     private let patientId: String
 
     private var state = PatientFileState()
 
-    public init(api: PatientsAPI, patientId: String) {
+    public init(api: PatientsAPI, exports: ExportsAPI? = nil, patientId: String) {
         self.api = api
+        self.exports = exports
         self.patientId = patientId
+    }
+
+    public var canExportSummary: Bool { exports != nil }
+
+    /**
+     * Asks for the patient summary PDF (spec M12).
+     *
+     * Queued rather than returned: it carries measurement charts, lab tables
+     * and — with consent — photographs, and building that while somebody waits
+     * on a spinner is how a request times out on a slow connection. The export
+     * screen is where it lands.
+     */
+    public func requestSummary(includePhotos: Bool) async -> Bool {
+        guard let exports else { return false }
+
+        state.savingError = nil
+
+        do {
+            _ = try await exports.requestSummary(
+                patientId: patientId,
+                includePhotos: includePhotos
+            )
+
+            return true
+        } catch let error as APIError {
+            state.savingError = L10n.message(for: error)
+        } catch {
+            state.savingError = L10n.string("error.server")
+        }
+
+        return false
     }
 
     public func currentState() -> PatientFileState { state }

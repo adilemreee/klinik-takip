@@ -22,6 +22,7 @@ public struct FinanceScreen: View {
 
     @State private var state = FinanceState()
     @State private var paying: FinanceRecord?
+    @State private var reversing: PaymentEntry?
 
     public init(model: FinanceModel, openPatient: @escaping (String, String) -> Void) {
         self.model = model
@@ -69,6 +70,14 @@ public struct FinanceScreen: View {
         .navigationTitle(L10n.string("finance.title"))
         .refreshable { await reload() }
         .task { await reload() }
+        .sheet(item: $reversing) { payment in
+            ReversalSheet(payment: payment) { reason in
+                let ok = await model.reverse(paymentId: payment.id, reason: reason)
+                state = model.currentState()
+
+                if ok { reversing = nil }
+            }
+        }
         .sheet(item: $paying) { record in
             PaymentSheet(record: record) { amount, method, reference in
                 let ok = await model.pay(
@@ -315,6 +324,51 @@ public struct FinanceScreen: View {
                     Spacer(minLength: 0)
                 }
 
+                if !record.livePayments.isEmpty {
+                    VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                        Text(L10n.string("finance.payments.title"))
+                            .font(Tokens.Typography.captionRelative)
+                            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                        ForEach(record.payments) { payment in
+                            HStack(spacing: Tokens.Spacing.sm) {
+                                Text(payment.amount.display(payment.currency))
+                                    .font(Tokens.Typography.calloutRelative)
+                                    .foregroundStyle(
+                                        (payment.isReversed
+                                            ? Tokens.Palette.textDisabled
+                                            : Tokens.Palette.textPrimary).resolve(for: scheme)
+                                    )
+                                    .strikethrough(payment.isReversed)
+
+                                Text(payment.method.localizedName)
+                                    .font(Tokens.Typography.captionRelative)
+                                    .foregroundStyle(
+                                        Tokens.Palette.textSecondary.resolve(for: scheme)
+                                    )
+
+                                Spacer(minLength: Tokens.Spacing.sm)
+
+                                if payment.isReversed {
+                                    Badge(
+                                        L10n.string("finance.payment.reversed"),
+                                        tone: .neutral,
+                                        symbol: "arrow.uturn.backward"
+                                    )
+                                } else {
+                                    Button(L10n.string("finance.reverse")) { reversing = payment }
+                                        .font(Tokens.Typography.captionRelative)
+                                        .frame(minHeight: Tokens.minimumTouchTarget)
+                                        .foregroundStyle(
+                                            Tokens.Palette.critical.resolve(for: scheme)
+                                        )
+                                }
+                            }
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                }
+
                 if !record.balance.isZero, record.cancelledAt == nil {
                     PrimaryButton(
                         title: L10n.string("finance.recordPayment"),
@@ -450,5 +504,56 @@ struct PaymentSheet: View {
         guard !trimmed.isEmpty, let value = Decimal(string: trimmed), value > 0 else { return nil }
 
         return trimmed
+    }
+}
+
+
+/**
+ * Undoing a payment.
+ *
+ * A reason is required and the row is kept: a payment entered and undone is
+ * part of what happened, and a ledger that forgets its corrections is one
+ * nobody can audit. The server enforces both; this asks for the sentence while
+ * whoever is undoing it still remembers why.
+ */
+struct ReversalSheet: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dismiss) private var dismiss
+
+    let payment: PaymentEntry
+    let submit: (String) async -> Void
+
+    @State private var reason = ""
+    @State private var busy = false
+
+    var body: some View {
+        FormScaffold(
+            title: L10n.string("finance.reverse"),
+            subtitle: payment.amount.display(payment.currency)
+        ) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
+                LabelledField(
+                    label: L10n.string("finance.reverseReason"),
+                    text: $reason,
+                    isSecure: false,
+                    contentType: .plain,
+                    keyboard: .default
+                )
+
+                PrimaryButton(
+                    title: L10n.string("finance.reverse"),
+                    isBusy: busy,
+                    isEnabled: !reason.trimmingCharacters(in: .whitespaces).isEmpty && !busy
+                ) {
+                    busy = true
+                    await submit(reason)
+                    busy = false
+                }
+
+                Button(L10n.string("common.cancel")) { dismiss() }
+                    .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+            }
+        }
     }
 }

@@ -175,16 +175,37 @@ public struct StaffHomeScreen: View {
     /// is not — a nurse should not be shown a review queue she cannot open.
     @ViewBuilder
     private var queues: some View {
-        if let pending = state.pendingReportCount, pending > 0 {
+        let pending = state.pendingReportCount ?? 0
+        let flagged = state.flaggedPhotoCount ?? 0
+
+        if pending > 0 || flagged > 0 {
             Card {
-                NavigationRow(
-                    symbol: "doc.text.magnifyingglass",
-                    title: L10n.string("briefing.pendingReports"),
-                    detail: L10n.string("briefing.pendingReportsHint"),
-                    badge: "\(pending)",
-                    badgeTone: .warning
-                ) {
-                    onSelect(.pendingReports)
+                VStack(spacing: 0) {
+                    if pending > 0 {
+                        NavigationRow(
+                            symbol: "doc.text.magnifyingglass",
+                            title: L10n.string("briefing.pendingReports"),
+                            detail: L10n.string("briefing.pendingReportsHint"),
+                            badge: "\(pending)",
+                            badgeTone: .warning
+                        ) {
+                            onSelect(.pendingReports)
+                        }
+                    }
+
+                    if flagged > 0 {
+                        if pending > 0 { Divider() }
+
+                        NavigationRow(
+                            symbol: "photo.badge.exclamationmark",
+                            title: L10n.string("briefing.flaggedPhotos"),
+                            detail: L10n.string("briefing.flaggedPhotosHint"),
+                            badge: "\(flagged)",
+                            badgeTone: .warning
+                        ) {
+                            onSelect(.flaggedPhotos)
+                        }
+                    }
                 }
             }
         }

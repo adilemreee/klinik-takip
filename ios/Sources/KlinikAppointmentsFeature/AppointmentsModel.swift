@@ -35,6 +35,8 @@ public struct AppointmentsState: Sendable, Equatable {
 /// Appointments (spec M10).
 public actor AppointmentsModel {
     private let api: AppointmentsAPI
+    /// Nil on the patient's own list, which asks rather than books.
+    private let patientId: String?
     private let load: @Sendable (AppointmentsAPI) async throws -> [Appointment]
 
     private(set) public var state = AppointmentsState()
@@ -42,13 +44,62 @@ public actor AppointmentsModel {
     /// The caller's own appointments.
     public init(api: AppointmentsAPI) {
         self.api = api
+        self.patientId = nil
         self.load = { try await $0.mine() }
     }
 
     /// A named patient's, for staff.
     public init(api: AppointmentsAPI, patientId: String) {
         self.api = api
+        self.patientId = patientId
         self.load = { try await $0.forPatient(patientId) }
+    }
+
+    /**
+     * The clinic booking a slot, rather than a patient asking for one.
+     *
+     * Confirmed on arrival: an appointment the clinic made does not need the
+     * clinic to agree to it, and leaving it as a request would put the clinic's
+     * own bookings in its own approval queue.
+     */
+    @discardableResult
+    public func book(
+        type: AppointmentType,
+        at scheduledAt: Date,
+        durationMinutes: Int,
+        location: String?,
+        note: String?
+    ) async -> Bool {
+        guard let patientId, !state.booking else { return false }
+
+        state.booking = true
+        state.error = nil
+        defer { state.booking = false }
+
+        do {
+            _ = try await api.book(
+                patientId: patientId,
+                type: type,
+                scheduledAt: scheduledAt,
+                staffId: nil,
+                durationMinutes: durationMinutes,
+                location: location,
+                note: note
+            )
+        } catch let error as APIError {
+            // The clash, in its own words: "that time is taken" sends somebody
+            // looking for another slot, "the clinic is not open then" sends
+            // them to another day, and the wrong one wastes their afternoon.
+            state.error = AppointmentsAPI.refusal(from: error)?.localizedMessage
+                ?? L10n.message(for: error)
+            return false
+        } catch {
+            state.error = L10n.string("error.server")
+            return false
+        }
+
+        await refresh()
+        return true
     }
 
     public func currentState() -> AppointmentsState { state }

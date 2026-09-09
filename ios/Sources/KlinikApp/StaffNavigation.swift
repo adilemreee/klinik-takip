@@ -7,6 +7,7 @@ import KlinikBriefingFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikDesign
+import KlinikAISettingsFeature
 import KlinikAnalyticsFeature
 import KlinikDocumentsFeature
 import KlinikExportsFeature
@@ -55,6 +56,9 @@ public enum StaffDestination: Hashable, Sendable {
     case audit
     case protocols
     case agencies
+    case flaggedPhotos
+    case inbox
+    case aiSettings
     case surveys(patientId: String)
     case travel(patientId: String)
     /// AI output nobody has signed off yet (spec M5).
@@ -118,7 +122,8 @@ struct StaffPatientsView: View {
                 model: StaffHomeModel(
                     briefing: environment.briefing,
                     emergency: environment.emergency,
-                    reports: environment.reports
+                    reports: environment.reports,
+                    photos: environment.photos
                 ),
                 onSelect: { target in
                     switch target {
@@ -126,6 +131,8 @@ struct StaffPatientsView: View {
                         agendaPath.append(.patient(id: id, name: name))
                     case .pendingReports:
                         agendaPath.append(.pendingReports)
+                    case .flaggedPhotos:
+                        agendaPath.append(.flaggedPhotos)
                     case .emergencyQueue:
                         // A tab, not a push: the queue has its own place, and
                         // burying a second copy inside the agenda's stack would
@@ -176,6 +183,7 @@ struct StaffPatientsView: View {
 
             Divider()
 
+            Button(L10n.string("menu.inbox")) { path.wrappedValue.append(.inbox) }
             Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
             Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
             Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
@@ -183,6 +191,7 @@ struct StaffPatientsView: View {
             Button(L10n.string("menu.exports")) { path.wrappedValue.append(.exports) }
             Button(L10n.string("menu.audit")) { path.wrappedValue.append(.audit) }
             Button(L10n.string("menu.protocols")) { path.wrappedValue.append(.protocols) }
+            Button(L10n.string("menu.aiSettings")) { path.wrappedValue.append(.aiSettings) }
             Button(L10n.string("menu.complicationQueue")) {
                 path.wrappedValue.append(.complicationQueue)
             }
@@ -209,7 +218,11 @@ struct StaffPatientsView: View {
         switch destination {
         case .patient(let id, let name):
             PatientFileScreen(
-                model: PatientFileModel(api: environment.patients, patientId: id),
+                model: PatientFileModel(
+                    api: environment.patients,
+                    exports: environment.exports,
+                    patientId: id
+                ),
                 onSection: { section in push(StaffDestination(section, patientId: id)) },
                 onInvite: { push(.invite(patientId: id, name: name)) }
             )
@@ -253,6 +266,44 @@ struct StaffPatientsView: View {
 
         case .agencies:
             AgenciesScreen(model: AgenciesModel(api: environment.finance))
+
+        case .aiSettings:
+            AISettingsScreen(model: AISettingsModel(api: environment.aiSettings))
+
+        case .inbox:
+            InboxScreen(
+                model: InboxModel(api: environment.messaging),
+                openConversation: { id, name in
+                    // Into the file rather than straight to the thread: a
+                    // clinician answering a message usually wants what is
+                    // around it, and the conversation is one tap from there.
+                    push(.patient(id: id, name: name))
+                }
+            )
+
+        case .aiSettings:
+            AISettingsScreen(model: AISettingsModel(api: environment.aiSettings))
+
+        case .inbox:
+            InboxScreen(
+                model: InboxModel(api: environment.messaging),
+                openConversation: { id, name in
+                    // Into the file rather than straight to the thread: a
+                    // clinician answering a message usually wants what is
+                    // around it, and the conversation is one tap from there.
+                    push(.patient(id: id, name: name))
+                }
+            )
+
+        case .flaggedPhotos:
+            FlaggedPhotosScreen(
+                model: FlaggedPhotosModel(api: environment.photos),
+                linkFor: { [photos = environment.photos] id in
+                    guard let link = try? await photos.link(photoId: id) else { return nil }
+
+                    return URL(string: link.url)
+                }
+            )
 
         case .surveys(let patientId):
             SurveyTrendScreen(
@@ -317,7 +368,14 @@ struct StaffPatientsView: View {
             LabReviewScreen(model: LabReviewModel(api: environment.lab, patientId: patientId))
 
         case .labTrend(let patientId):
-            LabTrendScreen(model: LabTrendModel(api: environment.lab, subject: .patient(id: patientId)))
+            LabTrendScreen(
+                model: LabTrendModel(
+                    api: environment.lab,
+                    subject: .patient(id: patientId),
+                    reports: environment.reports
+                ),
+                canInterpret: true
+            )
 
         case .photos(let patientId):
             PhotoGalleryView(
@@ -332,7 +390,8 @@ struct StaffPatientsView: View {
             // Staff may mark a visit attended; a patient only reads.
             FollowUpScreen(
                 model: FollowUpModel(api: environment.followUp, patientId: patientId),
-                canMark: true
+                canMark: true,
+                canGenerate: true
             )
 
         case .conversation(let patientId):

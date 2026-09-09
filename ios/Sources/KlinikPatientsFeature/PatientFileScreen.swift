@@ -29,6 +29,9 @@ public struct PatientFileScreen: View {
     @State private var state = PatientFileState()
     @State private var editingIdentity = false
     @State private var editingMedical = false
+    @State private var exporting = false
+    @State private var exportWithPhotos = false
+    @State private var exportQueued = false
 
     public init(
         model: PatientFileModel,
@@ -190,6 +193,37 @@ public struct PatientFileScreen: View {
                 // Only while there is no login. A file whose patient already
                 // uses the app does not need an invitation, and offering one
                 // would issue a code nobody has a use for.
+                if model.canExportSummary {
+                    if exportQueued {
+                        Label(L10n.string("file.exportQueued"), systemImage: "checkmark.circle")
+                            .font(Tokens.Typography.captionRelative)
+                            .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Toggle(L10n.string("file.exportWithPhotos"), isOn: $exportWithPhotos)
+                            .font(Tokens.Typography.calloutRelative)
+                            .frame(minHeight: Tokens.minimumTouchTarget)
+
+                        // Photographs only where a usage consent exists; the
+                        // server enforces that and the report says what it left
+                        // out, which is why the toggle can be offered plainly.
+                        Button(L10n.string("file.exportSummary")) {
+                            Task {
+                                exporting = true
+                                exportQueued = await model.requestSummary(
+                                    includePhotos: exportWithPhotos
+                                )
+                                state = model.currentState()
+                                exporting = false
+                            }
+                        }
+                        .font(Tokens.Typography.calloutRelative)
+                        .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                        .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+                        .disabled(exporting)
+                    }
+                }
+
                 if !file.contact.hasAccount, let onInvite {
                     Button(L10n.string("menu.invite")) { onInvite() }
                         .font(Tokens.Typography.subheadingRelative)

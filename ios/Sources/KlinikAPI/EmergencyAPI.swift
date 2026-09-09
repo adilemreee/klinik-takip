@@ -171,13 +171,6 @@ public struct EmergencyAPI: Sendable {
         )
     }
 
-    public func detail(_ emergencyId: String) async throws -> StaffEmergencyView {
-        try await client.send(
-            Endpoint(method: .get, path: "emergency/\(emergencyId)"),
-            as: StaffEmergencyView.self
-        )
-    }
-
     public func acknowledge(_ emergencyId: String) async throws -> StaffEmergencyView {
         try await client.send(
             Endpoint(method: .patch, path: "emergency/\(emergencyId)/acknowledge"),

@@ -62,7 +62,8 @@ private func model(_ bodies: [String: (Int, String)]) async -> StaffHomeModel {
     return await StaffHomeModel(
         briefing: BriefingAPI(client: client),
         emergency: EmergencyAPI(client: client),
-        reports: ReportsAPI(client: client)
+        reports: ReportsAPI(client: client),
+        photos: PhotosAPI(client: client)
     )
 }
 

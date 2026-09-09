@@ -752,3 +752,7 @@
 "menu.assistant" = "Hızlı yanıt";
 "assistant.offerOpen" = "Sık sorulan bir soruysa hemen yanıt alabilirsiniz.";
 "assistant.offerClosed" = "Klinik şu an kapalı — asistan bazı soruları hemen yanıtlayabilir.";
+"message.attach" = "Dosya ekle";
+"message.attaching" = "Yükleniyor…";
+"message.photoAttached" = "Fotoğraf — açmak için dokunun";
+"message.fileAttached" = "Dosya — açmak için dokunun";

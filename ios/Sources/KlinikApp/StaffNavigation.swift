@@ -244,7 +244,8 @@ struct StaffPatientsView: View {
                 model: ChatModel(api: environment.messaging) {
                     try await environment.messaging.conversation(patientId: patientId)
                 },
-                canUseTemplates: true
+                canUseTemplates: true,
+                pickAttachment: { await FilePicker.present() }
             )
 
         case .appointments(let patientId):

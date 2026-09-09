@@ -12,10 +12,15 @@ public struct ChatScreen: View {
     private let onTyping: (@Sendable (String) -> Void)?
     /// Set on the patient's side only. Staff have no assistant to hand off to.
     private let openAssistant: (() -> Void)?
+    /// Supplied by the app shell, which owns the picker. Nil hides the button
+    /// rather than showing one that does nothing.
+    private let pickAttachment: (() async -> (url: URL, contentType: String)?)?
 
     @State private var state = ChatState()
     @State private var draft = ""
     @State private var showingTemplates = false
+    @State private var attaching = false
+    @State private var viewing: ViewedAttachment?
 
     /// - Parameter onTyping: notifies the socket. Supplied by the caller so the
     ///   screen owns no connection of its own.
@@ -23,12 +28,14 @@ public struct ChatScreen: View {
         model: ChatModel,
         canUseTemplates: Bool = false,
         onTyping: (@Sendable (String) -> Void)? = nil,
-        openAssistant: (() -> Void)? = nil
+        openAssistant: (() -> Void)? = nil,
+        pickAttachment: (() async -> (url: URL, contentType: String)?)? = nil
     ) {
         self.model = model
         self.canUseTemplates = canUseTemplates
         self.onTyping = onTyping
         self.openAssistant = openAssistant
+        self.pickAttachment = pickAttachment
     }
 
     public var body: some View {
@@ -96,7 +103,15 @@ public struct ChatScreen: View {
                     }
 
                     ForEach(state.messages) { message in
-                        MessageRow(message: message)
+                        if message.hasAttachment {
+                            Button { Task { await open(message) } } label: {
+                                MessageRow(message: message)
+                            }
+                            .buttonStyle(.plain)
+                            .frame(minHeight: Tokens.minimumTouchTarget)
+                        } else {
+                            MessageRow(message: message)
+                        }
                     }
 
                     if !state.typing.isEmpty {
@@ -120,14 +135,35 @@ public struct ChatScreen: View {
                 showingTemplates = false
             }
         }
+        .sheet(item: $viewing) { attachment in
+            AttachmentViewer(url: attachment.url)
+        }
     }
 
     private var composer: some View {
         VStack(spacing: Tokens.Spacing.sm) {
-            if canUseTemplates && !state.quickReplies.isEmpty {
-                Button(L10n.string("message.templates")) { showingTemplates = true }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: Tokens.Spacing.md) {
+                if canUseTemplates && !state.quickReplies.isEmpty {
+                    Button(L10n.string("message.templates")) { showingTemplates = true }
+                        .frame(minHeight: Tokens.minimumTouchTarget)
+                }
+
+                if pickAttachment != nil {
+                    Button {
+                        Task { await attach() }
+                    } label: {
+                        Label(L10n.string("message.attach"), systemImage: "paperclip")
+                            .font(Tokens.Typography.calloutRelative)
+                    }
                     .frame(minHeight: Tokens.minimumTouchTarget)
+                    .disabled(attaching || state.sending)
+                }
+
+                Spacer(minLength: 0)
+
+                if attaching {
+                    ProgressView().accessibilityLabel(L10n.string("message.attaching"))
+                }
             }
 
             LabelledField(
@@ -154,6 +190,38 @@ public struct ChatScreen: View {
             }
         }
         .padding(Tokens.Spacing.lg)
+    }
+
+    /// Picks a file, uploads it and sends it with whatever is in the box.
+    private func attach() async {
+        guard let pickAttachment, let picked = await pickAttachment() else { return }
+
+        attaching = true
+        defer { attaching = false }
+
+        let caption = draft
+        let sent = await refreshReturning {
+            await model.attach(
+                fileURL: picked.url,
+                contentType: picked.contentType,
+                caption: caption
+            )
+        }
+
+        if sent { draft = "" }
+    }
+
+    /// Fetches the signed link when somebody taps, not before: the link is
+    /// short-lived, and one fetched with the list would be dead by the time a
+    /// reader scrolled to it.
+    private func open(_ message: ChatMessage) async {
+        guard message.hasAttachment else { return }
+        guard let url = await model.attachmentURL(for: message.id) else {
+            state = await model.currentState()
+            return
+        }
+
+        viewing = ViewedAttachment(id: message.id, url: url)
     }
 
     private func refresh(_ work: () async -> Void) async {
@@ -208,10 +276,33 @@ struct MessageRow: View {
     let message: ChatMessage
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
-            Text(message.body ?? message.transcript ?? L10n.string("message.attachment"))
-                .font(Tokens.Typography.bodyRelative)
-                .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+        VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
+            if message.hasAttachment {
+                // Says what it is and that it opens. "Ek" on its own reads as a
+                // message the app failed to render.
+                HStack(spacing: Tokens.Spacing.sm) {
+                    Image(systemName: message.type == .image ? "photo" : "paperclip")
+                        .font(Tokens.Typography.bodyRelative)
+                        .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+                        .accessibilityHidden(true)
+
+                    Text(
+                        L10n.string(
+                            message.type == .image ? "message.photoAttached" : "message.fileAttached"
+                        )
+                    )
+                    .font(Tokens.Typography.subheadingRelative)
+                    .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+
+                    Spacer(minLength: 0)
+                }
+            }
+
+            if let text = message.body ?? message.transcript, !text.isEmpty {
+                Text(text)
+                    .font(Tokens.Typography.bodyRelative)
+                    .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+            }
 
             HStack(spacing: Tokens.Spacing.sm) {
                 Text(message.createdAt, style: .time)
@@ -319,3 +410,62 @@ struct AssistantOffer: View {
         .accessibilityAddTraits(.isButton)
     }
 }
+
+
+/// What the attachment sheet carries. A URL is not `Identifiable`, and the
+/// sheet needs an identity to know when to re-present.
+struct ViewedAttachment: Identifiable, Equatable {
+    let id: String
+    let url: URL
+}
+
+#if os(iOS)
+import QuickLook
+
+/// The same previewer the documents screen uses, so a photograph sent in a
+/// message and one uploaded to the file open the same way.
+struct AttachmentViewer: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeCoordinator() -> Coordinator { Coordinator(url: url) }
+
+    func makeUIViewController(context: Context) -> QLPreviewController {
+        let controller = QLPreviewController()
+        controller.dataSource = context.coordinator
+
+        return controller
+    }
+
+    func updateUIViewController(_ controller: QLPreviewController, context: Context) {
+        context.coordinator.url = url
+        controller.reloadData()
+    }
+
+    final class Coordinator: NSObject, QLPreviewControllerDataSource {
+        var url: URL
+
+        init(url: URL) {
+            self.url = url
+        }
+
+        func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
+
+        func previewController(
+            _ controller: QLPreviewController,
+            previewItemAt index: Int
+        ) -> QLPreviewItem {
+            url as NSURL
+        }
+    }
+}
+#else
+/// The package builds for macOS so its tests run headlessly; no test opens an
+/// attachment.
+struct AttachmentViewer: View {
+    let url: URL
+
+    var body: some View {
+        Text(url.lastPathComponent)
+    }
+}
+#endif

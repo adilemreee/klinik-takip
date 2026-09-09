@@ -752,3 +752,7 @@
 "menu.assistant" = "Quick answer";
 "assistant.offerOpen" = "If it is a common question you can have an answer now.";
 "assistant.offerClosed" = "The clinic is closed — the assistant can answer some questions straight away.";
+"message.attach" = "Attach";
+"message.attaching" = "Uploading…";
+"message.photoAttached" = "Photograph — tap to open";
+"message.fileAttached" = "File — tap to open";

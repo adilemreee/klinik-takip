@@ -22,6 +22,10 @@ public struct ChatState: Sendable, Equatable {
     public var quickReplies: [QuickReply] = []
     public var sending = false
     public var error: String?
+    /// An uploaded file waiting for its message. Kept so a failed send can be
+    /// retried without transferring the bytes a second time.
+    public var pendingMediaKey: String?
+    public var pendingMediaType: MessageType?
     /// Who is typing, other than the caller.
     public var typing: Set<String> = []
 
@@ -111,12 +115,14 @@ public actor ChatModel {
                 conversationId: conversationId,
                 body: trimmed.isEmpty ? nil : trimmed,
                 mediaKey: mediaKey,
-                type: mediaKey != nil ? .file : nil
+                type: messageType
             )
 
             // Appended from the server's answer, including its queued status, so
             // the row on screen says the same thing the clinic will see.
             append(sent.message)
+            state.pendingMediaKey = nil
+            state.pendingMediaType = nil
         } catch let error as APIError {
             state.error = L10n.message(for: error)
             return false
@@ -126,6 +132,67 @@ public actor ChatModel {
         }
 
         return true
+    }
+
+    /**
+     * Attaches a file and sends it as one message.
+     *
+     * Two calls, and the second one is the point: an upload that succeeds and a
+     * send that fails leaves a file in storage nobody can see. The key is kept
+     * so the send can be retried without uploading the bytes again — on hotel
+     * wifi that difference is a wound photograph transferred twice.
+     */
+    @discardableResult
+    public func attach(fileURL: URL, contentType: String, caption: String = "") async -> Bool {
+        guard let conversationId = state.conversationId, !state.sending else { return false }
+
+        state.sending = true
+        state.error = nil
+
+        do {
+            let attachment = try await api.attach(
+                conversationId: conversationId,
+                fileURL: fileURL,
+                contentType: contentType
+            )
+
+            state.pendingMediaKey = attachment.mediaKey
+            state.pendingMediaType = contentType.hasPrefix("image/") ? .image : .file
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+            state.sending = false
+            return false
+        } catch {
+            state.error = L10n.string("error.server")
+            state.sending = false
+            return false
+        }
+
+        state.sending = false
+
+        return await send(caption, mediaKey: state.pendingMediaKey)
+    }
+
+    /// The signed URL for one message's attachment. Short-lived by design, so
+    /// it is fetched when somebody taps rather than kept beside the row.
+    public func attachmentURL(for messageId: String) async -> URL? {
+        do {
+            return try await api.attachmentURL(messageId: messageId)
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return nil
+    }
+
+    /// Images are sent as images so the conversation can show them inline; a
+    /// wound photograph rendered as "dosya" is a photograph nobody looks at.
+    private var messageType: MessageType? {
+        guard state.pendingMediaKey != nil else { return nil }
+
+        return state.pendingMediaType ?? .file
     }
 
     /// A message that arrived over the socket.

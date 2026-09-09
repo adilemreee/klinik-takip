@@ -401,3 +401,99 @@ final class TriageRenderingTests: XCTestCase {
         }
     }
 }
+
+/// Attachments: the upload and the send are two calls, and only the second one
+/// makes the file visible to anybody.
+final class ChatAttachmentTests: XCTestCase {
+    private func chat(_ transport: HTTPTransport) async -> ChatModel {
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: NoRefresh())
+        try? await session.signIn(
+            with: SessionTokens(
+                accessToken: "access",
+                refreshToken: "refresh",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+
+        let client = APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: transport,
+            session: session
+        )
+
+        let api = MessagingAPI(client: client)
+
+        return ChatModel(api: api) { try await api.myConversation() }
+    }
+
+    private struct NoRefresh: TokenRefresher {
+        func refresh(using refreshToken: String) async throws -> SessionTokens {
+            throw APIError.unknown(status: 0)
+        }
+    }
+
+    private actor Transport: HTTPTransport {
+        let bodies: [String: (Int, String)]
+        private(set) var calls: [String] = []
+
+        init(bodies: [String: (Int, String)]) {
+            self.bodies = bodies
+        }
+
+        func send(_ request: URLRequest) async throws -> HTTPResponse {
+            let key = "\(request.httpMethod ?? "GET") \(request.url!.path)"
+            calls.append(key)
+
+            guard let (status, body) = bodies[key] else {
+                return HTTPResponse(status: 500, body: Data())
+            }
+
+            return HTTPResponse(status: status, body: Data(body.utf8))
+        }
+
+        func made() -> [String] { calls }
+    }
+
+    private let conversation = """
+    {"id":"c1","patientId":"p1","subject":null,"lastMessageAt":null,"closedAt":null}
+    """
+
+    /**
+     * A failed send after a successful upload keeps the key.
+     *
+     * Without it the bytes go up a second time on retry, and a wound
+     * photograph on hotel wifi is not a transfer to repeat for nothing.
+     */
+    func testAFailedSendKeepsTheUploadedKey() async throws {
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent("attachment-test.png")
+        try Data("not really a png".utf8).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let transport = Transport(bodies: [
+            "GET /me/conversation": (200, conversation),
+            "GET /conversations/c1/messages": (200, #"{"items":[],"nextCursor":null}"#),
+            "GET /conversations/clinic-state": (200, #"{"open":true,"opensAt":null}"#),
+            "POST /conversations/c1/attachments": (
+                200, #"{"mediaKey":"messages/c1/abc.png","mime":"image/png","size":16}"#
+            ),
+            // The send fails.
+            "POST /conversations/c1/messages": (500, "{}"),
+        ])
+
+        let model = await chat(transport)
+        await model.load()
+
+        let sent = await model.attach(
+            fileURL: file,
+            contentType: "image/png",
+            caption: "Yaram böyle"
+        )
+
+        let state = await model.currentState()
+        XCTAssertFalse(sent)
+        XCTAssertEqual(state.pendingMediaKey, "messages/c1/abc.png")
+        XCTAssertEqual(state.pendingMediaType, .image)
+        XCTAssertNotNil(state.error)
+    }
+}

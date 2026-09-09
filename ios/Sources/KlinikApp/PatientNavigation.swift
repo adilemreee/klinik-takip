@@ -132,7 +132,11 @@ struct PatientHomeView: View {
                 // Spec M4 puts the assistant in front of the clinic rather
                 // than beside it: a question it can answer from the clinic's
                 // own documents does not need to wait for a nurse.
-                openAssistant: { path.append(.assistant) }
+                openAssistant: { path.append(.assistant) },
+                // The same picker the documents screen uses, and the same
+                // types: the server accepts a superset for messages, so
+                // nothing offered here can be refused on arrival.
+                pickAttachment: { await FilePicker.present() }
             )
 
         case .assistant:

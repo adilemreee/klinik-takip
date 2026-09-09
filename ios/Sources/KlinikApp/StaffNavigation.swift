@@ -40,6 +40,8 @@ public enum StaffDestination: Hashable, Sendable {
     case medications(patientId: String)
     case invite(patientId: String, name: String)
     case account
+    /// Every patient the caller can see, a month at a time (spec M10).
+    case calendar
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -156,6 +158,7 @@ struct StaffPatientsView: View {
 
             Divider()
 
+            Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
             Button(L10n.string("menu.complicationQueue")) {
                 path.wrappedValue.append(.complicationQueue)
             }
@@ -203,6 +206,12 @@ struct StaffPatientsView: View {
             AccountScreen(
                 model: AccountModel(api: environment.auth),
                 signOut: signOut
+            )
+
+        case .calendar:
+            CalendarScreen(
+                model: CalendarModel(api: environment.appointments),
+                openPatient: { id, name in push(.patient(id: id, name: name)) }
             )
 
         case .pendingReports:

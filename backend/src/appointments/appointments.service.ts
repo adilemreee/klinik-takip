@@ -16,6 +16,11 @@ import { NOTIFICATION_TYPES } from '../notifications/templates';
 import { dueReminders, overlaps, withinAvailability } from './booking';
 import { buildCalendar } from './ics';
 
+export interface CalendarEntry {
+  appointment: Appointment;
+  patient: { id: string; mrn: string; fullName: string };
+}
+
 export interface BookInput {
   staffId?: string;
   type: AppointmentType;
@@ -184,21 +189,37 @@ export class AppointmentsService {
   }
 
   /** A clinician's own calendar for a window of days. */
-  async calendar(
-    user: AuthenticatedUser,
-    from: Date,
-    to: Date,
-  ): Promise<Appointment[]> {
+  /**
+   * The caller's calendar, with names on it.
+   *
+   * A cross-patient view is the one place an appointment needs to say whose it
+   * is: a day showing four rows of `patientId` is a day a clinician cannot
+   * read. Each row's identity travels with it rather than being looked up per
+   * appointment, which on a busy month would be thirty extra reads.
+   */
+  async calendar(user: AuthenticatedUser, from: Date, to: Date): Promise<CalendarEntry[]> {
     const scope = await this.access.scopeFilter(user);
 
-    return this.prisma.appointment.findMany({
+    const appointments = await this.prisma.appointment.findMany({
       where: {
         patient: scope,
         scheduledAt: { gte: from, lte: to },
         status: { not: AppointmentStatus.CANCELLED },
       },
       orderBy: { scheduledAt: 'asc' },
+      include: {
+        patient: { select: { id: true, mrn: true, firstName: true, lastName: true } },
+      },
     });
+
+    return appointments.map(({ patient, ...appointment }) => ({
+      appointment,
+      patient: {
+        id: patient.id,
+        mrn: patient.mrn,
+        fullName: `${patient.firstName} ${patient.lastName}`,
+      },
+    }));
   }
 
   /**

@@ -784,3 +784,14 @@
 "invite.needContact" = "Enter an e-mail address or a phone number.";
 "invite.badEmail" = "That e-mail address does not look right.";
 "menu.invite" = "Invite the patient";
+
+/* Calendar (M10) */
+"calendar.title" = "Calendar";
+"calendar.previousMonth" = "Previous month";
+"calendar.nextMonth" = "Next month";
+"calendar.appointmentCount" = "%d appointments";
+"calendar.nothingThatDay" = "Nothing that day.";
+"calendar.minutes" = "%d min";
+"calendar.hasRequest" = "waiting for confirmation";
+"menu.calendar" = "Calendar";
+"appointment.addToCalendar" = "Add to my calendar";

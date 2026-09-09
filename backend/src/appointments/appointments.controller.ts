@@ -16,10 +16,11 @@ import {
 } from '../authz/decorators/require-permissions.decorator';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { MeasurementsService } from '../measurements/measurements.service';
-import { AppointmentsService } from './appointments.service';
+import { AppointmentsService, type CalendarEntry } from './appointments.service';
 import {
   AppointmentDto,
   BookAppointmentDto,
+  CalendarEntryDto,
   CalendarQueryDto,
   CancelDto,
   RescheduleDto,
@@ -67,12 +68,12 @@ export class AppointmentsController {
   @Get('calendar')
   @RequirePermissions('appointments.read')
   @ApiOperation({ summary: 'The caller\'s calendar between two moments' })
-  @ApiOkResponse({ type: [AppointmentDto] })
+  @ApiOkResponse({ type: [CalendarEntryDto] })
   @ApiStandardErrors()
   async calendar(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: CalendarQueryDto,
-  ): Promise<Appointment[]> {
+  ): Promise<CalendarEntry[]> {
     return this.appointments.calendar(user, query.from, query.to);
   }
 

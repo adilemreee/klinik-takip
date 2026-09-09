@@ -53,6 +53,31 @@ public actor AppointmentsModel {
 
     public func currentState() -> AppointmentsState { state }
 
+    /**
+     * Writes the calendar file to a temporary location, for sharing.
+     *
+     * The patient's appointments name their clinic and their surgeon, so the
+     * file is produced on demand and shared through the system sheet — where
+     * the person choosing where it goes is the person it is about.
+     */
+    public func calendarFile() async -> URL? {
+        do {
+            let data = try await api.calendarFile()
+            let destination = FileManager.default.temporaryDirectory
+                .appendingPathComponent("klinik-randevular.ics")
+
+            try data.write(to: destination, options: .atomic)
+
+            return destination
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return nil
+    }
+
     public func refresh() async {
         state.phase = .loading
 

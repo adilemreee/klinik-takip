@@ -784,3 +784,14 @@
 "invite.needContact" = "E-posta ya da telefon girin.";
 "invite.badEmail" = "E-posta adresi geçerli görünmüyor.";
 "menu.invite" = "Hastayı davet et";
+
+/* Takvim (M10) */
+"calendar.title" = "Takvim";
+"calendar.previousMonth" = "Önceki ay";
+"calendar.nextMonth" = "Sonraki ay";
+"calendar.appointmentCount" = "%d randevu";
+"calendar.nothingThatDay" = "Bu gün randevu yok.";
+"calendar.minutes" = "%d dk";
+"calendar.hasRequest" = "onay bekleyen var";
+"menu.calendar" = "Takvim";
+"appointment.addToCalendar" = "Takvimime ekle";

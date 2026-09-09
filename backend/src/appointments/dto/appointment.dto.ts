@@ -106,3 +106,24 @@ export class AppointmentDto {
   })
   remindersSent!: string[];
 }
+
+
+/** Who an appointment on a cross-patient calendar belongs to. */
+export class CalendarPatientDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '2026-K7RMPX' })
+  mrn!: string;
+
+  @ApiProperty({ example: 'Ayşe Yılmaz' })
+  fullName!: string;
+}
+
+export class CalendarEntryDto {
+  @ApiProperty({ type: AppointmentDto })
+  appointment!: AppointmentDto;
+
+  @ApiProperty({ type: CalendarPatientDto })
+  patient!: CalendarPatientDto;
+}

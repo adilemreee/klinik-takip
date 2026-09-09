@@ -126,6 +126,12 @@ public actor APIClient {
         _ = try await sendRaw(endpoint)
     }
 
+    /// The bytes, for the handful of endpoints that answer something other than
+    /// JSON — the iCalendar file being the only one today.
+    public func data(for endpoint: Endpoint) async throws -> Data {
+        try await sendRaw(endpoint)
+    }
+
     /// Sends a multipart body streamed from disk.
     ///
     /// The envelope is assembled in a temporary file and removed afterwards

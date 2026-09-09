@@ -44,6 +44,23 @@ public struct Appointment: Decodable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// One row on a cross-patient calendar: the appointment and whose it is.
+///
+/// The name travels with the appointment because a day showing four rows of
+/// `patientId` is a day nobody can read.
+public struct CalendarEntry: Decodable, Sendable, Equatable, Identifiable {
+    public let appointment: Appointment
+    public let patient: CalendarPatient
+
+    public var id: String { appointment.id }
+
+    public struct CalendarPatient: Decodable, Sendable, Equatable {
+        public let id: String
+        public let mrn: String
+        public let fullName: String
+    }
+}
+
 /// A clash the server refused, in a form the screen can explain.
 public enum BookingRefusal: Sendable, Equatable {
     case slotTaken
@@ -77,7 +94,7 @@ public struct AppointmentsAPI: Sendable {
         )
     }
 
-    public func calendar(from: Date, to: Date) async throws -> [Appointment] {
+    public func calendar(from: Date, to: Date) async throws -> [CalendarEntry] {
         let formatter = ISO8601DateFormatter()
 
         return try await client.send(
@@ -86,8 +103,19 @@ public struct AppointmentsAPI: Sendable {
                 path: "appointments/calendar",
                 query: ["from": formatter.string(from: from), "to": formatter.string(from: to)]
             ),
-            as: [Appointment].self
+            as: [CalendarEntry].self
         )
+    }
+
+    /**
+     * The patient's own appointments as an iCalendar file (spec M10).
+     *
+     * Bytes rather than a link. The file names the clinic, the doctor and the
+     * dates, and a URL that could be pasted into a group chat is a URL that
+     * will be.
+     */
+    public func calendarFile() async throws -> Data {
+        try await client.data(for: Endpoint(method: .get, path: "me/appointments/calendar.ics"))
     }
 
     /// A patient asking. The clinic confirms it separately.

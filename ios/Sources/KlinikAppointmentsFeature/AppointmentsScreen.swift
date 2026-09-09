@@ -12,6 +12,8 @@ public struct AppointmentsScreen: View {
     private let canConfirm: Bool
 
     @State private var state = AppointmentsState()
+    @State private var calendarFile: URL?
+    @State private var exporting = false
 
     public init(model: AppointmentsModel, canConfirm: Bool = false) {
         self.model = model
@@ -25,6 +27,33 @@ public struct AppointmentsScreen: View {
         .background(Tokens.Palette.background.resolve(for: scheme))
         .navigationTitle(L10n.string("menu.appointments"))
         .task { await refresh { await model.refresh() } }
+        // Staff read the same appointments from the calendar screen; the file
+        // is the patient's own, so the button is theirs.
+        .toolbar {
+            if !canConfirm {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        Task {
+                            exporting = true
+                            calendarFile = await model.calendarFile()
+                            state = await model.currentState()
+                            exporting = false
+                        }
+                    } label: {
+                        if exporting {
+                            ProgressView().accessibilityLabel(L10n.string("common.loading"))
+                        } else {
+                            Label(L10n.string("appointment.addToCalendar"), systemImage: "calendar.badge.plus")
+                        }
+                    }
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                    .accessibilityLabel(L10n.string("appointment.addToCalendar"))
+                }
+            }
+        }
+        .sheet(item: $calendarFile) { url in
+            ShareSheet(url: url)
+        }
     }
 
     @ViewBuilder
@@ -197,3 +226,30 @@ struct AppointmentRow: View {
         }
     }
 }
+
+
+/// A URL the share sheet can be presented for. `URL` is not `Identifiable`, and
+/// a sheet needs an identity to know when to present.
+extension URL: @retroactive Identifiable {
+    public var id: String { absoluteString }
+}
+
+#if os(iOS)
+/// The system share sheet, for handing the calendar file to whichever app the
+/// patient keeps their diary in.
+struct ShareSheet: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+#else
+struct ShareSheet: View {
+    let url: URL
+
+    var body: some View { Text(url.lastPathComponent) }
+}
+#endif

@@ -206,8 +206,10 @@ export class PatientFileSummaryDto {
   @ApiProperty({ type: PatientDto })
   patient!: unknown;
 
-  @ApiProperty({ description: "The account's e-mail and phone, when one is linked" })
-  contact!: { email: string | null; phone: string | null };
+  @ApiProperty({
+    description: "The account's e-mail and phone, and whether a login exists at all",
+  })
+  contact!: { email: string | null; phone: string | null; hasAccount: boolean };
 
   @ApiPropertyOptional({ type: MedicalProfileViewDto, nullable: true })
   medicalProfile!: MedicalProfileViewDto | null;

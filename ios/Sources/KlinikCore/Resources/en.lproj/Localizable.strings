@@ -758,3 +758,29 @@
 "message.fileAttached" = "File — tap to open";
 "connection.showingCached" = "You are offline — showing what was last seen at %@.";
 "connection.unreachable" = "The clinic cannot be reached. Check your connection.";
+
+/* Account and devices (M1) */
+"account.title" = "Account";
+"account.thisDevice" = "This device";
+"account.otherDevices" = "Other devices";
+"account.noOtherDevices" = "No other device is signed in.";
+"account.unknownDevice" = "Unnamed device";
+"account.lastSeen" = "Last seen: %@";
+"account.address" = "Connected from";
+"account.revoke" = "End this device's session";
+"account.signOutEverywhere" = "Sign out everywhere";
+"account.signOutEverywhereConfirm" = "Every session will end, including this one. Continue?";
+"menu.account" = "Account";
+"auth.twoFactorTypeInstead" = "If you cannot scan the code, type this key in by hand:";
+
+/* Patient invitation (M1) */
+"invite.title" = "Invite the patient";
+"invite.hint" = "An e-mail or a phone number, at least one. The code is single-use and shown to you once.";
+"invite.action" = "Create the invitation";
+"invite.issued" = "Invitation code created";
+"invite.shownOnce" = "This code will not be shown again. Pass it to the patient now.";
+"invite.expires" = "Valid until";
+"invite.share" = "Share the code";
+"invite.needContact" = "Enter an e-mail address or a phone number.";
+"invite.badEmail" = "That e-mail address does not look right.";
+"menu.invite" = "Invite the patient";

@@ -1,6 +1,7 @@
 import SwiftUI
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikAuthFeature
 import KlinikAssistantFeature
 import KlinikComplicationsFeature
 import KlinikConsentsFeature
@@ -38,6 +39,7 @@ public enum PatientDestination: Hashable, Sendable {
     case consents
     /// The FAQ assistant that stands in front of the clinic (spec M4).
     case assistant
+    case account
 }
 
 /**
@@ -107,6 +109,7 @@ struct PatientHomeView: View {
             Button(L10n.string("menu.appointments")) { path.append(.appointments) }
             Button(L10n.string("consent.title")) { path.append(.consents) }
             Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
+            Button(L10n.string("menu.account")) { path.append(.account) }
 
             Divider()
 
@@ -234,6 +237,9 @@ struct PatientHomeView: View {
             NotificationSettingsScreen(
                 model: NotificationSettingsModel(api: environment.notifications)
             )
+
+        case .account:
+            AccountScreen(model: AccountModel(api: environment.auth), signOut: signOut)
         }
     }
 }

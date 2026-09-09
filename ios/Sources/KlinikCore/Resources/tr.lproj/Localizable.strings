@@ -758,3 +758,29 @@
 "message.fileAttached" = "Dosya — açmak için dokunun";
 "connection.showingCached" = "Çevrimdışısınız — %@ tarihindeki son bilgiler gösteriliyor.";
 "connection.unreachable" = "Kliniğe ulaşılamıyor. Bağlantınızı kontrol edin.";
+
+/* Hesap ve cihazlar (M1) */
+"account.title" = "Hesabım";
+"account.thisDevice" = "Bu cihaz";
+"account.otherDevices" = "Diğer cihazlar";
+"account.noOtherDevices" = "Başka bir cihazda açık oturum yok.";
+"account.unknownDevice" = "Adı bilinmeyen cihaz";
+"account.lastSeen" = "Son görülme: %@";
+"account.address" = "Bağlandığı adres";
+"account.revoke" = "Bu cihazın oturumunu kapat";
+"account.signOutEverywhere" = "Tüm cihazlardan çık";
+"account.signOutEverywhereConfirm" = "Bu cihaz dahil tüm oturumlar kapatılacak. Devam edilsin mi?";
+"menu.account" = "Hesabım";
+"auth.twoFactorTypeInstead" = "Karekodu okutamıyorsanız bu anahtarı elle girin:";
+
+/* Hasta daveti (M1) */
+"invite.title" = "Hastayı davet et";
+"invite.hint" = "E-posta ya da telefondan en az biri gerekli. Kod tek kullanımlıktır ve size bir kez gösterilir.";
+"invite.action" = "Davet oluştur";
+"invite.issued" = "Davet kodu oluşturuldu";
+"invite.shownOnce" = "Bu kod bir daha gösterilmeyecek. Şimdi hastaya iletin.";
+"invite.expires" = "Geçerlilik";
+"invite.share" = "Kodu paylaş";
+"invite.needContact" = "E-posta ya da telefon girin.";
+"invite.badEmail" = "E-posta adresi geçerli görünmüyor.";
+"menu.invite" = "Hastayı davet et";

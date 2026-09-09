@@ -33,6 +33,10 @@ public struct PatientIdentity: Decodable, Sendable, Equatable, Identifiable {
 public struct PatientContact: Decodable, Sendable, Equatable {
     public let email: String?
     public let phone: String?
+    /// Whether a login exists. The file is opened when somebody books and the
+    /// account comes later, so false is ordinary — it is what the invitation
+    /// button is for, not a fault.
+    public let hasAccount: Bool
 }
 
 public struct MedicalProfile: Decodable, Sendable, Equatable {

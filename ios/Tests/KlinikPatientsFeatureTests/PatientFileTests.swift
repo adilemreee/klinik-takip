@@ -21,7 +21,7 @@ final class PatientFileTests: XCTestCase {
           "birthDate":"1985-03-12T00:00:00.000Z","age":40,"sex":"FEMALE","country":"DE",
           "city":"Berlin","nationality":null,"preferredLanguage":"tr","referralSource":null,
           "status":"POST_OP","createdAt":"2026-01-01T00:00:00.000Z","version":3},
-         "contact":{"email":null,"phone":null},
+         "contact":{"email":null,"phone":null,"hasAccount":false},
          "medicalProfile":null,"lastSurgery":null,"assignments":[],
          "latestMeasurements":\(measurements),
          "alerts":{"criticalLabs":\(criticalLabs),"labsAwaitingReview":\(awaitingLabs),

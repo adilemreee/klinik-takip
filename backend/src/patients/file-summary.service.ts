@@ -42,7 +42,18 @@ export interface PatientFileSummary {
     createdAt: Date;
     version: number;
   };
-  contact: { email: string | null; phone: string | null };
+  contact: {
+    email: string | null;
+    phone: string | null;
+    /**
+     * Whether a login exists for this file.
+     *
+     * The file is opened when somebody books and the account comes later, so
+     * "no account yet" is an ordinary state and the one the invite button
+     * exists for — not an error.
+     */
+    hasAccount: boolean;
+  };
   medicalProfile: MedicalProfileView | null;
   lastSurgery: SurgeryView | null;
   /** Who may see this file, which is who is responsible for it. */
@@ -219,7 +230,11 @@ export class PatientFileSummaryService {
         createdAt: patient.createdAt,
         version: patient.version,
       },
-      contact: { email: patient.user?.email ?? null, phone: patient.user?.phone ?? null },
+      contact: {
+        email: patient.user?.email ?? null,
+        phone: patient.user?.phone ?? null,
+        hasAccount: patient.userId !== null,
+      },
       medicalProfile: patient.medicalProfile
         ? {
             bloodType: patient.medicalProfile.bloodType,

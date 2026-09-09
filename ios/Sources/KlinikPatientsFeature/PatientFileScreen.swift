@@ -22,14 +22,22 @@ public struct PatientFileScreen: View {
 
     private let model: PatientFileModel
     private let onSection: (FileSection) -> Void
+    /// Nil hides the invitation action rather than showing one that leads
+    /// nowhere. The patient's own app has no use for it.
+    private let onInvite: (() -> Void)?
 
     @State private var state = PatientFileState()
     @State private var editingIdentity = false
     @State private var editingMedical = false
 
-    public init(model: PatientFileModel, onSection: @escaping (FileSection) -> Void) {
+    public init(
+        model: PatientFileModel,
+        onSection: @escaping (FileSection) -> Void,
+        onInvite: (() -> Void)? = nil
+    ) {
         self.model = model
         self.onSection = onSection
+        self.onInvite = onInvite
     }
 
     public var body: some View {
@@ -178,6 +186,18 @@ public struct PatientFileScreen: View {
                     .font(Tokens.Typography.calloutRelative)
                     .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
                     .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+
+                // Only while there is no login. A file whose patient already
+                // uses the app does not need an invitation, and offering one
+                // would issue a code nobody has a use for.
+                if !file.contact.hasAccount, let onInvite {
+                    Button(L10n.string("menu.invite")) { onInvite() }
+                        .font(Tokens.Typography.subheadingRelative)
+                        .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                        .foregroundStyle(Tokens.Palette.accentText.resolve(for: scheme))
+                        .background(Tokens.Palette.accent.resolve(for: scheme))
+                        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+                }
             }
         }
     }

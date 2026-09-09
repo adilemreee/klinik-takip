@@ -1,6 +1,7 @@
 import SwiftUI
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikAuthFeature
 import KlinikBriefingFeature
 import KlinikComplicationsFeature
 import KlinikCore
@@ -37,6 +38,8 @@ public enum StaffDestination: Hashable, Sendable {
     /// Across all patients, not one — the point of a triage queue.
     case complicationQueue
     case medications(patientId: String)
+    case invite(patientId: String, name: String)
+    case account
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -159,6 +162,7 @@ struct StaffPatientsView: View {
             Button(L10n.string("notification.settingsTitle")) {
                 path.wrappedValue.append(.notificationSettings)
             }
+            Button(L10n.string("menu.account")) { path.wrappedValue.append(.account) }
 
             Divider()
 
@@ -178,15 +182,27 @@ struct StaffPatientsView: View {
         switch destination {
         case .patient(let id, let name):
             PatientFileScreen(
-                model: PatientFileModel(api: environment.patients, patientId: id)
-            ) { section in
-                push(StaffDestination(section, patientId: id))
-            }
+                model: PatientFileModel(api: environment.patients, patientId: id),
+                onSection: { section in push(StaffDestination(section, patientId: id)) },
+                onInvite: { push(.invite(patientId: id, name: name)) }
+            )
             .navigationTitle(name)
 
         case .medications(let patientId):
             PrescribingScreen(
                 model: PrescribingModel(api: environment.medications, patientId: patientId)
+            )
+
+        case .invite(let patientId, let name):
+            InviteView(
+                model: InviteModel(api: environment.auth, patientId: patientId),
+                patientName: name
+            )
+
+        case .account:
+            AccountScreen(
+                model: AccountModel(api: environment.auth),
+                signOut: signOut
             )
 
         case .pendingReports:

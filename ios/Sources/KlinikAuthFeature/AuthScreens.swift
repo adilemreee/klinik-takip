@@ -150,9 +150,19 @@ struct TwoFactorSetupView: View {
             title: L10n.string("auth.twoFactorSetupTitle"),
             subtitle: L10n.string("auth.twoFactorSetupHint")
         ) {
-            // The secret in text as well as a code to scan: scanning fails often
-            // enough — a cracked screen, a borrowed phone — that leaving only
-            // one route in would strand people at onboarding.
+            // Both routes in. Scanning fails often enough — a cracked screen,
+            // a borrowed phone, an authenticator with no camera permission —
+            // that offering only one would strand people at onboarding.
+            HStack {
+                Spacer()
+                QRCode(payload: otpauthURI)
+                Spacer()
+            }
+
+            Text(L10n.string("auth.twoFactorTypeInstead"))
+                .font(Tokens.Typography.captionRelative)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
             Text(secret)
                 .font(.system(.body, design: .monospaced))
                 .textSelection(.enabled)

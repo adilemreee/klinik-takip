@@ -66,7 +66,7 @@ public struct TokensResponse: Decodable, Sendable {
     }
 }
 
-public struct DeviceSession: Decodable, Sendable, Identifiable {
+public struct DeviceSession: Decodable, Sendable, Equatable, Identifiable {
     public let familyId: String
     public let deviceName: String?
     public let platform: String?
@@ -80,6 +80,29 @@ public struct DeviceSession: Decodable, Sendable, Identifiable {
 public struct TotpSetup: Decodable, Sendable {
     public let secret: String
     public let uri: String
+
+    /// The secret in groups of four, which is how somebody types it into an
+    /// authenticator by hand without losing their place.
+    public var groupedSecret: String {
+        stride(from: 0, to: secret.count, by: 4)
+            .map { offset -> String in
+                let start = secret.index(secret.startIndex, offsetBy: offset)
+                let end = secret.index(start, offsetBy: min(4, secret.count - offset))
+
+                return String(secret[start..<end])
+            }
+            .joined(separator: " ")
+    }
+}
+
+/// An invitation, returned once (spec M1).
+///
+/// The code is shown a single time — only its hash is kept — so the screen
+/// that receives it has to be the screen that delivers it.
+public struct Invitation: Decodable, Sendable, Equatable {
+    public let id: String
+    public let code: String
+    public let expiresAt: Date
 }
 
 /// Authentication calls.
@@ -138,6 +161,31 @@ public struct AuthAPI: Sendable {
         try await client.send(Endpoint(method: .post, path: "auth/logout-all"))
     }
 
+    /**
+     * Invites somebody to open an account (spec M1).
+     *
+     * `patientId` links the new login to a file that already exists, which is
+     * the normal case: the clinic opens the file when the patient books, and
+     * the account comes later.
+     */
+    public func invite(
+        email: String?,
+        phone: String?,
+        role: String,
+        patientId: String?
+    ) async throws -> Invitation {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "auth/invitations",
+                body: try JSONEncoder.klinik.encode(
+                    InviteBody(email: email, phone: phone, role: role, patientId: patientId)
+                )
+            ),
+            as: Invitation.self
+        )
+    }
+
     public func revokeSession(familyId: String) async throws {
         try await client.send(Endpoint(method: .delete, path: "auth/sessions/\(familyId)"))
     }
@@ -145,6 +193,13 @@ public struct AuthAPI: Sendable {
 
 /// Refreshes without going through `APIClient`, which would need a valid token
 /// to obtain one — a loop.
+private struct InviteBody: Encodable {
+    let email: String?
+    let phone: String?
+    let role: String
+    let patientId: String?
+}
+
 public struct HTTPTokenRefresher: TokenRefresher {
     private let baseURL: URL
     private let transport: HTTPTransport

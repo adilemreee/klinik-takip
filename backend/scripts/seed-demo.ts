@@ -137,10 +137,16 @@ const STORIES: Story[] = [
     appointments: [
       { type: AppointmentType.CONSULTATION, status: AppointmentStatus.REQUESTED, inDays: 4, note: 'İlk görüşme talebi' },
     ],
+    // From the clinic, not from her: a lead has no account yet, so anything
+    // she asked came in by another route and somebody logged it. A message
+    // with no sender would render as one nobody wrote.
     messages: [
-      { fromPatient: true, body: 'Merhaba, burun estetiği için fiyat ve süreç hakkında bilgi alabilir miyim?', daysAgo: 1 },
+      {
+        fromPatient: false,
+        body: 'Instagram üzerinden gelen fiyat sorunuzu aldık. Ön görüşme için bir randevu talebi oluşturduk.',
+        daysAgo: 1,
+      },
     ],
-    unread: true,
     consents: [ConsentType.DATA_PROCESSING],
   },
   {
@@ -283,7 +289,11 @@ const STORIES: Story[] = [
 ];
 
 async function main(): Promise<void> {
-  if (process.env.NODE_ENV === 'production' || process.env.APP_ENV === 'production') {
+  // `APP_ENV`, not `NODE_ENV`. Staging runs a production *build* — NODE_ENV is
+  // `production` there and correctly so — and guarding on it blocked the one
+  // environment this script exists for. APP_ENV is the deployment, and the
+  // config schema validates it against `local | staging | production`.
+  if (process.env.APP_ENV === 'production') {
     throw new Error('seed-demo refuses to run against production');
   }
 
@@ -331,10 +341,14 @@ async function main(): Promise<void> {
     }
 
     // The marker for "already filled". A patient with a profile — or, for the
-    // lead who has none by design, with a conversation — is left alone.
+    // lead who has none by design, with a message — is left alone.
+    //
+    // Messages rather than conversations: opening a chat creates an empty
+    // conversation, so counting those read a patient nobody had written to as
+    // already done.
     const already = story.profile
       ? patient.medicalProfile !== null
-      : (await prisma.conversation.count({ where: { patientId: patient.id } })) > 0;
+      : (await prisma.message.count({ where: { conversation: { patientId: patient.id } } })) > 0;
 
     if (already) {
       console.log(`skipped ${story.firstName}: already has data`);
@@ -588,12 +602,22 @@ async function fill(
   const last = story.messages?.[story.messages.length - 1];
 
   if (story.messages?.length && last) {
-    const conversation = await prisma.conversation.create({
-      data: {
-        patientId,
-        subject: null,
-        lastMessageAt: daysFromNow(-last.daysAgo, 14),
-      },
+    // Reused when one already exists: a patient has one conversation with the
+    // clinic, and opening the chat screen creates it whether or not anybody
+    // wrote anything.
+    const existing = await prisma.conversation.findFirst({ where: { patientId } });
+
+    const conversation =
+      existing ??
+      (await prisma.conversation.create({ data: { patientId, subject: null } }));
+
+    await prisma.conversation.update({
+      where: { id: conversation.id },
+      data: { lastMessageAt: daysFromNow(-last.daysAgo, 14) },
+    });
+
+    await prisma.conversationParticipant.deleteMany({
+      where: { conversationId: conversation.id },
     });
 
     await prisma.conversationParticipant.createMany({

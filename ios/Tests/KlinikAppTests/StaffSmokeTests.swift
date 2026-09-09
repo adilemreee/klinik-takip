@@ -1,15 +1,19 @@
 import XCTest
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikBriefingFeature
 import KlinikComplicationsFeature
 import KlinikCore
+import KlinikEmergencyFeature
 import KlinikDocumentsFeature
 import KlinikFollowUpFeature
 import KlinikLabFeature
 import KlinikMeasurementsFeature
+import KlinikMedicationsFeature
 import KlinikMessagingFeature
 import KlinikPatientsFeature
 import KlinikPhotosFeature
+import KlinikReportsFeature
 @testable import KlinikApp
 
 /**
@@ -71,6 +75,23 @@ final class StaffSmokeTests: XCTestCase {
         let route = Root.route(for: RootInput(session: .signedIn, identity: identity))
         XCTAssertEqual(route, .staffHome(role: identity.role))
 
+        // The first screen a clinician sees, before any patient is chosen.
+        let agenda = StaffHomeModel(
+            briefing: environment.briefing,
+            emergency: environment.emergency,
+            reports: environment.reports
+        )
+        await agenda.load()
+        assertNotFailed(agenda.currentState().phase, "agenda")
+
+        let emergencies = EmergencyQueueModel(api: environment.emergency)
+        await emergencies.load()
+        assertNotFailed(emergencies.currentState().phase, "emergency queue")
+
+        let reports = ReportReviewModel(api: environment.reports)
+        await reports.load()
+        assertNotFailed(reports.currentState().phase, "report review")
+
         // The list, through the model the screen actually uses.
         let list = PatientListModel(api: environment.patients)
         await list.search(query: "")
@@ -125,6 +146,10 @@ final class StaffSmokeTests: XCTestCase {
         let appointments = AppointmentsModel(api: environment.appointments, patientId: patient.id)
         await appointments.refresh()
         assertNotFailed(await appointments.currentState().phase, "appointments")
+
+        let medications = PrescribingModel(api: environment.medications, patientId: patient.id)
+        await medications.load()
+        assertNotFailed(medications.currentState().phase, "medications")
 
         let queue = ComplicationQueueModel(api: environment.complications)
         await queue.load()

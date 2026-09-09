@@ -165,6 +165,11 @@ public final class PushRegistrar: NSObject {
 
     /// Stable for the life of the install. Used so the clinic can replace a
     /// device's old token rather than accumulating one per launch.
+    ///
+    /// `@MainActor` spelled out: `UIDevice.current` is isolated in the SDK, and
+    /// whether a `static` inherits its type's isolation is one of the things
+    /// the two toolchains disagree about.
+    @MainActor
     static func deviceIdentifier() -> String? {
         #if canImport(UIKit)
         return UIDevice.current.identifierForVendor?.uuidString

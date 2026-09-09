@@ -91,6 +91,18 @@ Bu biçim her iki araç zincirinde de doğru derleniyor ve zaten daha dürüst: 
 geçtiğini okuyan görüyor. Aynı sebeple bir delege, elindeki çerçeve nesnesini
 değil, ondan çıkardığı veriyi (`[Data]`, `Bool`) geri vermeli.
 
+### Kural: UIKit'e dokunan her şeye izolasyonu **açıkça** yazın
+
+`UIApplication.shared`, `UIDevice.current`, `VNDocumentCameraViewController.isSupported`
+gibi üyeler SDK'da main actor'a bağlı. Bir `enum`'un izolasyonu yoktur, ve bir
+`@MainActor` tipin `static` üyesinin izolasyonu miras alıp almadığı iki araç
+zincirinin anlaşamadığı şeylerden biri. O yüzden çıkarıma bırakmayın:
+
+```swift
+@MainActor
+static var isAvailable: Bool { VNDocumentCameraViewController.isSupported }
+```
+
 **Push etmeden önce:** `swift build && swift test` yetmez, ikisi de macOS için
 derler. Şunlar da çalıştırılmalı:
 

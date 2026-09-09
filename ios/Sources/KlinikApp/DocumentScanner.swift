@@ -45,6 +45,11 @@ enum DocumentScanner {
     /// Whether this device has a document scanner at all. False in the
     /// simulator and on hardware without a camera, and the caller hides the
     /// button rather than offering one that fails when pressed.
+    ///
+    /// `@MainActor` spelled out rather than inferred: `isSupported` is
+    /// main-actor isolated in the SDK, and an enum carries no isolation of its
+    /// own to inherit.
+    @MainActor
     static var isAvailable: Bool {
         #if canImport(VisionKit) && os(iOS)
         return VNDocumentCameraViewController.isSupported

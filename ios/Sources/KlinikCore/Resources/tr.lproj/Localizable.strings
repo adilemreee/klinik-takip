@@ -952,3 +952,11 @@
 "biometrics.enableHint" = "Uygulama her açıldığında kimliğiniz sorulur. Bildirimler ve acil çağrılar bundan etkilenmez.";
 "biometrics.unavailable" = "Bu cihazda biyometrik doğrulama kurulu değil.";
 "account.security" = "Güvenlik";
+
+/* Sağlık verisi (M20) */
+"health.sync" = "Apple Health'ten al";
+"health.syncing" = "Alınıyor…";
+"health.synced" = "%d ölçüm alındı. Bunlar kayıtta 'cihazdan' olarak işaretlenir.";
+"health.nothingNew" = "Son almadan bu yana yeni ölçüm yok.";
+"health.denied" = "Sağlık verisine erişim izni verilmedi. Ayarlar > Sağlık'tan değiştirebilirsiniz.";
+"health.unavailable" = "Bu cihazda sağlık verisi yok.";

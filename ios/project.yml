@@ -52,10 +52,29 @@ targets:
         NSMicrophoneUsageDescription: Sesli mesaj göndermek için mikrofona erişilir.
         NSFaceIDUsageDescription: Uygulamayı güvenli şekilde açmak için kullanılır.
         NSLocationWhenInUseUsageDescription: Acil durum bildirimine konumunuzu eklemek için kullanılır. Konum beklenmez; alarm hemen gider.
+        # Read-only, and only kilo and nabız — the two readings the clinic
+        # charts. Asking for more than a product uses is how an app is refused
+        # at review and distrusted by whoever reads the prompt.
+        NSHealthShareUsageDescription: Kilo ve nabız ölçümlerinizi Apple Health'ten alıp klinik takibinize eklemek için kullanılır. Yalnız siz istediğinizde okunur.
+        NSHealthUpdateUsageDescription: Uygulama Apple Health'e veri yazmaz.
         # Development builds are pointed at a tunnel on localhost; a release
         # build talks to the clinic's own host over TLS and nothing else.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+    # Capabilities the app asks the system for. Kept here rather than in a
+    # committed .entitlements file for the same reason the project is generated:
+    # what is reviewed should be the thirty lines, not the plist.
+    #
+    # A build signed without a matching provisioning profile will fail at that
+    # step rather than silently shipping without the capability — which is the
+    # right failure, because push that quietly does not register is push nobody
+    # notices is missing.
+    entitlements:
+      path: App/Klinik.entitlements
+      properties:
+        aps-environment: development
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     configFiles:
       Debug: Config/Base.xcconfig
       Release: Config/Base.xcconfig

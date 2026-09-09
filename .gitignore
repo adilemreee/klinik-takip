@@ -89,3 +89,7 @@ Thumbs.db
 
 # Local operational notes — server inventory, real hostnames, known gaps
 docs/OPERASYON-LOCAL.md
+
+# Generated from ios/project.yml, like the project itself. What is reviewed
+# should be the thirty lines of YAML, not the plist they produce.
+ios/App/Klinik.entitlements

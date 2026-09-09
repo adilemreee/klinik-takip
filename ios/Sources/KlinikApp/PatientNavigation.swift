@@ -65,6 +65,38 @@ struct PatientHomeView: View {
     let biometrics: BiometricSetting
 
     @State private var path: [PatientDestination] = []
+    @State private var health: HealthSync
+
+    init(
+        environment: AppEnvironment,
+        patientId: String?,
+        signOut: @escaping () async -> Void,
+        biometrics: BiometricSetting
+    ) {
+        self.environment = environment
+        self.patientId = patientId
+        self.signOut = signOut
+        self.biometrics = biometrics
+        _health = State(initialValue: HealthSync(measurements: environment.measurements))
+    }
+
+    /// The sentence under the button after a synchronisation. Said in words
+    /// rather than a count alone: "0" reads as a failure when it usually means
+    /// there was nothing new since this morning.
+    private func syncHealth() async -> String {
+        switch await health.sync() {
+        case .synced(let count):
+            return String(format: L10n.string("health.synced"), count)
+        case .nothingNew:
+            return L10n.string("health.nothingNew")
+        case .denied:
+            return L10n.string("health.denied")
+        case .unavailable:
+            return L10n.string("health.unavailable")
+        case .failed(let message):
+            return message
+        }
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -211,7 +243,10 @@ struct PatientHomeView: View {
             )
 
         case .measurements:
-            RecordMeasurementView(
+            // The chart, not just the entry sheet. A patient typing a weight
+            // every morning and never seeing the curve it makes is a patient
+            // filling in somebody else's form.
+            BodyChartView(
                 model: MeasurementsModel(
                     api: environment.measurements,
                     subject: .me,
@@ -221,7 +256,7 @@ struct PatientHomeView: View {
                     // wearing a nurse's authority.
                     source: .patient
                 ),
-                onSaved: {}
+                syncFromDevice: health.isAvailable ? { await syncHealth() } : nil
             )
 
         case .followUp:

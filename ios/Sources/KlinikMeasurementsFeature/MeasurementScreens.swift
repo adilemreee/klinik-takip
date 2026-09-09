@@ -18,22 +18,64 @@ public struct BodyChartView: View {
 
     private let model: MeasurementsModel
     private let canRecord: Bool
+    /// Pulling readings off the phone's health store (spec M20). Nil on the
+    /// staff side and on a device with no health data, which leaves the button
+    /// out rather than showing one that cannot work.
+    private let syncFromDevice: (() async -> String?)?
 
     @State private var state = MeasurementsState()
     @State private var series: ChartSeries = .weight
     @State private var recording = false
+    @State private var syncing = false
+    @State private var syncMessage: String?
 
     /// - Parameter canRecord: staff without `medical.write` still read the
     ///   chart. Hiding the button they would be refused anyway is kinder than
     ///   showing them a 403.
-    public init(model: MeasurementsModel, canRecord: Bool = true) {
+    public init(
+        model: MeasurementsModel,
+        canRecord: Bool = true,
+        syncFromDevice: (() async -> String?)? = nil
+    ) {
         self.model = model
         self.canRecord = canRecord
+        self.syncFromDevice = syncFromDevice
     }
 
     public var body: some View {
         VStack(spacing: 0) {
+            if let syncMessage {
+                Text(syncMessage)
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Tokens.Spacing.md)
+                    .background(Tokens.Palette.infoSurface.resolve(for: scheme))
+            }
+
             content
+
+            if let syncFromDevice {
+                Button {
+                    Task {
+                        syncing = true
+                        syncMessage = await syncFromDevice()
+                        syncing = false
+                        await refresh { await model.load() }
+                    }
+                } label: {
+                    if syncing {
+                        ProgressView().accessibilityLabel(L10n.string("health.syncing"))
+                    } else {
+                        Label(L10n.string("health.sync"), systemImage: "heart.text.square")
+                            .font(Tokens.Typography.calloutRelative)
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+                .disabled(syncing)
+                .padding(.bottom, Tokens.Spacing.sm)
+            }
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }

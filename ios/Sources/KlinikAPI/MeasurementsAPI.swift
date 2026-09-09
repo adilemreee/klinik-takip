@@ -93,6 +93,17 @@ public struct NewMeasurement: Encodable, Sendable, Equatable {
     public let measuredAt: Date?
     public let note: String?
 
+    /**
+     * True when the reading came off a health device rather than being typed
+     * (spec M20).
+     *
+     * Sent on the patient's own path, where it decides `PATIENT` versus
+     * `DEVICE` and nothing else. A patient saying a number came off their watch
+     * is a claim about their own phone; saying it came from a nurse would be a
+     * claim about somebody else, and the server does not accept one.
+     */
+    public let fromDevice: Bool?
+
     /// Set only on the staff path. On `me/measurements` the server refuses the
     /// field outright rather than quietly rewriting it, so it must be absent —
     /// which a nil optional is, since the synthesised encoder omits it.
@@ -103,13 +114,15 @@ public struct NewMeasurement: Encodable, Sendable, Equatable {
         value: Double,
         secondaryValue: Double? = nil,
         measuredAt: Date? = nil,
-        note: String? = nil
+        note: String? = nil,
+        fromDevice: Bool? = nil
     ) {
         self.type = type
         self.value = value
         self.secondaryValue = secondaryValue
         self.measuredAt = measuredAt
         self.note = note
+        self.fromDevice = fromDevice
         self.source = nil
     }
 }

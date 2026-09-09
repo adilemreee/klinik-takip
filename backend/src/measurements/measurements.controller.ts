@@ -97,12 +97,15 @@ export class MyMeasurementsController {
     @Body() dto: RecordMeasurementDto,
   ): Promise<Measurement> {
     const patient = await this.measurements.ownPatientId(user);
+    const { fromDevice, ...measurement } = dto;
 
     return this.measurements.record(user, patient, {
-      ...dto,
-      // Not taken from the request: a patient cannot label their entry as a
-      // nurse's or a device's.
-      source: MeasurementSource.PATIENT,
+      ...measurement,
+      // Narrowed rather than taken from the request. A patient may say the
+      // reading came off their watch — that is a claim about their own phone —
+      // but not that it came from a nurse, which is a claim about somebody
+      // else's authority.
+      source: fromDevice ? MeasurementSource.DEVICE : MeasurementSource.PATIENT,
     });
   }
 

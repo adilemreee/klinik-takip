@@ -952,3 +952,11 @@
 "biometrics.enableHint" = "You will be asked to confirm it is you each time the app opens. Notifications and emergency calls are unaffected.";
 "biometrics.unavailable" = "This device has no biometric check set up.";
 "account.security" = "Security";
+
+/* Health data (M20) */
+"health.sync" = "Import from Apple Health";
+"health.syncing" = "Importing…";
+"health.synced" = "%d readings imported. They are marked as coming from a device.";
+"health.nothingNew" = "Nothing new since the last import.";
+"health.denied" = "Access to health data was not granted. You can change it in Settings › Health.";
+"health.unavailable" = "This device has no health data.";

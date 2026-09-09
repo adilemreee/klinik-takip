@@ -1,7 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MeasurementSource, MeasurementType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class RecordMeasurementDto {
   @ApiProperty({ enum: MeasurementType })
@@ -36,6 +44,22 @@ export class RecordMeasurementDto {
   @IsString()
   @MaxLength(500)
   note?: string;
+
+  /**
+   * Whether this reading came off a health device rather than being typed
+   * (spec M20).
+   *
+   * A boolean rather than the source enum, deliberately. The patient still
+   * cannot label a reading as a nurse's — the only thing this decides is
+   * PATIENT versus DEVICE, which is a claim about their own phone and one they
+   * are entitled to make.
+   */
+  @ApiPropertyOptional({
+    description: 'True when the reading was synchronised from HealthKit or Health Connect',
+  })
+  @IsOptional()
+  @IsBoolean()
+  fromDevice?: boolean;
 }
 
 export class StaffRecordMeasurementDto extends RecordMeasurementDto {

@@ -1,6 +1,7 @@
 import SwiftUI
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikAuditFeature
 import KlinikAuthFeature
 import KlinikBriefingFeature
 import KlinikComplicationsFeature
@@ -19,6 +20,7 @@ import KlinikMessagingFeature
 import KlinikNotificationsFeature
 import KlinikPatientsFeature
 import KlinikPhotosFeature
+import KlinikProtocolsFeature
 import KlinikReportsFeature
 import KlinikSurveysFeature
 
@@ -49,6 +51,8 @@ public enum StaffDestination: Hashable, Sendable {
     case analytics
     case finance
     case exports
+    case audit
+    case protocols
     case surveys(patientId: String)
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
@@ -170,6 +174,8 @@ struct StaffPatientsView: View {
             Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
             Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
             Button(L10n.string("menu.exports")) { path.wrappedValue.append(.exports) }
+            Button(L10n.string("menu.audit")) { path.wrappedValue.append(.audit) }
+            Button(L10n.string("menu.protocols")) { path.wrappedValue.append(.protocols) }
             Button(L10n.string("menu.complicationQueue")) {
                 path.wrappedValue.append(.complicationQueue)
             }
@@ -230,6 +236,12 @@ struct StaffPatientsView: View {
 
         case .exports:
             ExportsScreen(model: ExportsModel(api: environment.exports))
+
+        case .audit:
+            AuditScreen(model: AuditModel(api: environment.audit))
+
+        case .protocols:
+            ProtocolsScreen(model: ProtocolsModel(api: environment.protocols))
 
         case .surveys(let patientId):
             SurveyTrendScreen(

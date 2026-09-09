@@ -82,8 +82,12 @@ function checkTouchTargets(path, lines) {
 
     // Inside a Menu, the system sizes the rows and a minimum height on the
     // label does nothing. Flagging them trains people to ignore the checker.
-    const enclosing = lines.slice(Math.max(0, index - 20), index).join('\n');
-    if (/\bMenu\s*\{/.test(enclosing) || /DropdownMenu\(/.test(enclosing)) return;
+    //
+    // Found by walking back to the enclosing `Menu {` rather than by looking a
+    // fixed number of lines: a menu with a dozen entries is longer than any
+    // window worth picking, and a checker that starts failing because somebody
+    // added a menu item is a checker people switch off.
+    if (isInsideMenu(lines, index)) return;
 
     const window = lines.slice(index, index + 8).join('\n');
 
@@ -99,6 +103,38 @@ function checkTouchTargets(path, lines) {
       report(path, index + 1, 'touch-target-unchecked', text.trim());
     }
   });
+}
+
+/**
+ * Whether a line sits inside a `Menu { ... }` (or Compose `DropdownMenu`).
+ *
+ * Walks backwards counting braces, so it is the block structure that decides
+ * rather than a distance. Indentation is not consulted: this is generated-free
+ * source, but a wrapped argument list would defeat an indentation rule and not
+ * this one.
+ */
+function isInsideMenu(lines, index) {
+  let depth = 0;
+
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const text = lines[cursor];
+
+    // Comments and strings are not worth parsing properly here: a stray brace
+    // inside one would at worst widen or narrow the search by a block, and the
+    // rule it guards is advisory.
+    depth += (text.match(/\}/g) || []).length;
+    depth -= (text.match(/\{/g) || []).length;
+
+    if (depth < 0) {
+      // This line opened the block we are inside. Is it a menu?
+      if (/\bMenu\s*\{/.test(text) || /DropdownMenu\(/.test(text)) return true;
+
+      depth = 0;
+      continue;
+    }
+  }
+
+  return false;
 }
 
 /**

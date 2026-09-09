@@ -41,6 +41,8 @@ public final class AppEnvironment {
     public let finance: FinanceAPI
     public let exports: ExportsAPI
     public let surveys: SurveysAPI
+    public let audit: AuditAPI
+    public let protocols: ProtocolsAPI
 
     /// Chunked upload, shared by every screen that can attach a file.
     public let resumable: ResumableUpload
@@ -115,6 +117,8 @@ public final class AppEnvironment {
         finance = FinanceAPI(client: client)
         exports = ExportsAPI(client: client)
         surveys = SurveysAPI(client: client)
+        audit = AuditAPI(client: client)
+        protocols = ProtocolsAPI(client: client)
         resumable = ResumableUpload(client: client)
 
     }

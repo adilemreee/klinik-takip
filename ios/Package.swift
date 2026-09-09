@@ -36,6 +36,8 @@ let package = Package(
         .library(name: "KlinikFinanceFeature", targets: ["KlinikFinanceFeature"]),
         .library(name: "KlinikExportsFeature", targets: ["KlinikExportsFeature"]),
         .library(name: "KlinikSurveysFeature", targets: ["KlinikSurveysFeature"]),
+        .library(name: "KlinikAuditFeature", targets: ["KlinikAuditFeature"]),
+        .library(name: "KlinikProtocolsFeature", targets: ["KlinikProtocolsFeature"]),
         .library(name: "KlinikApp", targets: ["KlinikApp"]),
     ],
     // The only third-party dependency in the client. SQLite through Swift's C
@@ -244,6 +246,23 @@ let package = Package(
             dependencies: ["KlinikSurveysFeature", "KlinikCore"]
         ),
 
+        // Who looked at what, and the patterns worth a second look (M13).
+        .target(
+            name: "KlinikAuditFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        // The documents the assistant is allowed to quote (M4).
+        .target(
+            name: "KlinikProtocolsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        .testTarget(
+            name: "KlinikProtocolsFeatureTests",
+            dependencies: ["KlinikProtocolsFeature", "KlinikCore"]
+        ),
+
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 
@@ -280,6 +299,7 @@ let package = Package(
                 "KlinikBriefingFeature", "KlinikReportsFeature",
                 "KlinikAssistantFeature", "KlinikAnalyticsFeature",
                 "KlinikFinanceFeature", "KlinikExportsFeature", "KlinikSurveysFeature",
+                "KlinikAuditFeature", "KlinikProtocolsFeature",
             ]
         ),
 

@@ -234,3 +234,108 @@ final class MeasurementsModelTests: XCTestCase {
         XCTAssertEqual(results.filter { $0 }.count, 1)
     }
 }
+
+/// Both halves of the queue: takes a write and hands it back.
+private actor FakeQueue: PendingWriteQueue, PendingWriteReader {
+    private var writes: [PendingWrite] = []
+
+    func enqueue(_ write: PendingWrite) async throws { writes.append(write) }
+
+    func unsent(entityType: String) async -> [PendingWrite] {
+        writes.filter { $0.entityType == entityType }
+    }
+}
+
+/**
+ * A reading typed with no connection (spec M15).
+ *
+ * The reading is a fact about a moment that has passed. Asking the patient to
+ * remember it and type it again tomorrow is how a follow-up curve ends up with
+ * a hole in it — so it is kept, and shown to them, marked as unsent.
+ */
+final class OfflineMeasurementTests: XCTestCase {
+    private func model(
+        _ transport: HTTPTransport,
+        queue: FakeQueue,
+        subject: MeasurementSubject = .me
+    ) async -> MeasurementsModel {
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: UnusedRefresher())
+        try? await session.signIn(
+            with: SessionTokens(
+                accessToken: "access",
+                refreshToken: "refresh",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+        let client = APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: transport,
+            session: session
+        )
+        await client.useQueue(queue)
+
+        return MeasurementsModel(
+            api: MeasurementsAPI(client: client),
+            subject: subject,
+            source: .patient,
+            queue: queue
+        )
+    }
+
+    func testAReadingTypedOfflineIsKeptAndShown() async {
+        let queue = FakeQueue()
+        let measurements = await model(FailingTransport(error: .offline), queue: queue)
+
+        let saved = await measurements.record(NewMeasurement(type: .weight, value: 78.4))
+
+        XCTAssertTrue(saved, "The reading is recorded — it is the clinic that has not seen it")
+
+        let state = await measurements.currentState()
+        XCTAssertNil(state.saveError, "Nothing went wrong from the patient's side")
+        XCTAssertEqual(state.unsent.map(\.value), [78.4])
+        XCTAssertEqual(state.unsent.first?.type, .weight)
+    }
+
+    /// The same queue serves the staff screens, where each file is a different
+    /// subject. A patient's own screen must not show somebody else's readings.
+    func testOnlyThisSubjectsReadingsAreShown() async {
+        let queue = FakeQueue()
+
+        let mine = await model(FailingTransport(error: .offline), queue: queue, subject: .me)
+        _ = await mine.record(NewMeasurement(type: .weight, value: 78.4))
+
+        let theirs = await model(
+            FailingTransport(error: .offline),
+            queue: queue,
+            subject: .patient(id: "p9")
+        )
+        _ = await theirs.record(NewMeasurement(type: .weight, value: 61.0))
+
+        await mine.load()
+        let state = await mine.currentState()
+
+        XCTAssertEqual(state.unsent.map(\.value), [78.4])
+    }
+
+    /// A server that says no has answered. Queueing its refusal would tell
+    /// somebody their reading is on its way to a clinic that refused it.
+    func testARefusedReadingIsStillAnError() async {
+        let queue = FakeQueue()
+        let measurements = await model(
+            RecordingTransport(
+                bodies: [
+                    "/me/measurements": (400, #"{"statusCode":400,"message":"Kilo 500 kg olamaz"}"#)
+                ]
+            ),
+            queue: queue
+        )
+
+        let saved = await measurements.record(NewMeasurement(type: .weight, value: 500))
+
+        XCTAssertFalse(saved)
+
+        let state = await measurements.currentState()
+        XCTAssertEqual(state.saveError, "Kilo 500 kg olamaz")
+        XCTAssertTrue(state.unsent.isEmpty)
+    }
+}

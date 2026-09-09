@@ -19,6 +19,10 @@ public struct ComplicationsState: Sendable, Equatable {
     public var submitting = false
     public var error: String?
 
+    /// The last report was kept on the phone rather than delivered (spec M15).
+    /// The screen says so, and says to telephone if it is urgent.
+    public var queued = false
+
     /// How many have been waiting past the clinic threshold — the number that
     /// makes someone open this screen.
     public var overdueCount: Int { items.filter(\.overdue).count }
@@ -142,6 +146,13 @@ public actor MyComplicationsModel {
 
         do {
             _ = try await api.report(note: note, bodyArea: bodyArea, photoIds: photoIds)
+        } catch APIError.queuedForLater {
+            // Kept, not lost — and said plainly, with the one sentence that
+            // matters beside it: a queue is the right home for a report that
+            // would otherwise disappear, and the wrong home for an emergency.
+            state.queued = true
+            state.error = nil
+            return true
         } catch let error as APIError {
             state.error = L10n.message(for: error)
             return false
@@ -150,6 +161,7 @@ public actor MyComplicationsModel {
             return false
         }
 
+        state.queued = false
         await load()
         return true
     }

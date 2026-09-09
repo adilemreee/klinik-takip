@@ -24,6 +24,8 @@ public struct RootView: View {
     @State private var lock = BiometricLock()
     @State private var push: PushRegistrar?
 
+    @Environment(\.scenePhase) private var scenePhase
+
     public init(environment: AppEnvironment) {
         self.environment = environment
     }
@@ -39,6 +41,13 @@ public struct RootView: View {
             content
         }
         .task { await start() }
+        .onChange(of: scenePhase) { _, phase in
+            // Coming back to the front is the moment a patient has most likely
+            // walked into signal. Cheaper and more accurate than a timer.
+            guard phase == .active else { return }
+
+            Task { await environment.sync.sync() }
+        }
     }
 
     @ViewBuilder
@@ -122,6 +131,7 @@ public struct RootView: View {
     // MARK: - State
 
     private func start() async {
+        environment.sync.start()
         await environment.session.restore()
         await refresh()
     }
@@ -179,6 +189,9 @@ public struct RootView: View {
         // account on this device would be shown it the first time the network
         // dropped.
         await environment.client.forgetCachedResponses()
+        // And the queue holds one person's unsent writes, addressed to `me/…`.
+        // Left behind, they would be sent as whoever signs in next.
+        await environment.sync.clearForSignOut()
         identity = nil
         sessionState = .signedOut
     }

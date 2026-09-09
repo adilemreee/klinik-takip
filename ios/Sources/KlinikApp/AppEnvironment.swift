@@ -59,6 +59,11 @@ public final class AppEnvironment {
     public let uploads: UploadStore
     public let storeFailure: String?
 
+    /// What holds writes that could not be delivered, and sends them when the
+    /// connection returns (spec M15).
+    public let queue: SyncEngine
+    public let sync: SyncCoordinator
+
     /**
      * Where the privacy notice lives.
      *
@@ -97,6 +102,13 @@ public final class AppEnvironment {
             connection: connection.observer
         )
 
+        queue = SyncEngine(store: opened.outbox, sender: APIOutboxSender(client: client))
+        sync = SyncCoordinator(
+            engine: queue,
+            watcher: NetworkReachability(),
+            storeFailure: opened.failure
+        )
+
         auth = AuthAPI(client: client)
         me = MeAPI(client: client)
         patients = PatientsAPI(client: client)
@@ -125,6 +137,16 @@ public final class AppEnvironment {
         aiSettings = AISettingsAPI(client: client)
         resumable = ResumableUpload(client: client)
 
+        // Attached here rather than passed to the initialiser because the
+        // thing that drains the queue sends through this same client: built in
+        // one step, each would need the other first. The task runs before any
+        // screen exists, so no write can be made while the client still has
+        // nowhere to keep it.
+        Task { [client, sync] in await client.useQueue(sync) }
+
+        // A read reaching the clinic is better evidence that the connection is
+        // back than any reachability API, and it costs nothing to act on.
+        connection.whenReachable = { [sync] in sync.connectionProved() }
     }
 
     /**

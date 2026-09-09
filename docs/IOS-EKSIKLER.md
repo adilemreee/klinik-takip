@@ -72,7 +72,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 | M12 | Raporlama ve dışa aktarım | 🟢 | Kolon seçimli export, geçmiş, indirme, hasta özet PDF isteme |
 | M13 | Denetim günlüğü | 🟢 | Filtreli kayıt + sunucunun anomali tespiti |
 | M14 | Asenkron kuyruk | 🟡 | Durum rozetleri ve başarısızlık nedeni var; canlı WebSocket ilerlemesi yok |
-| M15 | Offline-first | 🟡 | Okumalar son bilinen yanıta düşüyor + çevrimdışı göstergesi. **Yazmalar hâlâ outbox'a girmiyor** |
+| M15 | Offline-first | 🟡 | Okumalar son bilinen yanıta düşüyor; **yazmalar kuyruğa giriyor, tekrar gönderiliyor ve ekranda gönderilmedi diye görünüyor**. Fotoğraf/belge yüklemeleri hâlâ kuyruk dışında |
 | M16 | Belge tarayıcı + OCR | 🟢 | VisionKit tarama, çok sayfa → PDF, cihaz üstü ön okuma |
 | M17 | Onam ve belge yönetimi | 🟡 | Hasta onam verebiliyor. **Parmakla imza ve belge kontrol listesi yok** |
 | M18 | PROM anketleri | 🟢 | Hasta formu + doktorda eğilim ve bulgular |
@@ -110,10 +110,14 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
 6. **Müsaitlik tanımı (M10).** `AvailabilityWindow` tablosu var, uç noktası yok.
    Doluluk raporu bu yüzden "kapasite tanımlı değil" diyor.
 7. **Video görüşme (M10).** Şartnamede opsiyonel; hiç başlanmadı.
-8. **Offline yazma kuyruğu (M15).** Okumalar çevrimdışında son bilinen yanıta
-   düşüyor ve bunu ekranda söylüyor. **Yazmalar** hâlâ doğrudan gidiyor:
-   çevrimdışıyken girilen bir ölçüm kaydedilmiyor, hata veriyor. Outbox altyapısı
-   duruyor; her modelin oradan geçmesi gerekiyor.
+8. **Offline yazma kuyruğu (M15).** ✅ **2026-09-10'da yapıldı.** Ölçüm, doz
+   check-in'i, şikâyet, anket ve mesaj bağlantı yokken kuyruğa giriyor; bağlantı
+   dönünce kendiliğinden gönderiliyor; ekranlar bunları "Gönderilmedi" diye
+   gösteriyor. Sunucuya `Idempotency-Key` eklendi, yani yanıtı yolda kaybolan bir
+   yazmanın tekrarı ikinci bir kayıt yaratmıyor. Ayrıntı:
+   [OFFLINE-VE-CAKISMA.md](OFFLINE-VE-CAKISMA.md).
+
+   **Kalanı:** fotoğraf ve belge yüklemeleri (multipart) bu kuyruktan geçmiyor.
 9. **Parmakla imza + belge kontrol listesi (M17).**
 10. **WhatsApp kanalı (M6).** Şartnamede opsiyonel.
 11. **Android.** Bu belgedeki her şey **yalnız iOS**. Android'de temel iskelet

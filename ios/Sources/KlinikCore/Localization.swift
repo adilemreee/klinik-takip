@@ -59,6 +59,8 @@ public enum L10n {
             return body.message.isEmpty ? string("error.server") : body.message
         case .conflict(let body):
             return body.message.isEmpty ? string("error.server") : body.message
+        case .queuedForLater:
+            return string("sync.savedOffline")
         }
     }
 

@@ -1,4 +1,5 @@
 import XCTest
+import KlinikAPI
 import KlinikSync
 @testable import KlinikSyncStore
 
@@ -31,17 +32,32 @@ final class SQLiteStoreTests: XCTestCase {
     private func entry(
         _ id: String,
         entityId: String = "p1",
+        entityType: String = "patients",
         createdAt: Date = Date(),
         attempts: Int = 0
     ) -> OutboxEntry {
-        OutboxEntry(
-            id: id,
-            entityType: "patients",
-            entityId: entityId,
-            payload: Data("{\"note\":\"ağrı var\"}".utf8),
-            baseVersion: 3,
-            createdAt: createdAt,
-            attempts: attempts
+        OutboxEntry(write: write(id, entityId: entityId, entityType: entityType, createdAt: createdAt), attempts: attempts)
+    }
+
+    private func write(
+        _ id: String,
+        entityId: String = "p1",
+        entityType: String = "patients",
+        createdAt: Date = Date()
+    ) -> PendingWrite {
+        PendingWrite(
+            ticket: QueuedWrite(
+                entityType: entityType,
+                entityId: entityId,
+                summary: "Şikâyet bildirimi",
+                baseVersion: 3,
+                id: id
+            ),
+            method: .patch,
+            path: "patients/\(entityId)",
+            query: ["reason": "ağrı"],
+            body: Data("{\"note\":\"ağrı var\"}".utf8),
+            createdAt: createdAt
         )
     }
 
@@ -56,9 +72,15 @@ final class SQLiteStoreTests: XCTestCase {
         let pending = try await afterRelaunch.pending()
 
         XCTAssertEqual(pending.map(\.id), ["e1"])
-        XCTAssertEqual(pending[0].baseVersion, 3)
+        XCTAssertEqual(pending[0].write.ticket.baseVersion, 3)
+        XCTAssertEqual(pending[0].write.method, .patch)
+        XCTAssertEqual(pending[0].write.path, "patients/p1")
+        // The query survives too: a request replayed without it is a different
+        // request.
+        XCTAssertEqual(pending[0].write.query, ["reason": "ağrı"])
+        XCTAssertEqual(pending[0].summary, "Şikâyet bildirimi")
         XCTAssertEqual(
-            String(decoding: pending[0].payload, as: UTF8.self),
+            String(decoding: pending[0].write.body ?? Data(), as: UTF8.self),
             "{\"note\":\"ağrı var\"}"
         )
     }
@@ -69,10 +91,7 @@ final class SQLiteStoreTests: XCTestCase {
         let store = SQLiteOutboxStore(store: try SQLiteStore(url: fileURL))
         try await store.recordConflict(
             SyncConflict(
-                id: "c1",
-                entityType: "patients",
-                entityId: "p1",
-                localPayload: Data("mine".utf8),
+                local: write("c1"),
                 serverRecord: Data("theirs".utf8),
                 serverVersion: 4
             )
@@ -202,14 +221,7 @@ final class SQLiteStoreTests: XCTestCase {
 
         for id in ["c1", "c2"] {
             try await store.recordConflict(
-                SyncConflict(
-                    id: id,
-                    entityType: "patients",
-                    entityId: "p1",
-                    localPayload: Data(),
-                    serverRecord: Data(),
-                    serverVersion: 1
-                )
+                SyncConflict(local: write(id), serverRecord: Data(), serverVersion: 1)
             )
         }
 

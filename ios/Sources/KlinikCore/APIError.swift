@@ -78,6 +78,17 @@ public enum APIError: Error, Sendable, Equatable {
     case unknown(status: Int)
 
     /**
+     * The write could not be delivered and was kept to be sent later.
+     *
+     * Thrown rather than returned because there is no answer to return: the
+     * server has not seen the change, so there is no record, no id and no
+     * timestamp to hand back. The screen that catches this tells the user
+     * their work is saved and not yet sent — which is the truth, and is
+     * neither the success nor the failure the other cases describe.
+     */
+    case queuedForLater
+
+    /**
      * Whether the clinic was unreachable, as opposed to unwilling.
      *
      * The distinction decides whether a stale copy may be shown: a server that
@@ -97,6 +108,10 @@ public enum APIError: Error, Sendable, Equatable {
             return false
         }
     }
+
+    /// Whether the user's work survived. Not an error to apologise for: the
+    /// change is on the device and will be sent.
+    public var wasKept: Bool { self == .queuedForLater }
 
     /// Whether the session is over and the user has to sign in again.
     public var requiresReauthentication: Bool {

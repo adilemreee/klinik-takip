@@ -1,43 +1,30 @@
 import Foundation
+import KlinikAPI
 
 /// A change made locally that has not reached the server yet.
+///
+/// The request itself, plus what the queue has learnt about trying to send it.
+/// Storing the request rather than a description of the change is what keeps
+/// this layer free of a switch over every kind of write in the app: replaying
+/// an entry is sending it again, not reconstructing it.
 public struct OutboxEntry: Sendable, Equatable, Identifiable, Codable {
-    public enum Operation: String, Sendable, Codable {
-        case update
-        case create
-    }
-
-    public let id: String
-    public let entityType: String
-    public let entityId: String
-    public let operation: Operation
-    /// The request body, already encoded.
-    public let payload: Data
-    /// The version the record had when the user started editing. Sent back so
-    /// the server can tell whether anyone changed it in the meantime.
-    public let baseVersion: Int?
-    public let createdAt: Date
+    public let write: PendingWrite
     public var attempts: Int
     public var lastError: String?
 
-    public init(
-        id: String = UUID().uuidString,
-        entityType: String,
-        entityId: String,
-        operation: Operation = .update,
-        payload: Data,
-        baseVersion: Int?,
-        createdAt: Date = Date(),
-        attempts: Int = 0,
-        lastError: String? = nil
-    ) {
-        self.id = id
-        self.entityType = entityType
-        self.entityId = entityId
-        self.operation = operation
-        self.payload = payload
-        self.baseVersion = baseVersion
-        self.createdAt = createdAt
+    public var id: String { write.id }
+    public var entityType: String { write.entityType }
+    public var entityId: String { write.entityId }
+    public var createdAt: Date { write.createdAt }
+    /// The line the user reads in the pending list.
+    public var summary: String { write.summary }
+
+    /// Writes to one record are sent in the order they were made, so this is
+    /// what groups them.
+    public var recordKey: String { "\(entityType):\(entityId)" }
+
+    public init(write: PendingWrite, attempts: Int = 0, lastError: String? = nil) {
+        self.write = write
         self.attempts = attempts
         self.lastError = lastError
     }
@@ -48,29 +35,26 @@ public struct OutboxEntry: Sendable, Equatable, Identifiable, Codable {
 /// Kept rather than discarded: spec M15 says clinical data is never silently
 /// overwritten, which also means the user's work is never silently thrown away.
 public struct SyncConflict: Sendable, Equatable, Identifiable, Codable {
-    public let id: String
-    public let entityType: String
-    public let entityId: String
-    /// What the user wrote.
-    public let localPayload: Data
+    /// What the user wrote, whole — so "keep mine" is sending it again rather
+    /// than rebuilding a request from a description of one.
+    public let local: PendingWrite
     /// What the server has now, for the screen to show alongside it.
     public let serverRecord: Data
     public let serverVersion: Int
     public let detectedAt: Date
 
+    public var id: String { local.id }
+    public var entityType: String { local.entityType }
+    public var entityId: String { local.entityId }
+    public var summary: String { local.summary }
+
     public init(
-        id: String,
-        entityType: String,
-        entityId: String,
-        localPayload: Data,
+        local: PendingWrite,
         serverRecord: Data,
         serverVersion: Int,
         detectedAt: Date = Date()
     ) {
-        self.id = id
-        self.entityType = entityType
-        self.entityId = entityId
-        self.localPayload = localPayload
+        self.local = local
         self.serverRecord = serverRecord
         self.serverVersion = serverVersion
         self.detectedAt = detectedAt
@@ -90,6 +74,21 @@ public protocol OutboxStore: Sendable {
     func conflicts() async throws -> [SyncConflict]
     func recordConflict(_ conflict: SyncConflict) async throws
     func clearConflict(id: String) async throws
+}
+
+public extension OutboxStore {
+    /**
+     * The queued writes of one kind.
+     *
+     * What a screen needs to show the user their own work. Nothing in this app
+     * keeps a local copy of the clinic's records, so a reading entered on a
+     * plane exists in exactly one place until it is sent — and a list that
+     * showed only what the server knows would look, to the person who typed
+     * it, like the app had thrown it away.
+     */
+    func pending(entityType: String) async throws -> [OutboxEntry] {
+        try await pending().filter { $0.entityType == entityType }
+    }
 }
 
 /// In-memory store for tests and previews.

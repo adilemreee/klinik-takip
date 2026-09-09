@@ -44,6 +44,8 @@ public enum PatientDestination: Hashable, Sendable {
     case account
     case surveys
     case travel
+    /// What the app is holding and has not delivered (spec M15).
+    case pendingChanges
 }
 
 /**
@@ -89,6 +91,8 @@ struct PatientHomeView: View {
         switch await health.sync() {
         case .synced(let count):
             return String(format: L10n.string("health.synced"), count)
+        case .queued(let count):
+            return String(format: L10n.string("health.queued"), count)
         case .nothingNew:
             return L10n.string("health.nothingNew")
         case .denied:
@@ -102,21 +106,15 @@ struct PatientHomeView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            HomeScreen(
-                model: HomeModel(api: environment.me),
-                emergency: EmergencyModel(
-                    trigger: APIEmergencyTrigger(api: environment.emergency)
-                ),
-                onSelect: { action in
-                    // The emergency action is not a destination: it arms the
-                    // two-step confirmation in place. Pushing a screen would
-                    // put a navigation animation between a patient and the
-                    // button they just pressed.
-                    if let destination = PatientHomeView.destination(for: action) {
-                        path.append(destination)
-                    }
+            VStack(spacing: 0) {
+                // Inside the stack rather than above it, so tapping it can go
+                // somewhere. A queue nobody can open is a queue nobody trusts.
+                PendingWritesBanner(sync: environment.sync) {
+                    path.append(.pendingChanges)
                 }
-            )
+
+                home
+            }
             .navigationDestination(for: PatientDestination.self) { destination in
                 screen(for: destination)
             }
@@ -124,6 +122,24 @@ struct PatientHomeView: View {
                 ToolbarItem(placement: .primaryAction) { menu }
             }
         }
+    }
+
+    private var home: some View {
+        HomeScreen(
+            model: HomeModel(api: environment.me),
+            emergency: EmergencyModel(
+                trigger: APIEmergencyTrigger(api: environment.emergency)
+            ),
+            onSelect: { action in
+                // The emergency action is not a destination: it arms the
+                // two-step confirmation in place. Pushing a screen would put a
+                // navigation animation between a patient and the button they
+                // just pressed.
+                if let destination = PatientHomeView.destination(for: action) {
+                    path.append(destination)
+                }
+            }
+        )
     }
 
     /// The four home actions that lead somewhere. `emergency` deliberately does not.
@@ -151,12 +167,11 @@ struct PatientHomeView: View {
             Button(L10n.string("consent.title")) { path.append(.consents) }
             Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
             Button(L10n.string("menu.account")) { path.append(.account) }
+            Button(L10n.string("menu.pendingChanges")) { path.append(.pendingChanges) }
 
             Divider()
 
-            Button(L10n.string("auth.signOut"), role: .destructive) {
-                Task { await signOut() }
-            }
+            SignOutButton(sync: environment.sync, signOut: signOut)
         } label: {
             Label(L10n.string("common.more"), systemImage: "ellipsis.circle")
         }
@@ -167,7 +182,7 @@ struct PatientHomeView: View {
         switch destination {
         case .messages:
             ChatScreen(
-                model: ChatModel(api: environment.messaging) {
+                model: ChatModel(api: environment.messaging, queue: environment.queue) {
                     // A patient has exactly one conversation with the clinic,
                     // and the server decides which — asking for it by id here
                     // would let the client name someone else's.
@@ -218,7 +233,9 @@ struct PatientHomeView: View {
             )
 
         case .medications:
-            MedicationsScreen(model: MedicationsModel(api: environment.medications))
+            MedicationsScreen(
+                model: MedicationsModel(api: environment.medications, queue: environment.queue)
+            )
 
         case .photos:
             PhotoGalleryView(
@@ -257,7 +274,8 @@ struct PatientHomeView: View {
                     // server decides this too; sending `.nurse` from a patient
                     // build would put unverified numbers in a clinical record
                     // wearing a nurse's authority.
-                    source: .patient
+                    source: .patient,
+                    queue: environment.queue
                 ),
                 syncFromDevice: health.isAvailable ? { await syncHealth() } : nil
             )
@@ -306,6 +324,9 @@ struct PatientHomeView: View {
             // Read-only: the patient sees the trip the clinic booked, and the
             // model reads `me/travel`, which needs no `patients.read`.
             TravelScreen(model: TravelModel(api: environment.travel))
+
+        case .pendingChanges:
+            PendingChangesScreen(sync: environment.sync)
         }
     }
 }

@@ -239,6 +239,13 @@ public struct MyComplicationsView: View {
                     ErrorBanner(message: error)
                 }
 
+                // Not an error banner: the report is safe. But it has not been
+                // read by anybody, and the one thing a patient must be told
+                // here is what to do if waiting is not an option.
+                if state.queued {
+                    QueuedReportNotice()
+                }
+
                 ForEach(state.items) { item in
                     MyComplicationRow(item: item)
                 }
@@ -347,6 +354,43 @@ struct MyComplicationRow: View {
             }
         }
         .padding(.vertical, Tokens.Spacing.xs)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+
+/**
+ * A complaint the phone is holding.
+ *
+ * Says two things, and the second one is why this view exists rather than a
+ * generic "kaydedildi": the report is safe, and nobody at the clinic has seen
+ * it. A patient whose wound is opening should not be waiting on a queue, and
+ * the only honest thing an offline app can do is say so and give them the
+ * telephone.
+ */
+struct QueuedReportNotice: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        Card(tone: .warning) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                HStack(spacing: Tokens.Spacing.sm) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(Tokens.Typography.bodyRelative)
+                        // The sentence beside it says the same thing.
+                        .accessibilityHidden(true)
+
+                    Text(L10n.string("sync.savedOffline"))
+                        .font(Tokens.Typography.bodyRelative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Text(L10n.string("sync.urgentWarning"))
+                    .font(Tokens.Typography.calloutRelative)
+                    .foregroundStyle(Tone.critical.foreground.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
         .accessibilityElement(children: .combine)
     }
 }

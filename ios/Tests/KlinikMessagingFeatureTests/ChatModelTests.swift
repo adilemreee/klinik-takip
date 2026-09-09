@@ -497,3 +497,108 @@ final class ChatAttachmentTests: XCTestCase {
         XCTAssertNotNil(state.error)
     }
 }
+
+/// Reads work, writes do not — a phone that has drifted out of signal between
+/// opening the thread and pressing send.
+private actor ReadsOnlyTransport: HTTPTransport {
+    private let bodies: [String: (Int, String)]
+
+    init(bodies: [String: (Int, String)]) {
+        self.bodies = bodies
+    }
+
+    func send(_ request: URLRequest) async throws -> HTTPResponse {
+        if request.httpMethod != "GET" { throw APIError.offline }
+
+        let key = "GET \(request.url!.path)"
+
+        guard let (status, body) = bodies[key] else {
+            return HTTPResponse(status: 500, body: Data())
+        }
+
+        return HTTPResponse(status: status, body: Data(body.utf8))
+    }
+}
+
+/// Both halves of the queue: takes a write and hands it back.
+private actor FakeQueue: PendingWriteQueue, PendingWriteReader {
+    private var writes: [PendingWrite] = []
+
+    func enqueue(_ write: PendingWrite) async throws { writes.append(write) }
+
+    func unsent(entityType: String) async -> [PendingWrite] {
+        writes.filter { $0.entityType == entityType }
+    }
+}
+
+/**
+ * A message written with no connection (spec M15).
+ *
+ * A message that simply vanishes is how a patient decides the app cannot be
+ * trusted with anything — so it is kept, and shown in the thread it belongs
+ * to, marked as not sent. Marked, and not mixed in with the delivered ones:
+ * believing the clinic has read a symptom nobody has seen is worse than
+ * knowing it has not been sent.
+ */
+final class OfflineChatTests: XCTestCase {
+    private func model(_ queue: FakeQueue) async -> ChatModel {
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: UnusedRefresher())
+        try? await session.signIn(
+            with: SessionTokens(
+                accessToken: "access",
+                refreshToken: "refresh",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+        let client = APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: ReadsOnlyTransport(
+                bodies: [
+                    "GET /me/conversation": (200, conversationBody),
+                    "GET /conversations/c1/messages": (200, #"{"items":[],"nextCursor":null}"#),
+                    "GET /conversations/clinic-state": (
+                        200, #"{"open":true,"opensAt":null,"queueMinutes":null}"#
+                    ),
+                ]
+            ),
+            session: session
+        )
+        await client.useQueue(queue)
+
+        let api = MessagingAPI(client: client)
+
+        return ChatModel(api: api, queue: queue) { try await api.myConversation() }
+    }
+
+    func testAMessageWrittenOfflineStaysInTheThread() async {
+        let queue = FakeQueue()
+        let chat = await model(queue)
+        await chat.load()
+
+        let sent = await chat.send("Dikişte kızarıklık var")
+
+        XCTAssertTrue(sent, "It is written and kept; what is outstanding is the delivery")
+
+        let state = await chat.currentState()
+        XCTAssertEqual(state.unsent.map(\.body), ["Dikişte kızarıklık var"])
+        XCTAssertNil(state.error)
+        XCTAssertTrue(
+            state.messages.isEmpty,
+            "It is not mixed in with what the clinic has actually received"
+        )
+    }
+
+    func testUnsentMessagesComeBackWhenTheThreadIsReopened() async {
+        let queue = FakeQueue()
+        let first = await model(queue)
+        await first.load()
+        _ = await first.send("Dikişte kızarıklık var")
+
+        // A second model on the same queue is what reopening the app looks like.
+        let reopened = await model(queue)
+        await reopened.load()
+
+        let state = await reopened.currentState()
+        XCTAssertEqual(state.unsent.map(\.body), ["Dikişte kızarıklık var"])
+    }
+}

@@ -148,7 +148,16 @@ public struct SurveysAPI: Sendable {
         try await client.send(Endpoint(method: .get, path: "me/surveys"), as: [PendingSurvey].self)
     }
 
-    /// Answers. A value that does not fit its question is refused by the server.
+    /**
+     * Answers. A value that does not fit its question is refused by the server.
+     *
+     * Queued when there is no connection (spec M15). A questionnaire is ten
+     * minutes of somebody's attention; losing it to a dropped connection is
+     * losing the answers *and* the willingness to give them again.
+     *
+     * Filed under the assignment, so a second submission of the same
+     * questionnaire follows the first rather than racing it.
+     */
     public func submit(
         _ assignmentId: String,
         answers: [String: SurveyAnswer]
@@ -157,11 +166,21 @@ public struct SurveysAPI: Sendable {
             Endpoint(
                 method: .post,
                 path: "me/surveys/\(assignmentId)",
-                body: try JSONEncoder.klinik.encode(SubmitBody(answers: answers))
+                body: try JSONEncoder.klinik.encode(SubmitBody(answers: answers)),
+                offline: .queue(
+                    QueuedWrite(
+                        entityType: SurveysAPI.queuedEntity,
+                        entityId: assignmentId,
+                        summary: L10n.string("sync.item.survey")
+                    )
+                )
             ),
             as: SurveySubmitResult.self
         )
     }
+
+    /// What queued answers are filed under.
+    public static let queuedEntity = "survey"
 
     public func forPatient(_ patientId: String) async throws -> PatientSurveys {
         try await client.send(

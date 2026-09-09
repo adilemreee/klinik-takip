@@ -40,6 +40,11 @@ public final class ConnectionState {
     /// How many failures in a row before saying so.
     private let threshold: Int
 
+    /// Told whenever a read reaches the clinic, so the offline queue gets a
+    /// chance to drain on proof of a connection rather than on a promise of
+    /// one. Set by the composition root; nil everywhere else.
+    public var whenReachable: (@MainActor () -> Void)?
+
     public init(threshold: Int = 2) {
         self.threshold = threshold
     }
@@ -47,6 +52,7 @@ public final class ConnectionState {
     func succeeded() {
         failures = 0
         freshness = .live
+        whenReachable?()
     }
 
     func fellBackToCache(storedAt: Date) {
@@ -108,7 +114,7 @@ struct FreshnessBanner: View {
                 symbol: "wifi.slash",
                 text: String(
                     format: L10n.string("connection.showingCached"),
-                    FreshnessBanner.moment(since)
+                    Moment.text(since)
                 ),
                 tone: .warning
             )
@@ -142,21 +148,5 @@ struct FreshnessBanner: View {
         .background(tone.surface.resolve(for: scheme))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(text)
-    }
-
-    /// "14:20" for today, a date for anything older — a bare time on a
-    /// three-day-old copy reads as three minutes ago.
-    static func moment(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
-        let formatter = DateFormatter()
-
-        if calendar.isDate(date, inSameDayAs: now) {
-            formatter.dateStyle = .none
-            formatter.timeStyle = .short
-        } else {
-            formatter.dateStyle = .short
-            formatter.timeStyle = .short
-        }
-
-        return formatter.string(from: date)
     }
 }

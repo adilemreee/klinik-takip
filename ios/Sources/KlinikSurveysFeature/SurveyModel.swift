@@ -17,6 +17,8 @@ public struct SurveyState: Sendable, Equatable {
     public var answers: [String: SurveyAnswer] = [:]
     public var submitting = false
     public var submitted = false
+    /// The answers were kept on the phone rather than delivered (spec M15).
+    public var queued = false
     public var error: String?
 
     public init() {}
@@ -91,6 +93,17 @@ public final class SurveyModel {
             state.surveys.removeAll { $0.id == survey.id }
             state.answers = [:]
             state.submitted = true
+            state.queued = false
+            state.phase = state.surveys.contains { $0.isOpen() } ? .loaded : .none
+        } catch APIError.queuedForLater {
+            // Ten minutes of somebody's attention, kept. The questionnaire
+            // leaves the list exactly as it would have: it is answered, and
+            // what is outstanding is the delivery, not the answering.
+            state.surveys.removeAll { $0.id == survey.id }
+            state.answers = [:]
+            state.submitted = true
+            state.queued = true
+            state.error = nil
             state.phase = state.surveys.contains { $0.isOpen() } ? .loaded : .none
         } catch let error as APIError {
             state.error = L10n.message(for: error)

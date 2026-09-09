@@ -72,7 +72,8 @@ public struct MedicationsScreen: View {
                         DoseRow(
                             dose: dose,
                             medication: state.medication(for: dose),
-                            isWorking: state.working == dose.id
+                            isWorking: state.working == dose.id,
+                            unsent: state.unsent[dose.id]
                         ) { action, minutes in
                             await refresh {
                                 await model.checkIn(dose.id, action: action, snoozeMinutes: minutes)
@@ -157,10 +158,23 @@ struct DoseRow: View {
     let dose: DoseLog
     let medication: Medication?
     let isWorking: Bool
+    /// What the patient chose while offline, still waiting to be sent.
+    let unsent: MedicationsAPI.CheckInAction?
     let onCheckIn: (MedicationsAPI.CheckInAction, Int?) async -> Void
 
     /// Long enough to be a real "not now", short enough to still be today.
     private static let snoozeMinutes = 30
+
+    /// The word for a choice that has not been sent. `nonisolated` because a
+    /// static on a `View` otherwise inherits the view's main-actor isolation,
+    /// and the tests call this directly.
+    nonisolated static func name(of action: MedicationsAPI.CheckInAction) -> String {
+        switch action {
+        case .taken: return L10n.string("medication.taken")
+        case .skipped: return L10n.string("medication.skipped")
+        case .snooze: return L10n.string("medication.snooze")
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
@@ -173,9 +187,20 @@ struct DoseRow: View {
 
                 // In words as well as colour: a colour a reader cannot
                 // distinguish says nothing (spec section 7).
-                Text(dose.status.localizedName)
+                Text(unsent.map { DoseRow.name(of: $0) } ?? dose.status.localizedName)
                     .font(Tokens.Typography.captionRelative)
-                    .foregroundStyle(tint.resolve(for: scheme))
+                    .foregroundStyle((unsent == nil ? tint : Tone.warning.foreground).resolve(for: scheme))
+            }
+
+            // Says both halves of the truth: what the patient chose, and that
+            // the clinic has not seen it yet. Either half on its own would be
+            // a lie about the record.
+            if unsent != nil {
+                Badge(
+                    L10n.string("sync.queuedBadge"),
+                    tone: .warning,
+                    symbol: "clock.arrow.circlepath"
+                )
             }
 
             if let dosage = medication?.dose {
@@ -188,7 +213,9 @@ struct DoseRow: View {
                 .font(Tokens.Typography.captionRelative)
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
 
-            if dose.status.isOpen {
+            // Hidden once a choice is waiting to be sent: tapping again would
+            // queue a second check-in for the same dose.
+            if dose.status.isOpen, unsent == nil {
                 HStack(spacing: Tokens.Spacing.md) {
                     Button(L10n.string("medication.taken")) {
                         Task { await onCheckIn(.taken, nil) }

@@ -218,7 +218,18 @@ public struct MedicationsAPI: Sendable {
         )
     }
 
-    /// "İçtim" / "Atladım" / "Ertele".
+    /**
+     * "İçtim" / "Atladım" / "Ertele".
+     *
+     * Queued when there is no connection (spec M15). The dose is the one thing
+     * in this app whose whole value is the timestamp: a patient who took their
+     * antibiotic at nine and could only say so at midnight has an adherence
+     * record that is wrong by three hours, and a clinician reading it cannot
+     * tell that from a missed dose.
+     *
+     * Filed under the dose, so two check-ins on the same one stay in order and
+     * a refusal on the first holds the second.
+     */
     public func checkIn(
         _ logId: String,
         action: CheckInAction,
@@ -230,10 +241,43 @@ public struct MedicationsAPI: Sendable {
                 path: "me/medications/doses/\(logId)",
                 body: try JSONEncoder.klinik.encode(
                     CheckInBody(action: action.rawValue, snoozeMinutes: snoozeMinutes)
+                ),
+                offline: .queue(
+                    QueuedWrite(
+                        entityType: MedicationsAPI.queuedDoseEntity,
+                        entityId: logId,
+                        summary: L10n.string(MedicationsAPI.summaryKey(for: action))
+                    )
                 )
             ),
             as: DoseLog.self
         )
+    }
+
+    /// What a queued check-in is filed under.
+    public static let queuedDoseEntity = "dose"
+
+    /// What the patient chose, read back out of a queued check-in.
+    ///
+    /// The body format stays private to this file; the screen asks a question
+    /// in its own terms and gets an answer in them.
+    public static func queuedAction(in write: PendingWrite) -> CheckInAction? {
+        guard
+            let body = write.body,
+            let decoded = try? JSONDecoder.klinik.decode(CheckInBody.self, from: body)
+        else {
+            return nil
+        }
+
+        return CheckInAction(rawValue: decoded.action)
+    }
+
+    static func summaryKey(for action: CheckInAction) -> String {
+        switch action {
+        case .taken: return "sync.item.doseTaken"
+        case .skipped: return "sync.item.doseSkipped"
+        case .snooze: return "sync.item.doseSnoozed"
+        }
     }
 
     /// Something the patient is already taking; a clinician approves it.
@@ -303,7 +347,10 @@ public struct MedicationsAPI: Sendable {
         case snooze
     }
 
-    private struct CheckInBody: Encodable {
+    /// Codable, not just Encodable: a check-in queued while offline is read
+    /// back out so the row on screen shows what the patient chose rather than
+    /// snapping back to "not taken".
+    private struct CheckInBody: Codable {
         let action: String
         let snoozeMinutes: Int?
     }

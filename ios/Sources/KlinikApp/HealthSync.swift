@@ -18,6 +18,9 @@ public enum HealthSyncOutcome: Sendable, Equatable {
     /// Nothing new since the last time. Not a failure.
     case nothingNew
     case synced(count: Int)
+    /// Read off the phone and kept, but not delivered: there was no connection
+    /// (spec M15). They will be sent on their own.
+    case queued(count: Int)
     case failed(String)
 }
 
@@ -127,6 +130,7 @@ public final class HealthSync {
         guard !readings.isEmpty else { return .nothingNew }
 
         var filed = 0
+        var queued = 0
 
         for reading in readings {
             do {
@@ -140,6 +144,12 @@ public final class HealthSync {
                     for: .me
                 )
                 filed += 1
+            } catch APIError.queuedForLater {
+                // Kept rather than delivered, and counted as done: the queue
+                // will send it. Treating it as a failure would leave the
+                // watermark behind these readings, and the next sync would read
+                // the same ones off the phone and queue a second copy of each.
+                queued += 1
             } catch let error as APIError {
                 // Stops at the first refusal rather than hammering: whatever
                 // was filed stays filed, and the watermark is not moved past it.
@@ -153,7 +163,10 @@ public final class HealthSync {
             defaults.set(newest.timeIntervalSince1970, forKey: HealthSync.watermarkKey)
         }
 
-        return .synced(count: filed)
+        // Said apart from the delivered ones, because a patient told "12
+        // readings taken" about numbers the clinic has not received has been
+        // told something untrue.
+        return queued > 0 ? .queued(count: filed + queued) : .synced(count: filed)
         #else
         return .unavailable
         #endif

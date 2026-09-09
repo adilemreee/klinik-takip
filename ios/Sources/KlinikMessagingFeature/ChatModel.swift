@@ -29,12 +29,33 @@ public struct ChatState: Sendable, Equatable {
     /// Who is typing, other than the caller.
     public var typing: Set<String> = []
 
+    /// Messages written on this phone that have not reached the clinic.
+    ///
+    /// Kept apart from `messages` rather than mixed into it: those come from
+    /// the server and have an id, a sender and a delivery state. Inventing
+    /// those fields for something the clinic has never seen would put a row on
+    /// screen that looks exactly like a delivered message.
+    public var unsent: [UnsentMessage] = []
+
     public var hasOlder: Bool { olderCursor != nil }
 
     /// True when what the patient writes now will be held rather than sent.
     public var willBeQueued: Bool { clinic?.open == false }
 
     public init() {}
+}
+
+/// Something the patient wrote that is still on the phone.
+public struct UnsentMessage: Sendable, Equatable, Identifiable {
+    public let id: String
+    public let body: String
+    public let writtenAt: Date
+
+    public init(id: String, body: String, writtenAt: Date) {
+        self.id = id
+        self.body = body
+        self.writtenAt = writtenAt
+    }
 }
 
 /// One conversation (spec M3).
@@ -45,11 +66,19 @@ public struct ChatState: Sendable, Equatable {
 public actor ChatModel {
     private let api: MessagingAPI
     private let conversation: () async throws -> Conversation
+    /// The offline queue, read-only. Nil in tests that have nothing to say
+    /// about it.
+    private let queue: PendingWriteReader?
 
     private(set) public var state = ChatState()
 
-    public init(api: MessagingAPI, conversation: @escaping @Sendable () async throws -> Conversation) {
+    public init(
+        api: MessagingAPI,
+        queue: PendingWriteReader? = nil,
+        conversation: @escaping @Sendable () async throws -> Conversation
+    ) {
         self.api = api
+        self.queue = queue
         self.conversation = conversation
     }
 
@@ -71,7 +100,8 @@ public actor ChatModel {
             state.messages = loaded.items
             state.olderCursor = loaded.nextCursor
             state.clinic = try await clinic
-            state.phase = loaded.items.isEmpty ? .empty : .loaded
+            await readQueue()
+            state.phase = loaded.items.isEmpty && state.unsent.isEmpty ? .empty : .loaded
         } catch let error as APIError {
             if case .notFound = error {
                 state.phase = .notFound
@@ -123,6 +153,14 @@ public actor ChatModel {
             append(sent.message)
             state.pendingMediaKey = nil
             state.pendingMediaType = nil
+        } catch APIError.queuedForLater {
+            // Kept on the phone. It shows in the thread under its own heading,
+            // marked as not sent — a message that simply vanished is how a
+            // patient decides the app cannot be trusted with anything.
+            await readQueue()
+            state.pendingMediaKey = nil
+            state.pendingMediaType = nil
+            state.error = nil
         } catch let error as APIError {
             state.error = L10n.message(for: error)
             return false
@@ -132,6 +170,19 @@ public actor ChatModel {
         }
 
         return true
+    }
+
+    /// What the queue is still holding for this conversation.
+    private func readQueue() async {
+        guard let queue, let conversationId = state.conversationId else { return }
+
+        state.unsent = await queue.unsent(entityType: MessagingAPI.queuedEntity)
+            .filter { $0.entityId == conversationId }
+            .compactMap { write in
+                guard let text = MessagingAPI.queuedText(in: write) else { return nil }
+
+                return UnsentMessage(id: write.id, body: text, writtenAt: write.createdAt)
+            }
     }
 
     /**

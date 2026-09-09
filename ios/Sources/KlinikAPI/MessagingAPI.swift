@@ -185,6 +185,14 @@ public struct MessagingAPI: Sendable {
         )
     }
 
+    /**
+     * Sends a message.
+     *
+     * Queued when there is no connection (spec M15), filed under the
+     * conversation: messages in one thread must reach the clinic in the order
+     * they were written, and a refused one holds the rest rather than letting
+     * an answer arrive before its question.
+     */
     public func send(
         conversationId: String,
         body: String?,
@@ -197,10 +205,45 @@ public struct MessagingAPI: Sendable {
                 path: "conversations/\(conversationId)/messages",
                 body: try JSONEncoder.klinik.encode(
                     SendBody(body: body, mediaKey: mediaKey, type: type)
+                ),
+                offline: .queue(
+                    QueuedWrite(
+                        entityType: MessagingAPI.queuedEntity,
+                        entityId: conversationId,
+                        summary: String(
+                            format: L10n.string("sync.item.message"),
+                            MessagingAPI.preview(of: body)
+                        )
+                    )
                 )
             ),
             as: SentMessage.self
         )
+    }
+
+    /// What a queued message is filed under.
+    public static let queuedEntity = "message"
+
+    /// What the patient wrote, read back out of a queued message.
+    public static func queuedText(in write: PendingWrite) -> String? {
+        guard
+            let body = write.body,
+            let decoded = try? JSONDecoder.klinik.decode(SendBody.self, from: body)
+        else {
+            return nil
+        }
+
+        return decoded.body
+    }
+
+    /// Enough of the message to recognise it in the pending list, without
+    /// putting a paragraph of somebody's medical history in a row.
+    static func preview(of body: String?) -> String {
+        let text = (body ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard text.count > 40 else { return text }
+
+        return text.prefix(40).trimmingCharacters(in: .whitespaces) + "…"
     }
 
     public func attach(conversationId: String, fileURL: URL, contentType: String) async throws -> Attachment {
@@ -234,7 +277,9 @@ public struct MessagingAPI: Sendable {
         try await client.send(Endpoint(method: .get, path: "quick-replies"), as: [QuickReply].self)
     }
 
-    private struct SendBody: Encodable {
+    /// Codable, not just Encodable: a message queued while offline is read
+    /// back out so it can be shown in the thread that it belongs to.
+    private struct SendBody: Codable {
         let body: String?
         let mediaKey: String?
         let type: MessageType?

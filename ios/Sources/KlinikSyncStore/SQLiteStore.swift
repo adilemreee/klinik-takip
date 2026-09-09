@@ -110,6 +110,59 @@ public actor SQLiteStore {
             }
         }
 
+        /*
+         * The queue holds requests now, not descriptions of changes.
+         *
+         * v1 stored an `operation` and a `payload` and left it to the sender to
+         * work out what to do with them — which meant a switch over every kind
+         * of write in the app, in the one layer that has no business knowing
+         * about any of them. An entry now carries the request itself, so
+         * replaying it is sending it again.
+         *
+         * The old table is dropped rather than migrated. No released build
+         * ever wrote a row to it: nothing called `append` outside the tests
+         * until this change, so there is no user's work to carry across. A
+         * development build with rows in it loses them, which is said out loud
+         * here rather than discovered later.
+         */
+        migrator.registerMigration("v3-outbox-holds-requests") { database in
+            try database.drop(table: "outbox")
+            try database.drop(table: "conflict")
+
+            try database.create(table: "outbox") { table in
+                table.primaryKey("id", .text)
+                table.column("entityType", .text).notNull()
+                table.column("entityId", .text).notNull()
+                table.column("method", .text).notNull()
+                table.column("path", .text).notNull()
+                /// JSON. Writes rarely carry one, and nothing indexes it.
+                table.column("query", .text).notNull()
+                table.column("body", .blob)
+                table.column("baseVersion", .integer)
+                table.column("summary", .text).notNull()
+                table.column("createdAt", .datetime).notNull()
+                table.column("attempts", .integer).notNull().defaults(to: 0)
+                table.column("lastError", .text)
+            }
+
+            // Sending is always "oldest first", so the order is an index rather
+            // than a sort of the whole queue on every pass.
+            try database.create(index: "outbox_createdAt", on: "outbox", columns: ["createdAt"])
+            // Screens ask for their own kind, to show the user unsent work.
+            try database.create(index: "outbox_entityType", on: "outbox", columns: ["entityType"])
+
+            try database.create(table: "conflict") { table in
+                table.primaryKey("id", .text)
+                table.column("entityType", .text).notNull()
+                table.column("entityId", .text).notNull()
+                /// The user's whole request, so "keep mine" sends it again.
+                table.column("local", .blob).notNull()
+                table.column("serverRecord", .blob).notNull()
+                table.column("serverVersion", .integer).notNull()
+                table.column("detectedAt", .datetime).notNull()
+            }
+        }
+
         return migrator
     }
 
@@ -130,40 +183,67 @@ private struct OutboxRow: Codable, FetchableRecord, PersistableRecord {
     var id: String
     var entityType: String
     var entityId: String
-    var operation: String
-    var payload: Data
+    var method: String
+    var path: String
+    var query: String
+    var body: Data?
     var baseVersion: Int?
+    var summary: String
     var createdAt: Date
     var attempts: Int
     var lastError: String?
 
     init(_ entry: OutboxEntry) {
-        id = entry.id
-        entityType = entry.entityType
-        entityId = entry.entityId
-        operation = entry.operation.rawValue
-        payload = entry.payload
-        baseVersion = entry.baseVersion
-        createdAt = entry.createdAt
+        let write = entry.write
+
+        id = write.id
+        entityType = write.entityType
+        entityId = write.entityId
+        method = write.method.rawValue
+        path = write.path
+        query = OutboxRow.encode(write.query)
+        body = write.body
+        baseVersion = write.ticket.baseVersion
+        summary = write.summary
+        createdAt = write.createdAt
         attempts = entry.attempts
         lastError = entry.lastError
     }
 
-    /// An unreadable operation would otherwise become a silently dropped edit.
+    /// Nil for a row whose method the app no longer recognises. A silently
+    /// dropped edit is the one outcome this store exists to prevent, so it is
+    /// reported by returning nothing rather than by guessing at a method.
     var entry: OutboxEntry? {
-        guard let operation = OutboxEntry.Operation(rawValue: operation) else { return nil }
+        guard let method = HTTPMethod(rawValue: method) else { return nil }
 
         return OutboxEntry(
-            id: id,
-            entityType: entityType,
-            entityId: entityId,
-            operation: operation,
-            payload: payload,
-            baseVersion: baseVersion,
-            createdAt: createdAt,
+            write: PendingWrite(
+                ticket: QueuedWrite(
+                    entityType: entityType,
+                    entityId: entityId,
+                    summary: summary,
+                    baseVersion: baseVersion,
+                    id: id
+                ),
+                method: method,
+                path: path,
+                query: OutboxRow.decode(query),
+                body: body,
+                createdAt: createdAt
+            ),
             attempts: attempts,
             lastError: lastError
         )
+    }
+
+    private static func encode(_ query: [String: String]) -> String {
+        guard !query.isEmpty, let data = try? JSONEncoder().encode(query) else { return "{}" }
+
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func decode(_ query: String) -> [String: String] {
+        (try? JSONDecoder().decode([String: String].self, from: Data(query.utf8))) ?? [:]
     }
 }
 
@@ -173,27 +253,30 @@ private struct ConflictRow: Codable, FetchableRecord, PersistableRecord {
     var id: String
     var entityType: String
     var entityId: String
-    var localPayload: Data
+    var local: Data
     var serverRecord: Data
     var serverVersion: Int
     var detectedAt: Date
 
-    init(_ conflict: SyncConflict) {
+    init?(_ conflict: SyncConflict) {
+        guard let encoded = try? JSONEncoder().encode(conflict.local) else { return nil }
+
         id = conflict.id
         entityType = conflict.entityType
         entityId = conflict.entityId
-        localPayload = conflict.localPayload
+        local = encoded
         serverRecord = conflict.serverRecord
         serverVersion = conflict.serverVersion
         detectedAt = conflict.detectedAt
     }
 
-    var conflict: SyncConflict {
-        SyncConflict(
-            id: id,
-            entityType: entityType,
-            entityId: entityId,
-            localPayload: localPayload,
+    var conflict: SyncConflict? {
+        guard let write = try? JSONDecoder().decode(PendingWrite.self, from: local) else {
+            return nil
+        }
+
+        return SyncConflict(
+            local: write,
             serverRecord: serverRecord,
             serverVersion: serverVersion,
             detectedAt: detectedAt
@@ -251,6 +334,18 @@ public struct SQLiteOutboxStore: OutboxStore {
         .compactMap(\.entry)
     }
 
+    /// Filtered in SQL rather than in Swift, so a screen asking for its own
+    /// kind does not read the whole queue to find three rows.
+    public func pending(entityType: String) async throws -> [OutboxEntry] {
+        try await store.read { database in
+            try OutboxRow
+                .filter(Column("entityType") == entityType)
+                .order(Column("createdAt").asc)
+                .fetchAll(database)
+        }
+        .compactMap(\.entry)
+    }
+
     public func append(_ entry: OutboxEntry) async throws {
         // Upsert rather than insert: a retry that re-queues the same edit must
         // not put two of it in the queue.
@@ -275,11 +370,13 @@ public struct SQLiteOutboxStore: OutboxStore {
         try await store.read { database in
             try ConflictRow.order(Column("detectedAt").asc).fetchAll(database)
         }
-        .map(\.conflict)
+        .compactMap(\.conflict)
     }
 
     public func recordConflict(_ conflict: SyncConflict) async throws {
-        try await store.write { try ConflictRow(conflict).upsert($0) }
+        guard let row = ConflictRow(conflict) else { return }
+
+        try await store.write { try row.upsert($0) }
     }
 
     public func clearConflict(id: String) async throws {

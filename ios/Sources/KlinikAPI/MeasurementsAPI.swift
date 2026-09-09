@@ -86,7 +86,10 @@ public struct BodyChart: Decodable, Sendable, Equatable {
     }
 }
 
-public struct NewMeasurement: Encodable, Sendable, Equatable {
+/// Codable, not just Encodable: a reading queued while offline is written to
+/// disk as its own request body and read back to be shown to the patient who
+/// typed it.
+public struct NewMeasurement: Codable, Sendable, Equatable {
     public let type: MeasurementType
     public let value: Double
     public let secondaryValue: Double?
@@ -135,7 +138,7 @@ public enum MeasurementSubject: Sendable, Equatable {
     case patient(id: String)
     case me
 
-    var basePath: String {
+    public var basePath: String {
         switch self {
         case .patient(let id): return "patients/\(id)/measurements"
         case .me: return "me/measurements"
@@ -180,6 +183,17 @@ public struct MeasurementsAPI: Sendable {
         )
     }
 
+    /**
+     * Records a reading.
+     *
+     * Queued when there is no connection (spec M15). A weight typed in a hotel
+     * with no wifi is a fact about a moment that has passed — asking the
+     * patient to remember it and type it again tomorrow is how a follow-up
+     * curve ends up with a hole in it.
+     *
+     * Throws `APIError.queuedForLater` in that case: there is no saved record
+     * to return, because the clinic has not seen it yet.
+     */
     public func record(
         _ measurement: NewMeasurement,
         for subject: MeasurementSubject,
@@ -192,8 +206,28 @@ public struct MeasurementsAPI: Sendable {
             Endpoint(
                 method: .post,
                 path: subject.basePath,
-                body: try JSONEncoder.klinik.encode(payload)
+                body: try JSONEncoder.klinik.encode(payload),
+                offline: .queue(
+                    .standalone(
+                        entityType: MeasurementsAPI.queuedEntity,
+                        summary: String(
+                            format: L10n.string("sync.item.measurement"),
+                            measurement.type.localizedName
+                        )
+                    )
+                )
             )
         )
+    }
+
+    /// What a queued reading is filed under, so the screen can find its own.
+    public static let queuedEntity = "measurement"
+
+    /// The reading inside a queued write, read back out for the screen that
+    /// has to show the patient what they typed.
+    public static func queuedReading(in write: PendingWrite) -> NewMeasurement? {
+        guard let body = write.body else { return nil }
+
+        return try? JSONDecoder.klinik.decode(NewMeasurement.self, from: body)
     }
 }

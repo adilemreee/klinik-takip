@@ -88,6 +88,11 @@ public struct BodyChartView: View {
                     .background(Tokens.Palette.infoSurface.resolve(for: scheme))
             }
 
+            // Above the chart and outside the phase switch, so a reading the
+            // patient entered on a plane is visible whether the chart loaded,
+            // failed, or has nothing in it yet.
+            UnsentReadings(readings: state.unsent)
+
             content
 
             if let syncFromDevice {
@@ -363,5 +368,78 @@ struct LatestReadingSummary: View {
         }
 
         return nil
+    }
+}
+
+
+/**
+ * Readings this phone is holding (spec M15).
+ *
+ * Listed rather than plotted. A queued weight has no BMI — that depends on the
+ * height in effect when it was taken, which the server applies — so drawing it
+ * on the curve would put a point on a chart in a position nobody computed, and
+ * a clinician reading that chart would have no way to know.
+ */
+struct UnsentReadings: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let readings: [UnsentMeasurement]
+
+    var body: some View {
+        if readings.isEmpty {
+            EmptyView()
+        } else {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                HStack(spacing: Tokens.Spacing.sm) {
+                    Badge(
+                        L10n.string("sync.queuedBadge"),
+                        tone: .warning,
+                        symbol: "clock.arrow.circlepath"
+                    )
+
+                    Spacer(minLength: 0)
+                }
+
+                ForEach(readings) { reading in
+                    HStack(spacing: Tokens.Spacing.sm) {
+                        Text(reading.type.localizedName)
+                            .font(Tokens.Typography.captionRelative)
+                            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                        Text(UnsentReadings.text(for: reading))
+                            .font(Tokens.Typography.subheadingRelative)
+                            .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+                        Spacer(minLength: 0)
+
+                        Text(reading.enteredAt, style: .time)
+                            .font(Tokens.Typography.footnoteRelative)
+                            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .padding(Tokens.Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Tone.warning.surface.resolve(for: scheme))
+        }
+    }
+
+    /// Blood pressure is two numbers and reads as nonsense as one.
+    ///
+    /// `nonisolated` because a static on a `View` otherwise inherits the
+    /// view's main-actor isolation, and the tests call this directly.
+    nonisolated static func text(for reading: UnsentMeasurement) -> String {
+        guard let secondary = reading.secondaryValue else {
+            return Self.number(reading.value)
+        }
+
+        return "\(Self.number(reading.value))/\(Self.number(secondary))"
+    }
+
+    nonisolated static func number(_ value: Double) -> String {
+        value == value.rounded()
+            ? String(Int(value))
+            : String(format: "%.1f", value)
     }
 }

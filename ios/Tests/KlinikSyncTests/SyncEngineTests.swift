@@ -1,4 +1,5 @@
 import XCTest
+import KlinikAPI
 import KlinikCore
 @testable import KlinikSync
 
@@ -30,12 +31,19 @@ final class SyncEngineTests: XCTestCase {
         createdAt: Date = Date()
     ) -> OutboxEntry {
         OutboxEntry(
-            id: id,
-            entityType: entity,
-            entityId: record,
-            payload: Data(#"{"city":"Berlin"}"#.utf8),
-            baseVersion: version,
-            createdAt: createdAt
+            write: PendingWrite(
+                ticket: QueuedWrite(
+                    entityType: entity,
+                    entityId: record,
+                    summary: "Şehir: Berlin",
+                    baseVersion: version,
+                    id: id
+                ),
+                method: .patch,
+                path: "patients/\(record)",
+                body: Data(#"{"city":"Berlin"}"#.utf8),
+                createdAt: createdAt
+            )
         )
     }
 
@@ -104,7 +112,7 @@ final class SyncEngineTests: XCTestCase {
         XCTAssertEqual(conflicts.first?.serverVersion, 3)
         // Both sides are kept so the screen can show them together.
         XCTAssertEqual(conflicts.first?.serverRecord, serverRecord)
-        XCTAssertEqual(conflicts.first?.localPayload, Data(#"{"city":"Berlin"}"#.utf8))
+        XCTAssertEqual(conflicts.first?.local.body, Data(#"{"city":"Berlin"}"#.utf8))
 
         let pending = try await store.pending()
         XCTAssertTrue(pending.isEmpty, "A conflicted entry does not stay queued as-is")
@@ -193,7 +201,7 @@ final class SyncEngineTests: XCTestCase {
 
         let pending = try await store.pending()
         XCTAssertEqual(pending.map(\.id), ["e1-replay"])
-        XCTAssertEqual(pending.first?.baseVersion, 3)
+        XCTAssertEqual(pending.first?.write.ticket.baseVersion, 3)
     }
 
     // MARK: - Failures

@@ -202,7 +202,14 @@ extension PushRegistrar: UNUserNotificationCenterDelegate {
         await handle(action: action, logId: logId)
     }
 
-    /// The two answers a patient can give without opening anything.
+    /**
+     * The two answers a patient can give without opening anything.
+     *
+     * A check-in made with no connection is kept by the queue and sent later
+     * (spec M15), which is why the failure is swallowed here: from a
+     * notification there is no screen to say anything on, and the check-in is
+     * not lost. It appears under "Bekleyen değişiklikler" when the app opens.
+     */
     private func handle(action: String, logId: String) async {
         switch action {
         case "taken":

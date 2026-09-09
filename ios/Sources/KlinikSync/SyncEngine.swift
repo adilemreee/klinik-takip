@@ -1,4 +1,5 @@
 import Foundation
+import KlinikAPI
 import KlinikCore
 
 /// What happened when one queued change was sent.
@@ -51,7 +52,10 @@ public struct SyncState: Sendable, Equatable {
 public actor SyncEngine {
     private let store: OutboxStore
     private let sender: OutboxSender
-    private let maxAttempts: Int
+
+    /// After this many refusals an entry is something a person has to decide
+    /// about, rather than something the app keeps trying.
+    public let maxAttempts: Int
 
     private(set) public var state = SyncState()
 
@@ -63,11 +67,67 @@ public actor SyncEngine {
 
     public func currentState() -> SyncState { state }
 
-    /// Records a local change. The caller has already applied it locally — the
-    /// UI reads from the local store, so the user sees their edit immediately
-    /// whether or not the network is there.
+    /// Records a local change.
     public func enqueue(_ entry: OutboxEntry) async throws {
         try await store.append(entry)
+        await refreshStatus()
+    }
+
+    /**
+     * Recomputes the status from the store.
+     *
+     * Called on launch, when the in-memory status is `upToDate` simply because
+     * nothing has happened yet — while the store may hold last night's unsent
+     * work. Everything else keeps it current as a side effect of doing
+     * something to the queue.
+     */
+    public func reloadStatus() async {
+        await refreshStatus()
+    }
+
+    /// Everything still waiting, oldest first.
+    public func pending() async -> [OutboxEntry] {
+        (try? await store.pending()) ?? []
+    }
+
+    /// The queued writes of one kind, for a screen showing the user their own
+    /// unsent work.
+    public func pending(entityType: String) async -> [OutboxEntry] {
+        (try? await store.pending(entityType: entityType)) ?? []
+    }
+
+    /**
+     * Drops a queued change at the user's request.
+     *
+     * The only way out of a change the server will not accept. Deliberately a
+     * separate verb from anything the engine does on its own: nothing here
+     * throws away a person's work without them saying so.
+     */
+    public func discard(id: String) async throws {
+        try await store.remove(id: id)
+        try? await store.clearConflict(id: id)
+        await refreshStatus()
+    }
+
+    /**
+     * Empties the queue.
+     *
+     * For one situation only: the session ending. An entry is a request built
+     * against `me/…` paths and carries no user of its own, so anything left
+     * behind at sign-out would be sent as whoever signs in next — one person's
+     * blood pressure filed in another person's record. The screen that offers
+     * to sign out says what is about to be lost.
+     */
+    public func discardEverything() async {
+        for entry in await pending() {
+            try? await store.remove(id: entry.id)
+        }
+
+        for conflict in await conflicts() {
+            try? await store.clearConflict(id: conflict.id)
+        }
+
+        state.lastSyncedAt = nil
         await refreshStatus()
     }
 
@@ -87,7 +147,7 @@ public actor SyncEngine {
         var blocked = Set<String>()
 
         for entry in entries {
-            let key = "\(entry.entityType):\(entry.entityId)"
+            let key = entry.recordKey
 
             if blocked.contains(key) {
                 continue
@@ -100,10 +160,7 @@ public actor SyncEngine {
             case .conflict(let serverRecord, let serverVersion):
                 try? await store.recordConflict(
                     SyncConflict(
-                        id: entry.id,
-                        entityType: entry.entityType,
-                        entityId: entry.entityId,
-                        localPayload: entry.payload,
+                        local: entry.write,
                         serverRecord: serverRecord,
                         serverVersion: serverVersion
                     )
@@ -186,5 +243,24 @@ public extension SendOutcome {
         default:
             return .rejected(L10n.message(for: error))
         }
+    }
+}
+
+/**
+ * The engine, seen from the networking layer.
+ *
+ * `APIClient` hands it a write it could not deliver and knows nothing else
+ * about it — not that it is stored in SQLite, not that anything ever drains it.
+ */
+extension SyncEngine: PendingWriteQueue {
+    public func enqueue(_ write: PendingWrite) async throws {
+        try await enqueue(OutboxEntry(write: write))
+    }
+}
+
+/// The queue, seen by a screen showing the user their own unsent work.
+extension SyncEngine: PendingWriteReader {
+    public func unsent(entityType: String) async -> [PendingWrite] {
+        await pending(entityType: entityType).map(\.write)
     }
 }

@@ -46,6 +46,15 @@ public struct ComplicationsAPI: Sendable {
 
     // MARK: - Patient side
 
+    /**
+     * A complaint the patient reports themselves.
+     *
+     * Queued when there is no connection (spec M15) — and the screen that
+     * catches `queuedForLater` says, in the same breath, to telephone the
+     * clinic if it is urgent. A queue is the right home for a report that
+     * would otherwise be lost, and the wrong home for an emergency; the
+     * emergency button deliberately does not use one.
+     */
     public func report(
         note: String,
         bodyArea: String?,
@@ -57,11 +66,20 @@ public struct ComplicationsAPI: Sendable {
                 path: "me/complications",
                 body: try JSONEncoder.klinik.encode(
                     ReportBody(note: note, bodyArea: bodyArea, photoIds: photoIds)
+                ),
+                offline: .queue(
+                    .standalone(
+                        entityType: ComplicationsAPI.queuedEntity,
+                        summary: L10n.string("sync.item.complication")
+                    )
                 )
             ),
             as: ComplicationView.self
         )
     }
+
+    /// What a queued report is filed under.
+    public static let queuedEntity = "complication"
 
     public func mine() async throws -> [ComplicationView] {
         try await client.send(

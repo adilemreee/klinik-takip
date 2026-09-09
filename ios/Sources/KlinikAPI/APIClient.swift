@@ -12,7 +12,7 @@ public struct APIConfiguration: Sendable {
     }
 }
 
-public enum HTTPMethod: String, Sendable {
+public enum HTTPMethod: String, Sendable, Codable {
     case get = "GET"
     case post = "POST"
     case patch = "PATCH"
@@ -39,6 +39,10 @@ public struct Endpoint: Sendable {
     /// 401 on it means the five minutes elapsed, not that a session expired.
     public let bearerOverride: String?
 
+    /// Whether this write may be kept and sent later, and under which key.
+    /// Reads are never queued: asking again is what a read is.
+    public let offline: OfflineBehaviour
+
     public init(
         method: HTTPMethod,
         path: String,
@@ -46,7 +50,8 @@ public struct Endpoint: Sendable {
         body: Data? = nil,
         contentType: String? = nil,
         requiresAuthentication: Bool = true,
-        bearerOverride: String? = nil
+        bearerOverride: String? = nil,
+        offline: OfflineBehaviour = .fail
     ) {
         self.method = method
         self.path = path
@@ -55,6 +60,7 @@ public struct Endpoint: Sendable {
         self.contentType = contentType
         self.requiresAuthentication = requiresAuthentication
         self.bearerOverride = bearerOverride
+        self.offline = offline
     }
 }
 
@@ -71,6 +77,13 @@ public actor APIClient {
     private let cache: ResponseCache?
     private let connection: ConnectionObserver?
 
+    /// Where a write goes when it cannot be delivered.
+    ///
+    /// Set after construction rather than injected, because the thing that
+    /// drains the queue sends through this same client: built in one step,
+    /// each would need the other first.
+    private var queue: PendingWriteQueue?
+
     public init(
         configuration: APIConfiguration,
         transport: HTTPTransport,
@@ -83,6 +96,12 @@ public actor APIClient {
         self.session = session
         self.cache = cache
         self.connection = connection
+    }
+
+    /// Hands the client the queue that keeps undelivered writes. Until this
+    /// is called, a write that cannot be sent fails, exactly as before.
+    public func useQueue(_ queue: PendingWriteQueue) {
+        self.queue = queue
     }
 
     /// Called when the session ends. A cache that outlived a sign-out would
@@ -191,6 +210,65 @@ public actor APIClient {
             await connection?.servedFromCache(storedAt: cached.storedAt)
 
             return cached.body
+        } catch let error as APIError where endpoint.offline.isQueueable && error.isConnectivity {
+            try await keep(endpoint, ratherThanFailingWith: error)
+        }
+    }
+
+    /**
+     * Keeps a write that could not be delivered (spec M15).
+     *
+     * The connection is tried first and always: trying is how the app finds
+     * out it is online, and a queue that skips the attempt would delay every
+     * write behind a guess about the network.
+     *
+     * Never returns normally. There is nothing to return — the server has not
+     * seen the change, so there is no record, no id and no timestamp — and
+     * `queuedForLater` is what the screen catches to say the work is saved and
+     * not yet sent.
+     */
+    private func keep(_ endpoint: Endpoint, ratherThanFailingWith failure: APIError) async throws
+        -> Never {
+        guard let queue, let write = PendingWrite(endpoint) else { throw failure }
+
+        do {
+            try await queue.enqueue(write)
+        } catch {
+            // The queue is the only reason to claim the work is safe. If it
+            // could not take it, the honest answer is the original failure —
+            // telling somebody their reading is saved when it is nowhere is
+            // worse than telling them it failed. Named apart from the catch's
+            // own binding on purpose: `throw error` here would report the
+            // queue's failure and lose the one the user needs to see.
+            throw failure
+        }
+
+        await connection?.couldNotReachServer()
+
+        throw APIError.queuedForLater
+    }
+
+    /**
+     * Sends one queued write again.
+     *
+     * Reports the failure's body along with the error, which `APIError`
+     * deliberately does not carry: a 409 on a replay is the one case where the
+     * body matters, because it holds what the server has now and the conflict
+     * screen has to show it beside what the user wrote.
+     */
+    public func replay(_ write: PendingWrite) async -> ReplayResult {
+        do {
+            let response = try await attempt(write.replayEndpoint, retryAfterRefresh: true)
+
+            if (200...299).contains(response.status) {
+                return .succeeded
+            }
+
+            return .failed(mapFailure(response), body: response.body)
+        } catch let error as APIError {
+            return .failed(error, body: Data())
+        } catch {
+            return .failed(.unknown(status: 0), body: Data())
         }
     }
 
@@ -199,6 +277,30 @@ public actor APIClient {
     }
 
     private func perform(
+        _ endpoint: Endpoint,
+        retryAfterRefresh: Bool,
+        contentType: String? = nil,
+        bodyFile: URL? = nil
+    ) async throws -> HTTPResponse {
+        let response = try await attempt(
+            endpoint,
+            retryAfterRefresh: retryAfterRefresh,
+            contentType: contentType,
+            bodyFile: bodyFile
+        )
+
+        if (200...299).contains(response.status) {
+            return response
+        }
+
+        throw mapFailure(response)
+    }
+
+    /// Everything `perform` does except deciding that a non-2xx is an error.
+    ///
+    /// Split out for `replay`, which needs the failing response rather than
+    /// the error it maps to.
+    private func attempt(
         _ endpoint: Endpoint,
         retryAfterRefresh: Bool,
         contentType: String? = nil,
@@ -221,10 +323,6 @@ public actor APIClient {
             response = try await transport.send(request)
         }
 
-        if (200...299).contains(response.status) {
-            return response
-        }
-
         // One retry, and only for a 401 on an authenticated request. Retrying
         // more would spend refresh tokens the backend treats as single-use.
         //
@@ -235,7 +333,7 @@ public actor APIClient {
         if response.status == 401, endpoint.requiresAuthentication, endpoint.bearerOverride == nil,
            retryAfterRefresh, let token {
             _ = try await session.refreshAfterUnauthorized(usedAccessToken: token)
-            return try await perform(
+            return try await attempt(
                 endpoint,
                 retryAfterRefresh: false,
                 contentType: contentType,
@@ -243,7 +341,7 @@ public actor APIClient {
             )
         }
 
-        throw mapFailure(response)
+        return response
     }
 
     private func buildRequest(
@@ -284,6 +382,13 @@ public actor APIClient {
 
         if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        // Sent on the first attempt as well as on every replay. The server
+        // remembers what a key already did, which is what stops an answer lost
+        // on the way back from becoming a second dose log.
+        if let ticket = endpoint.offline.ticket {
+            request.setValue(ticket.id, forHTTPHeaderField: "Idempotency-Key")
         }
 
         return request

@@ -39,10 +39,14 @@ public struct SurveyScreen: View {
 
                 case .none:
                     MessageState(
-                        icon: state.submitted ? "checkmark.circle" : "checklist",
-                        text: state.submitted
-                            ? L10n.string("survey.thanks")
-                            : L10n.string("survey.nothingPending")
+                        icon: SurveyScreen.icon(submitted: state.submitted, queued: state.queued),
+                        // "Teşekkürler" over answers the clinic has not
+                        // received would be a thank-you on somebody else's
+                        // behalf.
+                        text: SurveyScreen.message(
+                            submitted: state.submitted,
+                            queued: state.queued
+                        )
                     )
                     .frame(minHeight: 320)
 
@@ -133,6 +137,20 @@ public struct SurveyScreen: View {
     private func reload() async {
         await model.load()
         state = model.currentState()
+    }
+
+    /// `nonisolated` because a static on a `View` otherwise inherits the
+    /// view's main-actor isolation, and the tests call these directly.
+    nonisolated static func icon(submitted: Bool, queued: Bool) -> String {
+        if queued { return "clock.arrow.circlepath" }
+
+        return submitted ? "checkmark.circle" : "checklist"
+    }
+
+    nonisolated static func message(submitted: Bool, queued: Bool) -> String {
+        if queued { return L10n.string("sync.savedOffline") }
+
+        return L10n.string(submitted ? "survey.thanks" : "survey.nothingPending")
     }
 }
 

@@ -114,6 +114,13 @@ public struct ChatScreen: View {
                         }
                     }
 
+                    // After everything the clinic has, because that is where
+                    // they were written. Marked, because the clinic has not
+                    // seen them.
+                    ForEach(state.unsent) { message in
+                        UnsentMessageRow(message: message)
+                    }
+
                     if !state.typing.isEmpty {
                         Text(L10n.string("message.typing"))
                             .font(Tokens.Typography.captionRelative)
@@ -267,6 +274,46 @@ struct ClosedBanner: View {
         formatter.timeStyle = .short
 
         return "\(L10n.string("message.queuedUntil")) \(formatter.string(from: opensAt))"
+    }
+}
+
+/**
+ * A message this phone is still holding.
+ *
+ * Drawn deliberately unlike a delivered one: no delivery state, no sender,
+ * and a badge saying it has not been sent. The alternative — rendering it as
+ * an ordinary message with a small grey clock — is how somebody comes to
+ * believe the clinic has read a symptom nobody has seen.
+ */
+struct UnsentMessageRow: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let message: UnsentMessage
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
+            Text(message.body)
+                .font(Tokens.Typography.bodyRelative)
+                .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+            HStack(spacing: Tokens.Spacing.sm) {
+                Text(message.writtenAt, style: .time)
+                    .font(Tokens.Typography.footnoteRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                Badge(
+                    L10n.string("sync.queuedBadge"),
+                    tone: .warning,
+                    symbol: "clock.arrow.circlepath"
+                )
+            }
+        }
+        .padding(Tokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Tone.warning.surface.resolve(for: scheme))
+        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(message.body). \(L10n.string("sync.queuedBadge"))")
     }
 }
 

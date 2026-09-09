@@ -65,6 +65,8 @@ public enum StaffDestination: Hashable, Sendable {
     case pendingReports
     case notificationSettings
     case newPatient
+    /// What the app is holding and has not delivered (spec M15).
+    case pendingChanges
 }
 
 /// The three things a clinician does often enough to deserve a tab.
@@ -118,7 +120,25 @@ struct StaffPatientsView: View {
 
     private var agenda: some View {
         NavigationStack(path: $agendaPath) {
-            StaffHomeScreen(
+            VStack(spacing: 0) {
+                // On the tab a clinician opens the app to, and inside the
+                // stack so tapping it goes somewhere.
+                PendingWritesBanner(sync: environment.sync) {
+                    agendaPath.append(.pendingChanges)
+                }
+
+                agendaHome
+            }
+            .navigationTitle(L10n.string("menu.agenda"))
+            .navigationDestination(for: StaffDestination.self) { destination in
+                screen(for: destination) { agendaPath.append($0) }
+            }
+            .toolbar { ToolbarItem(placement: .primaryAction) { menu($agendaPath) } }
+        }
+    }
+
+    private var agendaHome: some View {
+        StaffHomeScreen(
                 model: StaffHomeModel(
                     briefing: environment.briefing,
                     emergency: environment.emergency,
@@ -141,12 +161,6 @@ struct StaffPatientsView: View {
                     }
                 }
             )
-            .navigationTitle(L10n.string("menu.agenda"))
-            .navigationDestination(for: StaffDestination.self) { destination in
-                screen(for: destination) { agendaPath.append($0) }
-            }
-            .toolbar { ToolbarItem(placement: .primaryAction) { menu($agendaPath) } }
-        }
     }
 
     private var patients: some View {
@@ -199,12 +213,13 @@ struct StaffPatientsView: View {
                 path.wrappedValue.append(.notificationSettings)
             }
             Button(L10n.string("menu.account")) { path.wrappedValue.append(.account) }
+            Button(L10n.string("menu.pendingChanges")) {
+                path.wrappedValue.append(.pendingChanges)
+            }
 
             Divider()
 
-            Button(L10n.string("auth.signOut"), role: .destructive) {
-                Task { await signOut() }
-            }
+            SignOutButton(sync: environment.sync, signOut: signOut)
         } label: {
             Label(L10n.string("common.more"), systemImage: "ellipsis.circle")
         }
@@ -281,20 +296,6 @@ struct StaffPatientsView: View {
                 }
             )
 
-        case .aiSettings:
-            AISettingsScreen(model: AISettingsModel(api: environment.aiSettings))
-
-        case .inbox:
-            InboxScreen(
-                model: InboxModel(api: environment.messaging),
-                openConversation: { id, name in
-                    // Into the file rather than straight to the thread: a
-                    // clinician answering a message usually wants what is
-                    // around it, and the conversation is one tap from there.
-                    push(.patient(id: id, name: name))
-                }
-            )
-
         case .flaggedPhotos:
             FlaggedPhotosScreen(
                 model: FlaggedPhotosModel(api: environment.photos),
@@ -340,7 +341,8 @@ struct StaffPatientsView: View {
                     // Recorded as a nurse's reading, because it is one. The
                     // server keeps the distinction; sending `.patient` from a
                     // staff build would launder an unverified number.
-                    source: .nurse
+                    source: .nurse,
+                    queue: environment.queue
                 )
             )
 
@@ -396,7 +398,7 @@ struct StaffPatientsView: View {
 
         case .conversation(let patientId):
             ChatScreen(
-                model: ChatModel(api: environment.messaging) {
+                model: ChatModel(api: environment.messaging, queue: environment.queue) {
                     try await environment.messaging.conversation(patientId: patientId)
                 },
                 canUseTemplates: true,
@@ -427,6 +429,9 @@ struct StaffPatientsView: View {
             NotificationSettingsScreen(
                 model: NotificationSettingsModel(api: environment.notifications)
             )
+
+        case .pendingChanges:
+            PendingChangesScreen(sync: environment.sync)
         }
     }
 }

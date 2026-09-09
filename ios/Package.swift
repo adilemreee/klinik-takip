@@ -279,7 +279,7 @@ let package = Package(
         ),
 
         // Offline queue and synchronisation (spec M15).
-        .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
+        .target(name: "KlinikSync", dependencies: ["KlinikAPI", "KlinikCore"]),
 
         // The shell: what the app shows and how the pieces are wired together.
         // A library rather than the app target itself, so the routing decision
@@ -332,7 +332,10 @@ let package = Package(
         .testTarget(name: "KlinikHomeFeatureTests", dependencies: ["KlinikHomeFeature", "KlinikCore"]),
         .testTarget(name: "KlinikSyncTests", dependencies: ["KlinikSync", "KlinikCore"]),
         .testTarget(name: "KlinikSyncStoreTests", dependencies: ["KlinikSyncStore", "KlinikSync"]),
-        .testTarget(name: "KlinikAppTests", dependencies: ["KlinikApp", "KlinikAPI", "KlinikCore"]),
+        .testTarget(
+            name: "KlinikAppTests",
+            dependencies: ["KlinikApp", "KlinikAPI", "KlinikCore", "KlinikSync"]
+        ),
         .testTarget(name: "KlinikDesignTests", dependencies: ["KlinikDesign"]),
         .testTarget(name: "KlinikCoreTests", dependencies: ["KlinikCore"]),
         .testTarget(name: "KlinikAPITests", dependencies: ["KlinikAPI", "KlinikCore"]),

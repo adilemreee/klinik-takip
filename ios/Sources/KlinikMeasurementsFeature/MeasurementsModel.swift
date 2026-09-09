@@ -21,7 +21,40 @@ public struct MeasurementsState: Sendable, Equatable {
     /// The reason the last save was refused, ready to show beside the field.
     public var saveError: String?
 
+    /**
+     * Readings on this phone that have not reached the clinic (spec M15).
+     *
+     * Listed beside the chart rather than drawn on it. A queued weight has no
+     * BMI — that depends on the height in effect at the time, which is the
+     * server's to apply — so plotting it would put a point on a curve the
+     * clinician is not looking at, in a position nobody has computed.
+     */
+    public var unsent: [UnsentMeasurement] = []
+
     public init() {}
+}
+
+/// A reading the patient entered while offline.
+public struct UnsentMeasurement: Sendable, Equatable, Identifiable {
+    public let id: String
+    public let type: MeasurementType
+    public let value: Double
+    public let secondaryValue: Double?
+    public let enteredAt: Date
+
+    public init(
+        id: String,
+        type: MeasurementType,
+        value: Double,
+        secondaryValue: Double?,
+        enteredAt: Date
+    ) {
+        self.id = id
+        self.type = type
+        self.value = value
+        self.secondaryValue = secondaryValue
+        self.enteredAt = enteredAt
+    }
 }
 
 /// The body-measurement screen: the chart, and recording a new reading.
@@ -33,6 +66,9 @@ public actor MeasurementsModel {
     private let api: MeasurementsAPI
     private let subject: MeasurementSubject
     private let source: MeasurementSource
+    /// The offline queue, read-only. Nil in tests that have nothing to say
+    /// about it.
+    private let queue: PendingWriteReader?
 
     private(set) public var state = MeasurementsState()
 
@@ -42,11 +78,13 @@ public actor MeasurementsModel {
     public init(
         api: MeasurementsAPI,
         subject: MeasurementSubject,
-        source: MeasurementSource = .nurse
+        source: MeasurementSource = .nurse,
+        queue: PendingWriteReader? = nil
     ) {
         self.api = api
         self.subject = subject
         self.source = source
+        self.queue = queue
     }
 
     public func currentState() -> MeasurementsState { state }
@@ -85,6 +123,12 @@ public actor MeasurementsModel {
 
         do {
             try await api.record(measurement, for: subject, source: source)
+        } catch APIError.queuedForLater {
+            // Kept, not lost. It appears under the chart marked as unsent, and
+            // the form reports success — because from the patient's side the
+            // reading *is* recorded; it is the clinic that has not seen it.
+            await readQueue()
+            return true
         } catch let error as APIError {
             // A refused reading is the plausibility check doing its job, and
             // the server's message names the range. Showing our own would hide
@@ -100,7 +144,30 @@ public actor MeasurementsModel {
         return true
     }
 
+    /// What the queue is still holding for this subject.
+    private func readQueue() async {
+        guard let queue else { return }
+
+        state.unsent = await queue.unsent(entityType: MeasurementsAPI.queuedEntity)
+            // One patient's readings, not everyone's: the same queue serves the
+            // staff screens, where each file is a different subject.
+            .filter { $0.path == subject.basePath }
+            .compactMap { write in
+                guard let reading = MeasurementsAPI.queuedReading(in: write) else { return nil }
+
+                return UnsentMeasurement(
+                    id: write.id,
+                    type: reading.type,
+                    value: reading.value,
+                    secondaryValue: reading.secondaryValue,
+                    enteredAt: reading.measuredAt ?? write.createdAt
+                )
+            }
+    }
+
     private func reload() async {
+        await readQueue()
+
         do {
             let chart = try await api.chart(for: subject)
             state.phase = chart.weight.isEmpty && chart.bmi.isEmpty ? .empty : .loaded(chart)

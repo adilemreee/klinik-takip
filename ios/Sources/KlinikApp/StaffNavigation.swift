@@ -1,10 +1,12 @@
 import SwiftUI
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikBriefingFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikDesign
 import KlinikDocumentsFeature
+import KlinikEmergencyFeature
 import KlinikFollowUpFeature
 import KlinikLabFeature
 import KlinikMeasurementsFeature
@@ -12,6 +14,7 @@ import KlinikMessagingFeature
 import KlinikNotificationsFeature
 import KlinikPatientsFeature
 import KlinikPhotosFeature
+import KlinikReportsFeature
 
 /**
  * Where clinic staff can get to (T2.6).
@@ -32,44 +35,128 @@ public enum StaffDestination: Hashable, Sendable {
     case appointments(patientId: String)
     /// Across all patients, not one — the point of a triage queue.
     case complicationQueue
+    /// AI output nobody has signed off yet (spec M5).
+    case pendingReports
     case notificationSettings
     case newPatient
 }
 
-/// The staff side of the app: the patient list and everything under a file.
+/// The three things a clinician does often enough to deserve a tab.
+enum StaffTab: Hashable {
+    case agenda
+    case patients
+    case emergency
+}
+
+/**
+ * The staff side of the app.
+ *
+ * Three tabs rather than one list with a menu hanging off it. The agenda is
+ * first because it is what a clinician opens the app to read; the emergency
+ * queue is a tab of its own rather than a menu item because a call nobody can
+ * find is a call nobody answers, and a menu is where things go to be missed.
+ *
+ * Each tab keeps its own navigation stack, so following a name from the agenda
+ * into a file does not disturb whatever the patients tab was showing.
+ */
 @MainActor
 struct StaffPatientsView: View {
     let environment: AppEnvironment
     let signOut: () async -> Void
 
-    @State private var path: [StaffDestination] = []
+    @State private var tab: StaffTab = .agenda
+    @State private var agendaPath: [StaffDestination] = []
+    @State private var patientsPath: [StaffDestination] = []
+    @State private var emergencyPath: [StaffDestination] = []
 
     var body: some View {
-        NavigationStack(path: $path) {
+        TabView(selection: $tab) {
+            agenda
+                .tabItem { Label(L10n.string("menu.agenda"), systemImage: "sun.horizon") }
+                .tag(StaffTab.agenda)
+
+            patients
+                .tabItem { Label(L10n.string("menu.patients"), systemImage: "person.2") }
+                .tag(StaffTab.patients)
+
+            emergency
+                .tabItem {
+                    Label(L10n.string("menu.emergencyQueue"), systemImage: "cross.case")
+                }
+                .tag(StaffTab.emergency)
+        }
+    }
+
+    private var agenda: some View {
+        NavigationStack(path: $agendaPath) {
+            StaffHomeScreen(
+                model: StaffHomeModel(
+                    briefing: environment.briefing,
+                    emergency: environment.emergency,
+                    reports: environment.reports
+                ),
+                onSelect: { target in
+                    switch target {
+                    case .patient(let id, let name):
+                        agendaPath.append(.patient(id: id, name: name))
+                    case .pendingReports:
+                        agendaPath.append(.pendingReports)
+                    case .emergencyQueue:
+                        // A tab, not a push: the queue has its own place, and
+                        // burying a second copy inside the agenda's stack would
+                        // leave two back buttons to the same list.
+                        tab = .emergency
+                    }
+                }
+            )
+            .navigationTitle(L10n.string("menu.agenda"))
+            .navigationDestination(for: StaffDestination.self) { destination in
+                screen(for: destination) { agendaPath.append($0) }
+            }
+            .toolbar { ToolbarItem(placement: .primaryAction) { menu($agendaPath) } }
+        }
+    }
+
+    private var patients: some View {
+        NavigationStack(path: $patientsPath) {
             PatientListView(
                 model: PatientListModel(api: environment.patients),
                 onSelect: { patient in
-                    path.append(.patient(id: patient.id, name: patient.fullName))
+                    patientsPath.append(.patient(id: patient.id, name: patient.fullName))
                 }
             )
             .navigationTitle(L10n.string("menu.patients"))
             .navigationDestination(for: StaffDestination.self) { destination in
-                screen(for: destination)
+                screen(for: destination) { patientsPath.append($0) }
             }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) { menu }
+            .toolbar { ToolbarItem(placement: .primaryAction) { menu($patientsPath) } }
+        }
+    }
+
+    private var emergency: some View {
+        NavigationStack(path: $emergencyPath) {
+            EmergencyQueueScreen(
+                model: EmergencyQueueModel(api: environment.emergency),
+                openFile: { id, name in emergencyPath.append(.patient(id: id, name: name)) }
+            )
+            .navigationDestination(for: StaffDestination.self) { destination in
+                screen(for: destination) { emergencyPath.append($0) }
             }
         }
     }
 
-    private var menu: some View {
+    private func menu(_ path: Binding<[StaffDestination]>) -> some View {
         Menu {
-            Button(L10n.string("patient.new")) { path.append(.newPatient) }
+            Button(L10n.string("patient.new")) { path.wrappedValue.append(.newPatient) }
 
             Divider()
 
-            Button(L10n.string("menu.complicationQueue")) { path.append(.complicationQueue) }
-            Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
+            Button(L10n.string("menu.complicationQueue")) {
+                path.wrappedValue.append(.complicationQueue)
+            }
+            Button(L10n.string("notification.settingsTitle")) {
+                path.wrappedValue.append(.notificationSettings)
+            }
 
             Divider()
 
@@ -82,12 +169,19 @@ struct StaffPatientsView: View {
     }
 
     @ViewBuilder
-    private func screen(for destination: StaffDestination) -> some View {
+    private func screen(
+        for destination: StaffDestination,
+        push: @escaping (StaffDestination) -> Void
+    ) -> some View {
         switch destination {
         case .patient(let id, let name):
-            PatientFileView(environment: environment, patientId: id, name: name) { next in
-                path.append(next)
-            }
+            PatientFileView(environment: environment, patientId: id, name: name, go: push)
+
+        case .pendingReports:
+            ReportReviewScreen(
+                model: ReportReviewModel(api: environment.reports),
+                openPatient: { id, name in push(.patient(id: id, name: name)) }
+            )
 
         case .measurements(let patientId):
             BodyChartView(

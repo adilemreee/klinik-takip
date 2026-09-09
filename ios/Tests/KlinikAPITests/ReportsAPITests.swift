@@ -28,6 +28,7 @@ final class ReportsAPITests: XCTestCase {
       "riskLevel":"CRITICAL","model":"test-model-2026","modelVersion":"test-model-2026",
       "generatedAt":"2026-03-01T08:00:00.000Z","reviewedById":null,
       "reviewedAt":null,"releasedToPatientAt":null},
+     "patient":{"id":"p1","mrn":"2026-K7RMPX","fullName":"Ayşe Yılmaz"},
      "disclaimer":"Bu içerik yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez.",
      "visibleToPatient":false}
     """

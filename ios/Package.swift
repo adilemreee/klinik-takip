@@ -29,6 +29,8 @@ let package = Package(
         .library(name: "KlinikEmergencyFeature", targets: ["KlinikEmergencyFeature"]),
         .library(name: "KlinikSync", targets: ["KlinikSync"]),
         .library(name: "KlinikSyncStore", targets: ["KlinikSyncStore"]),
+        .library(name: "KlinikBriefingFeature", targets: ["KlinikBriefingFeature"]),
+        .library(name: "KlinikReportsFeature", targets: ["KlinikReportsFeature"]),
         .library(name: "KlinikApp", targets: ["KlinikApp"]),
     ],
     // The only third-party dependency in the client. SQLite through Swift's C
@@ -163,6 +165,29 @@ let package = Package(
             name: "KlinikEmergencyFeatureTests",
             dependencies: ["KlinikEmergencyFeature", "KlinikCore"]
         ),
+        // The clinician's agenda: the briefing, the queues and who is waiting
+        // (spec M2 "hasta özeti", M5 "günlük doktor brifingi").
+        .target(
+            name: "KlinikBriefingFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        .testTarget(
+            name: "KlinikBriefingFeatureTests",
+            dependencies: ["KlinikBriefingFeature", "KlinikCore"]
+        ),
+
+        // Signing off AI output before a patient ever sees it (spec M5).
+        .target(
+            name: "KlinikReportsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        .testTarget(
+            name: "KlinikReportsFeatureTests",
+            dependencies: ["KlinikReportsFeature", "KlinikCore"]
+        ),
+
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 
@@ -191,6 +216,7 @@ let package = Package(
                 "KlinikNotificationsFeature", "KlinikFollowUpFeature",
                 "KlinikAppointmentsFeature", "KlinikEmergencyFeature",
                 "KlinikMedicationsFeature", "KlinikConsentsFeature",
+                "KlinikBriefingFeature", "KlinikReportsFeature",
             ]
         ),
 

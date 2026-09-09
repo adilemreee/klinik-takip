@@ -26,10 +26,24 @@ export const LAB_SOURCE = 'lab';
 
 export interface ReportView {
   report: AiReport;
+  /**
+   * Who the report is about.
+   *
+   * Carried on the view rather than looked up by the client, because the
+   * review queue crosses patients: a screen listing `patientId` alone would
+   * ask a doctor to sign off on a UUID.
+   */
+  patient: ReportPatient;
   /** The warning the specification puts under every AI output (M5). */
   disclaimer: string;
   /** True once a clinician has released it to the patient. */
   visibleToPatient: boolean;
+}
+
+export interface ReportPatient {
+  id: string;
+  mrn: string;
+  fullName: string;
 }
 
 /**
@@ -242,12 +256,21 @@ export class AIReportsService {
       where: { patient: scope, reviewedAt: null },
       orderBy: { generatedAt: 'asc' },
       take: 200,
-      include: { patient: { select: { preferredLanguage: true } } },
+      include: {
+        patient: {
+          select: { id: true, mrn: true, firstName: true, lastName: true, preferredLanguage: true },
+        },
+      },
     });
 
-    return reports.map((report) => ({
+    return reports.map(({ patient, ...report }) => ({
       report,
-      disclaimer: disclaimerFor(report.patient.preferredLanguage),
+      patient: {
+        id: patient.id,
+        mrn: patient.mrn,
+        fullName: `${patient.firstName} ${patient.lastName}`,
+      },
+      disclaimer: disclaimerFor(patient.preferredLanguage),
       visibleToPatient: report.releasedToPatientAt !== null,
     }));
   }
@@ -387,11 +410,16 @@ export class AIReportsService {
   private async view(report: AiReport, patientId: string): Promise<ReportView> {
     const patient = await this.prisma.patient.findUnique({
       where: { id: patientId },
-      select: { preferredLanguage: true },
+      select: { id: true, mrn: true, firstName: true, lastName: true, preferredLanguage: true },
     });
 
     return {
       report,
+      patient: {
+        id: patientId,
+        mrn: patient?.mrn ?? '',
+        fullName: patient ? `${patient.firstName} ${patient.lastName}` : '',
+      },
       disclaimer: disclaimerFor(patient?.preferredLanguage),
       visibleToPatient: report.releasedToPatientAt !== null,
     };

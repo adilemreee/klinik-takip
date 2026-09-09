@@ -61,9 +61,24 @@ export class AIReportDto {
   releasedToPatientAt!: Date | null;
 }
 
+/** Who a queued report is about, so a cross-patient queue can name them. */
+export class ReportPatientDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '2026-K7RMPX' })
+  mrn!: string;
+
+  @ApiProperty({ example: 'Ayşe Yılmaz' })
+  fullName!: string;
+}
+
 export class ReportViewDto {
   @ApiProperty({ type: AIReportDto })
   report!: AIReportDto;
+
+  @ApiProperty({ type: ReportPatientDto })
+  patient!: ReportPatientDto;
 
   @ApiProperty({
     description: 'The warning that goes under every AI output (spec M5), in the patient\'s language',

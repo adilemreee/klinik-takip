@@ -618,3 +618,39 @@
 "app.storageUnavailable" = "Offline storage could not be opened on this device. What you enter may be lost when the app closes.";
 "auth.sessionExpired" = "Your session expired. Please sign in again.";
 "auth.signOut" = "Sign out";
+
+/* Clinician agenda (M2, M5) */
+"briefing.greeting.morning" = "Good morning";
+"briefing.greeting.afternoon" = "Good afternoon";
+"briefing.greeting.evening" = "Good evening";
+"briefing.emergencyOpen" = "%d open emergency calls";
+"briefing.openQueue" = "Open the calls";
+"briefing.riskCount" = "%d people waiting";
+"briefing.pendingReports" = "AI notes awaiting review";
+"briefing.pendingReportsHint" = "Nothing reaches the patient until you sign it off.";
+"briefing.flaggedPhotos" = "Photographs suggested for review";
+"briefing.flaggedPhotosHint" = "The pre-read marked something.";
+"briefing.aiSummary" = "Summary of the day";
+"briefing.aiDisclaimer" = "This content was produced by artificial intelligence and is not a medical diagnosis.";
+"menu.agenda" = "Agenda";
+"menu.emergencyQueue" = "Emergency";
+
+/* Emergency queue — staff (M8) */
+"emergency.snapshot" = "Clinical summary";
+"emergency.bloodType" = "Blood type";
+"emergency.allergies" = "Allergies";
+"emergency.chronic" = "Chronic conditions";
+"emergency.currentMedications" = "Current medication";
+"emergency.lastSurgery" = "Last surgery";
+"emergency.daysAgo" = "%d days ago";
+"emergency.callPatientAt" = "Call the patient: %@";
+"emergency.openLocation" = "Open the location on a map";
+"emergency.patientNote" = "The patient's note";
+"emergency.escalation" = "Escalation %d";
+"emergency.acknowledged" = "Answered";
+"emergency.openFile" = "Open the file";
+"emergency.none" = "None";
+"patient.ageYears" = "%d years old";
+"report.noPatientText" = "This note has no plain-language half, so approving it sends the patient nothing.";
+"common.showMore" = "Show all";
+"common.showLess" = "Show less";

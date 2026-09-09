@@ -31,8 +31,17 @@ public struct AIReport: Decodable, Sendable, Equatable, Identifiable {
     public let releasedToPatientAt: Date?
 }
 
+/// Who a queued report is about. The review queue crosses patients, so the
+/// name travels with the report rather than being looked up per row.
+public struct ReportPatient: Decodable, Sendable, Equatable {
+    public let id: String
+    public let mrn: String
+    public let fullName: String
+}
+
 public struct ReportView: Decodable, Sendable, Equatable, Identifiable {
     public let report: AIReport
+    public let patient: ReportPatient
     /// The warning that goes under every AI output (spec M5).
     public let disclaimer: String
     public let visibleToPatient: Bool

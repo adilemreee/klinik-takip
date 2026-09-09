@@ -618,3 +618,39 @@
 "app.storageUnavailable" = "Bu cihazda çevrimdışı kayıt açılamadı. Girdikleriniz uygulama kapanınca kaybolabilir.";
 "auth.sessionExpired" = "Oturumunuzun süresi doldu, tekrar giriş yapın.";
 "auth.signOut" = "Çıkış yap";
+
+/* Doktor gündemi (M2, M5) */
+"briefing.greeting.morning" = "Günaydın";
+"briefing.greeting.afternoon" = "İyi günler";
+"briefing.greeting.evening" = "İyi akşamlar";
+"briefing.emergencyOpen" = "%d açık acil çağrı";
+"briefing.openQueue" = "Çağrıları aç";
+"briefing.riskCount" = "%d kişi bekliyor";
+"briefing.pendingReports" = "Onay bekleyen yapay zekâ yorumu";
+"briefing.pendingReportsHint" = "Siz onaylayana kadar hastaya gitmez.";
+"briefing.flaggedPhotos" = "İncelenmesi önerilen fotoğraf";
+"briefing.flaggedPhotosHint" = "Ön değerlendirme bir bulgu işaretledi.";
+"briefing.aiSummary" = "Günün özeti";
+"briefing.aiDisclaimer" = "Bu içerik yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez.";
+"menu.agenda" = "Gündem";
+"menu.emergencyQueue" = "Acil";
+
+/* Acil çağrı kuyruğu — personel (M8) */
+"emergency.snapshot" = "Klinik özet";
+"emergency.bloodType" = "Kan grubu";
+"emergency.allergies" = "Alerjiler";
+"emergency.chronic" = "Kronik hastalıklar";
+"emergency.currentMedications" = "Kullandığı ilaçlar";
+"emergency.lastSurgery" = "Son ameliyat";
+"emergency.daysAgo" = "%d gün önce";
+"emergency.callPatientAt" = "Hastayı ara: %@";
+"emergency.openLocation" = "Konumu haritada aç";
+"emergency.patientNote" = "Hastanın notu";
+"emergency.escalation" = "Eskalasyon %d";
+"emergency.acknowledged" = "Alındı";
+"emergency.openFile" = "Dosyayı aç";
+"emergency.none" = "Yok";
+"patient.ageYears" = "%d yaşında";
+"report.noPatientText" = "Bu yorumun hasta için sade dilde karşılığı yok; onaylasanız da hastaya bir şey gitmez.";
+"common.showMore" = "Tamamını göster";
+"common.showLess" = "Kısalt";

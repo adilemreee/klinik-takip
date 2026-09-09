@@ -23,6 +23,7 @@ import KlinikPhotosFeature
 import KlinikProtocolsFeature
 import KlinikReportsFeature
 import KlinikSurveysFeature
+import KlinikTravelFeature
 
 /**
  * Where clinic staff can get to (T2.6).
@@ -53,7 +54,9 @@ public enum StaffDestination: Hashable, Sendable {
     case exports
     case audit
     case protocols
+    case agencies
     case surveys(patientId: String)
+    case travel(patientId: String)
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -176,6 +179,7 @@ struct StaffPatientsView: View {
             Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
             Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
             Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
+            Button(L10n.string("menu.agencies")) { path.wrappedValue.append(.agencies) }
             Button(L10n.string("menu.exports")) { path.wrappedValue.append(.exports) }
             Button(L10n.string("menu.audit")) { path.wrappedValue.append(.audit) }
             Button(L10n.string("menu.protocols")) { path.wrappedValue.append(.protocols) }
@@ -247,9 +251,22 @@ struct StaffPatientsView: View {
         case .protocols:
             ProtocolsScreen(model: ProtocolsModel(api: environment.protocols))
 
+        case .agencies:
+            AgenciesScreen(model: AgenciesModel(api: environment.finance))
+
         case .surveys(let patientId):
             SurveyTrendScreen(
                 model: SurveyTrendModel(api: environment.surveys, patientId: patientId)
+            )
+
+        case .travel(let patientId):
+            // Both switches are offered; the server refuses whichever this
+            // account may not use, and the screen says which rather than
+            // hiding a control somebody was told to look for.
+            TravelScreen(
+                model: TravelModel(api: environment.travel, patientId: patientId),
+                canEdit: true,
+                canClear: true
             )
 
         case .finance:
@@ -369,6 +386,7 @@ private extension StaffDestination {
         case .followUp: self = .followUp(patientId: patientId)
         case .appointments: self = .appointments(patientId: patientId)
         case .surveys: self = .surveys(patientId: patientId)
+        case .travel: self = .travel(patientId: patientId)
         }
     }
 }

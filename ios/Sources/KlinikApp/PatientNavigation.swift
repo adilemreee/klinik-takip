@@ -17,6 +17,7 @@ import KlinikMessagingFeature
 import KlinikNotificationsFeature
 import KlinikPhotosFeature
 import KlinikSurveysFeature
+import KlinikTravelFeature
 
 /**
  * Where a patient can get to (T2.6).
@@ -42,6 +43,7 @@ public enum PatientDestination: Hashable, Sendable {
     case assistant
     case account
     case surveys
+    case travel
 }
 
 /**
@@ -139,6 +141,7 @@ struct PatientHomeView: View {
         Menu {
             Button(L10n.string("menu.assistant")) { path.append(.assistant) }
             Button(L10n.string("menu.surveys")) { path.append(.surveys) }
+            Button(L10n.string("menu.travel")) { path.append(.travel) }
             Button(L10n.string("menu.photos")) { path.append(.photos) }
             Button(L10n.string("menu.measurements")) { path.append(.measurements) }
             Button(L10n.string("menu.followUp")) { path.append(.followUp) }
@@ -298,6 +301,11 @@ struct PatientHomeView: View {
 
         case .surveys:
             SurveyScreen(model: SurveyModel(api: environment.surveys))
+
+        case .travel:
+            // Read-only: the patient sees the trip the clinic booked, and the
+            // model reads `me/travel`, which needs no `patients.read`.
+            TravelScreen(model: TravelModel(api: environment.travel))
         }
     }
 }

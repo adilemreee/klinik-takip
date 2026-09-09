@@ -15,6 +15,7 @@ public enum FileSection: String, Sendable, Equatable, CaseIterable {
     case followUp
     case appointments
     case surveys
+    case travel
 }
 
 public enum PatientFilePhase: Sendable, Equatable {
@@ -153,7 +154,7 @@ public extension PatientFile {
             guard nextFollowUp != nil else { return nil }
             return (L10n.string("file.nextFollowUp"), false)
 
-        case .surveys:
+        case .surveys, .travel:
             // The count would need a second read; the row is worth having
             // without one, and an empty badge is better than a wrong number.
             return nil

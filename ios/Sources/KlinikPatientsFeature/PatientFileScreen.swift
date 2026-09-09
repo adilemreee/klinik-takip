@@ -659,6 +659,7 @@ public struct PatientFileScreen: View {
         case .followUp: return "calendar.badge.checkmark"
         case .appointments: return "calendar"
         case .surveys: return "checklist"
+        case .travel: return "airplane"
         }
     }
 
@@ -683,6 +684,7 @@ extension FileSection {
         case .followUp: return "menu.followUp"
         case .appointments: return "menu.appointments"
         case .surveys: return "menu.surveyTrend"
+        case .travel: return "menu.travel"
         }
     }
 }

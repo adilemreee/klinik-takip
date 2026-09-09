@@ -960,3 +960,44 @@
 "health.nothingNew" = "Nothing new since the last import.";
 "health.denied" = "Access to health data was not granted. You can change it in Settings › Health.";
 "health.unavailable" = "This device has no health data.";
+
+/* Health tourism — travel plan (M19) */
+"travel.title" = "Travel plan";
+"travel.none" = "Your clinic has not entered travel details yet.";
+"travel.emptyStaff" = "No travel details have been entered for this patient.";
+"travel.fillIn" = "Enter travel details";
+"travel.flights" = "Flights";
+"travel.arrivalFlight" = "Arriving flight";
+"travel.arrivalAt" = "Arrives";
+"travel.departureFlight" = "Departing flight";
+"travel.departureAt" = "Departs";
+"travel.hotel" = "Accommodation";
+"travel.hotelName" = "Hotel";
+"travel.hotelAddress" = "Address";
+"travel.checkIn" = "Check-in";
+"travel.checkOut" = "Check-out";
+"travel.welcome" = "Welcome and transfer";
+"travel.greeter" = "Who is meeting you";
+"travel.greeterPhone" = "Their phone";
+"travel.transfer" = "Transfer note";
+"travel.interpreter" = "Interpreter";
+"travel.interpreterName" = "Interpreter";
+"travel.interpreterLanguage" = "Language";
+"travel.interpreterPhone" = "Their phone";
+"travel.clearedToFly" = "Your doctor has confirmed you may fly.";
+"travel.notClearedToFly" = "A doctor has not yet confirmed you may fly.";
+"travel.clearedBy" = "Confirmed by %1$@ · %2$@";
+"travel.clearanceToggle" = "This patient may fly";
+"travel.clearanceForbidden" = "Only somebody with clinical decision rights can confirm a flight.";
+"menu.travel" = "Travel plan";
+
+/* Agencies (M19) */
+"agency.title" = "Agencies";
+"agency.empty" = "No agencies defined.";
+"agency.add" = "Add an agency";
+"agency.name" = "Agency";
+"agency.contact" = "Contact";
+"agency.commission" = "Commission percentage";
+"agency.commissionHint" = "Write it as a percentage: 10 means 10% of the net is commission.";
+"agency.inactive" = "Inactive";
+"menu.agencies" = "Agencies";

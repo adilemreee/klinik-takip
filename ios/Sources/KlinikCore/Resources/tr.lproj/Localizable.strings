@@ -960,3 +960,44 @@
 "health.nothingNew" = "Son almadan bu yana yeni ölçüm yok.";
 "health.denied" = "Sağlık verisine erişim izni verilmedi. Ayarlar > Sağlık'tan değiştirebilirsiniz.";
 "health.unavailable" = "Bu cihazda sağlık verisi yok.";
+
+/* Sağlık turizmi — seyahat planı (M19) */
+"travel.title" = "Seyahat planı";
+"travel.none" = "Kliniğiniz henüz seyahat bilgisi girmedi.";
+"travel.emptyStaff" = "Bu hasta için seyahat bilgisi girilmemiş.";
+"travel.fillIn" = "Seyahat bilgisi gir";
+"travel.flights" = "Uçuşlar";
+"travel.arrivalFlight" = "Geliş uçuşu";
+"travel.arrivalAt" = "Geliş zamanı";
+"travel.departureFlight" = "Dönüş uçuşu";
+"travel.departureAt" = "Dönüş zamanı";
+"travel.hotel" = "Konaklama";
+"travel.hotelName" = "Otel";
+"travel.hotelAddress" = "Adres";
+"travel.checkIn" = "Giriş";
+"travel.checkOut" = "Çıkış";
+"travel.welcome" = "Karşılama ve transfer";
+"travel.greeter" = "Sizi karşılayacak kişi";
+"travel.greeterPhone" = "Karşılama telefonu";
+"travel.transfer" = "Transfer notu";
+"travel.interpreter" = "Tercüman";
+"travel.interpreterName" = "Tercüman adı";
+"travel.interpreterLanguage" = "Dil";
+"travel.interpreterPhone" = "Tercüman telefonu";
+"travel.clearedToFly" = "Doktorunuz uçabileceğinizi onayladı.";
+"travel.notClearedToFly" = "Uçuş için doktor onayı henüz verilmedi.";
+"travel.clearedBy" = "Onaylayan: %1$@ · %2$@";
+"travel.clearanceToggle" = "Bu hasta uçabilir";
+"travel.clearanceForbidden" = "Uçuş onayını yalnız klinik karar yetkisi olan biri verebilir.";
+"menu.travel" = "Seyahat planı";
+
+/* Aracı kurumlar (M19) */
+"agency.title" = "Aracı kurumlar";
+"agency.empty" = "Tanımlı aracı kurum yok.";
+"agency.add" = "Kurum ekle";
+"agency.name" = "Kurum adı";
+"agency.contact" = "İlgili kişi";
+"agency.commission" = "Komisyon yüzdesi";
+"agency.commissionHint" = "Yüzde olarak yazın: 10 girerseniz net tutarın %10'u komisyon olarak hesaplanır.";
+"agency.inactive" = "Pasif";
+"menu.agencies" = "Aracı kurumlar";

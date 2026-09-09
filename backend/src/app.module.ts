@@ -33,6 +33,7 @@ import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MeModule } from './me/me.module';
 import { PatientsModule } from './patients/patients.module';
+import { TravelModule } from './travel/travel.module';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
 import { InfraModule } from './infra/infra.module';
@@ -62,6 +63,7 @@ import { ObservabilityModule } from './observability/observability.module';
     AuditModule,
     FilesModule,
     PatientsModule,
+    TravelModule,
     MeModule,
     MeasurementsModule,
     DocumentsModule,

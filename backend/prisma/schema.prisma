@@ -239,8 +239,8 @@ model Patient {
   /// Human-facing file number, used in search and on printed reports.
   mrn String @unique
 
-  firstName String   @map("first_name")
-  lastName  String   @map("last_name")
+  firstName String @map("first_name")
+  lastName  String @map("last_name")
 
   /// Name and file number, lower-cased and with Turkish letters folded to
   /// ASCII, so "Ayse Yilmaz" finds "Ayşe Yılmaz". Written by the application —
@@ -276,6 +276,8 @@ model Patient {
   /// Set when the legal retention period expires and identifying fields are
   /// scrubbed, keeping the clinical record for statistics (spec section 8).
   anonymizedAt DateTime? @map("anonymized_at") @db.Timestamptz
+
+  travelPlan TravelPlan?
 
   user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   assignedDoctor StaffProfile? @relation("AssignedDoctor", fields: [assignedDoctorId], references: [id], onDelete: SetNull)
@@ -1418,6 +1420,58 @@ model Agency {
   financeRecords FinanceRecord[]
 
   @@map("agencies")
+}
+
+/// The travel around an operation, for patients who fly in for it (spec M19).
+///
+/// One per patient: somebody has one trip per file, and a second admission is a
+/// second file. Kept apart from the clinical record because it is not clinical
+/// — a coordinator books hotels and does not hold `medical.read`.
+model TravelPlan {
+  id        String @id @default(uuid(7)) @db.Uuid
+  patientId String @unique @map("patient_id") @db.Uuid
+
+  arrivalFlight   String?   @map("arrival_flight")
+  arrivalAt       DateTime? @map("arrival_at") @db.Timestamptz
+  departureFlight String?   @map("departure_flight")
+  departureAt     DateTime? @map("departure_at") @db.Timestamptz
+
+  hotelName     String?   @map("hotel_name")
+  hotelAddress  String?   @map("hotel_address")
+  hotelCheckIn  DateTime? @map("hotel_check_in") @db.Date
+  hotelCheckOut DateTime? @map("hotel_check_out") @db.Date
+
+  /// Who is meeting them, and how the transfer works. Free text on purpose:
+  /// every clinic arranges this differently and a schema guess would be wrong
+  /// for most of them.
+  greeterName  String? @map("greeter_name")
+  greeterPhone String? @map("greeter_phone")
+  transferNote String? @map("transfer_note")
+
+  interpreterName     String? @map("interpreter_name")
+  interpreterLanguage String? @map("interpreter_language")
+  interpreterPhone    String? @map("interpreter_phone")
+
+  /// When a clinician said this patient may fly (spec M19's pre-flight wait).
+  ///
+  /// Recorded rather than computed. How long somebody must wait after an
+  /// operation before flying is a clinical judgement that varies by procedure
+  /// and by patient, and an app that worked it out from a date would be issuing
+  /// medical advice nobody reviewed.
+  clearedToFlyAt   DateTime? @map("cleared_to_fly_at") @db.Timestamptz
+  clearedToFlyById String?   @map("cleared_to_fly_by_id") @db.Uuid
+
+  notes String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// Optimistic concurrency, like every other editable record (spec M15).
+  version Int @default(1)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("travel_plans")
 }
 
 enum Currency {

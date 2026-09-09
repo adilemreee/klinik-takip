@@ -224,6 +224,54 @@ public struct FinanceRecordPage: Decodable, Sendable, Equatable {
     public let nextCursor: String?
 }
 
+/// An intermediary that sends the clinic patients (spec M19).
+public struct Agency: Decodable, Sendable, Equatable, Identifiable {
+    public let id: String
+    public let name: String
+    public let country: String?
+    public let contactName: String?
+    public let contactEmail: String?
+    public let contactPhone: String?
+    /// A fraction of the net, as a string: "0.1000" is ten per cent. Kept as
+    /// the server sent it — a rate parsed and reformatted here is a rate that
+    /// can disagree with the invoice.
+    public let commissionRate: String?
+    public let isActive: Bool
+
+    /// "%10" from "0.1000", for reading. The stored value is unchanged.
+    public var commissionPercentage: String? {
+        guard let commissionRate, let value = Double(commissionRate) else { return nil }
+
+        return "%\(Int((value * 100).rounded()))"
+    }
+}
+
+public struct NewAgency: Encodable, Sendable, Equatable {
+    public let name: String
+    public let country: String?
+    public let contactName: String?
+    public let contactEmail: String?
+    public let contactPhone: String?
+    /// 0–1 with up to four decimals, as the server's pattern requires.
+    public let commissionRate: String?
+
+    public init(
+        name: String,
+        country: String? = nil,
+        contactName: String? = nil,
+        contactEmail: String? = nil,
+        contactPhone: String? = nil,
+        commissionRate: String? = nil
+    ) {
+        self.name = name
+        self.country = country
+        self.contactName = contactName
+        self.contactEmail = contactEmail
+        self.contactPhone = contactPhone
+        self.commissionRate = commissionRate
+    }
+}
+
 public struct FinanceAPI: Sendable {
     private let client: APIClient
 
@@ -317,6 +365,39 @@ public struct FinanceAPI: Sendable {
                 ]
             ),
             as: CollectionReport.self
+        )
+    }
+
+    public func agencies(includeInactive: Bool = false) async throws -> [Agency] {
+        try await client.send(
+            Endpoint(
+                method: .get,
+                path: "finance/agencies",
+                query: includeInactive ? ["includeInactive": "true"] : [:]
+            ),
+            as: [Agency].self
+        )
+    }
+
+    public func createAgency(_ agency: NewAgency) async throws -> Agency {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "finance/agencies",
+                body: try JSONEncoder.klinik.encode(agency)
+            ),
+            as: Agency.self
+        )
+    }
+
+    public func updateAgency(_ id: String, _ agency: NewAgency) async throws -> Agency {
+        try await client.send(
+            Endpoint(
+                method: .patch,
+                path: "finance/agencies/\(id)",
+                body: try JSONEncoder.klinik.encode(agency)
+            ),
+            as: Agency.self
         )
     }
 

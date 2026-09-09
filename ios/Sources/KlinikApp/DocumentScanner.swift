@@ -61,8 +61,9 @@ enum DocumentScanner {
             let presenter = topViewControllerForScan()
         else { return nil }
 
+        let controller = VNDocumentCameraViewController()
+
         let pages: [Data] = await withCheckedContinuation { continuation in
-            let controller = VNDocumentCameraViewController()
             let delegate = ScanDelegate { pages in continuation.resume(returning: pages) }
 
             controller.delegate = delegate
@@ -72,6 +73,11 @@ enum DocumentScanner {
 
             presenter.present(controller, animated: true)
         }
+
+        // Dismissed here rather than in the delegate: this function is already
+        // on the main actor and holds the controller, and reaching for it from
+        // a nonisolated callback is what the compiler objects to.
+        controller.dismiss(animated: true)
 
         guard !pages.isEmpty else { return nil }
         guard let url = writePDF(pages) else { return nil }
@@ -85,35 +91,43 @@ enum DocumentScanner {
 
 #if canImport(VisionKit) && os(iOS)
 /**
- * The delegate, on the main actor because UIKit calls it there.
+ * The delegate.
  *
- * It resumes with `[Data]` rather than the scan: `VNDocumentCameraScan` is a
- * UIKit class with no `Sendable` conformance, and sending one into a
- * continuation is exactly the race Swift 6 refuses.
- *
- * The conformance itself is isolated to the main actor. VisionKit declares the
- * protocol as nonisolated, and the alternative — marking each method
- * `nonisolated` and hopping — would be pretending the callbacks might arrive
- * somewhere else when UIKit guarantees they do not.
+ * Carries no actor isolation of its own and hands back `[Data]`. Two reasons,
+ * and both are about what may cross a boundary: `VNDocumentCameraScan` and
+ * `UIImage` are not `Sendable`, so neither can reach the continuation, and the
+ * page bytes can. Dismissing the controller is left to `present()`, which is
+ * already on the main actor and holds the reference — reaching for it from here
+ * is what made three toolchains disagree.
  */
-@MainActor
-private final class ScanDelegate: NSObject, @MainActor VNDocumentCameraViewControllerDelegate {
+private final class ScanDelegate: NSObject, VNDocumentCameraViewControllerDelegate, @unchecked Sendable {
     nonisolated(unsafe) static var key = 0
 
-    private let finish: @MainActor ([Data]) -> Void
+    private let finish: @Sendable ([Data]) -> Void
+    private let lock = NSLock()
     private var answered = false
 
-    init(finish: @escaping @MainActor ([Data]) -> Void) {
+    init(finish: @escaping @Sendable ([Data]) -> Void) {
         self.finish = finish
     }
 
-    /// Resumes exactly once. A continuation resumed twice is a crash, and the
-    /// three delegate methods below are not mutually exclusive in every path.
-    private func complete(_ pages: [Data], from controller: UIViewController) {
-        guard !answered else { return }
-
+    /**
+     * Resumes exactly once.
+     *
+     * A continuation resumed twice is a crash, and the three callbacks below
+     * are not mutually exclusive on every path. UIKit calls them on the main
+     * thread, so the lock is belt and braces rather than a real contention
+     * worry — but a crash is not the place to be relying on a convention.
+     */
+    private func complete(_ pages: [Data]) {
+        lock.lock()
+        let first = !answered
         answered = true
-        controller.dismiss(animated: true) { [finish] in finish(pages) }
+        lock.unlock()
+
+        guard first else { return }
+
+        finish(pages)
     }
 
     /**
@@ -121,7 +135,7 @@ private final class ScanDelegate: NSObject, @MainActor VNDocumentCameraViewContr
      *
      * JPEG rather than PNG: a four-page PNG scan is tens of megabytes, and this
      * is uploaded from a hotel on somebody's data. 0.9 is high enough that the
-     * on-device text recognition below reads it as well as the original.
+     * on-device text recognition reads it as well as the original.
      */
     private func bytes(of scan: VNDocumentCameraScan) -> [Data] {
         (0..<scan.pageCount).compactMap { scan.imageOfPage(at: $0).jpegData(compressionQuality: 0.9) }
@@ -131,18 +145,18 @@ private final class ScanDelegate: NSObject, @MainActor VNDocumentCameraViewContr
         _ controller: VNDocumentCameraViewController,
         didFinishWith scan: VNDocumentCameraScan
     ) {
-        complete(bytes(of: scan), from: controller)
+        complete(bytes(of: scan))
     }
 
     func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
-        complete([], from: controller)
+        complete([])
     }
 
     func documentCameraViewController(
         _ controller: VNDocumentCameraViewController,
         didFailWithError error: Error
     ) {
-        complete([], from: controller)
+        complete([])
     }
 }
 

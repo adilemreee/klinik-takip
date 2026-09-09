@@ -163,6 +163,7 @@ describe('the published API contract', () => {
         'photos',
         'protocols',
         'surveys',
+        'travel',
       ]);
     });
 

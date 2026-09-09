@@ -30,7 +30,8 @@
     "openapi:export": "ts-node scripts/export-openapi.ts",
     "postman:export": "ts-node scripts/export-postman.ts",
     "api:export": "npm run openapi:export && npm run postman:export",
-    "legal:sync": "ts-node scripts/sync-legal.ts"
+    "legal:sync": "ts-node scripts/sync-legal.ts",
+    "seed:demo": "ts-node scripts/seed-demo.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

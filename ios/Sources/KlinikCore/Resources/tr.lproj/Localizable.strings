@@ -844,3 +844,34 @@
 "finance.method" = "Ödeme şekli";
 "finance.reference" = "Referans (isteğe bağlı)";
 "menu.finance" = "Finans";
+
+/* Dışa aktarım ekranı (M12) */
+"export.notPermitted" = "Bu hesabın dışa aktarma yetkisi yok.";
+"export.newTitle" = "Yeni dışa aktarım";
+"export.auditNote" = "Her dışa aktarım denetim günlüğüne yazılır: kim, ne zaman, hangi veriyi aldı.";
+"export.format" = "Biçim";
+"export.country" = "Ülke (isteğe bağlı, örn. DE)";
+"export.useRange" = "Tarih aralığı ile sınırla";
+"export.from" = "Başlangıç";
+"export.to" = "Bitiş";
+"export.request" = "Dosyayı hazırla";
+"export.chosenCount" = "%d kolon seçili";
+"export.notAllowed" = "Yetki yok";
+"export.group.identity" = "Kimlik";
+"export.group.clinical" = "Klinik";
+"export.group.finance" = "Finans";
+"export.history" = "Geçmiş";
+"export.noHistory" = "Henüz dışa aktarım yapılmadı.";
+"export.rows" = "Satır";
+"menu.exports" = "Dışa aktarımlar";
+"survey.nothingPending" = "Şu an doldurmanız gereken bir form yok.";
+"survey.textPlaceholder" = "Eklemek istediğiniz bir şey varsa yazın";
+"survey.none" = "Hiç";
+"survey.worst" = "En kötü";
+"survey.best" = "En iyi";
+"survey.trendTitle" = "Anket eğilimi";
+"survey.noAnswers" = "Bu hasta henüz anket doldurmadı.";
+"survey.answeredOn" = "%@ tarihinde";
+"survey.partialShort" = "Eksik yanıtlı";
+"menu.surveys" = "Formlarım";
+"menu.surveyTrend" = "Anketler";

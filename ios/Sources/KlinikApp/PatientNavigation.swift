@@ -16,6 +16,7 @@ import KlinikMedicationsFeature
 import KlinikMessagingFeature
 import KlinikNotificationsFeature
 import KlinikPhotosFeature
+import KlinikSurveysFeature
 
 /**
  * Where a patient can get to (T2.6).
@@ -40,6 +41,7 @@ public enum PatientDestination: Hashable, Sendable {
     /// The FAQ assistant that stands in front of the clinic (spec M4).
     case assistant
     case account
+    case surveys
 }
 
 /**
@@ -101,6 +103,7 @@ struct PatientHomeView: View {
     private var menu: some View {
         Menu {
             Button(L10n.string("menu.assistant")) { path.append(.assistant) }
+            Button(L10n.string("menu.surveys")) { path.append(.surveys) }
             Button(L10n.string("menu.photos")) { path.append(.photos) }
             Button(L10n.string("menu.measurements")) { path.append(.measurements) }
             Button(L10n.string("menu.followUp")) { path.append(.followUp) }
@@ -240,6 +243,9 @@ struct PatientHomeView: View {
 
         case .account:
             AccountScreen(model: AccountModel(api: environment.auth), signOut: signOut)
+
+        case .surveys:
+            SurveyScreen(model: SurveyModel(api: environment.surveys))
         }
     }
 }

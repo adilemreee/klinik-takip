@@ -39,6 +39,8 @@ public final class AppEnvironment {
     public let assistant: AssistantAPI
     public let analytics: AnalyticsAPI
     public let finance: FinanceAPI
+    public let exports: ExportsAPI
+    public let surveys: SurveysAPI
 
     /// Chunked upload, shared by every screen that can attach a file.
     public let resumable: ResumableUpload
@@ -111,6 +113,8 @@ public final class AppEnvironment {
         assistant = AssistantAPI(client: client)
         analytics = AnalyticsAPI(client: client)
         finance = FinanceAPI(client: client)
+        exports = ExportsAPI(client: client)
+        surveys = SurveysAPI(client: client)
         resumable = ResumableUpload(client: client)
 
     }

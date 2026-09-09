@@ -844,3 +844,34 @@
 "finance.method" = "Method";
 "finance.reference" = "Reference (optional)";
 "menu.finance" = "Finance";
+
+/* Export screen (M12) */
+"export.notPermitted" = "This account cannot export data.";
+"export.newTitle" = "New export";
+"export.auditNote" = "Every export is written to the audit log: who took what, and when.";
+"export.format" = "Format";
+"export.country" = "Country (optional, e.g. DE)";
+"export.useRange" = "Limit to a date range";
+"export.from" = "From";
+"export.to" = "To";
+"export.request" = "Prepare the file";
+"export.chosenCount" = "%d columns selected";
+"export.notAllowed" = "Not permitted";
+"export.group.identity" = "Identity";
+"export.group.clinical" = "Clinical";
+"export.group.finance" = "Finance";
+"export.history" = "History";
+"export.noHistory" = "Nothing has been exported yet.";
+"export.rows" = "Rows";
+"menu.exports" = "Exports";
+"survey.nothingPending" = "There is nothing for you to fill in right now.";
+"survey.textPlaceholder" = "Anything you would like to add";
+"survey.none" = "None";
+"survey.worst" = "Worst";
+"survey.best" = "Best";
+"survey.trendTitle" = "Survey trend";
+"survey.noAnswers" = "This patient has not answered a survey yet.";
+"survey.answeredOn" = "on %@";
+"survey.partialShort" = "Partly answered";
+"menu.surveys" = "My forms";
+"menu.surveyTrend" = "Surveys";

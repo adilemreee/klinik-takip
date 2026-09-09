@@ -8,6 +8,7 @@ import KlinikCore
 import KlinikDesign
 import KlinikAnalyticsFeature
 import KlinikDocumentsFeature
+import KlinikExportsFeature
 import KlinikFinanceFeature
 import KlinikEmergencyFeature
 import KlinikFollowUpFeature
@@ -19,6 +20,7 @@ import KlinikNotificationsFeature
 import KlinikPatientsFeature
 import KlinikPhotosFeature
 import KlinikReportsFeature
+import KlinikSurveysFeature
 
 /**
  * Where clinic staff can get to (T2.6).
@@ -46,6 +48,8 @@ public enum StaffDestination: Hashable, Sendable {
     case calendar
     case analytics
     case finance
+    case exports
+    case surveys(patientId: String)
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -165,6 +169,7 @@ struct StaffPatientsView: View {
             Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
             Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
             Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
+            Button(L10n.string("menu.exports")) { path.wrappedValue.append(.exports) }
             Button(L10n.string("menu.complicationQueue")) {
                 path.wrappedValue.append(.complicationQueue)
             }
@@ -222,6 +227,14 @@ struct StaffPatientsView: View {
 
         case .analytics:
             AnalyticsScreen(model: AnalyticsModel(api: environment.analytics))
+
+        case .exports:
+            ExportsScreen(model: ExportsModel(api: environment.exports))
+
+        case .surveys(let patientId):
+            SurveyTrendScreen(
+                model: SurveyTrendModel(api: environment.surveys, patientId: patientId)
+            )
 
         case .finance:
             FinanceScreen(
@@ -329,6 +342,7 @@ private extension StaffDestination {
         case .photos: self = .photos(patientId: patientId)
         case .followUp: self = .followUp(patientId: patientId)
         case .appointments: self = .appointments(patientId: patientId)
+        case .surveys: self = .surveys(patientId: patientId)
         }
     }
 }

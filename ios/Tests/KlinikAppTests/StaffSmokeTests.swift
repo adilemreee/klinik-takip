@@ -1,6 +1,7 @@
 import XCTest
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikAISettingsFeature
 import KlinikAnalyticsFeature
 import KlinikAuditFeature
 import KlinikAuthFeature
@@ -137,6 +138,10 @@ final class StaffSmokeTests: XCTestCase {
         let flagged = FlaggedPhotosModel(api: environment.photos)
         await flagged.load()
         assertNotFailed(flagged.currentState().phase, "flagged photos")
+
+        let aiSettings = AISettingsModel(api: environment.aiSettings)
+        await aiSettings.load()
+        assertNotFailed(aiSettings.currentState().phase, "AI settings")
 
         let devices = AccountModel(api: environment.auth)
         await devices.load()

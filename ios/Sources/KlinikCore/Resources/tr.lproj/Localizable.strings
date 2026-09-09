@@ -934,3 +934,21 @@
 "protocol.needTitle" = "Başlık gerekli.";
 "protocol.needContent" = "Metin çok kısa. En az birkaç cümle olmalı, yoksa asistan yanlış yere alıntı yapar.";
 "menu.protocols" = "Asistan kaynakları";
+"document.scan" = "Kamerayla tara";
+"document.scanReview" = "Tarama";
+"document.scanPreview" = "Telefonunuzun okuduğu metin";
+"document.scanUnreadable" = "Telefon bu taramada okunabilir bir metin bulamadı. Belge okunaksızsa daha iyi ışıkta tekrar çekin.";
+"document.scanNotData" = "Bu metin yalnız okunaklılığı kontrol etmeniz için; gönderilmez. Tahlil değerlerini klinik ayrıca doğrular.";
+
+/* Biyometrik kilit (M1) */
+"biometrics.faceID" = "Face ID";
+"biometrics.touchID" = "Touch ID";
+"biometrics.generic" = "Biyometrik doğrulama";
+"biometrics.reason" = "Hasta bilgilerini açmak için kimliğinizi doğrulayın";
+"biometrics.locked" = "Uygulama kilitli";
+"biometrics.unlockWith" = "%@ ile aç";
+"biometrics.tryAgain" = "Doğrulanamadı. Tekrar deneyin ya da cihaz şifrenizi kullanın.";
+"biometrics.enable" = "Açılışta kilit";
+"biometrics.enableHint" = "Uygulama her açıldığında kimliğiniz sorulur. Bildirimler ve acil çağrılar bundan etkilenmez.";
+"biometrics.unavailable" = "Bu cihazda biyometrik doğrulama kurulu değil.";
+"account.security" = "Güvenlik";

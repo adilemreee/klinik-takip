@@ -1,6 +1,6 @@
 # Klinikten İstenenler
 
-Yazılımda **eksik kod yok**. Aşağıdaki on bir maddede eksik olan şey veri ve
+Yazılımda **eksik kod yok**. Aşağıdaki on iki maddede eksik olan şey veri ve
 karar — ve bunları uydurmak, olmamalarından kötü olur. Bir eczacının
 onaylamadığı etkileşim tablosu, doğrulanmamış bir acil numara ya da uydurulmuş
 bir AI fiyatı, **doğru görünen ve olmayan** şeylerdir.
@@ -353,3 +353,29 @@ bağımsız. Öncelik sırası önerim:
 2. **Acil numaralar** (4), kliniğin hasta aldığı ülkeler — hasta güvenliği
 3. **Triyaj listesi** (2) ve **etkileşim tablosu** (1) — klinik gözden geçirme
 4. Gerisi
+
+
+---
+
+## 12. Apple push anahtarı (APNs) ve Play Console
+
+**Ne lazım:** Apple Developer hesabınızdan bir **APNs Auth Key** (`.p8` dosyası),
+**Key ID** ve **Team ID**. Android için ayrıca bir Firebase projesi ve servis
+hesabı anahtarı.
+
+**Neden ben dolduramıyorum:** Bunlar kliniğin kendi kimlik bilgileri. Üretemem,
+sizin hesabınızdan indirilir ve bir kasada durur. Deponun herkese açık olduğunu
+da unutmayın: bu dosyalar **repoya girmez**, sunucudaki `.env`'e girer.
+
+**Şu an ne oluyor:** Uygulama tarafı hazır — izin isteniyor, cihaz jetonu
+kliniğe kaydediliyor, bildirim butonları ("İçtim", "1 saat ertele") tanımlı ve
+uygulama açılmadan çalışıyor. Sunucuda ise gönderici **yapılandırılmamış**
+durumda: bildirim veritabanına yazılıyor, uygulama içi listede görünüyor, ama
+telefona **push olarak gitmiyor**.
+
+**Verdiğinizde ne değişir:** `.env`'e üç değer girilir, gönderici devreye girer,
+bildirimler telefonlara düşmeye başlar. Uygulamada değişiklik gerekmez.
+
+**Not:** Push gitmiyorken ilaç hatırlatmaları ve kritik değer uyarıları
+kullanıcıya **ulaşmaz**. Bu, uygulamanın gerçek hastayla kullanılmasının önünde
+duran maddelerden biridir.

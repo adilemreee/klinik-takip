@@ -21,6 +21,8 @@ public struct RootView: View {
     @State private var sessionState: SessionState = .signedOut
     @State private var identity: Identity?
     @State private var identityFailed = false
+    @State private var lock = BiometricLock()
+    @State private var push: PushRegistrar?
 
     public init(environment: AppEnvironment) {
         self.environment = environment
@@ -41,6 +43,18 @@ public struct RootView: View {
 
     @ViewBuilder
     private var content: some View {
+        // Ahead of the route, not inside it: the lock is about who is holding
+        // the phone, which is a question that comes before which screen they
+        // are entitled to.
+        if lock.isLocked, sessionState == .signedIn {
+            LockedView(lock: lock, signOut: { await signOut() })
+        } else {
+            routed
+        }
+    }
+
+    @ViewBuilder
+    private var routed: some View {
         switch Root.route(for: RootInput(session: sessionState, identity: identity)) {
         case .signIn:
             authFlow(message: nil)
@@ -82,12 +96,27 @@ public struct RootView: View {
         PatientHomeView(
             environment: environment,
             patientId: patientId,
-            signOut: { await signOut() }
+            signOut: { await signOut() },
+            biometrics: biometricSetting
         )
     }
 
     private var staffHome: some View {
-        StaffPatientsView(environment: environment, signOut: { await signOut() })
+        StaffPatientsView(
+            environment: environment,
+            signOut: { await signOut() },
+            biometrics: biometricSetting
+        )
+    }
+
+    /// The lock, as the account screen needs it: three closures rather than the
+    /// object, so a feature module never imports the shell.
+    private var biometricSetting: BiometricSetting {
+        BiometricSetting(
+            isAvailable: lock.isAvailable,
+            isEnabled: { [lock] in lock.isEnabled },
+            setEnabled: { [lock] enabled in lock.setEnabled(enabled) }
+        )
     }
 
     // MARK: - State
@@ -108,11 +137,28 @@ public struct RootView: View {
         await refreshIdentity()
     }
 
+    /// Push registration waits for a signed-in session: the token is stored
+    /// against a user, and asking iOS for permission before somebody knows what
+    /// the app is gets refused — and iOS only asks once.
+    private func startPush() async {
+        guard push == nil else { return }
+
+        let registrar = PushRegistrar(
+            notifications: environment.notifications,
+            medications: environment.medications
+        )
+        push = registrar
+        PushTokenBridge.shared.registrar = registrar
+
+        await registrar.start()
+    }
+
     private func refreshIdentity() async {
         identityFailed = false
 
         do {
             identity = try await environment.me.identity()
+            await startPush()
         } catch {
             // Not treated as signed out: a network blip is not a lapsed
             // session, and signing somebody out for one would lose their queued
@@ -122,6 +168,12 @@ public struct RootView: View {
     }
 
     private func signOut() async {
+        // Before the session ends, while the token can still be revoked with a
+        // valid credential.
+        await push?.stop()
+        push = nil
+        PushTokenBridge.shared.registrar = nil
+
         await environment.session.signOut()
         // The cache holds one person's clinical record. Left behind, the next
         // account on this device would be shown it the first time the network

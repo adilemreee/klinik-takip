@@ -10,13 +10,22 @@ public struct AccountScreen: View {
 
     private let model: AccountModel
     private let signOut: () async -> Void
+    /// The biometric setting, owned by the shell. Nil on a platform that has
+    /// no such thing, which leaves the section out rather than showing a
+    /// switch that does nothing.
+    private let biometrics: BiometricSetting?
 
     @State private var state = AccountState()
     @State private var confirmingSignOutEverywhere = false
 
-    public init(model: AccountModel, signOut: @escaping () async -> Void) {
+    public init(
+        model: AccountModel,
+        signOut: @escaping () async -> Void,
+        biometrics: BiometricSetting? = nil
+    ) {
         self.model = model
         self.signOut = signOut
+        self.biometrics = biometrics
     }
 
     public var body: some View {
@@ -43,6 +52,7 @@ public struct AccountScreen: View {
                     }
 
                 case .loaded:
+                    security
                     sessions
                 }
             }
@@ -65,6 +75,45 @@ public struct AccountScreen: View {
             }
 
             Button(L10n.string("common.cancel"), role: .cancel) {}
+        }
+    }
+
+    @ViewBuilder
+    private var security: some View {
+        if let biometrics {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+                SectionHeader(title: L10n.string("account.security"))
+
+                Card {
+                    VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                        if biometrics.isAvailable {
+                            Toggle(
+                                L10n.string("biometrics.enable"),
+                                isOn: Binding(
+                                    get: { biometrics.isEnabled() },
+                                    set: { biometrics.setEnabled($0) }
+                                )
+                            )
+                            .font(Tokens.Typography.bodyRelative)
+                            .frame(minHeight: Tokens.minimumTouchTarget)
+
+                            Text(L10n.string("biometrics.enableHint"))
+                                .font(Tokens.Typography.captionRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textSecondary.resolve(for: scheme)
+                                )
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Text(L10n.string("biometrics.unavailable"))
+                                .font(Tokens.Typography.bodyRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textSecondary.resolve(for: scheme)
+                                )
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -175,5 +224,29 @@ public struct AccountScreen: View {
     private func reload() async {
         await model.load()
         state = model.currentState()
+    }
+}
+
+
+/**
+ * The biometric setting, as this screen needs it.
+ *
+ * A small struct of closures rather than the lock itself: the account screen
+ * lives in the auth feature, the lock lives in the shell, and a feature module
+ * that imported the shell would make the dependency graph a circle.
+ */
+public struct BiometricSetting: Sendable {
+    public let isAvailable: Bool
+    public let isEnabled: @MainActor @Sendable () -> Bool
+    public let setEnabled: @MainActor @Sendable (Bool) -> Void
+
+    public init(
+        isAvailable: Bool,
+        isEnabled: @escaping @MainActor @Sendable () -> Bool,
+        setEnabled: @escaping @MainActor @Sendable (Bool) -> Void
+    ) {
+        self.isAvailable = isAvailable
+        self.isEnabled = isEnabled
+        self.setEnabled = setEnabled
     }
 }

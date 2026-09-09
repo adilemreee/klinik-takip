@@ -934,3 +934,21 @@
 "protocol.needTitle" = "A title is required.";
 "protocol.needContent" = "The text is too short. A few sentences at least, or the assistant will quote it at the wrong question.";
 "menu.protocols" = "Assistant sources";
+"document.scan" = "Scan with the camera";
+"document.scanReview" = "Scan";
+"document.scanPreview" = "What your phone could read";
+"document.scanUnreadable" = "Your phone found no readable text in this scan. If the document is unclear, take it again in better light.";
+"document.scanNotData" = "This text is only so you can check it is legible; it is not sent. The clinic verifies lab values separately.";
+
+/* Biometric lock (M1) */
+"biometrics.faceID" = "Face ID";
+"biometrics.touchID" = "Touch ID";
+"biometrics.generic" = "Biometric check";
+"biometrics.reason" = "Confirm it is you before opening patient information";
+"biometrics.locked" = "The app is locked";
+"biometrics.unlockWith" = "Unlock with %@";
+"biometrics.tryAgain" = "That did not work. Try again, or use your device passcode.";
+"biometrics.enable" = "Lock on opening";
+"biometrics.enableHint" = "You will be asked to confirm it is you each time the app opens. Notifications and emergency calls are unaffected.";
+"biometrics.unavailable" = "This device has no biometric check set up.";
+"account.security" = "Security";

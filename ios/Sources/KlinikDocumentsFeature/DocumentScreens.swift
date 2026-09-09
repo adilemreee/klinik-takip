@@ -10,10 +10,14 @@ public struct DocumentListView: View {
     private let model: DocumentsModel
     private let canUpload: Bool
     private let pickFile: () async -> (url: URL, contentType: String)?
+    /// Scanning with the camera (spec M16). Nil on a device that has no
+    /// scanner, which hides the button rather than showing one that fails.
+    private let scan: (() async -> (url: URL, contentType: String, preview: String)?)?
 
     @State private var state = DocumentsState()
     @State private var chosenType: DocumentType = .lab
     @State private var previewing: PreviewedDocument?
+    @State private var scanned: ScanResult?
 
     /// - Parameter pickFile: supplied by the app shell, which owns the document
     ///   picker. Kept out of here so the screen stays testable and does not
@@ -21,11 +25,13 @@ public struct DocumentListView: View {
     public init(
         model: DocumentsModel,
         canUpload: Bool = true,
-        pickFile: @escaping () async -> (url: URL, contentType: String)?
+        pickFile: @escaping () async -> (url: URL, contentType: String)?,
+        scan: (() async -> (url: URL, contentType: String, preview: String)?)? = nil
     ) {
         self.model = model
         self.canUpload = canUpload
         self.pickFile = pickFile
+        self.scan = scan
     }
 
     public var body: some View {
@@ -37,6 +43,19 @@ public struct DocumentListView: View {
         .task { await pollWhileProcessing() }
         .sheet(item: $previewing) { document in
             DocumentPreview(url: document.url)
+        }
+        .sheet(item: $scanned) { result in
+            ScanReviewSheet(result: result, type: chosenType) {
+                await refresh {
+                    await model.upload(
+                        fileURL: result.url,
+                        type: chosenType,
+                        contentType: result.contentType
+                    )
+                }
+
+                scanned = nil
+            }
         }
     }
 
@@ -118,6 +137,28 @@ public struct DocumentListView: View {
                         ProgressView(value: progress.fraction)
                             .accessibilityLabel(L10n.string("document.uploading"))
                             .accessibilityValue("\(Int(progress.fraction * 100))%")
+                    }
+
+                    if let scan {
+                        Button {
+                            Task {
+                                guard let result = await scan() else { return }
+
+                                scanned = ScanResult(
+                                    url: result.url,
+                                    contentType: result.contentType,
+                                    preview: result.preview
+                                )
+                            }
+                        } label: {
+                            Label(L10n.string("document.scan"), systemImage: "doc.viewfinder")
+                                .font(Tokens.Typography.subheadingRelative)
+                                .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                                .foregroundStyle(Tokens.Palette.accentText.resolve(for: scheme))
+                                .background(Tokens.Palette.accent.resolve(for: scheme))
+                                .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+                        }
+                        .disabled(state.uploading)
                     }
 
                     PrimaryButton(
@@ -275,6 +316,92 @@ struct StatusBadge: View {
         case .failed: return Tokens.Palette.criticalSurface
         case .skipped: return Tokens.Palette.surface
         case .pending, .queued, .processing: return Tokens.Palette.infoSurface
+        }
+    }
+}
+
+
+/// A scan waiting to be sent, with what the device could read of it.
+struct ScanResult: Identifiable, Equatable {
+    let url: URL
+    let contentType: String
+    let preview: String
+
+    var id: String { url.absoluteString }
+}
+
+/**
+ * What the phone read, before anything is uploaded.
+ *
+ * The text is never sent and never becomes data — the spec is explicit that OCR
+ * output is not auto-approved (M16). Its only job is to answer "is this
+ * legible" while the person is still standing where they could take it again,
+ * which is a question a spinner on a server three seconds later cannot ask.
+ */
+struct ScanReviewSheet: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dismiss) private var dismiss
+
+    let result: ScanResult
+    let type: DocumentType
+    let upload: () async -> Void
+
+    @State private var busy = false
+
+    var body: some View {
+        FormScaffold(
+            title: L10n.string("document.scanReview"),
+            subtitle: type.localizedName
+        ) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
+                if result.preview.isEmpty {
+                    // Not an error — a photograph of a wound scans to nothing —
+                    // but worth saying, because a tahlil that reads as nothing
+                    // will not read any better on the server.
+                    Card(tone: .warning) {
+                        Text(L10n.string("document.scanUnreadable"))
+                            .font(Tokens.Typography.bodyRelative)
+                            .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Card {
+                        VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                            Text(L10n.string("document.scanPreview"))
+                                .font(Tokens.Typography.captionRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textSecondary.resolve(for: scheme)
+                                )
+
+                            Text(result.preview)
+                                .font(.system(.footnote, design: .monospaced))
+                                .foregroundStyle(
+                                    Tokens.Palette.textPrimary.resolve(for: scheme)
+                                )
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+
+                Text(L10n.string("document.scanNotData"))
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                PrimaryButton(
+                    title: L10n.string("document.upload"),
+                    isBusy: busy,
+                    isEnabled: !busy
+                ) {
+                    busy = true
+                    await upload()
+                    busy = false
+                }
+
+                Button(L10n.string("common.cancel")) { dismiss() }
+                    .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+            }
         }
     }
 }

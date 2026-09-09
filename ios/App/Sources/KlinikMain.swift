@@ -49,6 +49,10 @@ struct KlinikMain: App {
 
     @State private var environment = AppEnvironment(baseURL: KlinikMain.baseURL)
 
+    /// The one thing SwiftUI has no equivalent for: APNs hands the device token
+    /// to an application delegate and nowhere else.
+    @UIApplicationDelegateAdaptor(KlinikAppDelegate.self) private var delegate
+
     var body: some Scene {
         WindowGroup {
             RootView(environment: environment)

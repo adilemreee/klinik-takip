@@ -60,6 +60,9 @@ struct PatientHomeView: View {
     let environment: AppEnvironment
     let patientId: String?
     let signOut: () async -> Void
+    /// The device-lock setting, owned by the shell and edited on the account
+    /// screen.
+    let biometrics: BiometricSetting
 
     @State private var path: [PatientDestination] = []
 
@@ -166,7 +169,17 @@ struct PatientHomeView: View {
                     // documents.read, which a patient must not have.
                     subject: .me
                 ),
-                pickFile: { await FilePicker.present() }
+                pickFile: { await FilePicker.present() },
+                // The camera path (spec M16). Nil on a device with no document
+                // scanner, which hides the button rather than offering one that
+                // fails when pressed.
+                scan: DocumentScanner.isAvailable
+                    ? {
+                        guard let scanned = await DocumentScanner.present() else { return nil }
+
+                        return (scanned.url, scanned.contentType, scanned.preview)
+                    }
+                    : nil
             )
 
         case .medications:
@@ -242,7 +255,11 @@ struct PatientHomeView: View {
             )
 
         case .account:
-            AccountScreen(model: AccountModel(api: environment.auth), signOut: signOut)
+            AccountScreen(
+                model: AccountModel(api: environment.auth),
+                signOut: signOut,
+                biometrics: biometrics
+            )
 
         case .surveys:
             SurveyScreen(model: SurveyModel(api: environment.surveys))

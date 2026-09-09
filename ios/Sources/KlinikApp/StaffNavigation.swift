@@ -82,6 +82,9 @@ enum StaffTab: Hashable {
 struct StaffPatientsView: View {
     let environment: AppEnvironment
     let signOut: () async -> Void
+    /// The device-lock setting, owned by the shell and edited on the account
+    /// screen.
+    let biometrics: BiometricSetting
 
     @State private var tab: StaffTab = .agenda
     @State private var agendaPath: [StaffDestination] = []
@@ -222,7 +225,8 @@ struct StaffPatientsView: View {
         case .account:
             AccountScreen(
                 model: AccountModel(api: environment.auth),
-                signOut: signOut
+                signOut: signOut,
+                biometrics: biometrics
             )
 
         case .calendar:
@@ -279,7 +283,17 @@ struct StaffPatientsView: View {
                     resumable: environment.resumable,
                     subject: .patient(id: patientId)
                 ),
-                pickFile: { await FilePicker.present() }
+                pickFile: { await FilePicker.present() },
+                // The camera path (spec M16). Nil on a device with no document
+                // scanner, which hides the button rather than offering one that
+                // fails when pressed.
+                scan: DocumentScanner.isAvailable
+                    ? {
+                        guard let scanned = await DocumentScanner.present() else { return nil }
+
+                        return (scanned.url, scanned.contentType, scanned.preview)
+                    }
+                    : nil
             )
 
         case .labReview(let patientId):

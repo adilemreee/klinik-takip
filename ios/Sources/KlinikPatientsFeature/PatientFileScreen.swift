@@ -666,7 +666,7 @@ public struct PatientFileScreen: View {
 
     // MARK: - Helpers
 
-    static func yesNo(_ value: Bool?) -> String {
+    nonisolated static func yesNo(_ value: Bool?) -> String {
         guard let value else { return L10n.string("file.unknown") }
 
         return value ? L10n.string("file.yes") : L10n.string("file.no")

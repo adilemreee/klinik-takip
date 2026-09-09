@@ -304,7 +304,7 @@ struct EditMedicalSheet: View {
 
     /// Splits on commas and drops what is left over. Somebody typing
     /// "penisilin, , lateks" means two allergies, not three.
-    static func list(_ text: String) -> [String] {
+    nonisolated static func list(_ text: String) -> [String] {
         text
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -313,7 +313,7 @@ struct EditMedicalSheet: View {
 
     /// Accepts both separators: a Turkish keyboard produces a comma, and a
     /// field that silently refuses it reads as broken.
-    static func weight(_ text: String) -> Double? {
+    nonisolated static func weight(_ text: String) -> Double? {
         let normalised = text
             .trimmingCharacters(in: .whitespaces)
             .replacingOccurrences(of: ",", with: ".")

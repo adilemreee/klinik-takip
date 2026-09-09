@@ -1566,6 +1566,82 @@
         ]
       }
     },
+    "/patients/{id}/summary": {
+      "get": {
+        "operationId": "PatientsController_summary",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientFileSummaryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Everything the patient file's header shows",
+        "tags": [
+          "patients"
+        ]
+      }
+    },
     "/patients/{id}/medical-profile": {
       "put": {
         "operationId": "PatientsController_upsertMedicalProfile",
@@ -1875,6 +1951,319 @@
         "summary": "End an assignment",
         "tags": [
           "patients"
+        ]
+      }
+    },
+    "/patients/{id}/travel": {
+      "get": {
+        "operationId": "TravelController_forPatient",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelPlanViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A patient's flights, hotel, transfer and interpreter",
+        "tags": [
+          "travel"
+        ]
+      },
+      "put": {
+        "operationId": "TravelController_upsert",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertTravelPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelPlanViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create or update the travel plan",
+        "tags": [
+          "travel"
+        ]
+      }
+    },
+    "/patients/{id}/travel/cleared-to-fly": {
+      "patch": {
+        "operationId": "TravelController_clearToFly",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearToFlyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelPlanViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record, or withdraw, a clinician’s clearance to fly",
+        "tags": [
+          "travel"
+        ]
+      }
+    },
+    "/me/travel": {
+      "get": {
+        "operationId": "MyTravelController_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TravelPlanViewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your flights, hotel, transfer and interpreter",
+        "tags": [
+          "me"
         ]
       }
     },
@@ -6814,7 +7203,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ConversationDto"
+                    "$ref": "#/components/schemas/InboxEntryDto"
                   }
                 }
               }
@@ -8651,7 +9040,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AppointmentDto"
+                    "$ref": "#/components/schemas/CalendarEntryDto"
                   }
                 }
               }
@@ -14326,6 +14715,252 @@
           "nextCursor"
         ]
       },
+      "MedicalProfileViewDto": {
+        "type": "object",
+        "properties": {
+          "bloodType": {
+            "type": "object",
+            "nullable": true,
+            "example": "A Rh+"
+          },
+          "allergies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "chronicConditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "currentMedications": {
+            "description": "What the patient says they take, not the plan",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "smoking": {
+            "type": "object",
+            "nullable": true
+          },
+          "alcohol": {
+            "type": "object",
+            "nullable": true
+          },
+          "targetWeightKg": {
+            "type": "object",
+            "nullable": true,
+            "description": "Decimal as a string"
+          },
+          "notes": {
+            "type": "object",
+            "nullable": true
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "number",
+            "description": "Send this back when editing, to catch a concurrent change"
+          }
+        },
+        "required": [
+          "allergies",
+          "chronicConditions",
+          "currentMedications",
+          "updatedAt",
+          "version"
+        ]
+      },
+      "SurgeryViewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "procedureName": {
+            "type": "string"
+          },
+          "performedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "daysAgo": {
+            "type": "number",
+            "description": "Whole days since the operation"
+          },
+          "location": {
+            "type": "object",
+            "nullable": true
+          },
+          "surgeonName": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "procedureName",
+          "performedAt",
+          "daysAgo"
+        ]
+      },
+      "MeasurementViewDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "WEIGHT"
+          },
+          "value": {
+            "type": "string",
+            "description": "Decimal as a string"
+          },
+          "secondaryValue": {
+            "type": "object",
+            "nullable": true,
+            "description": "Diastolic, for blood pressure"
+          },
+          "unit": {
+            "type": "string",
+            "example": "kg"
+          },
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "example": "NURSE"
+          }
+        },
+        "required": [
+          "type",
+          "value",
+          "unit",
+          "measuredAt",
+          "source"
+        ]
+      },
+      "FileAlertsDto": {
+        "type": "object",
+        "properties": {
+          "criticalLabs": {
+            "type": "number",
+            "description": "Verified results flagged critical"
+          },
+          "labsAwaitingReview": {
+            "type": "number",
+            "description": "Results the clinic has not confirmed yet"
+          },
+          "openComplications": {
+            "type": "number"
+          },
+          "openEmergency": {
+            "type": "boolean"
+          },
+          "processingDocuments": {
+            "type": "number",
+            "description": "Uploads still in OCR"
+          },
+          "unreviewedReports": {
+            "type": "number",
+            "description": "AI output nobody has signed off"
+          }
+        },
+        "required": [
+          "criticalLabs",
+          "labsAwaitingReview",
+          "openComplications",
+          "openEmergency",
+          "processingDocuments",
+          "unreviewedReports"
+        ]
+      },
+      "PatientFileSummaryDto": {
+        "type": "object",
+        "properties": {
+          "patient": {
+            "$ref": "#/components/schemas/PatientDto"
+          },
+          "contact": {
+            "type": "object",
+            "description": "The account's e-mail and phone, and whether a login exists at all"
+          },
+          "medicalProfile": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MedicalProfileViewDto"
+              }
+            ]
+          },
+          "lastSurgery": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SurgeryViewDto"
+              }
+            ]
+          },
+          "assignments": {
+            "description": "Staff currently responsible for this file",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "latestMeasurements": {
+            "description": "Newest reading of each kind",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeasurementViewDto"
+            }
+          },
+          "alerts": {
+            "$ref": "#/components/schemas/FileAlertsDto"
+          },
+          "lastMessage": {
+            "type": "object",
+            "nullable": true
+          },
+          "unreadMessages": {
+            "type": "number"
+          },
+          "nextAppointment": {
+            "type": "object",
+            "nullable": true
+          },
+          "nextFollowUp": {
+            "type": "object",
+            "nullable": true
+          },
+          "adherence": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null when nothing has been prescribed — not the same as zero"
+          },
+          "counts": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "patient",
+          "contact",
+          "assignments",
+          "latestMeasurements",
+          "alerts",
+          "unreadMessages",
+          "counts"
+        ]
+      },
       "UpdatePatientDto": {
         "type": "object",
         "properties": {
@@ -14407,6 +15042,10 @@
           },
           "alcohol": {
             "type": "boolean"
+          },
+          "targetWeightKg": {
+            "type": "number",
+            "description": "Goal weight in kilograms; the charts draw it as a line"
           },
           "notes": {
             "type": "string"
@@ -14498,6 +15137,199 @@
         "required": [
           "staffId",
           "role"
+        ]
+      },
+      "TravelPlanDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "arrivalFlight": {
+            "type": "object",
+            "nullable": true,
+            "example": "TK1980"
+          },
+          "arrivalAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "departureFlight": {
+            "type": "object",
+            "nullable": true
+          },
+          "departureAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "hotelName": {
+            "type": "object",
+            "nullable": true
+          },
+          "hotelAddress": {
+            "type": "object",
+            "nullable": true
+          },
+          "hotelCheckIn": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "hotelCheckOut": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "greeterName": {
+            "type": "object",
+            "nullable": true
+          },
+          "greeterPhone": {
+            "type": "object",
+            "nullable": true
+          },
+          "transferNote": {
+            "type": "object",
+            "nullable": true
+          },
+          "interpreterName": {
+            "type": "object",
+            "nullable": true
+          },
+          "interpreterLanguage": {
+            "type": "object",
+            "nullable": true
+          },
+          "interpreterPhone": {
+            "type": "object",
+            "nullable": true
+          },
+          "clearedToFlyAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Set by a clinician; never computed from the surgery date"
+          },
+          "notes": {
+            "type": "object",
+            "nullable": true
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "patientId",
+          "version"
+        ]
+      },
+      "TravelPlanViewDto": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TravelPlanDto"
+              }
+            ]
+          },
+          "clearedToFlyBy": {
+            "type": "object",
+            "nullable": true,
+            "description": "Who signed off the flight"
+          }
+        }
+      },
+      "UpsertTravelPlanDto": {
+        "type": "object",
+        "properties": {
+          "arrivalFlight": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "arrivalAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "departureFlight": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "departureAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "hotelName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "hotelAddress": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "hotelCheckIn": {
+            "type": "string",
+            "format": "date"
+          },
+          "hotelCheckOut": {
+            "type": "string",
+            "format": "date"
+          },
+          "greeterName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "greeterPhone": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "transferNote": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "interpreterName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "interpreterLanguage": {
+            "type": "string",
+            "maxLength": 40,
+            "example": "de"
+          },
+          "interpreterPhone": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "expectedVersion": {
+            "type": "number",
+            "description": "Version the client read; a mismatch is refused"
+          }
+        }
+      },
+      "ClearToFlyDto": {
+        "type": "object",
+        "properties": {
+          "cleared": {
+            "type": "boolean",
+            "description": "True when a clinician says the patient may fly"
+          }
+        },
+        "required": [
+          "cleared"
         ]
       },
       "PortablePatientDto": {
@@ -14829,6 +15661,10 @@
             "type": "string",
             "maxLength": 500
           },
+          "fromDevice": {
+            "type": "boolean",
+            "description": "True when the reading was synchronised from HealthKit or Health Connect"
+          },
           "source": {
             "type": "string",
             "enum": [
@@ -15014,6 +15850,10 @@
           "note": {
             "type": "string",
             "maxLength": 500
+          },
+          "fromDevice": {
+            "type": "boolean",
+            "description": "True when the reading was synchronised from HealthKit or Health Connect"
           }
         },
         "required": [
@@ -16236,6 +17076,86 @@
           "lastMessageAt"
         ]
       },
+      "InboxPatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string",
+            "example": "2026-K7RMPX"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Ayşe Yılmaz"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "fullName"
+        ]
+      },
+      "InboxLastMessageDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "object",
+            "nullable": true,
+            "description": "Null for an attachment with no text"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "IMAGE",
+              "FILE",
+              "AUDIO",
+              "SYSTEM",
+              "BOT"
+            ]
+          }
+        },
+        "required": [
+          "sentAt",
+          "type"
+        ]
+      },
+      "InboxEntryDto": {
+        "type": "object",
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/ConversationDto"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/InboxPatientDto"
+          },
+          "lastMessage": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InboxLastMessageDto"
+              }
+            ]
+          },
+          "unread": {
+            "type": "number",
+            "description": "Approximate: enough to decide whether to open the row"
+          }
+        },
+        "required": [
+          "conversation",
+          "patient",
+          "unread"
+        ]
+      },
       "MessageDto": {
         "type": "object",
         "properties": {
@@ -17137,6 +18057,43 @@
           "remindersSent"
         ]
       },
+      "CalendarPatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string",
+            "example": "2026-K7RMPX"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Ayşe Yılmaz"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "fullName"
+        ]
+      },
+      "CalendarEntryDto": {
+        "type": "object",
+        "properties": {
+          "appointment": {
+            "$ref": "#/components/schemas/AppointmentDto"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/CalendarPatientDto"
+          }
+        },
+        "required": [
+          "appointment",
+          "patient"
+        ]
+      },
       "RescheduleDto": {
         "type": "object",
         "properties": {
@@ -17596,11 +18553,36 @@
           "generatedAt"
         ]
       },
+      "ReportPatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string",
+            "example": "2026-K7RMPX"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Ayşe Yılmaz"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "fullName"
+        ]
+      },
       "ReportViewDto": {
         "type": "object",
         "properties": {
           "report": {
             "$ref": "#/components/schemas/AIReportDto"
+          },
+          "patient": {
+            "$ref": "#/components/schemas/ReportPatientDto"
           },
           "disclaimer": {
             "type": "string",
@@ -17612,6 +18594,7 @@
         },
         "required": [
           "report",
+          "patient",
           "disclaimer",
           "visibleToPatient"
         ]

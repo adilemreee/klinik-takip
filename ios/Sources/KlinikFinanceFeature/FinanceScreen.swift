@@ -495,7 +495,7 @@ struct PaymentSheet: View {
      * as one thousand two hundred and fifty *point* nothing — or refused. The
      * conversion is a normalisation, not arithmetic: the digits are unchanged.
      */
-    static func normalised(_ input: String) -> String? {
+    nonisolated static func normalised(_ input: String) -> String? {
         let trimmed = input
             .trimmingCharacters(in: .whitespaces)
             .replacingOccurrences(of: " ", with: "")

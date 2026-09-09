@@ -268,7 +268,10 @@ struct Markdown: View {
             .multilineTextAlignment(.leading)
     }
 
-    static func attributed(_ source: String) -> AttributedString {
+    /// `nonisolated` because it is a pure function of its argument. A `View` is
+    /// implicitly main-actor isolated, and older toolchains carry that to its
+    /// static members — which made this compile here and fail in CI.
+    nonisolated static func attributed(_ source: String) -> AttributedString {
         (try? AttributedString(
             markdown: source,
             options: .init(interpretedSyntax: .full, failurePolicy: .returnPartiallyParsedIfPossible)

@@ -679,6 +679,31 @@
           }
         },
         {
+          "name": "Everything the patient file's header shows",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "summary"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Everything the patient file's header shows"
+          }
+        },
+        {
           "name": "Allergies, chronic conditions, smoking and alcohol",
           "request": {
             "method": "PUT",
@@ -708,7 +733,7 @@
             "description": "Allergies, chronic conditions, smoking and alcohol",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bloodType\": \"\",\n  \"allergies\": [\n    \"\"\n  ],\n  \"chronicConditions\": [\n    \"\"\n  ],\n  \"currentMedications\": [\n    \"\"\n  ],\n  \"smoking\": false,\n  \"alcohol\": false,\n  \"notes\": \"\",\n  \"expectedVersion\": 0\n}",
+              "raw": "{\n  \"bloodType\": \"\",\n  \"allergies\": [\n    \"\"\n  ],\n  \"chronicConditions\": [\n    \"\"\n  ],\n  \"currentMedications\": [\n    \"\"\n  ],\n  \"smoking\": false,\n  \"alcohol\": false,\n  \"targetWeightKg\": 0,\n  \"notes\": \"\",\n  \"expectedVersion\": 0\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -814,8 +839,135 @@
       ]
     },
     {
+      "name": "travel",
+      "item": [
+        {
+          "name": "A patient's flights, hotel, transfer and interpreter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/travel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "travel"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A patient's flights, hotel, transfer and interpreter"
+          }
+        },
+        {
+          "name": "Create or update the travel plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/travel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "travel"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Create or update the travel plan",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"arrivalFlight\": \"\",\n  \"arrivalAt\": \"2026-01-01T00:00:00.000Z\",\n  \"departureFlight\": \"\",\n  \"departureAt\": \"2026-01-01T00:00:00.000Z\",\n  \"hotelName\": \"\",\n  \"hotelAddress\": \"\",\n  \"hotelCheckIn\": \"1990-01-01\",\n  \"hotelCheckOut\": \"1990-01-01\",\n  \"greeterName\": \"\",\n  \"greeterPhone\": \"\",\n  \"transferNote\": \"\",\n  \"interpreterName\": \"\",\n  \"interpreterLanguage\": \"de\",\n  \"interpreterPhone\": \"\",\n  \"notes\": \"\",\n  \"expectedVersion\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Record, or withdraw, a clinician’s clearance to fly",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/travel/cleared-to-fly",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "travel",
+                "cleared-to-fly"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Record, or withdraw, a clinician’s clearance to fly",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cleared\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "me",
       "item": [
+        {
+          "name": "Your flights, hotel, transfer and interpreter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/travel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "travel"
+              ]
+            },
+            "description": "Your flights, hotel, transfer and interpreter"
+          }
+        },
         {
           "name": "Your own data, in a form you can take elsewhere",
           "request": {
@@ -893,7 +1045,7 @@
             "description": "Record one of your own readings",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"WEIGHT\",\n  \"value\": 0,\n  \"secondaryValue\": 0,\n  \"unit\": \"\",\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\",\n  \"note\": \"\"\n}",
+              "raw": "{\n  \"type\": \"WEIGHT\",\n  \"value\": 0,\n  \"secondaryValue\": 0,\n  \"unit\": \"\",\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\",\n  \"note\": \"\",\n  \"fromDevice\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1436,7 +1588,7 @@
             "description": "Record a reading; implausible values are refused",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"WEIGHT\",\n  \"value\": 0,\n  \"secondaryValue\": 0,\n  \"unit\": \"\",\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\",\n  \"note\": \"\",\n  \"source\": \"PATIENT\"\n}",
+              "raw": "{\n  \"type\": \"WEIGHT\",\n  \"value\": 0,\n  \"secondaryValue\": 0,\n  \"unit\": \"\",\n  \"measuredAt\": \"2026-01-01T00:00:00.000Z\",\n  \"note\": \"\",\n  \"fromDevice\": false,\n  \"source\": \"PATIENT\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

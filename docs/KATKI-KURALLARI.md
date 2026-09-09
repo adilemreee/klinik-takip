@@ -49,3 +49,36 @@ Refs: T1.2
 Hiçbir koşulda repoya girmez: `.env`, API anahtarları, DB şifreleri, SSH anahtarları,
 APNs `.p8`, `google-services.json`, `GoogleService-Info.plist`, sunucu IP'si.
 `.gitignore` bunları kapsar; yine de commit öncesi `git diff --staged` ile bakılır.
+
+
+## Araç zinciri farkı — CI daha eskidir
+
+CI (`macos-15`) **Swift 6.1.2** ile derliyor; bir geliştirme Mac'inde büyük
+ihtimalle daha yenisi var. İkisi her şeyde aynı fikirde değil ve fark tek
+yönlü: **yeni sürüm daha çok şeyi kabul ediyor.** Yerelde derlenen bir kod
+CI'da kırılabilir; tersi olmaz.
+
+İki kez başımıza geldi:
+
+- `Bool?` üzerinde `switch` — 6.3 kapsayıcı sayıyor, 6.1 saymıyor. `if/else`
+  ikisinde de çalışıyor.
+- Bir `View`'ın `static` üyesi — `View` örtük olarak main actor'a bağlı ve 6.1
+  bunu statik üyelere de taşıyor. Testten çağrılan her böyle fonksiyon
+  `nonisolated` olmalı; zaten saf fonksiyonlar oldukları için doğru olan da bu.
+
+**Push etmeden önce:** `swift build && swift test` yetmez, ikisi de macOS için
+derler. Şunlar da çalıştırılmalı:
+
+```bash
+# iOS dallarını (VisionKit, HealthKit, LocalAuthentication, UIKit) derler
+swift build --package-path ios \
+  -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
+  -Xswiftc -target -Xswiftc arm64-apple-ios17.0-simulator
+
+# Kliniğin kuracağı uygulamanın kendisi
+cd ios && xcodegen generate && xcodebuild -project Klinik.xcodeproj \
+  -scheme Klinik -destination 'generic/platform=iOS Simulator' build
+```
+
+CI artık ikisini de yapıyor, ama bunu yerelde yakalamak bir turu geri
+kazandırır.

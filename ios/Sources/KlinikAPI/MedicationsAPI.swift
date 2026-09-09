@@ -154,6 +154,44 @@ public struct MyMedications: Decodable, Sendable, Equatable {
     public var openToday: [DoseLog] { today.filter(\.status.isOpen) }
 }
 
+/**
+ * A plan, as the server wants it.
+ *
+ * `frequencyRule` is an RRULE, which is the right thing to store and the wrong
+ * thing to ask a doctor to type. `Schedule` builds it from the two questions a
+ * clinician actually answers — how many times a day, and for how long.
+ */
+public struct Prescription: Encodable, Sendable, Equatable {
+    public let drugName: String
+    public let dose: String
+    public let form: String?
+    public let frequencyRule: String
+    public let startDate: Date
+    public let startTime: String?
+    public let timezone: String?
+    public let instructions: String?
+
+    public init(
+        drugName: String,
+        dose: String,
+        form: String? = nil,
+        frequencyRule: String,
+        startDate: Date,
+        startTime: String? = nil,
+        timezone: String? = nil,
+        instructions: String? = nil
+    ) {
+        self.drugName = drugName
+        self.dose = dose
+        self.form = form
+        self.frequencyRule = frequencyRule
+        self.startDate = startDate
+        self.startTime = startTime
+        self.timezone = timezone
+        self.instructions = instructions
+    }
+}
+
 public struct MedicationsAPI: Sendable {
     private let client: APIClient
 
@@ -217,6 +255,43 @@ public struct MedicationsAPI: Sendable {
                         startDate: startDate
                     )
                 )
+            ),
+            as: MedicationView.self
+        )
+    }
+
+    // MARK: - Staff (spec M9)
+
+    /// Writing a plan. The interaction check comes back on the response rather
+    /// than on every list read: the moment it matters is the moment a drug is
+    /// added, and a warning shown on every read stops being read.
+    public func prescribe(patientId: String, _ prescription: Prescription) async throws -> MedicationView {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "patients/\(patientId)/medications",
+                body: try JSONEncoder.klinik.encode(prescription)
+            ),
+            as: MedicationView.self
+        )
+    }
+
+    /// Something the patient added is inert until this is called (spec M9).
+    public func approve(patientId: String, medicationId: String) async throws -> MedicationView {
+        try await client.send(
+            Endpoint(
+                method: .patch,
+                path: "patients/\(patientId)/medications/\(medicationId)/approve"
+            ),
+            as: MedicationView.self
+        )
+    }
+
+    public func stop(patientId: String, medicationId: String) async throws -> MedicationView {
+        try await client.send(
+            Endpoint(
+                method: .patch,
+                path: "patients/\(patientId)/medications/\(medicationId)/stop"
             ),
             as: MedicationView.self
         )

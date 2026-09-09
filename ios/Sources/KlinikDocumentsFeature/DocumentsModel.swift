@@ -22,6 +22,8 @@ public struct DocumentsState: Sendable, Equatable {
     public var uploadError: String?
     /// How much of the current upload has reached the server, for a progress bar.
     public var uploadProgress: UploadProgress?
+    /// The document being fetched for preview, so only its row shows a spinner.
+    public var openingId: String?
 
     public var hasMore: Bool { nextCursor != nil }
 
@@ -150,6 +152,51 @@ public actor DocumentsModel {
             // A failed poll is not worth interrupting the screen for: the list
             // on display is still correct, only slightly stale.
         }
+    }
+
+    /**
+     * A local copy of the file, for the previewer.
+     *
+     * Downloaded rather than handed to a web view as a URL: the link is signed
+     * and short-lived, and a preview that has to re-fetch it half a minute
+     * later shows an expired-link error instead of a document. Written under
+     * the document's own id so two files with the same name do not overwrite
+     * each other in the cache.
+     */
+    public func localCopy(of documentId: String) async -> URL? {
+        state.openingId = documentId
+        state.uploadError = nil
+
+        defer { state.openingId = nil }
+
+        do {
+            let link = try await api.downloadLink(documentId: documentId)
+
+            guard let remote = URL(string: link.url) else {
+                state.uploadError = L10n.string("error.server")
+                return nil
+            }
+
+            let (data, _) = try await URLSession.shared.data(from: remote)
+
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("documents/\(documentId)", isDirectory: true)
+            try FileManager.default.createDirectory(
+                at: directory,
+                withIntermediateDirectories: true
+            )
+
+            let destination = directory.appendingPathComponent(link.filename)
+            try data.write(to: destination, options: .atomic)
+
+            return destination
+        } catch let error as APIError {
+            state.uploadError = L10n.message(for: error)
+        } catch {
+            state.uploadError = L10n.string("document.openFailed")
+        }
+
+        return nil
     }
 
     public func remove(documentId: String) async {

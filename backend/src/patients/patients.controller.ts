@@ -25,6 +25,7 @@ import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import {
   AssignmentDto,
   PatientDto,
+  PatientFileSummaryDto,
   PatientPageDto,
 } from './dto/patient-response.dto';
 import { AuditAction, Patient } from '@prisma/client';
@@ -45,12 +46,19 @@ import {
   PatientsService,
   RequestContext,
 } from './patients.service';
+import {
+  PatientFileSummaryService,
+  type PatientFileSummary,
+} from './file-summary.service';
 
 @ApiTags('patients')
 @ApiBearerAuth()
 @Controller('patients')
 export class PatientsController {
-  constructor(private readonly patients: PatientsService) {}
+  constructor(
+    private readonly patients: PatientsService,
+    private readonly fileSummary: PatientFileSummaryService,
+  ) {}
 
   @Post()
   @RequirePermissions('patients.write')
@@ -91,6 +99,27 @@ export class PatientsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<Patient> {
     return this.patients.findOne(user, id);
+  }
+
+  /**
+   * The whole file header in one read (spec M2).
+   *
+   * Separate from `GET :id` rather than folded into it: the plain record is
+   * what a write returns and what a list row needs, and making every one of
+   * those pay for fifteen aggregate queries would slow the list down to serve
+   * one screen.
+   */
+  @Get(':id/summary')
+  @RequirePermissions('medical.read')
+  @Audit({ entityType: 'patients', action: AuditAction.READ, entityIdParam: 'id' })
+  @ApiOperation({ summary: "Everything the patient file's header shows" })
+  @ApiOkResponse({ type: PatientFileSummaryDto })
+  @ApiStandardErrors()
+  async summary(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<PatientFileSummary> {
+    return this.fileSummary.summary(user, id);
   }
 
   @Patch(':id')

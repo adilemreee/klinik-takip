@@ -105,7 +105,9 @@ public struct NewPatient: Encodable, Sendable {
 }
 
 public struct PatientsAPI: Sendable {
-    private let client: APIClient
+    /// Internal rather than private so the file-header calls can live in their
+    /// own file (`PatientFileAPI.swift`) without this one growing to 500 lines.
+    let client: APIClient
 
     public init(client: APIClient) {
         self.client = client

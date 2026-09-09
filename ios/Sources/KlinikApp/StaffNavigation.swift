@@ -10,6 +10,7 @@ import KlinikEmergencyFeature
 import KlinikFollowUpFeature
 import KlinikLabFeature
 import KlinikMeasurementsFeature
+import KlinikMedicationsFeature
 import KlinikMessagingFeature
 import KlinikNotificationsFeature
 import KlinikPatientsFeature
@@ -35,6 +36,7 @@ public enum StaffDestination: Hashable, Sendable {
     case appointments(patientId: String)
     /// Across all patients, not one — the point of a triage queue.
     case complicationQueue
+    case medications(patientId: String)
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -175,7 +177,17 @@ struct StaffPatientsView: View {
     ) -> some View {
         switch destination {
         case .patient(let id, let name):
-            PatientFileView(environment: environment, patientId: id, name: name, go: push)
+            PatientFileScreen(
+                model: PatientFileModel(api: environment.patients, patientId: id)
+            ) { section in
+                push(StaffDestination(section, patientId: id))
+            }
+            .navigationTitle(name)
+
+        case .medications(let patientId):
+            PrescribingScreen(
+                model: PrescribingModel(api: environment.medications, patientId: patientId)
+            )
 
         case .pendingReports:
             ReportReviewScreen(
@@ -263,53 +275,19 @@ struct StaffPatientsView: View {
     }
 }
 
-/**
- * One patient's file, and the way into everything recorded about them.
- *
- * The detail screen stays what it was — a summary. The list below it is
- * navigation, kept here rather than inside the feature module so that module
- * has no opinion about what else the app contains.
- */
-@MainActor
-struct PatientFileView: View {
-    @Environment(\.colorScheme) private var scheme
-
-    let environment: AppEnvironment
-    let patientId: String
-    let name: String
-    let go: (StaffDestination) -> Void
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
-                PatientDetailView(
-                    model: PatientDetailModel(api: environment.patients, patientId: patientId)
-                )
-
-                Divider()
-
-                ForEach(sections, id: \.title) { section in
-                    Button(section.title) { go(section.destination) }
-                        .font(Tokens.Typography.bodyRelative)
-                        .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget, alignment: .leading)
-                }
-            }
-            .padding(Tokens.Spacing.lg)
+private extension StaffDestination {
+    /// The file names its sections; the app decides where they lead.
+    init(_ section: FileSection, patientId: String) {
+        switch section {
+        case .messages: self = .conversation(patientId: patientId)
+        case .measurements: self = .measurements(patientId: patientId)
+        case .medications: self = .medications(patientId: patientId)
+        case .documents: self = .documents(patientId: patientId)
+        case .labReview: self = .labReview(patientId: patientId)
+        case .labTrend: self = .labTrend(patientId: patientId)
+        case .photos: self = .photos(patientId: patientId)
+        case .followUp: self = .followUp(patientId: patientId)
+        case .appointments: self = .appointments(patientId: patientId)
         }
-        .background(Tokens.Palette.background.resolve(for: scheme))
-        .navigationTitle(name)
-    }
-
-    private var sections: [(title: String, destination: StaffDestination)] {
-        [
-            (L10n.string("menu.messages"), .conversation(patientId: patientId)),
-            (L10n.string("menu.measurements"), .measurements(patientId: patientId)),
-            (L10n.string("menu.documents"), .documents(patientId: patientId)),
-            (L10n.string("menu.labReview"), .labReview(patientId: patientId)),
-            (L10n.string("menu.labResults"), .labTrend(patientId: patientId)),
-            (L10n.string("menu.photos"), .photos(patientId: patientId)),
-            (L10n.string("menu.followUp"), .followUp(patientId: patientId)),
-            (L10n.string("menu.appointments"), .appointments(patientId: patientId)),
-        ]
     }
 }

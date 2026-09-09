@@ -13,6 +13,7 @@ public struct DocumentListView: View {
 
     @State private var state = DocumentsState()
     @State private var chosenType: DocumentType = .lab
+    @State private var previewing: PreviewedDocument?
 
     /// - Parameter pickFile: supplied by the app shell, which owns the document
     ///   picker. Kept out of here so the screen stays testable and does not
@@ -34,6 +35,9 @@ public struct DocumentListView: View {
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
         .task { await pollWhileProcessing() }
+        .sheet(item: $previewing) { document in
+            DocumentPreview(url: document.url)
+        }
     }
 
     @ViewBuilder
@@ -78,12 +82,23 @@ public struct DocumentListView: View {
 
             List {
                 ForEach(state.documents) { document in
-                    DocumentRow(document: document)
-                        .onAppear {
-                            if document.id == state.documents.last?.id {
-                                Task { await refresh { await model.loadMore() } }
-                            }
+                    Button {
+                        Task { await open(document) }
+                    } label: {
+                        DocumentRow(document: document, isOpening: state.openingId == document.id)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                    .swipeActions(edge: .trailing) {
+                        Button(L10n.string("common.delete"), role: .destructive) {
+                            Task { await refresh { await model.remove(documentId: document.id) } }
                         }
+                    }
+                    .onAppear {
+                        if document.id == state.documents.last?.id {
+                            Task { await refresh { await model.loadMore() } }
+                        }
+                    }
                 }
             }
             .listStyle(.plain)
@@ -115,6 +130,25 @@ public struct DocumentListView: View {
                 }
                 .padding(Tokens.Spacing.lg)
             }
+        }
+    }
+
+    /**
+     * Opens a document.
+     *
+     * The file is fetched before the sheet appears rather than after: a
+     * previewer that opens empty and fills in later reads as a broken document,
+     * and on hotel wifi that gap is seconds long.
+     */
+    private func open(_ document: ClinicalDocument) async {
+        guard state.openingId == nil else { return }
+
+        state = await model.currentState()
+        let url = await model.localCopy(of: document.id)
+        state = await model.currentState()
+
+        if let url {
+            previewing = PreviewedDocument(id: document.id, url: url)
         }
     }
 
@@ -159,25 +193,49 @@ struct DocumentRow: View {
     @Environment(\.colorScheme) private var scheme
 
     let document: ClinicalDocument
+    var isOpening = false
 
     var body: some View {
         HStack(spacing: Tokens.Spacing.md) {
+            Image(systemName: DocumentRow.symbol(for: document.mime))
+                .font(Tokens.Typography.headingRelative)
+                .frame(width: 32)
+                .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+                // The row is announced as one element; the name says what it is.
+                .accessibilityHidden(true)
+
             VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
                 Text(document.displayName)
                     .font(Tokens.Typography.bodyRelative)
                     .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
 
-                Text("\(document.type.localizedName) · \(sizeText)")
+                Text("\(document.type.localizedName) · \(sizeText) · \(document.createdAt.formatted(date: .abbreviated, time: .omitted))")
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
             }
 
-            Spacer()
+            Spacer(minLength: Tokens.Spacing.sm)
 
-            StatusBadge(status: document.ocrStatus)
+            if isOpening {
+                ProgressView().accessibilityLabel(L10n.string("common.loading"))
+            } else {
+                StatusBadge(status: document.ocrStatus)
+            }
         }
         .padding(.vertical, Tokens.Spacing.xs)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// The icon says what kind of file it is before the name is read.
+    static func symbol(for mime: String) -> String {
+        if mime.hasPrefix("image/") { return "photo" }
+        if mime == "application/pdf" { return "doc.richtext" }
+
+        return "doc"
     }
 
     private var sizeText: String {

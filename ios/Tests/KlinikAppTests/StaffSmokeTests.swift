@@ -80,9 +80,9 @@ final class StaffSmokeTests: XCTestCase {
         let patient = try XCTUnwrap(listed.patients.first, "the list came back empty")
 
         // And everything reachable from one patient's file.
-        let detail = PatientDetailModel(api: environment.patients, patientId: patient.id)
-        await detail.load()
-        assertNotFailed(await detail.currentState().phase, "patient detail")
+        let file = PatientFileModel(api: environment.patients, patientId: patient.id)
+        await file.load()
+        assertNotFailed(await file.currentState().phase, "patient file")
 
         let chat = ChatModel(api: environment.messaging) {
             try await environment.messaging.conversation(patientId: patient.id)

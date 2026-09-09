@@ -7,6 +7,7 @@ import {
   IsDate,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -175,6 +176,21 @@ export class MedicalProfileDto {
   @IsOptional()
   @IsBoolean()
   alcohol?: boolean;
+
+  /**
+   * The weight the patient is working towards — the target line on the weight
+   * and BMI charts (spec M2).
+   *
+   * The column has existed since the first migration and nothing could write
+   * it, so the line the charts are built to draw never appeared.
+   */
+  @ApiPropertyOptional({ description: 'Goal weight in kilograms; the charts draw it as a line' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(20)
+  @Max(400)
+  targetWeightKg?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

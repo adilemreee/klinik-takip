@@ -200,6 +200,11 @@ let package = Package(
             dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
         ),
 
+        .testTarget(
+            name: "KlinikMedicationsFeatureTests",
+            dependencies: ["KlinikMedicationsFeature", "KlinikCore"]
+        ),
+
         // Giving and withdrawing consent (KVKK, spec section 8).
         .target(
             name: "KlinikConsentsFeature",

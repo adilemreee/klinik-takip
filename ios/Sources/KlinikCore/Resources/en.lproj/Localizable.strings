@@ -747,3 +747,8 @@
 "medication.stopConfirm" = "Stop this medicine?";
 "common.delete" = "Delete";
 "document.openFailed" = "The document could not be opened. Check your connection and try again.";
+"assistant.intro" = "It answers from your clinic's own documents. Anything it is unsure about goes straight to the clinic. It does not diagnose and does not recommend medication.";
+"assistant.openConversation" = "I would rather write to the clinic";
+"menu.assistant" = "Quick answer";
+"assistant.offerOpen" = "If it is a common question you can have an answer now.";
+"assistant.offerClosed" = "The clinic is closed — the assistant can answer some questions straight away.";

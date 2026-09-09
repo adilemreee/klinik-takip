@@ -1,6 +1,7 @@
 import SwiftUI
 import KlinikAPI
 import KlinikAppointmentsFeature
+import KlinikAssistantFeature
 import KlinikComplicationsFeature
 import KlinikConsentsFeature
 import KlinikCore
@@ -35,6 +36,8 @@ public enum PatientDestination: Hashable, Sendable {
     case appointments
     case notificationSettings
     case consents
+    /// The FAQ assistant that stands in front of the clinic (spec M4).
+    case assistant
 }
 
 /**
@@ -95,6 +98,7 @@ struct PatientHomeView: View {
 
     private var menu: some View {
         Menu {
+            Button(L10n.string("menu.assistant")) { path.append(.assistant) }
             Button(L10n.string("menu.photos")) { path.append(.photos) }
             Button(L10n.string("menu.measurements")) { path.append(.measurements) }
             Button(L10n.string("menu.followUp")) { path.append(.followUp) }
@@ -124,6 +128,22 @@ struct PatientHomeView: View {
                     // and the server decides which — asking for it by id here
                     // would let the client name someone else's.
                     try await environment.messaging.myConversation()
+                },
+                // Spec M4 puts the assistant in front of the clinic rather
+                // than beside it: a question it can answer from the clinic's
+                // own documents does not need to wait for a nurse.
+                openAssistant: { path.append(.assistant) }
+            )
+
+        case .assistant:
+            AssistantScreen(
+                model: AssistantModel(api: environment.assistant),
+                openConversation: {
+                    // Replaces the assistant rather than stacking on it: going
+                    // back from the conversation should reach the home screen,
+                    // not the bot the patient chose to leave.
+                    path.removeLast()
+                    path.append(.messages)
                 }
             )
 

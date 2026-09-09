@@ -747,3 +747,8 @@
 "medication.stopConfirm" = "Bu ilaç kesilsin mi?";
 "common.delete" = "Sil";
 "document.openFailed" = "Belge açılamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+"assistant.intro" = "Kliniğinizin kendi belgelerinden yanıt verir. Emin olmadığı her soruyu size sormadan kliniğe iletir. Tanı koymaz, ilaç önermez.";
+"assistant.openConversation" = "Doğrudan kliniğe yazmak istiyorum";
+"menu.assistant" = "Hızlı yanıt";
+"assistant.offerOpen" = "Sık sorulan bir soruysa hemen yanıt alabilirsiniz.";
+"assistant.offerClosed" = "Klinik şu an kapalı — asistan bazı soruları hemen yanıtlayabilir.";

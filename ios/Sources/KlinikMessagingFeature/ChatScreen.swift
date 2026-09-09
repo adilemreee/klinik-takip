@@ -10,6 +10,8 @@ public struct ChatScreen: View {
     private let model: ChatModel
     private let canUseTemplates: Bool
     private let onTyping: (@Sendable (String) -> Void)?
+    /// Set on the patient's side only. Staff have no assistant to hand off to.
+    private let openAssistant: (() -> Void)?
 
     @State private var state = ChatState()
     @State private var draft = ""
@@ -20,11 +22,13 @@ public struct ChatScreen: View {
     public init(
         model: ChatModel,
         canUseTemplates: Bool = false,
-        onTyping: (@Sendable (String) -> Void)? = nil
+        onTyping: (@Sendable (String) -> Void)? = nil,
+        openAssistant: (() -> Void)? = nil
     ) {
         self.model = model
         self.canUseTemplates = canUseTemplates
         self.onTyping = onTyping
+        self.openAssistant = openAssistant
     }
 
     public var body: some View {
@@ -71,6 +75,14 @@ public struct ChatScreen: View {
             // feel like "lost".
             if state.willBeQueued {
                 ClosedBanner(opensAt: state.clinic?.opensAt)
+            }
+
+            // Offered, never forced. The spec puts the assistant in front of
+            // the clinic (M4), but a patient who wants a person should not
+            // have to argue with a machine first — especially outside hours,
+            // which is exactly when the assistant is worth trying.
+            if let openAssistant {
+                AssistantOffer(isClinicClosed: state.willBeQueued, open: openAssistant)
             }
 
             ScrollView {
@@ -248,5 +260,62 @@ struct QuickReplyList: View {
             .frame(minHeight: Tokens.minimumTouchTarget)
         }
         .listStyle(.plain)
+    }
+}
+
+
+/**
+ * The way into the FAQ assistant, from the conversation.
+ *
+ * A row rather than a redirect: the spec has the assistant answer first, and
+ * making it a wall would mean a patient with a real worry has to get past a bot
+ * to reach a nurse. The offer is louder when the clinic is closed, because that
+ * is when it is genuinely the faster answer.
+ */
+struct AssistantOffer: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let isClinicClosed: Bool
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: Tokens.Spacing.md) {
+                Image(systemName: "text.bubble")
+                    .font(Tokens.Typography.bodyRelative)
+                    .foregroundStyle(Tokens.Palette.info.resolve(for: scheme))
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+                    Text(L10n.string("assistant.title"))
+                        .font(Tokens.Typography.subheadingRelative)
+                        .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+                    Text(
+                        L10n.string(
+                            isClinicClosed ? "assistant.offerClosed" : "assistant.offerOpen"
+                        )
+                    )
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: Tokens.Spacing.sm)
+
+                Image(systemName: "chevron.right")
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textDisabled.resolve(for: scheme))
+                    .accessibilityHidden(true)
+            }
+            .padding(Tokens.Spacing.md)
+            .frame(minHeight: Tokens.minimumTouchTarget)
+            .background(Tokens.Palette.infoSurface.resolve(for: scheme))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 }

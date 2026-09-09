@@ -36,6 +36,7 @@ public final class AppEnvironment {
     public let medications: MedicationsAPI
     public let briefing: BriefingAPI
     public let reports: ReportsAPI
+    public let assistant: AssistantAPI
 
     /// Chunked upload, shared by every screen that can attach a file.
     public let resumable: ResumableUpload
@@ -85,6 +86,7 @@ public final class AppEnvironment {
         medications = MedicationsAPI(client: client)
         briefing = BriefingAPI(client: client)
         reports = ReportsAPI(client: client)
+        assistant = AssistantAPI(client: client)
         resumable = ResumableUpload(client: client)
 
         // A queue that cannot be opened must not take the app down with it:

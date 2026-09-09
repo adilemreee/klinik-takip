@@ -111,8 +111,11 @@ public final class HealthSync {
         }
 
         // A month at most on a first run: a decade of weights arriving at once
-        // would bury the post-operative curve the chart exists to show.
-        let since = lastSynced ?? Calendar.current.date(byAdding: .month, value: -1, to: Date())!
+        // would bury the post-operative curve the chart exists to show. The
+        // fallback is arithmetic, not a guess: a calendar that cannot subtract a
+        // month is not one worth crashing a health sync over.
+        let monthAgo = Calendar.current.date(byAdding: .month, value: -1, to: Date())
+        let since = lastSynced ?? monthAgo ?? Date().addingTimeInterval(-30 * 24 * 60 * 60)
         let readings = await HealthSync.read(from: store, since: since)
 
         guard !readings.isEmpty else { return .nothingNew }

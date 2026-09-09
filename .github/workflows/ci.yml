@@ -262,6 +262,34 @@ jobs:
       - name: Test
         run: swift test
 
+      # `swift build` on a macOS runner compiles for macOS, so every `#if
+      # os(iOS)` branch — VisionKit, HealthKit, LocalAuthentication, the whole
+      # of UIKit — is skipped. That hid a compile error in the document scanner
+      # for a day: the package was green and the app did not build.
+      #
+      # Cross-compiling for the simulator SDK compiles those branches. It is
+      # cheap and catches the class of bug that hole allows.
+      - name: Build for iOS
+        run: |
+          swift build \
+            -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphonesimulator --show-sdk-path)" \
+            -Xswiftc -target -Xswiftc "arm64-apple-ios17.0-simulator"
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      # And the app target itself: Info.plist, entitlements, the delegate that
+      # only an app may have. This is what a clinic installs.
+      - name: Build the app
+        run: |
+          xcodegen generate
+          xcodebuild \
+            -project Klinik.xcodeproj \
+            -scheme Klinik \
+            -destination 'generic/platform=iOS Simulator' \
+            -quiet \
+            build
+
   android:
     name: Android — build and test
     runs-on: ubuntu-latest

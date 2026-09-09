@@ -15,12 +15,16 @@ enum Tristate: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Written as an if/else rather than a `switch` over `Bool?`: whether that
+    /// switch is exhaustive depends on the toolchain, and it compiled here and
+    /// failed in CI.
     init(_ value: Bool?) {
-        switch value {
-        case true: self = .yes
-        case false: self = .no
-        case nil: self = .unknown
+        guard let value else {
+            self = .unknown
+            return
         }
+
+        self = value ? .yes : .no
     }
 
     var value: Bool? {

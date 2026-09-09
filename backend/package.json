@@ -147,7 +147,8 @@
     ]
   },
   "overrides": {
-    "deepmerge-ts": "^8.0.2"
+    "deepmerge-ts": "^8.0.2",
+    "multer": "^2.3.0"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

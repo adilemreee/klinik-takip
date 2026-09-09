@@ -594,7 +594,20 @@ describe('messaging', () => {
         .set('Authorization', `Bearer ${doctor.token}`)
         .expect(200);
 
-      expect((response.body as { id: string }[]).map((c) => c.id)).toContain(conversationId);
+      const rows = response.body as {
+        conversation: { id: string };
+        patient: { fullName: string };
+        lastMessage: { body: string | null } | null;
+        unread: number;
+      }[];
+
+      expect(rows.map((row) => row.conversation.id)).toContain(conversationId);
+
+      // The row carries enough to decide whether to open it: an inbox of ids
+      // and timestamps is a list somebody has to open every row of.
+      const row = rows.find((entry) => entry.conversation.id === conversationId);
+      expect(row?.patient.fullName).toBeTruthy();
+      expect(row?.lastMessage?.body).toBe('Merhaba');
     });
 
     /** A conversation nobody has written in is not an inbox item. */
@@ -607,7 +620,9 @@ describe('messaging', () => {
         .set('Authorization', `Bearer ${doctor.token}`)
         .expect(200);
 
-      expect((response.body as { id: string }[]).map((c) => c.id)).not.toContain(conversationId);
+      const rows = response.body as { conversation: { id: string } }[];
+
+      expect(rows.map((row) => row.conversation.id)).not.toContain(conversationId);
     });
   });
 });

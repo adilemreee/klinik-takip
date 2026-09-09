@@ -12,6 +12,11 @@ import KlinikMedicationsFeature
 import KlinikMessagingFeature
 import KlinikNotificationsFeature
 import KlinikPhotosFeature
+import KlinikAssistantFeature
+import KlinikAuthFeature
+import KlinikConsentsFeature
+import KlinikSurveysFeature
+import KlinikTravelFeature
 @testable import KlinikApp
 
 /**
@@ -175,6 +180,30 @@ final class LiveSmokeTests: XCTestCase {
         let appointments = AppointmentsModel(api: environment.appointments)
         await appointments.refresh()
         assertNotFailed(await appointments.currentState().phase, "appointments")
+
+        // The screens added after this suite was written. A patient reaching
+        // one of these and finding a permission error is exactly what running
+        // against the real server is for: the patient paths are `me/…`, and a
+        // staff path reached from a patient build fails with a 403 rather than
+        // anything a test double would show.
+        let assistant = AssistantModel(api: environment.assistant)
+        assertNotFailed(assistant.currentState().phase, "assistant")
+
+        let surveys = SurveyModel(api: environment.surveys)
+        await surveys.load()
+        assertNotFailed(surveys.currentState().phase, "surveys")
+
+        let travel = TravelModel(api: environment.travel)
+        await travel.load()
+        assertNotFailed(travel.currentState().phase, "travel plan")
+
+        let account = AccountModel(api: environment.auth)
+        await account.load()
+        assertNotFailed(account.currentState().phase, "account")
+
+        let consents = ConsentsModel(api: environment.consents)
+        await consents.load()
+        assertNotFailed(await consents.currentState().phase, "consents")
 
         let notifications = NotificationSettingsModel(api: environment.notifications)
         await notifications.load()

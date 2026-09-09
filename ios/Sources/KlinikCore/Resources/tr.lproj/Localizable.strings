@@ -795,3 +795,52 @@
 "calendar.hasRequest" = "onay bekleyen var";
 "menu.calendar" = "Takvim";
 "appointment.addToCalendar" = "Takvimime ekle";
+
+/* İstatistik paneli (M11) */
+"analytics.title" = "İstatistikler";
+"analytics.range" = "Dönem";
+"analytics.range.thisMonth" = "Bu ay";
+"analytics.range.lastThreeMonths" = "3 ay";
+"analytics.range.thisYear" = "Bu yıl";
+"analytics.range.lastYear" = "Geçen yıl";
+"analytics.notPermitted" = "Bu hesabın istatistik paneline erişimi yok.";
+"analytics.nothingInRange" = "Bu dönemde kayıt yok.";
+"analytics.procedures" = "Ameliyatlar";
+"analytics.totalOperations" = "Toplam %d ameliyat";
+"analytics.month" = "Ay";
+"analytics.count" = "Adet";
+"analytics.revenue" = "Gelir";
+"analytics.net" = "Net";
+"analytics.margin" = "Kâr";
+"analytics.cost" = "Maliyet";
+"analytics.commission" = "Aracı komisyonu";
+"analytics.recordCount" = "%d kayıt";
+"analytics.averagePerCurrency" = "Para birimi başına ortalama";
+"analytics.geography" = "Ülkeler";
+"analytics.patientCount" = "%d hasta";
+"analytics.cityUnknown" = "%d hastanın şehri girilmemiş.";
+"analytics.channels" = "Geliş kaynakları";
+"analytics.convertedOf" = "%1$d / %2$d ameliyata dönüştü";
+"analytics.revenueWithheld" = "Gelir kırılımı bu hesaba gösterilmiyor.";
+"analytics.occupancy" = "Doluluk";
+"menu.analytics" = "İstatistikler";
+
+/* Finans ekranı (M11) */
+"finance.title" = "Finans";
+"finance.currency" = "Para birimi";
+"finance.notPermitted" = "Bu hesabın finans ekranına erişimi yok.";
+"finance.outstanding" = "Bekleyen alacak";
+"finance.collectedThisMonth" = "Bu ay tahsil edilen";
+"finance.ageing" = "Alacak yaşlandırma";
+"finance.recordCount" = "%d kayıt";
+"finance.records" = "Kayıtlar";
+"finance.status" = "Durum";
+"finance.allStatuses" = "Hepsi";
+"finance.noRecords" = "Bu filtreyle kayıt yok.";
+"finance.loadMore" = "Daha fazla";
+"finance.agency" = "Aracı kurum";
+"finance.recordPayment" = "Ödeme gir";
+"finance.amount" = "Tutar";
+"finance.method" = "Ödeme şekli";
+"finance.reference" = "Referans (isteğe bağlı)";
+"menu.finance" = "Finans";

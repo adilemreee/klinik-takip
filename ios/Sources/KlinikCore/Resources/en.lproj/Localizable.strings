@@ -795,3 +795,52 @@
 "calendar.hasRequest" = "waiting for confirmation";
 "menu.calendar" = "Calendar";
 "appointment.addToCalendar" = "Add to my calendar";
+
+/* Statistics panel (M11) */
+"analytics.title" = "Statistics";
+"analytics.range" = "Period";
+"analytics.range.thisMonth" = "This month";
+"analytics.range.lastThreeMonths" = "3 months";
+"analytics.range.thisYear" = "This year";
+"analytics.range.lastYear" = "Last year";
+"analytics.notPermitted" = "This account cannot see the statistics panel.";
+"analytics.nothingInRange" = "Nothing recorded in this period.";
+"analytics.procedures" = "Operations";
+"analytics.totalOperations" = "%d operations in total";
+"analytics.month" = "Month";
+"analytics.count" = "Count";
+"analytics.revenue" = "Revenue";
+"analytics.net" = "Net";
+"analytics.margin" = "Margin";
+"analytics.cost" = "Cost";
+"analytics.commission" = "Agency commission";
+"analytics.recordCount" = "%d records";
+"analytics.averagePerCurrency" = "Average per currency";
+"analytics.geography" = "Countries";
+"analytics.patientCount" = "%d patients";
+"analytics.cityUnknown" = "%d patients have no city recorded.";
+"analytics.channels" = "Where patients came from";
+"analytics.convertedOf" = "%1$d of %2$d became operations";
+"analytics.revenueWithheld" = "The revenue breakdown is not shown to this account.";
+"analytics.occupancy" = "Occupancy";
+"menu.analytics" = "Statistics";
+
+/* Finance screen (M11) */
+"finance.title" = "Finance";
+"finance.currency" = "Currency";
+"finance.notPermitted" = "This account cannot see the finance screen.";
+"finance.outstanding" = "Outstanding";
+"finance.collectedThisMonth" = "Collected this month";
+"finance.ageing" = "Ageing";
+"finance.recordCount" = "%d records";
+"finance.records" = "Records";
+"finance.status" = "Status";
+"finance.allStatuses" = "All";
+"finance.noRecords" = "Nothing matches this filter.";
+"finance.loadMore" = "Load more";
+"finance.agency" = "Agency";
+"finance.recordPayment" = "Record a payment";
+"finance.amount" = "Amount";
+"finance.method" = "Method";
+"finance.reference" = "Reference (optional)";
+"menu.finance" = "Finance";

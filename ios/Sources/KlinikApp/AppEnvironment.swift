@@ -37,6 +37,8 @@ public final class AppEnvironment {
     public let briefing: BriefingAPI
     public let reports: ReportsAPI
     public let assistant: AssistantAPI
+    public let analytics: AnalyticsAPI
+    public let finance: FinanceAPI
 
     /// Chunked upload, shared by every screen that can attach a file.
     public let resumable: ResumableUpload
@@ -107,6 +109,8 @@ public final class AppEnvironment {
         briefing = BriefingAPI(client: client)
         reports = ReportsAPI(client: client)
         assistant = AssistantAPI(client: client)
+        analytics = AnalyticsAPI(client: client)
+        finance = FinanceAPI(client: client)
         resumable = ResumableUpload(client: client)
 
     }

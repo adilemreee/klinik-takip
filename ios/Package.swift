@@ -32,6 +32,8 @@ let package = Package(
         .library(name: "KlinikBriefingFeature", targets: ["KlinikBriefingFeature"]),
         .library(name: "KlinikReportsFeature", targets: ["KlinikReportsFeature"]),
         .library(name: "KlinikAssistantFeature", targets: ["KlinikAssistantFeature"]),
+        .library(name: "KlinikAnalyticsFeature", targets: ["KlinikAnalyticsFeature"]),
+        .library(name: "KlinikFinanceFeature", targets: ["KlinikFinanceFeature"]),
         .library(name: "KlinikApp", targets: ["KlinikApp"]),
     ],
     // The only third-party dependency in the client. SQLite through Swift's C
@@ -200,6 +202,29 @@ let package = Package(
             dependencies: ["KlinikAssistantFeature", "KlinikCore"]
         ),
 
+        // The clinic's numbers: operations, countries, revenue, channels and
+        // capacity (spec M11).
+        .target(
+            name: "KlinikAnalyticsFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        .testTarget(
+            name: "KlinikAnalyticsFeatureTests",
+            dependencies: ["KlinikAnalyticsFeature", "KlinikCore"]
+        ),
+
+        // Billing, payments and what is still owed (spec M11).
+        .target(
+            name: "KlinikFinanceFeature",
+            dependencies: ["KlinikAPI", "KlinikCore", "KlinikDesign"]
+        ),
+
+        .testTarget(
+            name: "KlinikFinanceFeatureTests",
+            dependencies: ["KlinikFinanceFeature", "KlinikCore"]
+        ),
+
         // Offline queue and synchronisation (spec M15).
         .target(name: "KlinikSync", dependencies: ["KlinikCore"]),
 
@@ -234,7 +259,8 @@ let package = Package(
                 "KlinikAppointmentsFeature", "KlinikEmergencyFeature",
                 "KlinikMedicationsFeature", "KlinikConsentsFeature",
                 "KlinikBriefingFeature", "KlinikReportsFeature",
-                "KlinikAssistantFeature",
+                "KlinikAssistantFeature", "KlinikAnalyticsFeature",
+                "KlinikFinanceFeature",
             ]
         ),
 

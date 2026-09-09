@@ -6,7 +6,9 @@ import KlinikBriefingFeature
 import KlinikComplicationsFeature
 import KlinikCore
 import KlinikDesign
+import KlinikAnalyticsFeature
 import KlinikDocumentsFeature
+import KlinikFinanceFeature
 import KlinikEmergencyFeature
 import KlinikFollowUpFeature
 import KlinikLabFeature
@@ -42,6 +44,8 @@ public enum StaffDestination: Hashable, Sendable {
     case account
     /// Every patient the caller can see, a month at a time (spec M10).
     case calendar
+    case analytics
+    case finance
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -159,6 +163,8 @@ struct StaffPatientsView: View {
             Divider()
 
             Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
+            Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
+            Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
             Button(L10n.string("menu.complicationQueue")) {
                 path.wrappedValue.append(.complicationQueue)
             }
@@ -211,6 +217,15 @@ struct StaffPatientsView: View {
         case .calendar:
             CalendarScreen(
                 model: CalendarModel(api: environment.appointments),
+                openPatient: { id, name in push(.patient(id: id, name: name)) }
+            )
+
+        case .analytics:
+            AnalyticsScreen(model: AnalyticsModel(api: environment.analytics))
+
+        case .finance:
+            FinanceScreen(
+                model: FinanceModel(api: environment.finance),
                 openPatient: { id, name in push(.patient(id: id, name: name)) }
             )
 

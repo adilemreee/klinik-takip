@@ -356,6 +356,9 @@ describe('consents', () => {
       expect(body.version).toBe(1);
       expect(body.body).toContain('Rinoplasti');
       expect(body.body).not.toContain('{{islem}}');
+      // The note to whoever maintains the file does not reach the patient
+      // about to sign it.
+      expect(body.body).not.toContain('avukat incelemesinden');
     });
 
     /// Its own answer, because "no wording published" and "your operation is

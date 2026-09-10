@@ -58,6 +58,20 @@ const MAXIMUM_SIGNATURE_BYTES = 512 * 1024;
  */
 export const TREATMENT_CONSENT_VERSION = 1;
 
+/**
+ * Where the part a patient reads begins.
+ *
+ * The file also carries a note to whoever maintains it — that it wants a
+ * lawyer's eye, which fields the clinic fills, how the per-procedure annex
+ * works. Serving that to a patient puts "this is a draft, have it reviewed" at
+ * the top of the document they are about to sign.
+ *
+ * An explicit marker rather than "everything after the first `---`": a clinic
+ * editing the file must not be able to lose half of it to a rule it cannot
+ * see. No marker means the whole file, which is the safe direction to fail.
+ */
+const PATIENT_SECTION = '<!-- ONAM-BASLANGIC -->';
+
 export interface ConsentForm {
   id: string;
   version: number;
@@ -228,7 +242,7 @@ export class ConsentsService {
         })
       : null;
 
-    const filled = ConsentsService.fill(base, {
+    const filled = ConsentsService.fill(ConsentsService.forPatient(base), {
       islem: surgery.procedureName,
       hekim: surgeon
         ? `${surgeon.firstName} ${surgeon.lastName}`
@@ -241,6 +255,15 @@ export class ConsentsService {
       version: TREATMENT_CONSENT_VERSION,
       body: annex ? `${filled}\n\n---\n\n${annex}` : filled,
     };
+  }
+
+  /// The part of the document the patient is shown.
+  static forPatient(document: string): string {
+    const marker = document.indexOf(PATIENT_SECTION);
+
+    return marker === -1
+      ? document
+      : document.slice(marker + PATIENT_SECTION.length).trimStart();
   }
 
   /**

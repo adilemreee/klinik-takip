@@ -40,6 +40,46 @@ describe('ConsentsService.fill', () => {
   });
 });
 
+/**
+ * What the patient is shown.
+ *
+ * The file also carries a note to whoever maintains it — that it wants a
+ * lawyer's eye, which fields to fill. Serving that puts "this is a draft" at
+ * the top of the document somebody is about to sign.
+ */
+describe('ConsentsService.forPatient', () => {
+  it('drops the note written for the clinic', () => {
+    const document = [
+      '# Onam Formu',
+      '',
+      '> Bu metin avukat incelemesi gerektirir.',
+      '',
+      '<!-- ONAM-BASLANGIC -->',
+      '',
+      '## Kim, neyi onaylıyor',
+    ].join('\n');
+
+    const shown = ConsentsService.forPatient(document);
+
+    expect(shown).toBe('## Kim, neyi onaylıyor');
+    expect(shown).not.toContain('avukat');
+  });
+
+  /// A clinic editing the file must not be able to lose half of it to a rule
+  /// it cannot see. No marker means the whole document.
+  it('serves everything when there is no marker', () => {
+    const document = '# Onam Formu\n\n## Kim, neyi onaylıyor';
+
+    expect(ConsentsService.forPatient(document)).toBe(document);
+  });
+
+  it('keeps a marker that appears later in the text alone', () => {
+    const document = '<!-- ONAM-BASLANGIC -->\nBir\n\nİki';
+
+    expect(ConsentsService.forPatient(document)).toBe('Bir\n\nİki');
+  });
+});
+
 describe('ConsentsService.day', () => {
   /// The date somebody reads, in the clinic's own zone — a patient in Berlin
   /// reading an operation date shifted by an hour is reading the wrong day.

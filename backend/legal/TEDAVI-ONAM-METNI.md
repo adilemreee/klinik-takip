@@ -14,8 +14,11 @@
 >
 > İşleme özel riskler ayrı bir dosyada: `TEDAVI-ONAM-<İŞLEM KODU>.md`. Varsa
 > sunucu bu metnin sonuna ekliyor. Bkz. [KLINIKTEN-ISTENENLER](KLINIKTEN-ISTENENLER.md) 13.
+>
+> **Yukarıdaki bu blok hastaya gösterilmiyor.** Sunucu aşağıdaki işaretten
+> sonrasını sunuyor; işaret silinirse dosyanın tamamı gider.
 
----
+<!-- ONAM-BASLANGIC -->
 
 ## Kim, neyi onaylıyor
 

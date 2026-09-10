@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
-import { ProcessingStatus } from '@prisma/client';
+import { Job as JobRow, ProcessingStatus } from '@prisma/client';
 import { Job, Worker } from 'bullmq';
 import type Redis from 'ioredis';
 import { PrismaService } from '../infra/prisma.service';
+import { publishJobEvent } from './job-events';
 import { JobName, QueueName } from './queue.constants';
 
 export type JobHandler = (job: Job) => Promise<void>;
@@ -52,13 +53,19 @@ export function runWorker(options: RunWorkerOptions): Worker {
         // A job nobody handles must not sit in the queue being retried: this is
         // a deployment mismatch, not a transient failure.
         logger.error(`No handler for ${options.queue}/${job.name} — marking it skipped`);
-        await markStatus(prisma, job, ProcessingStatus.SKIPPED, 'No handler registered');
+        await markStatus(
+          prisma,
+          job,
+          ProcessingStatus.SKIPPED,
+          options.connection,
+          'No handler registered',
+        );
         return;
       }
 
-      await touchStarted(prisma, job);
+      await touchStarted(prisma, job, options.connection);
       await handler(job);
-      await markStatus(prisma, job, ProcessingStatus.DONE);
+      await markStatus(prisma, job, ProcessingStatus.DONE, options.connection);
     },
     {
       connection: options.connection,
@@ -82,6 +89,7 @@ export function runWorker(options: RunWorkerOptions): Worker {
       prisma,
       job,
       statusAfterFailure(job.attemptsMade, attemptsAllowed),
+      options.connection,
       error.message,
     );
   });
@@ -97,11 +105,15 @@ function rowIdOf(job: Job): string | undefined {
   return typeof data.jobId === 'string' ? data.jobId : undefined;
 }
 
-async function touchStarted(prisma: PrismaService, job: Job): Promise<void> {
+async function touchStarted(
+  prisma: PrismaService,
+  job: Job,
+  redis: Redis,
+): Promise<void> {
   const id = rowIdOf(job);
   if (!id) return;
 
-  await prisma.job.update({
+  const row = await prisma.job.update({
     where: { id },
     data: {
       status: ProcessingStatus.PROCESSING,
@@ -112,12 +124,15 @@ async function touchStarted(prisma: PrismaService, job: Job): Promise<void> {
       error: null,
     },
   });
+
+  await announce(redis, row);
 }
 
 async function markStatus(
   prisma: PrismaService,
   job: Job,
   status: ProcessingStatus,
+  redis: Redis,
   error?: string,
 ): Promise<void> {
   const id = rowIdOf(job);
@@ -127,7 +142,7 @@ async function markStatus(
     status === ProcessingStatus.FAILED ||
     status === ProcessingStatus.SKIPPED;
 
-  await prisma.job
+  const row = await prisma.job
     .update({
       where: { id },
       data: {
@@ -139,4 +154,28 @@ async function markStatus(
       },
     })
     .catch(() => undefined);
+
+  if (row) {
+    await announce(redis, row);
+  }
+}
+
+/**
+ * Tells whoever is watching.
+ *
+ * After the row is written, never instead of it: the database is the record
+ * and this is a courtesy. A screen that misses the announcement is a screen
+ * that finds out on its next read, which is where it was before any of this.
+ */
+async function announce(redis: Redis, row: JobRow): Promise<void> {
+  await publishJobEvent(redis, {
+    jobId: row.id,
+    patientId: row.patientId,
+    entityType: row.entityType,
+    entityId: row.entityId,
+    queue: row.queue,
+    name: row.name,
+    status: row.status,
+    error: row.error,
+  });
 }

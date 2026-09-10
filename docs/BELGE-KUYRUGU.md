@@ -151,3 +151,36 @@ sunucu** karar veriyor, istemcinin tahmini yanındaki satırla çelişirdi.
 Durum takibi şimdilik yoklama ile (canlı güncelleme T4.1'deki sokete bağlı). Yoklama sınırlı:
 bekleyen iş yoksa hiç istek atılmıyor, varsa da birkaç dakika sonra duruyor — cebe girmiş bir
 ekranın sonsuza kadar yoklaması pil şikâyetidir.
+
+## Canlı İlerleme (2026-09-10)
+
+İş **worker sürecinde** oluyor; soketler **API sürecinde**. İkisi Redis'te
+buluşuyor: worker her durum değişikliğini yayınlıyor, API dinleyip o hastanın
+odasına iletiyor.
+
+```
+worker → publish klinik:job-events → API (JobsGateway) → oda: patient:<id> → istemci
+```
+
+**Bunun tamamı doğru çalışan bir ekranın üzerine konmuş bir nezakettir.**
+Ekranlar hâlâ, ortada bitmemiş iş varken yokluyor ve gerçeği veritabanından
+okuyor. Düşen bir olay birkaç saniyeye mal olur, yanlış bir cevaba asla. Bu
+yüzden bu dosyalarda hiçbir şey yeniden denemiyor, tamponlamıyor ya da tekrar
+oynatmıyor: geç gelen bir duyuru, onu gereksiz kılan okuma tarafından çoktan
+geçilmiştir.
+
+Aynı sebeple:
+
+- **Redis yoksa canlı olay da yok, uygulama ayakta.** Bağlantı kurulamıyorsa
+  gateway bunu söyleyip susuyor; ekranlar yoklamaya devam ediyor.
+- **Yayın işi düşürmüyor.** `publishJobEvent` asla fırlatmıyor — satır zaten
+  yazıldı, bu yalnız haber vermek.
+- **Hastası olmayan olay yayılmıyor.** Kapsamlanacak bir şey olmadan herkese
+  gönderilen bir iş olayı, ne kadar küçük görünürse görünsün bir sızıntıdır.
+
+**Odaya girmek REST'in kapsam kontrolünden geçiyor.** Farklı yetkilendiren bir
+kanal, REST tarafının uyguladığı her kuralın etrafından dolaşmanın yolu olurdu.
+
+**Yalnız biten iş ekranı tazeliyor.** Sıradan işlemeye geçen bir satır listede
+hiçbir şeyi değiştirmiyor; onun için sayfayı yeniden okumak, aynı bekleme
+göstergesini yeniden çizmek için bir istek harcamak olurdu.

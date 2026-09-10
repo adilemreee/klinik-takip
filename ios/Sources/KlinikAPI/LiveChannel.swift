@@ -40,3 +40,41 @@ public protocol LiveChannel: AnyObject {
     func subscribe(_ conversationId: String, _ handler: @escaping @MainActor (LiveEvent) -> Void)
     func unsubscribe(_ conversationId: String)
 }
+
+/// A job's status, as it changed (spec M14).
+public struct JobUpdate: Decodable, Sendable, Equatable {
+    public let jobId: String
+    public let patientId: String?
+    /// What the job is about, e.g. `documents`.
+    public let entityType: String?
+    public let entityId: String?
+    public let queue: String
+    public let name: String
+    public let status: ProcessingStatus
+    /// Set only when it failed, and already safe to show staff.
+    public let error: String?
+
+    /// Whether the work is over, one way or another — the moment a screen
+    /// showing a spinner has something new to read.
+    public var isSettled: Bool { status.isSettled }
+}
+
+/**
+ * Watching a patient's background work, as a screen sees it.
+ *
+ * A courtesy on top of a correct screen: the lists poll while anything is
+ * unsettled and read the truth from the server, so a dropped event costs a few
+ * seconds and never a wrong answer. That is why nothing here replays or
+ * buffers — an announcement that arrives late has already been overtaken by
+ * the read that made it unnecessary.
+ */
+@MainActor
+public protocol JobChannel: AnyObject {
+    /// Asks for this patient's job events. The scope check runs on the server,
+    /// per connection.
+    func watch(_ patientId: String)
+    func unwatch(_ patientId: String)
+
+    func onJob(_ patientId: String, _ handler: @escaping @MainActor (JobUpdate) -> Void)
+    func stopJobs(_ patientId: String)
+}

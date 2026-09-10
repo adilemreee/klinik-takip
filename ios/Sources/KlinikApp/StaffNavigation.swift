@@ -374,7 +374,9 @@ struct StaffPatientsView: View {
 
                         return (scanned.url, scanned.contentType, scanned.preview)
                     }
-                    : nil
+                    : nil,
+                jobs: environment.live,
+                watching: patientId
             )
 
         case .labReview(let patientId):

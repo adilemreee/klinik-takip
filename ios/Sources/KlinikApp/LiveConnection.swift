@@ -24,7 +24,7 @@ import KlinikCore
  */
 @MainActor
 @Observable
-public final class LiveConnection: LiveChannel {
+public final class LiveConnection: LiveChannel, JobChannel {
     /// Whether the socket is carrying anything. Reads still work without it;
     /// this is not the app's connectivity indicator.
     public private(set) var isConnected = false
@@ -37,8 +37,18 @@ public final class LiveConnection: LiveChannel {
     /// navigating back and forward does.
     private var handlers: [String: @MainActor (LiveEvent) -> Void] = [:]
 
+    /// Job handlers, per patient, and the patients to re-watch after a
+    /// reconnect — the server's scope check runs per connection.
+    private var jobHandlers: [String: @MainActor (JobUpdate) -> Void] = [:]
+    private var watching: Set<String> = []
+
     private var manager: SocketManager?
     private var socket: SocketIOClient?
+
+    /// A second namespace over the same connection, not a second connection:
+    /// socket.io multiplexes, and a phone holding two sockets to the same host
+    /// is a phone spending twice the battery to hear the same silence.
+    private var jobs: SocketIOClient?
 
     /// Conversations to (re)join. Kept because a reconnect starts with no
     /// rooms: the server's join check runs per connection, deliberately, and a
@@ -127,10 +137,29 @@ public final class LiveConnection: LiveChannel {
             }
         }
 
+        let jobs = manager.socket(forNamespace: "/jobs")
+
+        jobs.on(clientEvent: .connect) { [weak self] _, _ in
+            Task { @MainActor in self?.didConnectJobs() }
+        }
+
+        jobs.on("job") { [weak self] data, _ in
+            guard
+                let update = LiveConnection.decode(JobUpdate.self, from: data),
+                let patientId = update.patientId
+            else {
+                return
+            }
+
+            Task { @MainActor in self?.jobHandlers[patientId]?(update) }
+        }
+
         self.manager = manager
         self.socket = socket
+        self.jobs = jobs
 
         socket.connect()
+        jobs.connect()
     }
 
     /// Closes it. Called when the session ends: a socket authenticated as one
@@ -138,13 +167,44 @@ public final class LiveConnection: LiveChannel {
     public func stop() {
         socket?.removeAllHandlers()
         socket?.disconnect()
+        jobs?.removeAllHandlers()
+        jobs?.disconnect()
         manager?.disconnect()
 
         socket = nil
+        jobs = nil
         manager = nil
         joined = []
+        watching = []
         handlers = [:]
+        jobHandlers = [:]
         isConnected = false
+    }
+
+    // MARK: - Background work (spec M14)
+
+    public func watch(_ patientId: String) {
+        watching.insert(patientId)
+        jobs?.emit("watch", ["patientId": patientId])
+    }
+
+    public func unwatch(_ patientId: String) {
+        watching.remove(patientId)
+        jobs?.emit("unwatch", ["patientId": patientId])
+    }
+
+    public func onJob(_ patientId: String, _ handler: @escaping @MainActor (JobUpdate) -> Void) {
+        jobHandlers[patientId] = handler
+    }
+
+    public func stopJobs(_ patientId: String) {
+        jobHandlers[patientId] = nil
+    }
+
+    private func didConnectJobs() {
+        for patientId in watching {
+            jobs?.emit("watch", ["patientId": patientId])
+        }
     }
 
     /**

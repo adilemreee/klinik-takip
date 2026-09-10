@@ -71,7 +71,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 | M11 | Finans ve istatistik | 🟢 | İki panel: grafikli istatistik, alacak yaşlandırma + tahsilat + ödeme/iade |
 | M12 | Raporlama ve dışa aktarım | 🟢 | Kolon seçimli export, geçmiş, indirme, hasta özet PDF isteme |
 | M13 | Denetim günlüğü | 🟢 | Filtreli kayıt + sunucunun anomali tespiti |
-| M14 | Asenkron kuyruk | 🟡 | Durum rozetleri ve başarısızlık nedeni var; canlı WebSocket ilerlemesi yok |
+| M14 | Asenkron kuyruk | 🟢 | Durum rozetleri, başarısızlık nedeni ve **canlı ilerleme** — worker Redis'e yayınlıyor, API soketten iletiyor. Yoklama yedek olarak duruyor |
 | M15 | Offline-first | 🟡 | Okumalar son bilinen yanıta düşüyor; **yazmalar kuyruğa giriyor, tekrar gönderiliyor ve ekranda gönderilmedi diye görünüyor**. Fotoğraf/belge yüklemeleri hâlâ kuyruk dışında |
 | M16 | Belge tarayıcı + OCR | 🟢 | VisionKit tarama, çok sayfa → PDF, cihaz üstü ön okuma |
 | M17 | Onam ve belge yönetimi | 🟢 | Onam verme/geri alma, **parmakla imza** (PNG olarak özel depoda, hekim dosyadan görüyor), **ameliyat öncesi belge kontrol listesi**. Onam metnini klinik yayımlayana kadar imzalama ekranı açılmıyor |

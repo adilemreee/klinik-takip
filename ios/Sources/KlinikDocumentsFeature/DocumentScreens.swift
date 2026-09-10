@@ -13,6 +13,13 @@ public struct DocumentListView: View {
     /// Scanning with the camera (spec M16). Nil on a device that has no
     /// scanner, which hides the button rather than showing one that fails.
     private let scan: (() async -> (url: URL, contentType: String, preview: String)?)?
+    /// Live job progress (spec M14), supplied by the shell. A courtesy on top
+    /// of the polling below, not a replacement for it: a dropped event costs a
+    /// few seconds, and the poll is what makes that true.
+    private let jobs: (any JobChannel)?
+    /// Whose jobs to watch. The patient's own file on their side, the open
+    /// file on the clinician's.
+    private let watching: String?
 
     @State private var state = DocumentsState()
     @State private var chosenType: DocumentType = .lab
@@ -28,12 +35,16 @@ public struct DocumentListView: View {
         model: DocumentsModel,
         canUpload: Bool = true,
         pickFile: @escaping () async -> (url: URL, contentType: String)?,
-        scan: (() async -> (url: URL, contentType: String, preview: String)?)? = nil
+        scan: (() async -> (url: URL, contentType: String, preview: String)?)? = nil,
+        jobs: (any JobChannel)? = nil,
+        watching: String? = nil
     ) {
         self.model = model
         self.canUpload = canUpload
         self.pickFile = pickFile
         self.scan = scan
+        self.jobs = jobs
+        self.watching = watching
     }
 
     public var body: some View {
@@ -43,6 +54,13 @@ public struct DocumentListView: View {
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
         .task { await pollWhileProcessing() }
+        .task { watchJobs() }
+        .onDisappear {
+            guard let jobs, let watching else { return }
+
+            jobs.unwatch(watching)
+            jobs.stopJobs(watching)
+        }
         .sheet(item: $previewing) { document in
             DocumentPreview(url: document.url)
         }
@@ -237,6 +255,25 @@ public struct DocumentListView: View {
      * couple of minutes is not going to settle because we asked again, and a
      * screen left polling forever in a pocket is a battery complaint.
      */
+    /**
+     * Refreshes when the server says a job finished (spec M14).
+     *
+     * Only on a settled job: a row moving from queued to processing changes
+     * nothing the list shows, and re-reading the page for it would spend a
+     * request to redraw the same spinner.
+     */
+    private func watchJobs() {
+        guard let jobs, let watching else { return }
+
+        jobs.onJob(watching) { update in
+            guard update.isSettled else { return }
+
+            Task { await refresh { await model.refreshStatuses() } }
+        }
+
+        jobs.watch(watching)
+    }
+
     private func pollWhileProcessing() async {
         for _ in 0..<40 {
             try? await Task.sleep(for: .seconds(3))

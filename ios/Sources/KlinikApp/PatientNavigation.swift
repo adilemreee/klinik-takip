@@ -244,7 +244,12 @@ struct PatientHomeView: View {
 
                         return (scanned.url, scanned.contentType, scanned.preview)
                     }
-                    : nil
+                    : nil,
+                jobs: environment.live,
+                // The patient's own file. Nil until the clinic has linked one,
+                // which leaves the screen polling — which is what it did before
+                // any of this and is still correct.
+                watching: patientId
             )
 
         case .medications:

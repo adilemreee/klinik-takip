@@ -72,7 +72,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 | M12 | Raporlama ve dışa aktarım | 🟢 | Kolon seçimli export, geçmiş, indirme, hasta özet PDF isteme |
 | M13 | Denetim günlüğü | 🟢 | Filtreli kayıt + sunucunun anomali tespiti |
 | M14 | Asenkron kuyruk | 🟢 | Durum rozetleri, başarısızlık nedeni ve **canlı ilerleme** — worker Redis'e yayınlıyor, API soketten iletiyor. Yoklama yedek olarak duruyor |
-| M15 | Offline-first | 🟡 | Okumalar son bilinen yanıta düşüyor; **yazmalar kuyruğa giriyor, tekrar gönderiliyor ve ekranda gönderilmedi diye görünüyor**. Fotoğraf/belge yüklemeleri hâlâ kuyruk dışında |
+| M15 | Offline-first | 🟢 | Okumalar son bilinen yanıta düşüyor; yazmalar kuyruğa girip tekrar gönderiliyor ve ekranda "gönderilmedi" diye görünüyor; **dosyalar da kuyrukta** — kopyası uygulamanın kendi dizininde, oturum saklanıyor, 18 MB'da kopan aktarım oradan devam ediyor |
 | M16 | Belge tarayıcı + OCR | 🟢 | VisionKit tarama, çok sayfa → PDF, cihaz üstü ön okuma |
 | M17 | Onam ve belge yönetimi | 🟢 | Onam verme/geri alma, **parmakla imza** (PNG olarak özel depoda, hekim dosyadan görüyor), **ameliyat öncesi belge kontrol listesi**. Onam metnini klinik yayımlayana kadar imzalama ekranı açılmıyor |
 | M18 | PROM anketleri | 🟢 | Hasta formu + doktorda eğilim ve bulgular |

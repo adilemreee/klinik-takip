@@ -221,6 +221,13 @@ jobs:
       - name: Check string catalogues agree
         run: node design/scripts/check-strings.mjs
 
+      # A `View` is main-actor isolated and the compiler in CI carries that to
+      # its statics while the newer one on a developer's Mac does not — so a
+      # pure helper called from a test compiles locally and fails here. Three
+      # rounds lost to it; cheaper to check in a second than in a build.
+      - name: Check actor isolation on View statics
+        run: node design/scripts/check-isolation.mjs
+
       # Both clients generate from the shared sources. Sharing a document each
       # platform then transcribes by hand is not sharing — they drift within a
       # release. Regenerating and diffing is what makes it true.

@@ -103,6 +103,25 @@ zincirinin anlaşamadığı şeylerden biri. O yüzden çıkarıma bırakmayın:
 static var isAvailable: Bool { VNDocumentCameraViewController.isSupported }
 ```
 
+### Kural: testin çağırdığı `View` static'i `nonisolated` olmalı
+
+Bir `View` main actor'a bağlıdır ve CI'daki derleyici bu izolasyonu tipin
+`static` üyelerine de taşır; buradaki yeni derleyici taşımaz. Sonuç: ekranın
+yanında duran saf bir yardımcı fonksiyon **yerelde derlenir, CI'da patlar**:
+
+```
+error: call to main actor-isolated static method 'isSigned'
+       in a synchronous nonisolated context
+```
+
+Kural her static için değil — çoğu yalnız view'ın kendi gövdesinden okunuyor ve
+orada izolasyon zaten doğru. **Testin çağırdığı** static'ler `nonisolated`
+olmalı, çünkü test metodu izolasyonsuzdur. (Testin kendisi `@MainActor` ise
+sorun yok; sınır geçilmiyor.)
+
+`design/scripts/check-isolation.mjs` bunu tarıyor ve CI çalıştırıyor. Üç tur bu
+hataya gitti; bir saniyelik kontrol bir derlemeden ucuz.
+
 ### Kural: aktör metoduna `Sendable` olmayan varsayılan parametre koymayın
 
 ```swift

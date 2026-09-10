@@ -51,7 +51,10 @@ public struct SignaturePad: View {
 
     /// Whether anything has been drawn. A single tap is not a signature, so a
     /// stroke of one point does not count.
-    public static func isSigned(_ strokes: [[CGPoint]]) -> Bool {
+    ///
+    /// `nonisolated` because a static on a `View` otherwise inherits the
+    /// view's main-actor isolation, and the tests call it directly.
+    nonisolated public static func isSigned(_ strokes: [[CGPoint]]) -> Bool {
         strokes.contains { $0.count > 1 }
     }
 

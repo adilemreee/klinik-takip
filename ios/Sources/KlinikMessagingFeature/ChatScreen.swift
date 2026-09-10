@@ -15,6 +15,10 @@ public struct ChatScreen: View {
     /// Supplied by the app shell, which owns the picker. Nil hides the button
     /// rather than showing one that does nothing.
     private let pickAttachment: (() async -> (url: URL, contentType: String)?)?
+    /// The live half, supplied by the shell because a connection belongs to
+    /// the session rather than to a screen. Nil in previews and tests, where
+    /// the thread simply does not update on its own.
+    private let live: (any LiveChannel)?
 
     @State private var state = ChatState()
     @State private var draft = ""
@@ -33,11 +37,14 @@ public struct ChatScreen: View {
         Locale.current.language.languageCode?.identifier ?? "tr"
     }
 
-    /// - Parameter onTyping: notifies the socket. Supplied by the caller so the
-    ///   screen owns no connection of its own.
+    /// - Parameter onTyping: notifies the socket. Kept as a separate closure
+    ///   from `live` because the assistant screen reuses this view with no
+    ///   connection at all, and a nil channel there must not mean a nil typing
+    ///   indicator somewhere else.
     public init(
         model: ChatModel,
         canUseTemplates: Bool = false,
+        live: (any LiveChannel)? = nil,
         onTyping: (@Sendable (String) -> Void)? = nil,
         openAssistant: (() -> Void)? = nil,
         pickAttachment: (() async -> (url: URL, contentType: String)?)? = nil
@@ -47,6 +54,7 @@ public struct ChatScreen: View {
         self.onTyping = onTyping
         self.openAssistant = openAssistant
         self.pickAttachment = pickAttachment
+        self.live = live
     }
 
     public var body: some View {
@@ -58,6 +66,17 @@ public struct ChatScreen: View {
             await refresh { await model.load() }
             await refresh { await model.markRead() }
             if canUseTemplates { await refresh { await model.loadQuickReplies() } }
+
+            // After the load, because joining needs the conversation id the
+            // load resolves — a patient's thread is found by who they are, not
+            // named by the caller.
+            await listen()
+        }
+        .onDisappear {
+            guard let conversationId = state.conversationId else { return }
+
+            live?.leave(conversationId)
+            live?.unsubscribe(conversationId)
         }
     }
 
@@ -630,5 +649,44 @@ struct TranslateAction: View {
             .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
             .frame(minHeight: Tokens.minimumTouchTarget, alignment: .leading)
         }
+    }
+}
+
+
+extension ChatScreen {
+    /**
+     * Joins the room and routes what arrives into the model.
+     *
+     * A message the caller sent themselves arrives twice — once from the POST
+     * and once over the socket — and `ChatModel.append` replaces by id rather
+     * than appending, which is what keeps the thread from showing both.
+     */
+    @MainActor
+    fileprivate func listen() async {
+        guard let live, let conversationId = state.conversationId else { return }
+
+        live.subscribe(conversationId) { event in
+            Task { @MainActor in
+                switch event {
+                case .message(let message):
+                    await model.receive(message)
+                    // A message arriving while the thread is open has been
+                    // read by definition: the person is looking at it.
+                    await model.markRead()
+
+                case .typing(_, let userId):
+                    await model.setTyping(userId, isTyping: true)
+
+                case .read:
+                    // Nothing to change on this side yet: the ticks a reader
+                    // sees are their own, and the sender's screen reloads.
+                    break
+                }
+
+                state = await model.currentState()
+            }
+        }
+
+        live.join(conversationId)
     }
 }

@@ -54,6 +54,10 @@ public final class AppEnvironment {
     /// screen (spec M15).
     public let connection: ConnectionState
 
+    /// Live message delivery and the typing indicator (spec section 3.2).
+    /// Owned here because a connection belongs to the session, not a screen.
+    public let live: LiveConnection
+
     /// The offline queue's home on disk. Nil only if the file cannot be opened,
     /// which is reported rather than papered over — see `storeFailure`.
     public let outbox: OutboxStore
@@ -88,6 +92,7 @@ public final class AppEnvironment {
         )
 
         connection = ConnectionState()
+        live = LiveConnection(baseURL: baseURL, session: session)
 
         // The store is opened before the client, because the client's response
         // cache lives in it. A store that cannot be opened costs the offline

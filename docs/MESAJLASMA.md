@@ -113,3 +113,42 @@ hastanın yazdığı gibi ulaşması, hiç çeviri olmamasından kötüdür.
 **Okunamayan yanıt atılıyor.** Modelin cevabı JSON olarak okunamazsa hiçbir şey
 kaydedilmiyor — ham metni geçirmek "İşte çeviri:" cümlesini ya da yarım bir JSON
 parçasını hekimin mesaj akışına hastanın yazdığı gibi koyardı.
+
+## Canlı Teslim (2026-09-10)
+
+Sunucuda socket.io gateway T3'ten beri duruyordu — oda başına yetki kontrolü,
+teslim, yazıyor göstergesi. **iOS'ta karşılığı hiç yazılmamıştı:**
+`ChatModel.receive` vardı ve yalnız testler çağırıyordu. Mesajlar ancak ekran
+yeniden yüklendiğinde görünüyordu.
+
+### Kütüphane kararı
+
+`socket.io-client-swift` eklendi — GRDB'den sonra ikinci üçüncü-taraf bağımlılık.
+Aynı ilke: **ham API güvensizse kütüphane.** Sunucu düz WebSocket değil Engine.IO
+konuşuyor: el sıkışma, paket tipleri, namespace ve bir ping/timeout dansı.
+Timeout mantığını ince bir şekilde yanlış yazmak, yirmi beş saniye sonra sessizce
+teslim etmeyi bırakan bir sohbet demek — ve bunu kimse fark etmiyor, ta ki bir
+hastanın mesajı okunmadan beklemiş olana kadar.
+
+### Bağlantı kabuğa ait
+
+`LiveConnection` oturuma ait, ekrana değil — push kaydı gibi. Kendi bağlantısını
+açan bir sohbet ekranı, geri gidip yeniden girildiğinde ikincisini açardı ve
+klinik aynı mesajı iki kez teslim ederdi.
+
+**Jeton her bağlanışta yeniden alınıyor.** Soketler erişim jetonundan uzun yaşar
+— bir vizit turu bir jetonun ömründen uzundur — ve süresi geçmiş jetonla yeniden
+bağlanmak el sıkışmada reddedilir, ki bu ekranda "kliniğe ulaşılamıyor" gibi
+görünür.
+
+**Yeniden bağlanınca odalara yeniden giriliyor.** Sunucunun "bu konuşmayı
+görebilir misin" kontrolü bağlantı başına çalışıyor, bilerek; aksini varsayan bir
+istemci ilk kesintiden sonra bağlı görünüp hiçbir şey teslim etmezdi.
+
+**Mesajlar hâlâ REST ile gönderiliyor.** Gönderim sırasında kopan bir soket,
+istemciyi mesajın var olup olmadığından emin olmayan bir yerde bırakır; POST ya
+bir kimlik döner ya dönmez. Soket teslimi ve yazıyor göstergesini taşıyor —
+bir dakika geç geldiğinde değeri kalmayan iki şeyi.
+
+**Kendi mesajın iki kez geliyor** (POST'tan ve soketten) ve `append` kimliğe göre
+değiştiriyor, eklemiyor. Sohbetin ikisini birden göstermemesini sağlayan bu.

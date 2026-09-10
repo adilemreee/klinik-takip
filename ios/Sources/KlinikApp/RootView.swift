@@ -169,6 +169,10 @@ public struct RootView: View {
         do {
             identity = try await environment.me.identity()
             await startPush()
+            // After identity, like push: the socket authenticates as somebody,
+            // and opening it before we know who would be a connection nobody
+            // could scope.
+            await environment.live.start()
         } catch {
             // Not treated as signed out: a network blip is not a lapsed
             // session, and signing somebody out for one would lose their queued
@@ -183,6 +187,10 @@ public struct RootView: View {
         await push?.stop()
         push = nil
         PushTokenBridge.shared.registrar = nil
+
+        // A socket authenticated as one person must not still be delivering
+        // when the next one signs in.
+        environment.live.stop()
 
         await environment.session.signOut()
         // The cache holds one person's clinical record. Left behind, the next

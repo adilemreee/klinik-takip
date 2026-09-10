@@ -193,6 +193,10 @@ struct PatientHomeView: View {
                     // would let the client name someone else's.
                     try await environment.messaging.myConversation()
                 },
+                live: environment.live,
+                onTyping: { [live = environment.live] conversationId in
+                    Task { @MainActor in live.typing(in: conversationId) }
+                },
                 // Spec M4 puts the assistant in front of the clinic rather
                 // than beside it: a question it can answer from the clinic's
                 // own documents does not need to wait for a nurse.

@@ -1,5 +1,5 @@
 {
-  "originHash" : "5ae14c2e0c28e746f9a65e41475246211e7d0a116599fa259085971c74e8faea",
+  "originHash" : "0c496336eaef9929d3e17029252c1482c7aac72ce379d70de48beb14a37febe3",
   "pins" : [
     {
       "identity" : "grdb.swift",
@@ -8,6 +8,24 @@
       "state" : {
         "revision" : "b83108d10f42680d78f23fe4d4d80fc88dab3212",
         "version" : "7.11.1"
+      }
+    },
+    {
+      "identity" : "socket.io-client-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/socketio/socket.io-client-swift.git",
+      "state" : {
+        "revision" : "42da871d9369f290d6ec4930636c40672143905b",
+        "version" : "16.1.1"
+      }
+    },
+    {
+      "identity" : "starscream",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/daltoniam/Starscream",
+      "state" : {
+        "revision" : "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+        "version" : "4.0.8"
       }
     }
   ],

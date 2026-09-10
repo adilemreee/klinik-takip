@@ -413,6 +413,10 @@ struct StaffPatientsView: View {
                     try await environment.messaging.conversation(patientId: patientId)
                 },
                 canUseTemplates: true,
+                live: environment.live,
+                onTyping: { [live = environment.live] conversationId in
+                    Task { @MainActor in live.typing(in: conversationId) }
+                },
                 pickAttachment: { await FilePicker.present() }
             )
 

@@ -42,12 +42,23 @@ let package = Package(
         .library(name: "KlinikAISettingsFeature", targets: ["KlinikAISettingsFeature"]),
         .library(name: "KlinikApp", targets: ["KlinikApp"]),
     ],
-    // The only third-party dependency in the client. SQLite through Swift's C
-    // interop means manual statement lifetimes and finalisation on every error
-    // path, which is precisely the class of bug not worth hand-rolling in a
-    // health application; GRDB is the well-trodden wrapper for it.
+    /*
+     * Two third-party dependencies, chosen on the same principle: hand-roll it
+     * when the raw API is safe, take the library when the class of bug is not
+     * worth owning in a health application.
+     *
+     * GRDB — SQLite through Swift's C interop means manual statement lifetimes
+     * and finalisation on every error path.
+     *
+     * Socket.IO — the server speaks Engine.IO, not plain WebSocket: a
+     * handshake, packet types, namespaces, and a ping/timeout dance. Getting
+     * the timeout logic subtly wrong gives a chat that silently stops
+     * delivering after twenty-five seconds, which nobody notices until a
+     * patient's message has been sitting unread.
+     */
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
+        .package(url: "https://github.com/socketio/socket.io-client-swift.git", from: "16.1.0"),
     ],
     targets: [
         // Generated from design/tokens.json, shared with Android (spec 3.2).
@@ -316,6 +327,7 @@ let package = Package(
                 "KlinikFinanceFeature", "KlinikExportsFeature", "KlinikSurveysFeature",
                 "KlinikAuditFeature", "KlinikProtocolsFeature", "KlinikTravelFeature",
                 "KlinikAISettingsFeature",
+                .product(name: "SocketIO", package: "socket.io-client-swift"),
             ]
         ),
 

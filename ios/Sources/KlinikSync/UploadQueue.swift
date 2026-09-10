@@ -31,6 +31,16 @@ public actor UploadQueue {
     private let uploads: ResumableUpload
     private let maxAttempts: Int
 
+    /**
+     * Created inside the actor, never passed in.
+     *
+     * `FileManager` is not `Sendable`, so a `fileManager: FileManager =
+     * .default` parameter would build one on the caller's side and send it
+     * across the isolation boundary — which the compiler in CI refuses and the
+     * newer one here does not. Nothing needs to inject it, so nothing does.
+     */
+    private let files = FileManager.default
+
     public init(store: UploadStore, uploads: ResumableUpload, maxAttempts: Int = 5) {
         self.store = store
         self.uploads = uploads
@@ -51,18 +61,17 @@ public actor UploadQueue {
         type: DocumentType,
         contentType: String,
         originalName: String? = nil,
-        sessionId: String? = nil,
-        fileManager: FileManager = .default
+        sessionId: String? = nil
     ) async throws -> PendingUpload {
-        let directory = try PendingUpload.directory(fileManager: fileManager)
+        let directory = try PendingUpload.directory(fileManager: files)
         let id = UUID().uuidString
         let destination = directory
             .appendingPathComponent(id)
             .appendingPathExtension(fileURL.pathExtension)
 
-        try fileManager.copyItem(at: fileURL, to: destination)
+        try files.copyItem(at: fileURL, to: destination)
 
-        let attributes = try? fileManager.attributesOfItem(atPath: destination.path)
+        let attributes = try? files.attributesOfItem(atPath: destination.path)
         let size = (attributes?[.size] as? Int) ?? 0
 
         let upload = PendingUpload(
@@ -201,30 +210,30 @@ public actor UploadQueue {
     }
 
     /// Drops a queued upload at the user's request, and the bytes with it.
-    public func discard(id: String, fileManager: FileManager = .default) async {
+    public func discard(id: String) async {
         let upload = await unfinished().first { $0.id == id }
 
         try? await store.forget(id: id)
 
         if let upload {
-            try? fileManager.removeItem(at: upload.fileURL)
+            try? files.removeItem(at: upload.fileURL)
         }
     }
 
     /// Empties the queue when the session ends. The rows are addressed to
     /// `me/…` like everything else here, and the files are one person's.
-    public func discardEverything(fileManager: FileManager = .default) async {
+    public func discardEverything() async {
         for upload in await unfinished() {
             try? await store.forget(id: upload.id)
-            try? fileManager.removeItem(at: upload.fileURL)
+            try? files.removeItem(at: upload.fileURL)
         }
     }
 
-    private func forget(_ upload: PendingUpload, fileManager: FileManager = .default) async {
+    private func forget(_ upload: PendingUpload) async {
         try? await store.forget(id: upload.id)
         // The clinic has it now; a second copy on the phone is only somebody's
         // medical record taking up space in a directory nobody looks at.
-        try? fileManager.removeItem(at: upload.fileURL)
+        try? files.removeItem(at: upload.fileURL)
     }
 
     private func record(_ upload: PendingUpload, error: String) async {

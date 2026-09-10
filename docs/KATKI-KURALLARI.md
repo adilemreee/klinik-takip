@@ -103,6 +103,29 @@ zincirinin anlaşamadığı şeylerden biri. O yüzden çıkarıma bırakmayın:
 static var isAvailable: Bool { VNDocumentCameraViewController.isSupported }
 ```
 
+### Kural: aktör metoduna `Sendable` olmayan varsayılan parametre koymayın
+
+```swift
+// Yanlış: `.default` çağıranın tarafında üretilir ve aktör sınırından geçer
+public actor UploadQueue {
+    public func discard(id: String, fileManager: FileManager = .default) async { … }
+}
+
+// Doğru: aktörün kendi içinde
+public actor UploadQueue {
+    private let files = FileManager.default
+}
+```
+
+`FileManager`, `UserDefaults`, `NotificationCenter` — hiçbiri `Sendable` değil.
+Varsayılan değer **çağırma yerinde** hesaplanıyor, yani nesne aktöre gönderiliyor.
+Yereldeki 6.3 buna ses çıkarmadı, CI'daki 6.1 `sending value of non-Sendable type`
+diye reddetti.
+
+**Muaf olanlar:** aktörün `static` üyeleri (izolasyonsuzdur) ve `@MainActor` bir
+tipin `@MainActor` bir yerden çağrılan init'i — ikisinde de sınır geçilmiyor.
+`SQLiteStore.defaultURL(fileManager:)` bu yüzden duruyor.
+
 ### Kural: `guard` ile bayrağı kaldırmak arasına `await` koymayın
 
 Bir aktörde (veya `@MainActor` bir tipte) yeniden girişi engelleyen bayrak, kontrolle

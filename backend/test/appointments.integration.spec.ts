@@ -524,4 +524,137 @@ describe('appointments', () => {
       expect(response.text).not.toContain('BEGIN:VEVENT');
     });
   });
+
+  /**
+   * Publishing the hours (spec M10).
+   *
+   * Until a window exists nothing can be booked at all — the booking check
+   * refuses a clinician who has published no hours, deliberately — so these
+   * routes are not a refinement of booking. They are what switches it on, and
+   * before this there was no way to reach them.
+   */
+  describe('availability', () => {
+    /*
+     * Its own clinician, so publishing and withdrawing here cannot disturb the
+     * shared doctor every booking test relies on.
+     *
+     * A doctor rather than a nurse: publishing hours needs
+     * `appointments.write`, which the default matrix does not grant nurses. A
+     * clinic that wants its nurses to manage their own hours grants it as a
+     * per-user override — widening the role here would decide that for them.
+     */
+    let clinician: { token: string; userId: string; staffId: string };
+
+    const own = (token: string): request.Test =>
+      request(server).get('/appointments/availability').set('Authorization', `Bearer ${token}`);
+
+    beforeAll(async () => {
+      clinician = await actorFor(Role.DOCTOR);
+    });
+
+    it('publishes a window and hands it back', async () => {
+      const created = await request(server)
+        .post('/appointments/availability')
+        .set('Authorization', `Bearer ${clinician.token}`)
+        .send({ dayOfWeek: 3, startTime: '10:00', endTime: '16:00' })
+        .expect(201);
+
+      const body = created.body as { id: string; dayOfWeek: number; isActive: boolean };
+      expect(body.dayOfWeek).toBe(3);
+      expect(body.isActive).toBe(true);
+
+      const listed = (await own(clinician.token).expect(200)).body as { id: string }[];
+      expect(listed.map((window) => window.id)).toContain(body.id);
+    });
+
+    /// A window that ends before it starts matches nothing: the clinician's
+    /// calendar would simply never offer a slot, and nothing would say why.
+    it('refuses a window that ends before it starts', async () => {
+      await request(server)
+        .post('/appointments/availability')
+        .set('Authorization', `Bearer ${clinician.token}`)
+        .send({ dayOfWeek: 3, startTime: '17:00', endTime: '09:00' })
+        .expect(400);
+    });
+
+    it('switches a window off without losing it', async () => {
+      const created = await request(server)
+        .post('/appointments/availability')
+        .set('Authorization', `Bearer ${clinician.token}`)
+        .send({ dayOfWeek: 4, startTime: '10:00', endTime: '16:00' })
+        .expect(201);
+
+      const id = (created.body as { id: string }).id;
+
+      await request(server)
+        .patch(`/appointments/availability/${id}`)
+        .set('Authorization', `Bearer ${clinician.token}`)
+        .send({ dayOfWeek: 4, startTime: '10:00', endTime: '16:00', isActive: false })
+        .expect(200);
+
+      const listed = (await own(clinician.token).expect(200)).body as {
+        id: string;
+        isActive: boolean;
+      }[];
+
+      expect(listed.find((window) => window.id === id)?.isActive).toBe(false);
+    });
+
+    /// Own hours only. Publishing somebody else's availability is a decision
+    /// about their working week, and this app does not make it.
+    it('lists only the caller own windows', async () => {
+      await request(server)
+        .post('/appointments/availability')
+        .set('Authorization', `Bearer ${clinician.token}`)
+        .send({ dayOfWeek: 5, startTime: '10:00', endTime: '16:00' })
+        .expect(201);
+
+      const doctors = (await own(doctor.token).expect(200)).body as { staffId: string }[];
+
+      expect(doctors.every((window) => window.staffId === doctor.staffId)).toBe(true);
+    });
+
+    it('does not let one clinician withdraw another one window', async () => {
+      const created = await request(server)
+        .post('/appointments/availability')
+        .set('Authorization', `Bearer ${clinician.token}`)
+        .send({ dayOfWeek: 6, startTime: '10:00', endTime: '16:00' })
+        .expect(201);
+
+      await request(server)
+        .delete(`/appointments/availability/${(created.body as { id: string }).id}`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(404);
+    });
+
+    /// Cancelling somebody's follow-up because the doctor edited next month's
+    /// hours would be the clinic changing its mind on the patient's behalf.
+    it('leaves appointments already booked inside a withdrawn window alone', async () => {
+      // This clinician's own hours, so withdrawing them cannot affect the
+      // shared doctor every booking test above depends on.
+      await publishHours(clinician.staffId);
+
+      const patientId = await makePatient();
+
+      const booked = await book(patientId, {
+        scheduledAt: slotAt(330),
+        staffId: clinician.staffId,
+      }).expect(201);
+
+      const windows = (await own(clinician.token).expect(200)).body as { id: string }[];
+
+      for (const window of windows) {
+        await request(server)
+          .delete(`/appointments/availability/${window.id}`)
+          .set('Authorization', `Bearer ${clinician.token}`)
+          .expect(204);
+      }
+
+      const appointment = await prisma.appointment.findUniqueOrThrow({
+        where: { id: (booked.body as { id: string }).id },
+      });
+
+      expect(appointment.status).not.toBe('CANCELLED');
+    });
+  });
 });

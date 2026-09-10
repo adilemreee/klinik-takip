@@ -1118,3 +1118,22 @@
 "consent.versionLabel" = "Metin sürümü";
 "consent.noneRecorded" = "Bu hasta için kayıtlı onay yok.";
 "menu.consents" = "Onaylar ve izinler";
+
+/* Müsaitlik / çalışma saatleri (Şartname M10) */
+"availability.title" = "Çalışma saatlerim";
+"menu.availability" = "Çalışma saatlerim";
+"availability.add" = "Saat aralığı ekle";
+"availability.day" = "Gün";
+"availability.from" = "Başlangıç";
+"availability.to" = "Bitiş";
+"availability.open" = "Randevuya açık";
+"availability.paused" = "Geçici olarak kapalı";
+"availability.openToggle" = "Randevuya açık";
+"availability.withdraw" = "Kaldır";
+"availability.withdrawTitle" = "Bu aralık kaldırılsın mı?";
+"availability.withdrawDetail" = "Yeni randevu alınamaz. Bu aralıkta alınmış randevular iptal edilmez — takviminizde durmaya devam eder.";
+"availability.noneTitle" = "Hiç saat tanımlı değil — kimse sizden randevu alamıyor.";
+"availability.noneDetail" = "Sistem, saat yayımlamamış bir hekime randevu vermiyor. Bir aralık ekleyene kadar takviminiz boş kalır.";
+"availability.explain" = "Hastalar yalnız bu aralıklarda randevu alabilir. Bir haftalığına kapatmak için anahtarı kapatın; kaldırmanız gerekmez.";
+"availability.endBeforeStart" = "Bitiş saati başlangıçtan sonra olmalı.";
+"availability.noProfile" = "Bu hesabın personel kaydı yok. Çalışma saatleri bir hekime ait, bir girişe değil.";

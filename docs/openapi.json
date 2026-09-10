@@ -9374,6 +9374,304 @@
         ]
       }
     },
+    "/appointments/availability": {
+      "get": {
+        "operationId": "AppointmentsController_availability",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilityWindowDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The hours you are bookable in",
+        "tags": [
+          "appointments"
+        ]
+      },
+      "post": {
+        "operationId": "AppointmentsController_publish",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAvailabilityWindowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityWindowDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Publish a window you are bookable in",
+        "tags": [
+          "appointments"
+        ]
+      }
+    },
+    "/appointments/availability/{windowId}": {
+      "patch": {
+        "operationId": "AppointmentsController_changeAvailability",
+        "parameters": [
+          {
+            "name": "windowId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAvailabilityWindowDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityWindowDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change one of your windows, or switch it off",
+        "tags": [
+          "appointments"
+        ]
+      },
+      "delete": {
+        "operationId": "AppointmentsController_withdrawAvailability",
+        "parameters": [
+          {
+            "name": "windowId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Withdraw one of your windows",
+        "tags": [
+          "appointments"
+        ]
+      }
+    },
     "/appointments/calendar": {
       "get": {
         "operationId": "AppointmentsController_calendar",
@@ -18426,6 +18724,78 @@
           "latestFindings",
           "hasTrend",
           "pending"
+        ]
+      },
+      "AvailabilityWindowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string"
+          },
+          "dayOfWeek": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 6,
+            "description": "0 = Sunday .. 6 = Saturday"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "09:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "17:00"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Istanbul"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "staffId",
+          "dayOfWeek",
+          "startTime",
+          "endTime",
+          "timezone",
+          "isActive"
+        ]
+      },
+      "SetAvailabilityWindowDto": {
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "startTime": {
+            "type": "string",
+            "example": "09:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "17:00"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Europe/Istanbul"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Off without deleting, for a week away"
+          }
+        },
+        "required": [
+          "dayOfWeek",
+          "startTime",
+          "endTime"
         ]
       },
       "AppointmentDto": {

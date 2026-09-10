@@ -240,8 +240,123 @@ export class AppointmentsService {
     );
   }
 
+  /**
+   * The caller's own staff profile.
+   *
+   * Availability belongs to a clinician, not to a login, and the two are
+   * different rows. A caller with no profile is a wiring mistake — a patient
+   * cannot reach these routes — so it is an error rather than an empty list.
+   */
+  async ownStaffId(user: AuthenticatedUser): Promise<string> {
+    const staff = await this.prisma.staffProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+
+    if (!staff) {
+      throw new NotFoundException('This account has no staff profile');
+    }
+
+    return staff.id;
+  }
+
   async availabilityFor(staffId: string): Promise<AvailabilityWindow[]> {
-    return this.prisma.availabilityWindow.findMany({ where: { staffId } });
+    return this.prisma.availabilityWindow.findMany({
+      where: { staffId },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    });
+  }
+
+  /**
+   * Publishes a window a clinician is bookable in (spec M10).
+   *
+   * Until one exists nothing can be booked at all — `withinAvailability`
+   * refuses a doctor who has published no hours, deliberately, because
+   * inventing some would book patients into time nobody agreed to. So this is
+   * not a refinement of booking; it is the thing that switches it on.
+   */
+  async publishWindow(
+    staffId: string,
+    input: {
+      dayOfWeek: number;
+      startTime: string;
+      endTime: string;
+      timezone?: string;
+      isActive?: boolean;
+    },
+  ): Promise<AvailabilityWindow> {
+    AppointmentsService.assertOrdered(input.startTime, input.endTime);
+
+    return this.prisma.availabilityWindow.create({
+      data: {
+        staffId,
+        dayOfWeek: input.dayOfWeek,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        timezone: input.timezone ?? 'Europe/Istanbul',
+        isActive: input.isActive ?? true,
+      },
+    });
+  }
+
+  async changeWindow(
+    staffId: string,
+    windowId: string,
+    input: {
+      dayOfWeek?: number;
+      startTime?: string;
+      endTime?: string;
+      timezone?: string;
+      isActive?: boolean;
+    },
+  ): Promise<AvailabilityWindow> {
+    const existing = await this.prisma.availabilityWindow.findFirst({
+      where: { id: windowId, staffId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Availability window not found');
+    }
+
+    AppointmentsService.assertOrdered(
+      input.startTime ?? existing.startTime,
+      input.endTime ?? existing.endTime,
+    );
+
+    return this.prisma.availabilityWindow.update({ where: { id: existing.id }, data: input });
+  }
+
+  /**
+   * Withdraws a window.
+   *
+   * Appointments already booked inside it are left alone. Cancelling somebody's
+   * operation follow-up because the doctor edited next month's hours would be
+   * the clinic changing its mind on the patient's behalf; the calendar shows
+   * the appointment, and a human decides.
+   */
+  async withdrawWindow(staffId: string, windowId: string): Promise<void> {
+    const existing = await this.prisma.availabilityWindow.findFirst({
+      where: { id: windowId, staffId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Availability window not found');
+    }
+
+    await this.prisma.availabilityWindow.delete({ where: { id: existing.id } });
+  }
+
+  /**
+   * A window that ends before it starts would silently never match.
+   *
+   * `withinAvailability` requires both ends of the slot inside the window, so
+   * "17:00 to 09:00" refuses everything — the doctor's calendar would simply
+   * never offer a slot, and nothing would say why.
+   */
+  private static assertOrdered(startTime: string, endTime: string): void {
+    if (startTime >= endTime) {
+      throw new BadRequestException('endTime must be after startTime');
+    }
   }
 
   /**

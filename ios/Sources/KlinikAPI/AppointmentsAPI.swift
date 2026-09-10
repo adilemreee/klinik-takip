@@ -76,6 +76,50 @@ public enum BookingRefusal: Sendable, Equatable {
     }
 }
 
+/**
+ * A weekly window a clinician is bookable in (spec M10).
+ *
+ * Local wall-clock times in a named zone rather than instants: "Tuesdays,
+ * 09:00 to 17:00" is what a clinic decides, and it stays true across a
+ * daylight-saving change that would move any instant computed from it.
+ */
+public struct AvailabilityWindow: Decodable, Sendable, Equatable, Identifiable {
+    public let id: String
+    public let staffId: String
+    /// 0 = Sunday … 6 = Saturday, matching the server.
+    public let dayOfWeek: Int
+    public let startTime: String
+    public let endTime: String
+    public let timezone: String
+    public let isActive: Bool
+
+    public init(
+        id: String,
+        staffId: String,
+        dayOfWeek: Int,
+        startTime: String,
+        endTime: String,
+        timezone: String = "Europe/Istanbul",
+        isActive: Bool = true
+    ) {
+        self.id = id
+        self.staffId = staffId
+        self.dayOfWeek = dayOfWeek
+        self.startTime = startTime
+        self.endTime = endTime
+        self.timezone = timezone
+        self.isActive = isActive
+    }
+}
+
+private struct AvailabilityBody: Encodable {
+    let dayOfWeek: Int
+    let startTime: String
+    let endTime: String
+    let timezone: String?
+    let isActive: Bool?
+}
+
 public struct AppointmentsAPI: Sendable {
     private let client: APIClient
 
@@ -162,6 +206,79 @@ public struct AppointmentsAPI: Sendable {
                 )
             ),
             as: Appointment.self
+        )
+    }
+
+    // MARK: - Availability (spec M10)
+
+    /// The hours the caller is bookable in.
+    public func availability() async throws -> [AvailabilityWindow] {
+        try await client.send(
+            Endpoint(method: .get, path: "appointments/availability"),
+            as: [AvailabilityWindow].self
+        )
+    }
+
+    /**
+     * Publishes a window.
+     *
+     * Until one exists nothing can be booked at all: the server refuses a slot
+     * for a clinician who has published no hours, deliberately, because
+     * inventing some would book patients into time nobody agreed to.
+     */
+    public func publishAvailability(
+        dayOfWeek: Int,
+        startTime: String,
+        endTime: String,
+        timezone: String? = nil
+    ) async throws -> AvailabilityWindow {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "appointments/availability",
+                body: try JSONEncoder.klinik.encode(
+                    AvailabilityBody(
+                        dayOfWeek: dayOfWeek,
+                        startTime: startTime,
+                        endTime: endTime,
+                        timezone: timezone,
+                        isActive: nil
+                    )
+                )
+            ),
+            as: AvailabilityWindow.self
+        )
+    }
+
+    /// Switches a window off for a week away, or edits its hours.
+    public func changeAvailability(
+        _ windowId: String,
+        dayOfWeek: Int,
+        startTime: String,
+        endTime: String,
+        isActive: Bool
+    ) async throws -> AvailabilityWindow {
+        try await client.send(
+            Endpoint(
+                method: .patch,
+                path: "appointments/availability/\(windowId)",
+                body: try JSONEncoder.klinik.encode(
+                    AvailabilityBody(
+                        dayOfWeek: dayOfWeek,
+                        startTime: startTime,
+                        endTime: endTime,
+                        timezone: nil,
+                        isActive: isActive
+                    )
+                )
+            ),
+            as: AvailabilityWindow.self
+        )
+    }
+
+    public func withdrawAvailability(_ windowId: String) async throws {
+        try await client.send(
+            Endpoint(method: .delete, path: "appointments/availability/\(windowId)")
         )
     }
 

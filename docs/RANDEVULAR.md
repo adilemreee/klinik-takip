@@ -78,3 +78,37 @@ boşa harcatır.
 
 İptal edilen randevu ekrandan **düşmüyor**: iptal eden hasta onun iptal olduğunu görmeli,
 kaybolduğunu görüp kliniğin haberi olup olmadığını merak etmemeli.
+
+## Çalışma Saatleri (2026-09-10)
+
+`AvailabilityWindow` tablosu baştan beri vardı ve **uç noktası yoktu.** Bunun
+sonucu göründüğünden ağırdı: `withinAvailability` boş pencere listesinde
+`false` dönüyor — bilerek, çünkü saat yayımlamamış bir hekim saat *teklif
+etmemiştir* ve uydurmak, kimsenin kabul etmediği bir zamana hasta yerleştirmek
+olurdu. Yani temiz bir kurulumda **hiçbir randevu alınamıyordu.**
+
+Artık hekim kendi haftasını uygulamadan yayımlıyor:
+
+```
+GET    /appointments/availability            → kendi pencerelerim
+POST   /appointments/availability            → yeni pencere
+PATCH  /appointments/availability/:windowId  → saatleri değiştir / kapat-aç
+DELETE /appointments/availability/:windowId  → kaldır
+```
+
+**Yalnız kendi saatleri.** Başkasının müsaitliğini yayımlamak, onun çalışma
+haftası hakkında bir karardır; bu uygulama o kararı vermiyor. İhtiyacı olan
+klinik bunu bilerek bir yönetici uç noktası olarak ekler, miras almaz.
+
+**Kapatmak silmek değil.** Bir haftalığına kapanmak çalışma haftasını
+değiştirmez; anahtar kapatılır, pencere durur. İnsanlara her dönüşte saatlerini
+yeniden girdirmek, saat girmeyi bıraktırmanın yoludur.
+
+**Kaldırılan pencerede duran randevular iptal edilmiyor.** Hekim gelecek ayın
+saatlerini düzenledi diye birinin ameliyat sonrası kontrolünü iptal etmek,
+kliniğin hastanın adına fikir değiştirmesi olurdu. Randevu takvimde durur; karar
+bir insanındır.
+
+**İzin:** `appointments.write`. Varsayılan matriste hemşirelerde yok; kendi
+saatlerini yönetmesini isteyen klinik bunu kullanıcı bazlı override ile verir —
+rolü burada genişletmek bu kararı klinik adına vermek olurdu.

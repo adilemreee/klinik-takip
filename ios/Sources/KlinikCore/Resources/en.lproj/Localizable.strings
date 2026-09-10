@@ -1118,3 +1118,22 @@
 "consent.versionLabel" = "Wording version";
 "consent.noneRecorded" = "No consent has been recorded for this patient.";
 "menu.consents" = "Consents and permissions";
+
+/* Availability / working hours (spec M10) */
+"availability.title" = "My working hours";
+"menu.availability" = "My working hours";
+"availability.add" = "Add hours";
+"availability.day" = "Day";
+"availability.from" = "From";
+"availability.to" = "To";
+"availability.open" = "Open for booking";
+"availability.paused" = "Paused";
+"availability.openToggle" = "Open for booking";
+"availability.withdraw" = "Remove";
+"availability.withdrawTitle" = "Remove these hours?";
+"availability.withdrawDetail" = "No new appointments can be booked. Appointments already booked in it are not cancelled — they stay in your calendar.";
+"availability.noneTitle" = "No hours published — nobody can book you.";
+"availability.noneDetail" = "The system will not book a clinician who has published no hours. Until you add a window your calendar stays empty.";
+"availability.explain" = "Patients can only book inside these windows. To close for a week, switch one off rather than removing it.";
+"availability.endBeforeStart" = "The end time must be after the start.";
+"availability.noProfile" = "This account has no staff profile. Working hours belong to a clinician, not to a login.";

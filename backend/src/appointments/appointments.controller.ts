@@ -1,7 +1,20 @@
-import { Body, Controller, Get, Header, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiProduces,
@@ -19,11 +32,13 @@ import { MeasurementsService } from '../measurements/measurements.service';
 import { AppointmentsService, type CalendarEntry } from './appointments.service';
 import {
   AppointmentDto,
+  AvailabilityWindowDto,
   BookAppointmentDto,
   CalendarEntryDto,
   CalendarQueryDto,
   CancelDto,
   RescheduleDto,
+  SetAvailabilityWindowDto,
 } from './dto/appointment.dto';
 
 @ApiTags('appointments')
@@ -64,6 +79,86 @@ export class PatientAppointmentsController {
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointments: AppointmentsService) {}
+
+  /**
+   * The hours this clinician is bookable in (spec M10).
+   *
+   * Declared before `:appointmentId` routes so `availability` is not read as
+   * an appointment id.
+   *
+   * Own hours only. Publishing somebody else's availability is a decision
+   * about their working week, and this app does not make it — a clinic that
+   * needs it can add an admin route deliberately rather than inherit one.
+   */
+  @Get('availability')
+  @RequirePermissions('appointments.read')
+  @ApiOperation({ summary: 'The hours you are bookable in' })
+  @ApiOkResponse({ type: [AvailabilityWindowDto] })
+  @ApiStandardErrors()
+  async availability(@CurrentUser() user: AuthenticatedUser): Promise<AvailabilityWindowDto[]> {
+    const staffId = await this.appointments.ownStaffId(user);
+
+    return this.appointments.availabilityFor(staffId);
+  }
+
+  /**
+   * Publishes a window.
+   *
+   * Until one exists nothing can be booked at all: a doctor who has published
+   * no hours has not offered any, and the booking check refuses rather than
+   * inventing some. So this is what switches booking on.
+   */
+  @Post('availability')
+  @RequirePermissions('appointments.write')
+  @Audit({ entityType: 'availability', action: AuditAction.CREATE })
+  @ApiOperation({ summary: 'Publish a window you are bookable in' })
+  @ApiCreatedResponse({ type: AvailabilityWindowDto })
+  @ApiStandardErrors()
+  async publish(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SetAvailabilityWindowDto,
+  ): Promise<AvailabilityWindowDto> {
+    const staffId = await this.appointments.ownStaffId(user);
+
+    return this.appointments.publishWindow(staffId, dto);
+  }
+
+  @Patch('availability/:windowId')
+  @RequirePermissions('appointments.write')
+  @Audit({ entityType: 'availability', action: AuditAction.UPDATE })
+  @ApiOperation({ summary: 'Change one of your windows, or switch it off' })
+  @ApiOkResponse({ type: AvailabilityWindowDto })
+  @ApiStandardErrors()
+  async changeAvailability(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('windowId', ParseUUIDPipe) windowId: string,
+    @Body() dto: SetAvailabilityWindowDto,
+  ): Promise<AvailabilityWindowDto> {
+    const staffId = await this.appointments.ownStaffId(user);
+
+    return this.appointments.changeWindow(staffId, windowId, dto);
+  }
+
+  /**
+   * Withdraws a window. Appointments already booked inside it are left alone —
+   * cancelling somebody's follow-up because the doctor edited next month's
+   * hours would be the clinic changing its mind on the patient's behalf.
+   */
+  @Delete('availability/:windowId')
+  @RequirePermissions('appointments.write')
+  @Audit({ entityType: 'availability', action: AuditAction.DELETE })
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Withdraw one of your windows' })
+  @ApiNoContentResponse()
+  @ApiStandardErrors()
+  async withdrawAvailability(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('windowId', ParseUUIDPipe) windowId: string,
+  ): Promise<void> {
+    const staffId = await this.appointments.ownStaffId(user);
+
+    await this.appointments.withdrawWindow(staffId, windowId);
+  }
 
   @Get('calendar')
   @RequirePermissions('appointments.read')

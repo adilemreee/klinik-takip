@@ -67,7 +67,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 | M7 | Fotoğraf takibi | 🟢 | Overlay, kaydırmalı karşılaştırma, işaretli fotoğraf kuyruğu |
 | M8 | Acil durum | 🟢 | Personel kuyruğu, klinik özet, harita, arama, kapatma |
 | M9 | İlaç ve uyum | 🟢 | Reçete yazma (RRULE kurucu), onay, kesme, etkileşim uyarıları, uyum skoru |
-| M10 | Randevu ve takvim | 🟡 | Ay görünümü, ICS, personel randevu verme. **Müsaitlik tanımı ve video görüşme yok** |
+| M10 | Randevu ve takvim | 🟡 | Ay görünümü, ICS, personel randevu verme, **çalışma saatleri tanımı** (hekim kendi haftasını yayımlıyor, bir haftalığına kapatabiliyor). **Video görüşme yok** (şartnamede opsiyonel) |
 | M11 | Finans ve istatistik | 🟢 | İki panel: grafikli istatistik, alacak yaşlandırma + tahsilat + ödeme/iade |
 | M12 | Raporlama ve dışa aktarım | 🟢 | Kolon seçimli export, geçmiş, indirme, hasta özet PDF isteme |
 | M13 | Denetim günlüğü | 🟢 | Filtreli kayıt + sunucunun anomali tespiti |
@@ -107,8 +107,14 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
    servis, yeni bir sağlayıcı kararı.
 5. **Sesli mesaj + transkript (M3).** `MessageType.audio` ve `transcript` alanı
    var, kayıt arayüzü ve transkripsiyon işi yok.
-6. **Müsaitlik tanımı (M10).** `AvailabilityWindow` tablosu var, uç noktası yok.
-   Doluluk raporu bu yüzden "kapasite tanımlı değil" diyor.
+6. **Müsaitlik tanımı (M10).** ✅ **2026-09-10'da yapıldı.** Hekim çalışma
+   saatlerini uygulamadan yayımlıyor, düzenliyor, bir haftalığına kapatıyor.
+
+   **Bu göründüğünden ciddi bir açıktı:** sunucu, saat yayımlamamış bir hekime
+   randevu vermiyor (`withinAvailability` boş listede `false` dönüyor) — ve
+   saat oluşturmanın hiçbir yolu yoktu. Yani temiz bir kurulumda **hiç randevu
+   alınamıyordu.** Doluluk raporunun "kapasite tanımlı değil" demesi de bunun
+   yan etkisiydi.
 7. **Video görüşme (M10).** Şartnamede opsiyonel; hiç başlanmadı.
 8. **Offline yazma kuyruğu (M15).** ✅ **2026-09-10'da yapıldı.** Ölçüm, doz
    check-in'i, şikâyet, anket ve mesaj bağlantı yokken kuyruğa giriyor; bağlantı

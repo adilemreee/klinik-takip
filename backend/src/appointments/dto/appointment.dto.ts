@@ -1,7 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AppointmentStatus, AppointmentType } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class BookAppointmentDto {
   @ApiProperty({ enum: AppointmentType })
@@ -126,4 +138,55 @@ export class CalendarEntryDto {
 
   @ApiProperty({ type: CalendarPatientDto })
   patient!: CalendarPatientDto;
+}
+
+/**
+ * A weekly window a clinician is bookable in (spec M10).
+ *
+ * Local wall-clock times in a named zone rather than instants: "Tuesdays,
+ * 09:00 to 17:00" is what a clinic decides, and it stays true across a
+ * daylight-saving change that would move any instant computed from it.
+ */
+export class AvailabilityWindowDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() staffId!: string;
+  @ApiProperty({ minimum: 0, maximum: 6, description: '0 = Sunday .. 6 = Saturday' })
+  dayOfWeek!: number;
+  @ApiProperty({ example: '09:00' }) startTime!: string;
+  @ApiProperty({ example: '17:00' }) endTime!: string;
+  @ApiProperty({ example: 'Europe/Istanbul' }) timezone!: string;
+  @ApiProperty() isActive!: boolean;
+}
+
+export class SetAvailabilityWindowDto {
+  @ApiProperty({ minimum: 0, maximum: 6 })
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  dayOfWeek!: number;
+
+  /**
+   * `HH:MM`, validated by shape here and by ordering in the service.
+   *
+   * A pattern rather than a Date: the window is a wall-clock rule, and parsing
+   * it into an instant would pin it to one day and one offset.
+   */
+  @ApiProperty({ example: '09:00' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'startTime must be HH:MM' })
+  startTime!: string;
+
+  @ApiProperty({ example: '17:00' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'endTime must be HH:MM' })
+  endTime!: string;
+
+  @ApiPropertyOptional({ example: 'Europe/Istanbul' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  timezone?: string;
+
+  @ApiPropertyOptional({ description: 'Off without deleting, for a week away' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

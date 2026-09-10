@@ -66,6 +66,8 @@ public enum StaffDestination: Hashable, Sendable {
     case checklist(patientId: String)
     /// What the patient consented to, and the signature they drew (M17).
     case consents(patientId: String)
+    /// The hours the caller is bookable in (spec M10).
+    case availability
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -206,6 +208,7 @@ struct StaffPatientsView: View {
 
             Button(L10n.string("menu.inbox")) { path.wrappedValue.append(.inbox) }
             Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
+            Button(L10n.string("menu.availability")) { path.wrappedValue.append(.availability) }
             Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
             Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
             Button(L10n.string("menu.agencies")) { path.wrappedValue.append(.agencies) }
@@ -456,6 +459,9 @@ struct StaffPatientsView: View {
                 model: ConsentsModel(api: environment.consents, patientId: patientId),
                 openSignature: { openURL($0) }
             )
+
+        case .availability:
+            AvailabilityScreen(model: AvailabilityModel(api: environment.appointments))
         }
     }
 }

@@ -163,6 +163,39 @@ public actor SQLiteStore {
             }
         }
 
+        /*
+         * An unfinished upload holds an intention, not a protocol state.
+         *
+         * v1 keyed the row on the server's session id, which meant a file
+         * chosen with no connection at all could not be remembered: there was
+         * no server to open a session with, so there was no id to file it
+         * under. The row is now keyed locally and the session is a nullable
+         * column acquired when there is something to talk to — and replaced if
+         * it expires before the connection comes back.
+         *
+         * Dropped rather than migrated, for the same reason as v3: nothing
+         * ever wrote a row here.
+         */
+        migrator.registerMigration("v4-uploads-survive-having-no-server") { database in
+            try database.drop(table: "upload")
+
+            try database.create(table: "upload") { table in
+                table.primaryKey("id", .text)
+                table.column("sessionId", .text)
+                table.column("fileURL", .text).notNull()
+                table.column("patientId", .text)
+                table.column("documentType", .text).notNull()
+                table.column("originalName", .text).notNull()
+                table.column("contentType", .text).notNull()
+                table.column("totalBytes", .integer).notNull()
+                table.column("startedAt", .datetime).notNull()
+                table.column("attempts", .integer).notNull().defaults(to: 0)
+                table.column("lastError", .text)
+            }
+
+            try database.create(index: "upload_startedAt", on: "upload", columns: ["startedAt"])
+        }
+
         return migrator
     }
 
@@ -288,29 +321,44 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
     static let databaseTableName = "upload"
 
     var id: String
+    var sessionId: String?
     var fileURL: String
     var patientId: String?
+    var documentType: String
     var originalName: String
+    var contentType: String
     var totalBytes: Int
     var startedAt: Date
+    var attempts: Int
+    var lastError: String?
 
     init(_ upload: PendingUpload) {
         id = upload.id
+        sessionId = upload.sessionId
         fileURL = upload.fileURL.path
         patientId = upload.patientId
+        documentType = upload.documentType
         originalName = upload.originalName
+        contentType = upload.contentType
         totalBytes = upload.totalBytes
         startedAt = upload.startedAt
+        attempts = upload.attempts
+        lastError = upload.lastError
     }
 
     var upload: PendingUpload {
         PendingUpload(
             id: id,
+            sessionId: sessionId,
             fileURL: URL(fileURLWithPath: fileURL),
             patientId: patientId,
+            documentType: documentType,
             originalName: originalName,
+            contentType: contentType,
             totalBytes: totalBytes,
-            startedAt: startedAt
+            startedAt: startedAt,
+            attempts: attempts,
+            lastError: lastError
         )
     }
 }
@@ -401,6 +449,16 @@ public struct SQLiteUploadStore: UploadStore {
 
     public func remember(_ upload: PendingUpload) async throws {
         try await store.write { try UploadRow(upload).upsert($0) }
+    }
+
+    /// Only a row that is still queued: updating one already finished would
+    /// resurrect an upload the server has already assembled.
+    public func update(_ upload: PendingUpload) async throws {
+        try await store.write { database in
+            if try UploadRow.exists(database, key: upload.id) {
+                try UploadRow(upload).update(database)
+            }
+        }
     }
 
     public func forget(id: String) async throws {

@@ -128,37 +128,98 @@ public actor InMemoryOutboxStore: OutboxStore {
     }
 }
 
-/// A file whose upload was started and has not finished.
-///
-/// Uploading is resumable against the server — it reports how many bytes it
-/// already has — but only if the app still knows which session belonged to
-/// which file. Held in memory, that mapping dies with the process, and a
-/// patient who was uploading a 20 MB scan when the phone killed the app starts
-/// again from nothing on a connection that was already struggling.
+/**
+ * A file the user chose to send that has not reached the clinic.
+ *
+ * Uploading is resumable against the server — it reports how many bytes it
+ * already has — but only while the app still knows which session belonged to
+ * which file, and still has the file. Held in memory, that mapping dies with
+ * the process; left in the temporary directory, the bytes do. A patient who
+ * was sending a 20 MB scan when the phone reclaimed the app starts again from
+ * nothing, on a connection that was already struggling.
+ *
+ * The session is deliberately optional. A file chosen with no connection at
+ * all has no session yet — there was no server to open one with — and the
+ * queue's job is to hold the *intention*, not the protocol state.
+ */
 public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
-    /// The server's upload session.
+    /// Generated on the device. Not the server's session: that arrives later,
+    /// and may be replaced if it expires before the connection returns.
     public let id: String
-    /// Where the file is on this device.
+
+    /// The server's upload session, once there has been a server to ask.
+    public var sessionId: String?
+
+    /// Where the file is on this device. Somewhere the app owns, not the
+    /// temporary directory the picker handed over.
     public let fileURL: URL
+
+    /// Nil means the caller's own record.
     public let patientId: String?
+
+    /// Which kind of document this is, kept because the session has to be
+    /// opened with it later.
+    public let documentType: String
+
     public let originalName: String
+    public let contentType: String
     public let totalBytes: Int
     public let startedAt: Date
 
+    public var attempts: Int
+    public var lastError: String?
+
     public init(
-        id: String,
+        id: String = UUID().uuidString,
+        sessionId: String? = nil,
         fileURL: URL,
         patientId: String? = nil,
+        documentType: String,
         originalName: String,
+        contentType: String = "application/octet-stream",
         totalBytes: Int,
-        startedAt: Date = Date()
+        startedAt: Date = Date(),
+        attempts: Int = 0,
+        lastError: String? = nil
     ) {
         self.id = id
+        self.sessionId = sessionId
         self.fileURL = fileURL
         self.patientId = patientId
+        self.documentType = documentType
         self.originalName = originalName
+        self.contentType = contentType
         self.totalBytes = totalBytes
         self.startedAt = startedAt
+        self.attempts = attempts
+        self.lastError = lastError
+    }
+
+    /// Whether the bytes are still on this device. A queue entry whose file has
+    /// been swept away can never finish, and saying so beats retrying forever.
+    public var fileExists: Bool {
+        FileManager.default.fileExists(atPath: fileURL.path)
+    }
+
+    /**
+     * Where the queue keeps its copies of what the user chose to send.
+     *
+     * Application Support rather than the temporary directory the document
+     * picker hands over: the system empties that one whenever it likes, and an
+     * upload with no bytes left to send is not resumable, it is lost.
+     */
+    public static func directory(fileManager: FileManager = .default) throws -> URL {
+        let base = try fileManager.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        .appendingPathComponent("Klinik/uploads", isDirectory: true)
+
+        try fileManager.createDirectory(at: base, withIntermediateDirectories: true)
+
+        return base
     }
 }
 
@@ -168,6 +229,8 @@ public protocol UploadStore: Sendable {
     func remember(_ upload: PendingUpload) async throws
     func forget(id: String) async throws
 }
+
+
 
 /// In-memory store for tests and previews.
 public actor InMemoryUploadStore: UploadStore {
@@ -182,6 +245,10 @@ public actor InMemoryUploadStore: UploadStore {
     public func remember(_ upload: PendingUpload) async throws {
         uploads.removeAll { $0.id == upload.id }
         uploads.append(upload)
+    }
+
+    public func update(_ upload: PendingUpload) async throws {
+        try await remember(upload)
     }
 
     public func forget(id: String) async throws {

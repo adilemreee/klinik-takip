@@ -974,4 +974,8 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "triage.releasedFromWindow" to R.string.triage_released_from_window,
     "triage.summaryDisclaimer" to R.string.triage_summary_disclaimer,
     "triage.summaryTitle" to R.string.triage_summary_title,
+    "upload.fileGone" to R.string.upload_file_gone,
+    "upload.of" to R.string.upload_of,
+    "upload.waiting" to R.string.upload_waiting,
+    "upload.waitingCount" to R.string.upload_waiting_count,
 )

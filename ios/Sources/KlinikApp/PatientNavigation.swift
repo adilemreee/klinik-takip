@@ -217,7 +217,8 @@ struct PatientHomeView: View {
                     resumable: environment.resumable,
                     // `.me`, never the file id: the staff path needs
                     // documents.read, which a patient must not have.
-                    subject: .me
+                    subject: .me,
+                    queue: environment.fileQueue
                 ),
                 pickFile: { await FilePicker.present() },
                 // The camera path (spec M16). Nil on a device with no document

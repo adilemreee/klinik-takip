@@ -351,7 +351,8 @@ struct StaffPatientsView: View {
                 model: DocumentsModel(
                     api: environment.documents,
                     resumable: environment.resumable,
-                    subject: .patient(id: patientId)
+                    subject: .patient(id: patientId),
+                    queue: environment.fileQueue
                 ),
                 pickFile: { await FilePicker.present() },
                 // The camera path (spec M16). Nil on a device with no document

@@ -66,11 +66,14 @@ public final class NetworkReachability: ReachabilityWatcher {
 @Observable
 public final class SyncCoordinator {
     private let engine: SyncEngine
+    private let files: UploadQueue?
     private let watcher: ReachabilityWatcher?
 
     public private(set) var status: SyncStatus = .upToDate
     public private(set) var pending: [OutboxEntry] = []
     public private(set) var conflicts: [SyncConflict] = []
+    /// Files the connection could not carry (spec M15, T3.2).
+    public private(set) var uploads: [PendingUpload] = []
     public private(set) var lastSyncedAt: Date?
     public private(set) var isSyncing = false
 
@@ -93,11 +96,13 @@ public final class SyncCoordinator {
 
     public init(
         engine: SyncEngine,
+        files: UploadQueue? = nil,
         watcher: ReachabilityWatcher? = nil,
         attemptLimit: Int = 5,
         storeFailure: String? = nil
     ) {
         self.engine = engine
+        self.files = files
         self.watcher = watcher
         self.attemptLimit = attemptLimit
         self.storeFailure = storeFailure
@@ -114,7 +119,24 @@ public final class SyncCoordinator {
         pending.filter { $0.attempts >= attemptLimit }
     }
 
-    public var needsAttention: Bool { !conflicts.isEmpty || !stuck.isEmpty }
+    /// Files that will not go on their own: refused too often, or whose bytes
+    /// are no longer on the phone.
+    public var stuckUploads: [PendingUpload] {
+        uploads.filter { $0.attempts >= attemptLimit || !$0.fileExists }
+    }
+
+    public var waitingUploads: [PendingUpload] {
+        uploads.filter { $0.attempts < attemptLimit && $0.fileExists }
+    }
+
+    public var needsAttention: Bool {
+        !conflicts.isEmpty || !stuck.isEmpty || !stuckUploads.isEmpty
+    }
+
+    /// Everything the app is holding, of any kind. What the bar counts.
+    public var heldCount: Int { pending.count + uploads.count }
+
+    public var isHoldingSomething: Bool { heldCount > 0 || !conflicts.isEmpty }
 
     public func start() {
         watcher?.start { [weak self] reachable in
@@ -141,6 +163,7 @@ public final class SyncCoordinator {
 
         pending = await engine.pending()
         conflicts = await engine.conflicts()
+        uploads = await files?.unfinished() ?? []
 
         let state = await engine.currentState()
         status = state.status
@@ -171,10 +194,16 @@ public final class SyncCoordinator {
         status = state.status
         lastSyncedAt = state.lastSyncedAt
 
+        // Files after requests. A queued reading is one small call; a queued
+        // scan can be twenty megabytes, and putting it first would leave the
+        // quick work behind it on a connection that may not last.
+        let filesSent = await files?.drain() ?? 0
+
         pending = await engine.pending()
         conflicts = await engine.conflicts()
+        uploads = await files?.unfinished() ?? []
 
-        let sent = before > pending.count
+        let sent = before > pending.count || filesSent > 0
 
         if sent {
             appliedRevision += 1
@@ -197,7 +226,9 @@ public final class SyncCoordinator {
         guard !isSyncing else { return }
 
         Task { [engine] in
-            guard await engine.currentState().status != .upToDate else { return }
+            let idle = await engine.currentState().status == .upToDate && uploads.isEmpty
+
+            guard !idle else { return }
 
             await sync()
         }
@@ -216,6 +247,12 @@ public final class SyncCoordinator {
         await refresh()
     }
 
+    /// Drops a queued file, and the copy of it this app was keeping.
+    public func discardUpload(id: String) async {
+        await files?.discard(id: id)
+        await refresh()
+    }
+
     /**
      * Empties the queue as the session ends.
      *
@@ -226,6 +263,10 @@ public final class SyncCoordinator {
      */
     public func clearForSignOut() async {
         await engine.discardEverything()
+        // And the files. They are one person's medical documents sitting in a
+        // directory this app owns; leaving them for the next account is worse
+        // than losing them.
+        await files?.discardEverything()
         await refresh()
     }
 

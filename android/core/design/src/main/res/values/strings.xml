@@ -964,4 +964,8 @@
     <string name="triage_released_from_window">Mesaj kutusu saatleri beklenmeden iletildi</string>
     <string name="triage_summary_disclaimer">Bu özet yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez. Hastanın kendi mesajı aşağıdadır.</string>
     <string name="triage_summary_title">Yapay zeka özeti</string>
+    <string name="upload_file_gone">Dosya telefonda bulunamadı. Yeniden seçip göndermeniz gerekiyor.</string>
+    <string name="upload_of">%1$@ / %2$@</string>
+    <string name="upload_waiting">Gönderilmeyi bekleyen dosya</string>
+    <string name="upload_waiting_count">%d dosya gönderilmeyi bekliyor</string>
 </resources>

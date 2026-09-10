@@ -39,11 +39,19 @@ struct PendingChangesScreen: View {
                     stuck
                 }
 
+                if !sync.stuckUploads.isEmpty {
+                    stuckFiles
+                }
+
                 if !sync.waiting.isEmpty {
                     waiting
                 }
 
-                if sync.pending.isEmpty && sync.conflicts.isEmpty {
+                if !sync.waitingUploads.isEmpty {
+                    waitingFiles
+                }
+
+                if !sync.isHoldingSomething {
                     empty
                 }
             }
@@ -79,7 +87,7 @@ struct PendingChangesScreen: View {
                         .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
                 }
 
-                if !sync.pending.isEmpty {
+                if sync.isHoldingSomething {
                     Button {
                         Task { await sync.sync() }
                     } label: {
@@ -134,17 +142,17 @@ struct PendingChangesScreen: View {
 
     private var summaryTone: Tone {
         if sync.needsAttention { return .critical }
-        if sync.pending.isEmpty { return .success }
+        if !sync.isHoldingSomething { return .success }
 
         return .warning
     }
 
     private var summaryTitle: String {
         if sync.needsAttention { return L10n.string("sync.needsAttention") }
-        if sync.pending.isEmpty { return L10n.string("sync.upToDate") }
-        if sync.pending.count == 1 { return L10n.string("sync.pendingOne") }
+        if !sync.isHoldingSomething { return L10n.string("sync.upToDate") }
+        if sync.heldCount == 1 { return L10n.string("sync.pendingOne") }
 
-        return String(format: L10n.string("sync.pendingCount"), sync.pending.count)
+        return String(format: L10n.string("sync.pendingCount"), sync.heldCount)
     }
 
     // MARK: - Sections
@@ -168,6 +176,29 @@ struct PendingChangesScreen: View {
 
             ForEach(sync.stuck) { entry in
                 EntryCard(entry: entry, tone: .critical, sync: sync)
+            }
+        }
+    }
+
+    private var waitingFiles: some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+            SectionHeader(title: L10n.string("upload.waiting"))
+
+            ForEach(sync.waitingUploads) { upload in
+                UploadCard(upload: upload, tone: .info, sync: sync)
+            }
+        }
+    }
+
+    private var stuckFiles: some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+            SectionHeader(
+                title: L10n.string("sync.stuck"),
+                subtitle: L10n.string("sync.stuckDetail")
+            )
+
+            ForEach(sync.stuckUploads) { upload in
+                UploadCard(upload: upload, tone: .critical, sync: sync)
             }
         }
     }
@@ -262,6 +293,91 @@ private struct EntryCard: View {
     }
 }
 
+/**
+ * One file waiting to be sent.
+ *
+ * Shows how far it got, because on a 20 MB scan that number is the difference
+ * between "nearly there" and "nothing has happened" — and a patient deciding
+ * whether to find better wifi needs to know which.
+ */
+@MainActor
+private struct UploadCard: View {
+    @Environment(\.colorScheme) private var scheme
+    @State private var confirmingDiscard = false
+
+    let upload: PendingUpload
+    let tone: Tone
+    let sync: SyncCoordinator
+
+    var body: some View {
+        Card(tone: tone) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                Text(upload.originalName)
+                    .font(Tokens.Typography.bodyRelative)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: Tokens.Spacing.sm) {
+                    Text(Moment.text(upload.startedAt))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    Text(UploadCard.size(upload.totalBytes))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    if upload.attempts > 0 {
+                        Badge(
+                            String(format: L10n.string("sync.attempts"), upload.attempts),
+                            tone: tone
+                        )
+                    }
+                }
+
+                if !upload.fileExists {
+                    Text(L10n.string("upload.fileGone"))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tone.critical.foreground.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let lastError = upload.lastError {
+                    Text(String(format: L10n.string("sync.lastError"), lastError))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(tone.foreground.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Button(role: .destructive) {
+                    confirmingDiscard = true
+                } label: {
+                    Text(L10n.string("sync.discard"))
+                        .frame(minHeight: Tokens.minimumTouchTarget)
+                }
+            }
+        }
+        .confirmationDialog(
+            L10n.string("sync.discardTitle"),
+            isPresented: $confirmingDiscard,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.string("sync.discard"), role: .destructive) {
+                Task { await sync.discardUpload(id: upload.id) }
+            }
+            Button(L10n.string("common.cancel"), role: .cancel) {}
+        } message: {
+            Text(L10n.string("sync.discardDetail"))
+        }
+    }
+
+    /// `nonisolated` because a static on a `View` otherwise inherits the
+    /// view's main-actor isolation, and the tests call this directly.
+    nonisolated static func size(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+
+        return formatter.string(fromByteCount: Int64(bytes))
+    }
+}
+
 /// A change the clinic refused because the record moved on under it.
 @MainActor
 private struct ConflictCard: View {
@@ -339,7 +455,7 @@ struct PendingWritesBanner: View {
     let open: () -> Void
 
     var body: some View {
-        if sync.pending.isEmpty && sync.conflicts.isEmpty {
+        if !sync.isHoldingSomething {
             EmptyView()
         } else {
             Button(action: open) {
@@ -376,9 +492,9 @@ struct PendingWritesBanner: View {
 
     private var title: String {
         if sync.needsAttention { return L10n.string("sync.needsAttention") }
-        if sync.pending.count == 1 { return L10n.string("sync.pendingOne") }
+        if sync.heldCount == 1 { return L10n.string("sync.pendingOne") }
 
-        return String(format: L10n.string("sync.pendingCount"), sync.pending.count)
+        return String(format: L10n.string("sync.pendingCount"), sync.heldCount)
     }
 }
 
@@ -401,7 +517,7 @@ struct SignOutButton: View {
 
     var body: some View {
         Button(L10n.string("auth.signOut"), role: .destructive) {
-            if sync.pending.isEmpty {
+            if sync.heldCount == 0 {
                 Task { await signOut() }
             } else {
                 confirming = true
@@ -417,7 +533,7 @@ struct SignOutButton: View {
             }
             Button(L10n.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text(String(format: L10n.string("sync.signOutWarning"), sync.pending.count))
+            Text(String(format: L10n.string("sync.signOutWarning"), sync.heldCount))
         }
     }
 }

@@ -1084,3 +1084,7 @@
 "sync.signOutWarning" = "%d entries have not reached the clinic yet. Signing out removes them from this phone. It is better to find a connection and send them first.";
 "sync.signOutAnyway" = "Sign out anyway";
 "health.queued" = "%d readings taken, but there is no connection. They are on this phone and will be sent when it returns.";
+"upload.fileGone" = "The file is no longer on this phone. You will need to choose it again.";
+"upload.waiting" = "File waiting to be sent";
+"upload.waitingCount" = "%d files waiting to be sent";
+"upload.of" = "%1$@ of %2$@";

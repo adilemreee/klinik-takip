@@ -114,6 +114,7 @@ final class SQLiteStoreTests: XCTestCase {
                 id: "s1",
                 fileURL: URL(fileURLWithPath: "/tmp/scan.pdf"),
                 patientId: "p1",
+                documentType: "LAB",
                 originalName: "tahlil.pdf",
                 totalBytes: 20_000_000
             )
@@ -152,6 +153,7 @@ final class SQLiteStoreTests: XCTestCase {
                 PendingUpload(
                     id: id,
                     fileURL: URL(fileURLWithPath: "/tmp/\(id)"),
+                    documentType: "LAB",
                     originalName: "\(id).pdf",
                     totalBytes: 10,
                     startedAt: base.addingTimeInterval(offset)
@@ -239,6 +241,7 @@ final class SQLiteStoreTests: XCTestCase {
                 PendingUpload(
                     id: id,
                     fileURL: URL(fileURLWithPath: "/tmp/\(id)"),
+                    documentType: "LAB",
                     originalName: "\(id).pdf",
                     totalBytes: 1
                 )

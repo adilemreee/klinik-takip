@@ -296,9 +296,36 @@ En anlamlı üçü:
   hiçbir yerde değilken, verilebilecek en kötü cevaptır
 - *"discarding is the only way work leaves the queue unsent"*
 
+## Dosyalar ayrı bir kuyrukta
+
+Yazma kuyruğu **istek** taşıyor; dosya kuyruğu **bayt** taşıyor, ve bu farklı bir
+problem. Kuyruktaki bir ölçüm dört yüz karakterlik JSON — tek çağrıda tekrar
+oynatılır. Kuyruktaki bir tahlil taraması yirmi megabayt: uygulamanın öldürülmesinden
+sağ çıkmalı, sunucunun kaldığı yerden devam etmeli, ve birleştirildiğinde hâlâ aynı
+dosya olmalı.
+
+`UploadQueue` bunu şöyle yapıyor:
+
+- **Dosya kopyalanıyor.** Belge seçici geçici dizinde bir şey veriyor; sistem orayı
+  canı istediğinde boşaltıyor. Baytı kalmamış bir yükleme devam ettirilebilir değil,
+  kayıptır. Kopya `Application Support/Klinik/uploads` altında.
+- **Oturum opsiyonel.** Hiç bağlantı yokken seçilen dosyanın oturumu yok — soracak
+  sunucu yoktu. Kuyruğun işi **niyeti** tutmak, protokol durumunu değil; oturum
+  bağlantı gelince açılıyor.
+- **18 MB'da kopan bağlantı 18 MB'ı atmıyor.** Aktarım sırasında bağlantı ölürse
+  oturum iptal *edilmiyor*, dosyayla birlikte kuyruğa veriliyor — kuyruk sunucuya
+  "nerede kaldın" diye sorup oradan devam ediyor. (Reddedilen bir tür ise iptal
+  ediliyor: o parçalar hiç tamamlanmayacak.)
+- **Sunucunun unuttuğu oturum** 404 veriyor. Bu bildirilecek bir hata değil — dosya
+  hâlâ telefonda — yeni oturum açılıp baştan başlanıyor.
+- **Klinik aldıktan sonra kopya siliniyor.** Telefonda kalan ikinci kopya, kimsenin
+  bakmadığı bir dizinde duran birinin tıbbi kaydıdır.
+- **Baytı gitmiş dosya** sonsuza kadar denenmiyor; listede "dosya bulunamadı" diye
+  duruyor ve kişiye söyleniyor.
+
+Turda dosyalar **isteklerden sonra** gönderiliyor: küçük işi yirmi megabaytın
+arkasında bekletmek, zaten sürmeyebilecek bir bağlantıda yanlış sıralama olurdu.
+
 ## Hâlâ eksik
 
-- **Yarım kalan yüklemeler** (fotoğraf, belge) bu kuyruktan geçmiyor. `UploadStore`
-  duruyor ama devam ettirme henüz bağlanmadı — multipart gövde bu kuyruğun taşıdığı
-  şey değil.
 - **Android'de hiçbiri yok.** Motor ve depolama var; yazmaları kuyruğa sokan taraf yok.

@@ -62,6 +62,8 @@ public final class AppEnvironment {
     /// What holds writes that could not be delivered, and sends them when the
     /// connection returns (spec M15).
     public let queue: SyncEngine
+    /// Files waiting to reach the clinic, resumable across launches.
+    public let fileQueue: UploadQueue
     public let sync: SyncCoordinator
 
     /**
@@ -103,8 +105,10 @@ public final class AppEnvironment {
         )
 
         queue = SyncEngine(store: opened.outbox, sender: APIOutboxSender(client: client))
+        fileQueue = UploadQueue(store: opened.uploads, uploads: ResumableUpload(client: client))
         sync = SyncCoordinator(
             engine: queue,
+            files: fileQueue,
             watcher: NetworkReachability(),
             storeFailure: opened.failure
         )

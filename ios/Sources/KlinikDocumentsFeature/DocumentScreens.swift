@@ -109,6 +109,14 @@ public struct DocumentListView: View {
                     .padding(.horizontal, Tokens.Spacing.lg)
             }
 
+            // Not an error banner: the file is on the phone and will be sent.
+            // It is simply not in the list below yet, and a screen that said
+            // nothing would look like the upload had been ignored.
+            if state.uploadQueued {
+                HeldFileNotice()
+                    .padding(.horizontal, Tokens.Spacing.lg)
+            }
+
             List {
                 ForEach(state.documents) { document in
                     Button {
@@ -420,5 +428,38 @@ struct ScanReviewSheet: View {
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
             }
         }
+    }
+}
+
+
+/**
+ * A document the connection could not carry.
+ *
+ * Says the file is kept and that the clinic has not received it — both halves,
+ * because a patient who thinks their pre-op passport scan has arrived will not
+ * chase it, and a patient who thinks it was lost will send it twice.
+ */
+struct HeldFileNotice: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        HStack(spacing: Tokens.Spacing.sm) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(Tokens.Typography.bodyRelative)
+                // The sentence beside it says the same thing.
+                .accessibilityHidden(true)
+
+            Text(L10n.string("sync.savedOffline"))
+                .font(Tokens.Typography.calloutRelative)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Tone.warning.foreground.resolve(for: scheme))
+        .padding(Tokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Tone.warning.surface.resolve(for: scheme))
+        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

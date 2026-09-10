@@ -186,6 +186,33 @@ public protocol PendingWriteReader: Sendable {
     func unsent(entityType: String) async -> [PendingWrite]
 }
 
+/**
+ * Where a file goes when it cannot be sent now.
+ *
+ * Separate from `PendingWriteQueue` because bytes are a different problem from
+ * requests: a queued reading is four hundred characters that can be replayed
+ * in one call, and a queued scan is twenty megabytes that has to survive the
+ * app being killed and resume from wherever the server got to.
+ */
+public protocol PendingUploadQueue: Sendable {
+    /**
+     * Takes custody of a file, copying it somewhere the app owns.
+     *
+     * `sessionId` is the server session already opened for it, when there is
+     * one. Passing it is what lets a transfer interrupted at 18 MB carry on
+     * from 18 MB rather than start again — which, on the hotel connection this
+     * product has to survive, is the whole difference.
+     */
+    func keep(
+        fileURL: URL,
+        subject: RecordSubject,
+        type: DocumentType,
+        contentType: String,
+        originalName: String?,
+        sessionId: String?
+    ) async throws
+}
+
 /// What happened when the queue sent one write again.
 public enum ReplayResult: Sendable, Equatable {
     case succeeded

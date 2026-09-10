@@ -1084,3 +1084,7 @@
 "sync.signOutWarning" = "%d kayıt henüz kliniğe ulaşmadı. Çıkarsanız telefondan silinir. Önce bağlantı bulup göndermek daha iyi olur.";
 "sync.signOutAnyway" = "Yine de çık";
 "health.queued" = "%d ölçüm alındı ama bağlantı yok. Telefonda duruyorlar, bağlantı gelince gönderilecek.";
+"upload.fileGone" = "Dosya telefonda bulunamadı. Yeniden seçip göndermeniz gerekiyor.";
+"upload.waiting" = "Gönderilmeyi bekleyen dosya";
+"upload.waitingCount" = "%d dosya gönderilmeyi bekliyor";
+"upload.of" = "%1$@ / %2$@";

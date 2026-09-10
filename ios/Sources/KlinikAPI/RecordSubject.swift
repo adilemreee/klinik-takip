@@ -18,7 +18,7 @@ public enum RecordSubject: Sendable, Equatable {
     case me
 
     /// The path prefix for this subject, e.g. `me` or `patients/<id>`.
-    func base(_ suffix: String) -> String {
+    public func base(_ suffix: String) -> String {
         switch self {
         case .patient(let id): return "patients/\(id)/\(suffix)"
         case .me: return "me/\(suffix)"

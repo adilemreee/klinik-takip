@@ -22,6 +22,9 @@ public struct DocumentsState: Sendable, Equatable {
     public var uploadError: String?
     /// How much of the current upload has reached the server, for a progress bar.
     public var uploadProgress: UploadProgress?
+    /// The last upload could not be delivered and is being held on the phone
+    /// (spec M15). Not an error: the file is safe and will be sent.
+    public var uploadQueued = false
     /// The document being fetched for preview, so only its row shows a spinner.
     public var openingId: String?
 
@@ -42,6 +45,9 @@ public actor DocumentsModel {
     private let resumable: ResumableUpload
     private let subject: RecordSubject
     private let pageSize: Int
+    /// Where a file goes when the connection dies mid-transfer. Nil in tests
+    /// that have nothing to say about it.
+    private let queue: PendingUploadQueue?
 
     /**
      * Above this, the upload is chunked and resumable.
@@ -60,13 +66,15 @@ public actor DocumentsModel {
         resumable: ResumableUpload,
         subject: RecordSubject,
         pageSize: Int = 25,
-        resumableThreshold: Int = ResumableUpload.chunkSize
+        resumableThreshold: Int = ResumableUpload.chunkSize,
+        queue: PendingUploadQueue? = nil
     ) {
         self.api = api
         self.resumable = resumable
         self.subject = subject
         self.pageSize = pageSize
         self.resumableThreshold = resumableThreshold
+        self.queue = queue
     }
 
     public func currentState() -> DocumentsState { state }
@@ -104,6 +112,7 @@ public actor DocumentsModel {
 
         state.uploading = true
         state.uploadError = nil
+        state.uploadQueued = false
         state.uploadProgress = nil
         defer {
             state.uploading = false
@@ -112,7 +121,7 @@ public actor DocumentsModel {
 
         do {
             if (try? fileSize(of: fileURL)) ?? 0 > resumableThreshold {
-                try await sendResumable(fileURL: fileURL, type: type)
+                try await sendResumable(fileURL: fileURL, type: type, contentType: contentType)
             } else {
                 _ = try await api.upload(
                     subject: subject,
@@ -121,6 +130,8 @@ public actor DocumentsModel {
                     contentType: contentType
                 )
             }
+        } catch let error as APIError where error.isConnectivity {
+            return await hold(fileURL: fileURL, type: type, contentType: contentType, session: nil, failure: error)
         } catch let error as APIError {
             // A refused upload is the type or size check doing its job, and the
             // server's message says which. Our own would say less.
@@ -228,11 +239,19 @@ public actor DocumentsModel {
         }
     }
 
-    /// Opens a session, streams the file, and completes it. The session id is
-    /// kept for the duration so an interrupted send resumes rather than
-    /// restarts; surviving an app relaunch needs the local store that T2.6
-    /// still owes.
-    private func sendResumable(fileURL: URL, type: DocumentType) async throws {
+    /**
+     * Opens a session, streams the file, and completes it.
+     *
+     * A connection that dies mid-transfer hands the file *and its session* to
+     * the queue rather than aborting. Aborting would release the parts already
+     * sent, and eighteen megabytes uploaded from a hotel is not something to
+     * throw away because the last two failed.
+     *
+     * Anything else — a refused type, a permission — does abort: those parts
+     * will never be completed, and leaving them costs the server storage until
+     * its sweep runs.
+     */
+    private func sendResumable(fileURL: URL, type: DocumentType, contentType: String) async throws {
         let session = try await resumable.begin(
             subject: subject,
             type: type,
@@ -245,12 +264,61 @@ public actor DocumentsModel {
             }
 
             _ = try await resumable.complete(sessionId: session.id, fileURL: fileURL)
+        } catch let error as APIError where error.isConnectivity && queue != nil {
+            _ = await hold(
+                fileURL: fileURL,
+                type: type,
+                contentType: contentType,
+                session: session.id,
+                failure: error
+            )
+            return
         } catch {
             // Releases the parts already sent. Best-effort: the sweep on the
             // server catches whatever this misses.
             try? await resumable.abort(sessionId: session.id)
             throw error
         }
+    }
+
+    /**
+     * Hands a file the connection could not carry to the queue.
+     *
+     * Reports success, because from the patient's side the document *is*
+     * submitted — what is outstanding is the delivery, and the screen says so
+     * rather than pretending it arrived. With no queue attached the failure is
+     * reported exactly as it was before.
+     */
+    private func hold(
+        fileURL: URL,
+        type: DocumentType,
+        contentType: String,
+        session: String?,
+        failure: APIError
+    ) async -> Bool {
+        guard let queue else {
+            state.uploadError = L10n.message(for: failure)
+            return false
+        }
+
+        do {
+            try await queue.keep(
+                fileURL: fileURL,
+                subject: subject,
+                type: type,
+                contentType: contentType,
+                originalName: fileURL.lastPathComponent,
+                sessionId: session
+            )
+        } catch {
+            // The queue is the only reason to claim the file is safe.
+            state.uploadError = L10n.message(for: failure)
+            return false
+        }
+
+        state.uploadQueued = true
+
+        return true
     }
 
     private func report(_ progress: UploadProgress) {

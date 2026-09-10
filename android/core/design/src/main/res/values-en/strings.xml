@@ -964,4 +964,8 @@
     <string name="triage_released_from_window">Delivered without waiting for messaging hours</string>
     <string name="triage_summary_disclaimer">This summary was produced by AI and is not a medical diagnosis. The patient\'s own message is below.</string>
     <string name="triage_summary_title">AI summary</string>
+    <string name="upload_file_gone">The file is no longer on this phone. You will need to choose it again.</string>
+    <string name="upload_of">%1$@ of %2$@</string>
+    <string name="upload_waiting">File waiting to be sent</string>
+    <string name="upload_waiting_count">%d files waiting to be sent</string>
 </resources>

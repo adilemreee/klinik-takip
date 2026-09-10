@@ -50,13 +50,30 @@ public enum BiometryKind: Sendable, Equatable {
 public final class BiometricLock {
     private static let preferenceKey = "xyz.klinik.biometricLock"
 
-    private let defaults: UserDefaults
+    /**
+     * How long the app may sit in the background before it locks again.
+     *
+     * Not zero. The document picker, the camera and a QuickLook preview all
+     * put the app behind something, and demanding a face scan on the way back
+     * from choosing a photograph is how people turn the lock off. A minute is
+     * long enough for that and short enough that a handset left on a ward desk
+     * is locked by the time somebody else picks it up — which is the threat
+     * this is actually for.
+     */
+    public static let grace: TimeInterval = 60
 
-    /// True until somebody passes the check, for as long as the app is running.
+    private let defaults: UserDefaults
+    private let now: @Sendable () -> Date
+
+    /// True until somebody passes the check.
     public private(set) var isLocked: Bool
 
-    public init(defaults: UserDefaults = .standard) {
+    /// When the app was last put away. Nil while it is in front.
+    private var leftAt: Date?
+
+    public init(defaults: UserDefaults = .standard, now: @escaping @Sendable () -> Date = Date.init) {
         self.defaults = defaults
+        self.now = now
         isLocked = defaults.bool(forKey: BiometricLock.preferenceKey)
     }
 
@@ -91,7 +108,41 @@ public final class BiometricLock {
     public func setEnabled(_ enabled: Bool) {
         defaults.set(enabled, forKey: BiometricLock.preferenceKey)
 
-        if !enabled { isLocked = false }
+        if !enabled {
+            isLocked = false
+            leftAt = nil
+        }
+    }
+
+    /**
+     * The app went away.
+     *
+     * The time is recorded rather than the lock being thrown immediately,
+     * because "away" includes the two seconds it takes to pick a file. What
+     * decides is how long it was away, and that is only known on the way back.
+     */
+    public func wentAway() {
+        guard isEnabled, !isLocked else { return }
+
+        leftAt = now()
+    }
+
+    /**
+     * The app came back.
+     *
+     * Locks again if it was away longer than the grace. Before this, the lock
+     * only ever guarded a cold launch: unlock once in the morning and the
+     * phone was open all day, which is precisely the handset-on-a-ward-desk
+     * case the lock exists for.
+     */
+    public func cameBack() {
+        guard isEnabled, let leftAt else { return }
+
+        if now().timeIntervalSince(leftAt) >= BiometricLock.grace {
+            isLocked = true
+        }
+
+        self.leftAt = nil
     }
 
     /// Asks the device. Returns false on cancellation as well as failure —

@@ -30,8 +30,37 @@ public actor SQLiteStore {
         .appendingPathComponent("Klinik", isDirectory: true)
 
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        protect(directory, using: fileManager)
 
         return directory.appendingPathComponent("sync.sqlite")
+    }
+
+    /**
+     * Data Protection, set rather than inherited (T7.2).
+     *
+     * This file holds the last answer to every read the app has made — lab
+     * values, medication plans, a patient's own file — and the queue of what
+     * they have written. On disk, protected only by whatever the default
+     * happens to be that year.
+     *
+     * `completeUntilFirstUserAuthentication`, not `complete`. The stronger
+     * class makes a file unreadable whenever the screen is locked, and this
+     * app writes while locked on purpose: a medication check-in answered from
+     * a notification, and the queue draining after the phone finds signal. A
+     * class that silently fails those writes would lose exactly the work the
+     * queue exists to keep.
+     *
+     * Applied to the directory, so the `-wal` and `-shm` files SQLite creates
+     * alongside inherit it — they hold the same rows, and protecting only the
+     * one file named in the code protects roughly none of them.
+     */
+    static func protect(_ directory: URL, using fileManager: FileManager = .default) {
+        #if os(iOS)
+        try? fileManager.setAttributes(
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+            ofItemAtPath: directory.path
+        )
+        #endif
     }
 
     public init(url: URL) throws {

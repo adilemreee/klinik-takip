@@ -160,7 +160,12 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
 
 ### Faz 7 borçları
 
-12. T7.2 güvenlik denetimi + OWASP Mobile listesi
+12. T7.2 güvenlik denetimi ✅ **2026-09-11'de yapıldı** —
+    [GUVENLIK-DENETIMI-IOS.md](GUVENLIK-DENETIMI-IOS.md). Üç bulgu düzeltildi
+    (kilit arka plandan dönünce devreye girmiyordu, uygulama değiştirici
+    ekran görüntüsü klinik veri gösteriyordu, Data Protection sınıfı
+    varsayılana bırakılmıştı), üç risk gerekçesiyle kabul edildi. **Sızma
+    testi yapılmadı** — bu bir kod okuması.
 13. T7.5 beta (TestFlight / Play Internal)
 14. T7.6 mağaza hazırlığı
 15. T7.7 kullanım kılavuzları

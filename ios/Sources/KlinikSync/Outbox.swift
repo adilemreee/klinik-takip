@@ -219,6 +219,25 @@ public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
 
         try fileManager.createDirectory(at: base, withIntermediateDirectories: true)
 
+        /*
+         * Data Protection, set rather than inherited (T7.2).
+         *
+         * These are copies of somebody's passport, their lab report, a wound
+         * photograph — sitting on disk until the connection comes back.
+         *
+         * `completeUntilFirstUserAuthentication` rather than `complete`, for
+         * the same reason the queue's database uses it: the drain runs when
+         * the phone finds signal, which may be while the screen is locked, and
+         * a class that failed those reads would strand the very uploads this
+         * directory exists to keep.
+         */
+        #if os(iOS)
+        try? fileManager.setAttributes(
+            [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
+            ofItemAtPath: base.path
+        )
+        #endif
+
         return base
     }
 }

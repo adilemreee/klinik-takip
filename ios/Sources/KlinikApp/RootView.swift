@@ -40,13 +40,28 @@ public struct RootView: View {
 
             content
         }
+        // Over everything, including the lock screen: iOS takes the app
+        // switcher's picture as the app goes inactive, and a card showing
+        // somebody's lab results is a leak to whoever is holding the phone
+        // next — no exploit required.
+        .overlay { PrivacyCover(hidden: scenePhase == .active || sessionState != .signedIn) }
         .task { await start() }
         .onChange(of: scenePhase) { _, phase in
-            // Coming back to the front is the moment a patient has most likely
-            // walked into signal. Cheaper and more accurate than a timer.
-            guard phase == .active else { return }
+            switch phase {
+            case .background:
+                lock.wentAway()
 
-            Task { await environment.sync.sync() }
+            case .active:
+                lock.cameBack()
+
+                // Coming back to the front is the moment a patient has most
+                // likely walked into signal. Cheaper and more accurate than a
+                // timer.
+                Task { await environment.sync.sync() }
+
+            default:
+                break
+            }
         }
     }
 
@@ -246,5 +261,51 @@ struct UnsupportedRoleView: View {
             Button(L10n.string("auth.signOut")) { Task { await signOut() } }
         }
         .padding(Tokens.Spacing.xl)
+    }
+}
+
+
+/**
+ * What the app switcher is allowed to photograph.
+ *
+ * iOS snapshots the screen as the app goes inactive and shows that picture on
+ * the multitasking card. Without this, the card is whatever was open — a
+ * patient's file, a lab value, a wound photograph — visible to anyone holding
+ * the phone, with nothing to break into.
+ *
+ * Shown whenever the app is not frontmost and somebody is signed in, whether
+ * or not the device lock is switched on: the two protect different things, and
+ * a patient on their own phone still has a right not to have their results in
+ * the app switcher.
+ */
+struct PrivacyCover: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let hidden: Bool
+
+    var body: some View {
+        if hidden {
+            EmptyView()
+        } else {
+            ZStack {
+                Tokens.Palette.background.resolve(for: scheme)
+
+                VStack(spacing: Tokens.Spacing.md) {
+                    Image(systemName: "cross.case.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+                        // The name below says it.
+                        .accessibilityHidden(true)
+
+                    Text(L10n.string("app.name"))
+                        .font(Tokens.Typography.headingRelative)
+                        .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                }
+            }
+            .ignoresSafeArea()
+            .transition(.opacity)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(L10n.string("app.name"))
+        }
     }
 }

@@ -1148,3 +1148,4 @@
 "message.audioAttached" = "Voice message — tap to listen";
 "consent.procedureUnknown" = "The clinic has not yet recorded which operation you are having.";
 "consent.procedureUnknownWhy" = "A consent form that does not name the operation is not valid informed consent. The form will open here once the clinic records it.";
+"app.name" = "Klinik Takip";

@@ -1148,3 +1148,4 @@
 "message.audioAttached" = "Sesli mesaj — dinlemek için dokunun";
 "consent.procedureUnknown" = "Klinik henüz hangi işlemi yaptıracağınızı kaydetmedi.";
 "consent.procedureUnknownWhy" = "Yapılacak işlemi adıyla yazmayan bir onam formu geçerli bir aydınlatılmış onam değildir. Klinik işlem kaydını girdiğinde form burada açılır.";
+"app.name" = "Klinik Takip";

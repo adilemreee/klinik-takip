@@ -88,6 +88,7 @@
     <string name="analytics_too_few">Not enough data</string>
     <string name="analytics_total_operations">%d operations in total</string>
     <string name="app_identity_failed">Could not load who you are. Check your connection and try again.</string>
+    <string name="app_name">Klinik Takip</string>
     <string name="app_retry">Try again</string>
     <string name="app_role_unsupported">This app does not have a screen for this kind of account yet.</string>
     <string name="app_staff_title">Patients</string>

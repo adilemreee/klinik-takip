@@ -98,6 +98,7 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "analytics.tooFew" to R.string.analytics_too_few,
     "analytics.totalOperations" to R.string.analytics_total_operations,
     "app.identityFailed" to R.string.app_identity_failed,
+    "app.name" to R.string.app_name,
     "app.retry" to R.string.app_retry,
     "app.roleUnsupported" to R.string.app_role_unsupported,
     "app.staffTitle" to R.string.app_staff_title,

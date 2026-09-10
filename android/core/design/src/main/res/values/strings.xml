@@ -742,12 +742,16 @@
     <string name="message_load_older">Daha eski mesajlar</string>
     <string name="message_photo_attached">Fotoğraf — açmak için dokunun</string>
     <string name="message_queued_until">Mesajınız sıraya alınacak, iletim:</string>
+    <string name="message_show_original">Orijinali göster</string>
+    <string name="message_show_translation">Çeviriyi göster</string>
     <string name="message_status_delivered">İletildi</string>
     <string name="message_status_failed">Gönderilemedi</string>
     <string name="message_status_queued">Sırada</string>
     <string name="message_status_read">Okundu</string>
     <string name="message_status_sent">Gönderildi</string>
     <string name="message_templates">Hazır yanıtlar</string>
+    <string name="message_translate">Çevir</string>
+    <string name="message_translated">Çeviri</string>
     <string name="message_typing">Yazıyor…</string>
     <string name="notification_action_acknowledge_emergency">Ben ilgileniyorum</string>
     <string name="notification_action_ask_doctor">Doktora sor</string>

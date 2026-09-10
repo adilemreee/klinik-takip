@@ -22,6 +22,17 @@ public struct ChatScreen: View {
     @State private var attaching = false
     @State private var viewing: ViewedAttachment?
 
+    /**
+     * The language to translate into.
+     *
+     * The reader's own, taken from the device rather than from the clinic: a
+     * German patient reading a Turkish reply and a Turkish clinician reading a
+     * German complaint press the same button and mean two different things.
+     */
+    private var readerLanguage: String {
+        Locale.current.language.languageCode?.identifier ?? "tr"
+    }
+
     /// - Parameter onTyping: notifies the socket. Supplied by the caller so the
     ///   screen owns no connection of its own.
     public init(
@@ -103,14 +114,36 @@ public struct ChatScreen: View {
                     }
 
                     ForEach(state.messages) { message in
-                        if message.hasAttachment {
-                            Button { Task { await open(message) } } label: {
-                                MessageRow(message: message)
+                        VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+                            if message.hasAttachment {
+                                Button { Task { await open(message) } } label: {
+                                    MessageRow(
+                                        message: message,
+                                        showingOriginal: state.showingOriginal.contains(message.id)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .frame(minHeight: Tokens.minimumTouchTarget)
+                            } else {
+                                MessageRow(
+                                    message: message,
+                                    showingOriginal: state.showingOriginal.contains(message.id)
+                                )
                             }
-                            .buttonStyle(.plain)
-                            .frame(minHeight: Tokens.minimumTouchTarget)
-                        } else {
-                            MessageRow(message: message)
+
+                            TranslateAction(
+                                message: message,
+                                isWorking: state.translating == message.id,
+                                showingOriginal: state.showingOriginal.contains(message.id),
+                                translate: {
+                                    await refresh {
+                                        await model.translate(message.id, into: readerLanguage)
+                                    }
+                                },
+                                toggleOriginal: { showing in
+                                    await refresh { await model.showOriginal(message.id, showing) }
+                                }
+                            )
                         }
                     }
 
@@ -321,6 +354,20 @@ struct MessageRow: View {
     @Environment(\.colorScheme) private var scheme
 
     let message: ChatMessage
+    /// The reader asked to see what the sender actually wrote.
+    var showingOriginal = false
+
+    private var original: String? { message.body ?? message.transcript }
+
+    /// The translation when there is one and the reader has not asked for the
+    /// original. The original is never thrown away — it is one tap behind.
+    private var shown: String? {
+        guard let translated = message.translatedText, !showingOriginal else { return original }
+
+        return translated
+    }
+
+    private var isTranslated: Bool { message.translatedText != nil && !showingOriginal }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
@@ -345,10 +392,22 @@ struct MessageRow: View {
                 }
             }
 
-            if let text = message.body ?? message.transcript, !text.isEmpty {
+            if let text = shown, !text.isEmpty {
                 Text(text)
                     .font(Tokens.Typography.bodyRelative)
                     .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+            }
+
+            // Said, not implied. A translated message that looks exactly like
+            // an original is one a clinician quotes back as the patient's own
+            // words — and a model's reading of a complaint is not that.
+            if isTranslated {
+                Label(
+                    L10n.string("message.translated"),
+                    systemImage: "character.bubble"
+                )
+                .font(Tokens.Typography.footnoteRelative)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
             }
 
             HStack(spacing: Tokens.Spacing.sm) {
@@ -516,3 +575,60 @@ struct AttachmentViewer: View {
     }
 }
 #endif
+
+
+/**
+ * The translate button, and the way back to the original (spec M3).
+ *
+ * Offered on every message with words in it rather than only on ones that look
+ * foreign: the app does not know what language a message is in until somebody
+ * asks, and guessing wrong either hides the button from the person who needs
+ * it or clutters a Turkish thread with an offer to translate Turkish into
+ * Turkish. Once a message is translated the row switches to the way back.
+ */
+struct TranslateAction: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let message: ChatMessage
+    let isWorking: Bool
+    let showingOriginal: Bool
+    let translate: () async -> Void
+    let toggleOriginal: (Bool) async -> Void
+
+    var body: some View {
+        if !message.hasText {
+            EmptyView()
+        } else if message.translatedText != nil {
+            Button {
+                Task { await toggleOriginal(!showingOriginal) }
+            } label: {
+                Text(
+                    L10n.string(
+                        showingOriginal ? "message.showTranslation" : "message.showOriginal"
+                    )
+                )
+                .font(Tokens.Typography.footnoteRelative)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+            .frame(minHeight: Tokens.minimumTouchTarget, alignment: .leading)
+        } else {
+            Button {
+                Task { await translate() }
+            } label: {
+                if isWorking {
+                    // The word beside it says what is happening.
+                    ProgressView()
+                        .accessibilityHidden(true)
+                } else {
+                    Text(L10n.string("message.translate"))
+                        .font(Tokens.Typography.footnoteRelative)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(isWorking)
+            .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+            .frame(minHeight: Tokens.minimumTouchTarget, alignment: .leading)
+        }
+    }
+}

@@ -1137,3 +1137,7 @@
 "availability.explain" = "Patients can only book inside these windows. To close for a week, switch one off rather than removing it.";
 "availability.endBeforeStart" = "The end time must be after the start.";
 "availability.noProfile" = "This account has no staff profile. Working hours belong to a clinician, not to a login.";
+"message.translate" = "Translate";
+"message.translated" = "Translation";
+"message.showOriginal" = "Show the original";
+"message.showTranslation" = "Show the translation";

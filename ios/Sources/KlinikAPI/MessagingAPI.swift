@@ -42,13 +42,61 @@ public struct ChatMessage: Decodable, Sendable, Equatable, Identifiable {
     public let aiTriageLevel: TriageLevel?
     /// Three lines for the clinician. Rendered beside the message, never instead of it.
     public let aiSummary: String?
+    /// The language the sender wrote in, as the model read it. Nil until
+    /// somebody asks for a translation.
+    public let originalLanguage: String?
+    /// A translation somebody asked for (spec M3). Shown beside the original,
+    /// never instead of it: what the patient actually wrote is the record.
+    public let translatedText: String?
+    public let translatedTo: String?
     public let createdAt: Date
 
     public var isQueued: Bool { status == .queued }
+
+    /// Whether there is anything to translate. An attachment with no words is
+    /// not a message a model can do anything with.
+    public var hasText: Bool {
+        !((body ?? transcript ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
     public var hasAttachment: Bool { type == .file || type == .image || type == .audio }
 
     /// Whether this message should be marked out in a clinician's list.
     public var needsAttention: Bool { triageLevel == .urgent || triageLevel == .emergency }
+
+    /**
+     * Decoded leniently for the three translation fields.
+     *
+     * A message written before translation existed carries none of them, and
+     * refusing to decode it would empty the thread of everything the clinic
+     * already has.
+     */
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        id = try container.decode(String.self, forKey: .id)
+        conversationId = try container.decode(String.self, forKey: .conversationId)
+        senderId = try container.decodeIfPresent(String.self, forKey: .senderId)
+        type = try container.decode(MessageType.self, forKey: .type)
+        body = try container.decodeIfPresent(String.self, forKey: .body)
+        transcript = try container.decodeIfPresent(String.self, forKey: .transcript)
+        status = try container.decode(MessageStatus.self, forKey: .status)
+        queuedUntil = try container.decodeIfPresent(Date.self, forKey: .queuedUntil)
+        readAt = try container.decodeIfPresent(Date.self, forKey: .readAt)
+        triageLevel = try container.decodeIfPresent(TriageLevel.self, forKey: .triageLevel)
+        triageFlags = try container.decodeIfPresent([String].self, forKey: .triageFlags) ?? []
+        aiTriageLevel = try container.decodeIfPresent(TriageLevel.self, forKey: .aiTriageLevel)
+        aiSummary = try container.decodeIfPresent(String.self, forKey: .aiSummary)
+        originalLanguage = try container.decodeIfPresent(String.self, forKey: .originalLanguage)
+        translatedText = try container.decodeIfPresent(String.self, forKey: .translatedText)
+        translatedTo = try container.decodeIfPresent(String.self, forKey: .translatedTo)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, conversationId, senderId, type, body, transcript, status, queuedUntil, readAt
+        case triageLevel, triageFlags, aiTriageLevel, aiSummary
+        case originalLanguage, translatedText, translatedTo, createdAt
+    }
 }
 
 public enum TriageLevel: String, Decodable, Sendable, Equatable {
@@ -224,6 +272,23 @@ public struct MessagingAPI: Sendable {
     /// What a queued message is filed under.
     public static let queuedEntity = "message"
 
+    /**
+     * Translates a message into a language (spec M3).
+     *
+     * The answer carries the original as well: a translation is a reading of
+     * what somebody wrote, and the screen shows both.
+     */
+    public func translate(messageId: String, to language: String) async throws -> ChatMessage {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "conversations/messages/\(messageId)/translate",
+                body: try JSONEncoder.klinik.encode(TranslateBody(to: language))
+            ),
+            as: ChatMessage.self
+        )
+    }
+
     /// What the patient wrote, read back out of a queued message.
     public static func queuedText(in write: PendingWrite) -> String? {
         guard
@@ -283,6 +348,10 @@ public struct MessagingAPI: Sendable {
         let body: String?
         let mediaKey: String?
         let type: MessageType?
+    }
+
+    private struct TranslateBody: Encodable {
+        let to: String
     }
 
     private struct MarkedRead: Decodable, Sendable {

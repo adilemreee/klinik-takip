@@ -82,3 +82,34 @@ M3 iki şey daha istiyor ve ikisi de AI katmanına bağlı (T5.1 `AIProvider` so
 - **Otomatik dil algılama ve çift yönlü çeviri.** `original_language`, `translated_text`,
   `translated_to` alanları hazır; orijinal metin her zaman saklanıyor ve görülebiliyor —
   çeviri geldiğinde de öyle kalacak.
+
+## Çeviri (2026-09-10)
+
+Şema baştan hazırdı — `original_language`, `translated_text`, `translated_to` —
+ve `AiJobType.TRANSLATION` enum'da duruyordu. Eksik olan onları dolduran şeydi.
+
+Üç karar bunu şekillendiriyor, ilk ikisi şartnamenin:
+
+1. **Orijinal asla değiştirilmiyor.** Çeviri `body`'nin yanına yazılıyor ve
+   birini gösteren her ekran diğerini bir dokunuş ötede tutuyor. Hastanın
+   gerçekte yazdığı şey klinik kayıttır; çeviri onun bir okumasıdır.
+2. **İstek üzerine, gelir gelmez değil.** Her mesajı düştüğü anda çevirmek,
+   kimsenin ihtiyacı olmasa da bütün konuşmayı sağlayıcıya göndermek olurdu —
+   ve Türk bir kliniğin Türk bir hastayla yazışmasının çoğunda buna gerek yok.
+   İlk isteyen ödüyor, sonrakiler kayıtlı olanı okuyor.
+3. **Metin önce temizleniyor.** İnsanlar mesajlarını imzalıyor ve AI kapısı
+   hastanın adını taşıyan istemi reddediyor. Bu yüzden adlar `[ad]` ile
+   değiştirilip gönderiliyor, çeviri de o yer tutucuyla geliyor. Kusur değil:
+   okuyucuya orijinal de gösteriliyor, ad orada.
+
+**Hedef dil okuyucununki.** Cihazın dilinden alınıyor, kliniğinkinden değil:
+Türkçe cevabı okuyan Alman hasta ile Almanca şikâyeti okuyan Türk hekim aynı
+düğmeye basıp iki farklı şey kastediyor.
+
+**İstem yalnız "çevir" diyor.** Yardımcı olmaya çalışan bir model tıbbi bir
+şikâyeti özetler, yumuşatır ya da yanıtlar; bunlardan herhangi birinin hekime
+hastanın yazdığı gibi ulaşması, hiç çeviri olmamasından kötüdür.
+
+**Okunamayan yanıt atılıyor.** Modelin cevabı JSON olarak okunamazsa hiçbir şey
+kaydedilmiyor — ham metni geçirmek "İşte çeviri:" cümlesini ya da yarım bir JSON
+parçasını hekimin mesaj akışına hastanın yazdığı gibi koyardı.

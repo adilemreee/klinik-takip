@@ -19,7 +19,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Conversation, QuickReply } from '@prisma/client';
+import { Conversation, Message, QuickReply } from '@prisma/client';
 import type { Request } from 'express';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import {
@@ -36,19 +36,25 @@ import {
   ConversationDto,
   InboxEntryDto,
   CreateQuickReplyDto,
+  MessageDto,
   MessagePageDto,
   MessagePageQueryDto,
   QuickReplyDto,
   SendMessageDto,
   SentMessageDto,
+  TranslateMessageDto,
 } from './dto/message.dto';
 import { InboxEntry, MessagePage, MessagingService, SentMessage } from './messaging.service';
+import { TranslationService } from './translation.service';
 
 @ApiTags('messaging')
 @ApiBearerAuth()
 @Controller('conversations')
 export class ConversationsController {
-  constructor(private readonly messaging: MessagingService) {}
+  constructor(
+    private readonly messaging: MessagingService,
+    private readonly translation: TranslationService,
+  ) {}
 
   /**
    * Whether the clinic is reachable now.
@@ -127,6 +133,32 @@ export class ConversationsController {
     @Param('conversationId', ParseUUIDPipe) conversationId: string,
   ): Promise<{ marked: number }> {
     return { marked: await this.messaging.markRead(user, conversationId) };
+  }
+
+  /**
+   * Translates a message into the reader's language (spec M3).
+   *
+   * The original is never replaced — the translation comes back beside it, and
+   * the screen shows both. What a patient actually wrote is the clinical
+   * record; a translation is a reading of it.
+   *
+   * On request rather than on arrival: most messages between a Turkish clinic
+   * and a Turkish patient need nothing, and translating every one as it landed
+   * would send the whole conversation to a provider for no reason. The first
+   * person to ask pays for it; everyone after reads the stored one.
+   */
+  @Post('messages/:messageId/translate')
+  @HttpCode(200)
+  @RequireAnyPermission('messages.read', 'self.message')
+  @ApiOperation({ summary: "Translate a message into the reader's language" })
+  @ApiOkResponse({ type: MessageDto })
+  @ApiStandardErrors()
+  async translate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Body() dto: TranslateMessageDto,
+  ): Promise<Message> {
+    return this.translation.translate(user, messageId, dto.to);
   }
 
   @Get('messages/:messageId/attachment')

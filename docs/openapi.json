@@ -7962,6 +7962,92 @@
         ]
       }
     },
+    "/conversations/messages/{messageId}/translate": {
+      "post": {
+        "operationId": "ConversationsController_translate",
+        "parameters": [
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Translate a message into the reader's language",
+        "tags": [
+          "messaging"
+        ]
+      }
+    },
     "/conversations/messages/{messageId}/attachment": {
       "get": {
         "operationId": "ConversationsController_attachment",
@@ -17999,6 +18085,21 @@
             "nullable": true,
             "description": "Three lines for the clinician (complaint / measurements / duration). Shown beside the message, never instead of it"
           },
+          "originalLanguage": {
+            "type": "object",
+            "nullable": true,
+            "description": "The language the sender wrote in, as the model read it (BCP-47)"
+          },
+          "translatedText": {
+            "type": "object",
+            "nullable": true,
+            "description": "A translation somebody asked for. Shown beside the original, never instead of it"
+          },
+          "translatedTo": {
+            "type": "object",
+            "nullable": true,
+            "description": "Which language it was translated into"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -18100,6 +18201,19 @@
           "mediaKey",
           "mime",
           "size"
+        ]
+      },
+      "TranslateMessageDto": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "example": "tr",
+            "description": "BCP-47 language tag"
+          }
+        },
+        "required": [
+          "to"
         ]
       },
       "AttachmentUrlDto": {

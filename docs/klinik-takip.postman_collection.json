@@ -3162,6 +3162,46 @@
           }
         },
         {
+          "name": "Translate a message into the reader's language",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/messages/:messageId/translate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                "messages",
+                ":messageId",
+                "translate"
+              ],
+              "variable": [
+                {
+                  "key": "messageId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Translate a message into the reader's language",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"tr\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "A short-lived signed URL for an attachment",
           "request": {
             "method": "GET",

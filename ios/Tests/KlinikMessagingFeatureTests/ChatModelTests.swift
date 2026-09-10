@@ -602,3 +602,123 @@ final class OfflineChatTests: XCTestCase {
         XCTAssertEqual(state.unsent.map(\.body), ["Dikişte kızarıklık var"])
     }
 }
+
+/**
+ * Translating a message (spec M3).
+ *
+ * The rule the tests hold is the spec's: the original is never replaced. What
+ * a patient actually wrote is the clinical record; a translation is a reading
+ * of it, and both stay reachable.
+ */
+final class TranslationTests: XCTestCase {
+    private let translated = """
+    {"id":"m1","conversationId":"c1","senderId":"u1","type":"TEXT",\
+    "body":"Die Wunde ist rot.","transcript":null,"status":"SENT","queuedUntil":null,\
+    "readAt":null,"triageLevel":null,"triageFlags":[],"aiTriageLevel":null,"aiSummary":null,\
+    "originalLanguage":"de","translatedText":"Yara kızarmış.","translatedTo":"tr",\
+    "createdAt":"2026-01-02T08:00:00.000Z"}
+    """
+
+    private let refused = """
+    {"id":"m1","conversationId":"c1","senderId":"u1","type":"TEXT",\
+    "body":"Die Wunde ist rot.","transcript":null,"status":"SENT","queuedUntil":null,\
+    "readAt":null,"triageLevel":null,"triageFlags":[],"aiTriageLevel":null,"aiSummary":null,\
+    "originalLanguage":null,"translatedText":null,"translatedTo":null,\
+    "createdAt":"2026-01-02T08:00:00.000Z"}
+    """
+
+    private func model(_ transport: HTTPTransport) async -> ChatModel {
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: UnusedRefresher())
+        try? await session.signIn(
+            with: SessionTokens(
+                accessToken: "access",
+                refreshToken: "refresh",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+        let client = APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: transport,
+            session: session
+        )
+        let api = MessagingAPI(client: client)
+
+        return ChatModel(api: api) { try await api.myConversation() }
+    }
+
+    private func loaded(_ body: String) -> [String: (Int, String)] {
+        [
+            "GET /me/conversation": (200, conversationBody),
+            "GET /conversations/c1/messages": (200, "{\"items\":[\(body)],\"nextCursor\":null}"),
+            "GET /conversations/clinic-state": (
+                200, #"{"open":true,"opensAt":null,"queueMinutes":null}"#
+            ),
+            "POST /conversations/messages/m1/translate": (200, translated),
+        ]
+    }
+
+    func testTheOriginalIsKeptBesideTheTranslation() async {
+        let chat = await model(RecordingTransport(bodies: loaded(refused)))
+        await chat.load()
+
+        let ok = await chat.translate("m1", into: "tr")
+
+        XCTAssertTrue(ok)
+
+        let state = await chat.currentState()
+        let message = state.messages.first
+
+        XCTAssertEqual(message?.translatedText, "Yara kızarmış.")
+        XCTAssertEqual(message?.body, "Die Wunde ist rot.", "The original is the record")
+        XCTAssertEqual(message?.originalLanguage, "de")
+    }
+
+    /// The AI layer can decline — no provider, a budget, a red line. Nothing is
+    /// shown for it rather than a half-translation, and the original is there.
+    func testARefusedTranslationLeavesTheMessageAlone() async {
+        var bodies = loaded(refused)
+        bodies["POST /conversations/messages/m1/translate"] = (200, refused)
+
+        let chat = await model(RecordingTransport(bodies: bodies))
+        await chat.load()
+
+        let ok = await chat.translate("m1", into: "tr")
+
+        XCTAssertFalse(ok, "Nothing came back to show")
+
+        let state = await chat.currentState()
+        XCTAssertNil(state.messages.first?.translatedText)
+        XCTAssertNil(state.error, "A refusal is not an error the screen shouts about")
+    }
+
+    func testTheReaderCanAskForTheOriginalBack() async {
+        let chat = await model(RecordingTransport(bodies: loaded(translated)))
+        await chat.load()
+
+        await chat.showOriginal("m1", true)
+        var state = await chat.currentState()
+        XCTAssertTrue(state.showingOriginal.contains("m1"))
+
+        await chat.showOriginal("m1", false)
+        state = await chat.currentState()
+        XCTAssertFalse(state.showingOriginal.contains("m1"))
+    }
+
+    /// A message written before translation existed carries none of the three
+    /// fields, and refusing to decode it would empty the thread.
+    func testAMessageWithNoTranslationFieldsStillDecodes() async {
+        let old = """
+        {"id":"m1","conversationId":"c1","senderId":"u1","type":"TEXT","body":"Merhaba",\
+        "transcript":null,"status":"SENT","queuedUntil":null,"readAt":null,\
+        "triageLevel":null,"triageFlags":[],"aiTriageLevel":null,"aiSummary":null,\
+        "createdAt":"2026-01-02T08:00:00.000Z"}
+        """
+
+        let chat = await model(RecordingTransport(bodies: loaded(old)))
+        await chat.load()
+
+        let state = await chat.currentState()
+        XCTAssertEqual(state.messages.count, 1)
+        XCTAssertNil(state.messages.first?.translatedText)
+    }
+}

@@ -742,12 +742,16 @@
     <string name="message_load_older">Older messages</string>
     <string name="message_photo_attached">Photograph — tap to open</string>
     <string name="message_queued_until">Your message will be queued and sent at</string>
+    <string name="message_show_original">Show the original</string>
+    <string name="message_show_translation">Show the translation</string>
     <string name="message_status_delivered">Delivered</string>
     <string name="message_status_failed">Not sent</string>
     <string name="message_status_queued">Queued</string>
     <string name="message_status_read">Read</string>
     <string name="message_status_sent">Sent</string>
     <string name="message_templates">Quick replies</string>
+    <string name="message_translate">Translate</string>
+    <string name="message_translated">Translation</string>
     <string name="message_typing">Typing…</string>
     <string name="notification_action_acknowledge_emergency">I have this</string>
     <string name="notification_action_ask_doctor">Ask the doctor</string>

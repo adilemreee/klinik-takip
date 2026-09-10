@@ -60,7 +60,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 |---|---|---|---|
 | M1 | Kimlik, roller, onboarding | 🟢 | Davet, cihaz oturumları, TOTP karekodu, biyometrik kilit eklendi |
 | M2 | Hasta dosyası | 🟢 | `GET /patients/:id/summary` yazıldı; kart düzenlenebilir, bölümler bekleyeni söylüyor |
-| M3 | Mesajlaşma | 🟡 | Ek gönderme/açma ve erişim penceresi var. **Çeviri ve sesli mesaj yok** |
+| M3 | Mesajlaşma | 🟡 | Ek gönderme/açma, erişim penceresi, **mesaj çevirisi** (istek üzerine, orijinal her zaman bir dokunuş ötede). **Sesli mesaj yok**; canlı teslim de yok — iOS'ta socket istemcisi hiç yazılmadı |
 | M4 | AI triyaj + asistan | 🟢 | Asistan ekranı + protokol kaynak yönetimi |
 | M5 | AI klinik analiz | 🟢 | Rapor onay kuyruğu, fotoğraf ön değerlendirme, brifing, tahlil yorumu isteme |
 | M6 | Bildirim | 🟡 | İzin, jeton kaydı, aksiyon butonları hazır. **Sunucuda APNs anahtarı yok** (bkz. KLINIKTEN 12) |
@@ -102,9 +102,15 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
 
 ### Kod yazarak bitecek ama yapılmadı
 
-4. **Mesaj çevirisi (M3).** Ne sunucuda ne istemcide var. Hasta kendi dilinde
-   yazınca doktorun Türkçe okuması için bir çeviri katmanı gerekiyor — yeni bir
-   servis, yeni bir sağlayıcı kararı.
+4. **Mesaj çevirisi (M3).** ✅ **2026-09-10'da yapıldı.** Her mesajın altında
+   "Çevir"; çeviri kaydediliyor, orijinal asla değiştirilmiyor ve bir dokunuş
+   ötede duruyor. Zaten onaylanmış AI katmanından geçiyor (`AiJobType.TRANSLATION`
+   enum'da baştan vardı) — yeni bir sağlayıcı kararı gerekmedi.
+
+   **Bir ayrıntı bilerek böyle:** metin gönderilmeden önce isimler `[ad]` ile
+   değiştiriliyor, çünkü AI kapısı hastanın adını taşıyan istemi reddediyor.
+   Çeviri de o yer tutucuyla geliyor. Kusur değil: okuyucuya orijinali de
+   gösteriliyor, ad orada.
 5. **Sesli mesaj + transkript (M3).** `MessageType.audio` ve `transcript` alanı
    var, kayıt arayüzü ve transkripsiyon işi yok.
 6. **Müsaitlik tanımı (M10).** ✅ **2026-09-10'da yapıldı.** Hekim çalışma

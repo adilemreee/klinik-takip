@@ -29,6 +29,12 @@ public struct ChatState: Sendable, Equatable {
     /// Who is typing, other than the caller.
     public var typing: Set<String> = []
 
+    /// Messages the reader has chosen to see in the original rather than the
+    /// translation. Per message, because the choice is per message.
+    public var showingOriginal: Set<String> = []
+    /// The message being translated, so only its row shows a spinner.
+    public var translating: String?
+
     /// Messages written on this phone that have not reached the clinic.
     ///
     /// Kept apart from `messages` rather than mixed into it: those come from
@@ -244,6 +250,48 @@ public actor ChatModel {
         guard state.pendingMediaKey != nil else { return nil }
 
         return state.pendingMediaType ?? .file
+    }
+
+    /**
+     * Translates one message into the reader's language (spec M3).
+     *
+     * The row is replaced with the server's answer, which carries the original
+     * as well — a translation is a reading of what somebody wrote, and the
+     * screen keeps both.
+     *
+     * A message that comes back with no translation is one the AI layer
+     * declined or could not read. Nothing is shown for it rather than a
+     * half-translation, and the reader still has the original.
+     */
+    @discardableResult
+    public func translate(_ messageId: String, into language: String) async -> Bool {
+        guard state.translating == nil else { return false }
+
+        state.translating = messageId
+        state.error = nil
+        defer { state.translating = nil }
+
+        do {
+            let translated = try await api.translate(messageId: messageId, to: language)
+            append(translated)
+
+            return translated.translatedText != nil
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+            return false
+        } catch {
+            state.error = L10n.string("error.server")
+            return false
+        }
+    }
+
+    /// Shows what the sender actually wrote, rather than the translation.
+    public func showOriginal(_ messageId: String, _ showing: Bool) {
+        if showing {
+            state.showingOriginal.insert(messageId)
+        } else {
+            state.showingOriginal.remove(messageId)
+        }
     }
 
     /// A message that arrived over the socket.

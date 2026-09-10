@@ -1137,3 +1137,7 @@
 "availability.explain" = "Hastalar yalnız bu aralıklarda randevu alabilir. Bir haftalığına kapatmak için anahtarı kapatın; kaldırmanız gerekmez.";
 "availability.endBeforeStart" = "Bitiş saati başlangıçtan sonra olmalı.";
 "availability.noProfile" = "Bu hesabın personel kaydı yok. Çalışma saatleri bir hekime ait, bir girişe değil.";
+"message.translate" = "Çevir";
+"message.translated" = "Çeviri";
+"message.showOriginal" = "Orijinali göster";
+"message.showTranslation" = "Çeviriyi göster";

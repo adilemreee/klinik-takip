@@ -11,27 +11,24 @@ import XCTest
  */
 @MainActor
 final class BiometricLockTests: XCTestCase {
-    private var defaults: UserDefaults!
-    private var suite: String!
-
-    override func setUp() {
-        super.setUp()
-        suite = "lock-tests-\(UUID().uuidString)"
-        defaults = UserDefaults(suiteName: suite)
-    }
-
-    override func tearDown() {
-        defaults.removePersistentDomain(forName: suite)
-        super.tearDown()
-    }
-
     /// A clock the test moves by hand: a lock tested with a real one is a lock
     /// tested by waiting.
     private final class Clock: @unchecked Sendable {
         var now = Date(timeIntervalSince1970: 1_000_000)
     }
 
-    private func lock(enabled: Bool, clock: Clock) -> BiometricLock {
+    /**
+     * Its own defaults, made inside the test rather than in `setUp`.
+     *
+     * `setUp` and `tearDown` are nonisolated overrides, and this class is
+     * `@MainActor`: touching a stored property from them compiles on the
+     * newer toolchain here and fails on CI's. See docs/KATKI-KURALLARI.md.
+     */
+    private func store() -> UserDefaults {
+        UserDefaults(suiteName: "lock-tests-\(UUID().uuidString)")!
+    }
+
+    private func lock(enabled: Bool, clock: Clock, in defaults: UserDefaults) -> BiometricLock {
         defaults.set(enabled, forKey: "xyz.klinik.biometricLock")
 
         return BiometricLock(defaults: defaults, now: { clock.now })
@@ -39,7 +36,7 @@ final class BiometricLockTests: XCTestCase {
 
     func testLocksAgainAfterLongEnoughAway() {
         let clock = Clock()
-        let sut = lock(enabled: true, clock: clock)
+        let sut = lock(enabled: true, clock: clock, in: store())
         sut.setEnabled(true)
 
         // Somebody has already unlocked it this session.
@@ -59,7 +56,7 @@ final class BiometricLockTests: XCTestCase {
     /// photograph is how people turn the lock off.
     func testStaysUnlockedAfterAShortTrip() {
         let clock = Clock()
-        let sut = lock(enabled: true, clock: clock)
+        let sut = lock(enabled: true, clock: clock, in: store())
         sut.setEnabled(false)
         sut.setEnabled(true)
 
@@ -72,7 +69,7 @@ final class BiometricLockTests: XCTestCase {
 
     func testDoesNothingWhenTheLockIsOff() {
         let clock = Clock()
-        let sut = lock(enabled: false, clock: clock)
+        let sut = lock(enabled: false, clock: clock, in: store())
 
         sut.wentAway()
         clock.now += BiometricLock.grace * 10
@@ -85,7 +82,7 @@ final class BiometricLockTests: XCTestCase {
     /// makes on its own, and it must not lock anybody out.
     func testComingBackWithoutHavingLeftChangesNothing() {
         let clock = Clock()
-        let sut = lock(enabled: true, clock: clock)
+        let sut = lock(enabled: true, clock: clock, in: store())
         sut.setEnabled(false)
         sut.setEnabled(true)
 
@@ -96,7 +93,7 @@ final class BiometricLockTests: XCTestCase {
 
     func testTurningItOffForgetsThatTheAppWasAway() {
         let clock = Clock()
-        let sut = lock(enabled: true, clock: clock)
+        let sut = lock(enabled: true, clock: clock, in: store())
         sut.setEnabled(false)
         sut.setEnabled(true)
 
@@ -110,7 +107,7 @@ final class BiometricLockTests: XCTestCase {
 
     /// A cold launch with the lock on is locked, which is what it always did.
     func testStartsLockedWhenEnabled() {
-        let sut = lock(enabled: true, clock: Clock())
+        let sut = lock(enabled: true, clock: Clock(), in: store())
 
         XCTAssertTrue(sut.isLocked)
     }

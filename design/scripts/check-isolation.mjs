@@ -135,6 +135,44 @@ function referencedByTests(paths) {
   return referenced;
 }
 
+/**
+ * `setUp` and `tearDown` inside a `@MainActor` test class.
+ *
+ * XCTest declares them nonisolated, so touching a stored property of a
+ * main-actor class from one compiles on a newer toolchain and fails on CI's
+ * with "main actor-isolated property ... can not be mutated from a nonisolated
+ * context". The fix is to build the fixture inside each test method, which the
+ * class's own isolation covers.
+ */
+function mainActorSetUp(paths) {
+  const findings = [];
+
+  for (const path of paths) {
+    const lines = readFileSync(path, 'utf8').split('\n');
+    let mainActorClass = false;
+
+    lines.forEach((line, index) => {
+      if (/^(?:public |internal |private |final |)*class\s/.test(line)) {
+        mainActorClass = /@MainActor/.test(lines[index - 1] ?? '') || /@MainActor/.test(line);
+        return;
+      }
+
+      if (!mainActorClass) return;
+
+      // An `async` override is fine: XCTest runs those on the caller's
+      // executor and the isolation is inherited.
+      if (/^\s*override func (setUp|tearDown)\s*\(\s*\)(?!\s*async)/.test(line)) {
+        findings.push(
+          `  FAIL ${relative(root, path)}:${index + 1}  ` +
+            'setUp/tearDown is nonisolated inside a @MainActor test class',
+        );
+      }
+    });
+  }
+
+  return findings;
+}
+
 const statics = viewStatics(sources(join(root, 'ios/Sources')));
 const tests = referencedByTests(sources(join(root, 'ios/Tests')));
 
@@ -150,18 +188,20 @@ for (const [name, reference] of tests) {
   }
 }
 
+findings.push(...mainActorSetUp(sources(join(root, 'ios/Tests'))));
+
 console.log('isolation:');
 
 if (findings.length === 0) {
   console.log('  OK   every View static a test calls is nonisolated');
+  console.log('  OK   no @MainActor test class mutates state from setUp/tearDown');
   process.exit(0);
 }
 
 console.log(findings.join('\n'));
 console.log(`\n${findings.length} finding(s).`);
 console.log(
-  '\nA View is main-actor isolated and the compiler in CI carries that to its\n' +
-    'statics. A test method is nonisolated, so the call will not compile there.\n' +
-    'Mark the member `nonisolated` — see docs/KATKI-KURALLARI.md.',
+  '\nCI compiles with an older Swift, which is stricter about main-actor\n' +
+    'isolation than the one on a developer Mac. See docs/KATKI-KURALLARI.md.',
 );
 process.exit(1);

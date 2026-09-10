@@ -119,8 +119,26 @@ orada izolasyon zaten doğru. **Testin çağırdığı** static'ler `nonisolated
 olmalı, çünkü test metodu izolasyonsuzdur. (Testin kendisi `@MainActor` ise
 sorun yok; sınır geçilmiyor.)
 
-`design/scripts/check-isolation.mjs` bunu tarıyor ve CI çalıştırıyor. Üç tur bu
-hataya gitti; bir saniyelik kontrol bir derlemeden ucuz.
+### Kural: `@MainActor` test sınıfında `setUp`/`tearDown` durum tutmasın
+
+XCTest bu ikisini **izolasyonsuz** tanımlıyor. Sınıf `@MainActor` ise içinden
+saklı bir özelliğe dokunmak CI'da patlıyor:
+
+```
+error: main actor-isolated property 'defaults'
+       can not be mutated from a nonisolated context
+```
+
+Fikstürü test metodunun kendi içinde kurun — sınıfın izolasyonu orayı kapsıyor.
+(`override func setUp() async throws` de sorun değil; izolasyon miras alınıyor.)
+
+`design/scripts/check-isolation.mjs` her iki kuralı da tarıyor ve CI
+çalıştırıyor. Dört tur bu hata ailesine gitti; bir saniyelik kontrol bir
+derlemeden ucuz:
+
+```bash
+node design/scripts/check-isolation.mjs
+```
 
 ### Kural: aktör metoduna `Sendable` olmayan varsayılan parametre koymayın
 

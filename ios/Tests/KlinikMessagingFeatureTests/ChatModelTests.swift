@@ -722,3 +722,37 @@ final class TranslationTests: XCTestCase {
         XCTAssertNil(state.messages.first?.translatedText)
     }
 }
+
+/**
+ * Voice messages (spec M3).
+ *
+ * A voice message shown as "dosya" is one a clinician has to guess at before
+ * opening — and the transcript field that will sit beside it one day hangs off
+ * the type, so getting the type right is not cosmetic.
+ */
+final class VoiceMessageTests: XCTestCase {
+    func testAudioIsItsOwnKindOfMessage() {
+        XCTAssertEqual(ChatModel.messageType(for: "audio/mp4"), .audio)
+        XCTAssertEqual(ChatModel.messageType(for: "audio/mpeg"), .audio)
+    }
+
+    func testImagesAndFilesAreUnchanged() {
+        XCTAssertEqual(ChatModel.messageType(for: "image/jpeg"), .image)
+        XCTAssertEqual(ChatModel.messageType(for: "image/heic"), .image)
+        XCTAssertEqual(ChatModel.messageType(for: "application/pdf"), .file)
+        XCTAssertEqual(ChatModel.messageType(for: "application/octet-stream"), .file)
+    }
+
+    func testTheRowSaysItIsAVoiceMessage() {
+        XCTAssertEqual(MessageRow.attachmentKey(for: .audio), "message.audioAttached")
+        XCTAssertEqual(MessageRow.symbol(for: .audio), "waveform")
+    }
+
+    /// A bare number of seconds reads as a countdown at 90.
+    func testElapsedTimeIsMinutesAndSeconds() {
+        XCTAssertEqual(ChatScreen.elapsed(0), "0:00")
+        XCTAssertEqual(ChatScreen.elapsed(9), "0:09")
+        XCTAssertEqual(ChatScreen.elapsed(90), "1:30")
+        XCTAssertEqual(ChatScreen.elapsed(180), "3:00")
+    }
+}

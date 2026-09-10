@@ -214,7 +214,7 @@ public actor ChatModel {
             )
 
             state.pendingMediaKey = attachment.mediaKey
-            state.pendingMediaType = contentType.hasPrefix("image/") ? .image : .file
+            state.pendingMediaType = ChatModel.messageType(for: contentType)
         } catch let error as APIError {
             state.error = L10n.message(for: error)
             state.sending = false
@@ -228,6 +228,20 @@ public actor ChatModel {
         state.sending = false
 
         return await send(caption, mediaKey: state.pendingMediaKey)
+    }
+
+    /**
+     * What kind of message an attachment makes.
+     *
+     * Audio is its own type, not "file": a voice message shown as `dosya` is
+     * one a clinician has to guess at before opening, and the transcript field
+     * that will one day sit beside it hangs off this type.
+     */
+    static func messageType(for contentType: String) -> MessageType {
+        if contentType.hasPrefix("image/") { return .image }
+        if contentType.hasPrefix("audio/") { return .audio }
+
+        return .file
     }
 
     /// The signed URL for one message's attachment. Short-lived by design, so

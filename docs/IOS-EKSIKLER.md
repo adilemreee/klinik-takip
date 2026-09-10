@@ -60,7 +60,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 |---|---|---|---|
 | M1 | Kimlik, roller, onboarding | 🟢 | Davet, cihaz oturumları, TOTP karekodu, biyometrik kilit eklendi |
 | M2 | Hasta dosyası | 🟢 | `GET /patients/:id/summary` yazıldı; kart düzenlenebilir, bölümler bekleyeni söylüyor |
-| M3 | Mesajlaşma | 🟡 | Ek gönderme/açma, erişim penceresi, **mesaj çevirisi** (istek üzerine, orijinal her zaman bir dokunuş ötede). **Sesli mesaj yok**; canlı teslim de yok — iOS'ta socket istemcisi hiç yazılmadı |
+| M3 | Mesajlaşma | 🟡 | Ek gönderme/açma, erişim penceresi, **çeviri**, **canlı teslim + yazıyor göstergesi** (socket istemcisi eklendi), **sesli mesaj kaydı**. **Transkripsiyon yok** — sağlayıcı kararı klinikte |
 | M4 | AI triyaj + asistan | 🟢 | Asistan ekranı + protokol kaynak yönetimi |
 | M5 | AI klinik analiz | 🟢 | Rapor onay kuyruğu, fotoğraf ön değerlendirme, brifing, tahlil yorumu isteme |
 | M6 | Bildirim | 🟡 | İzin, jeton kaydı, aksiyon butonları hazır. **Sunucuda APNs anahtarı yok** (bkz. KLINIKTEN 12) |
@@ -111,8 +111,17 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
    değiştiriliyor, çünkü AI kapısı hastanın adını taşıyan istemi reddediyor.
    Çeviri de o yer tutucuyla geliyor. Kusur değil: okuyucuya orijinali de
    gösteriliyor, ad orada.
-5. **Sesli mesaj + transkript (M3).** `MessageType.audio` ve `transcript` alanı
-   var, kayıt arayüzü ve transkripsiyon işi yok.
+5. **Sesli mesaj (M3).** ✅ **Kayıt 2026-09-10'da yapıldı.** Hasta sesli not
+   kaydedip gönderiyor, hekim dinliyor.
+
+   **Yol boyunca bulunan hata:** dosya türü sezici `ftyp`'ı offset 4'te
+   görünce HEIC diyordu — ki bu her MP4, M4A ve MOV'un başlangıcı. Yani bir
+   hastanın sesli mesajı **fotoğraf olarak** kaydediliyordu. Artık marka
+   (`M4A `, `heic`, …) okunuyor; tanınmayan marka reddediliyor.
+
+   **Transkripsiyon hâlâ yok** ve bilerek: hastanın sesini üçüncü bir tarafa
+   göndermek yeni bir veri kategorisi ve yeni bir KVKK kararı. `transcript`
+   alanı boş duruyor, klinik sağlayıcıya karar verince dolar.
 6. **Müsaitlik tanımı (M10).** ✅ **2026-09-10'da yapıldı.** Hekim çalışma
    saatlerini uygulamadan yayımlıyor, düzenliyor, bir haftalığına kapatıyor.
 

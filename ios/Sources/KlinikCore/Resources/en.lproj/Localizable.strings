@@ -1141,3 +1141,8 @@
 "message.translated" = "Translation";
 "message.showOriginal" = "Show the original";
 "message.showTranslation" = "Show the translation";
+"message.record" = "Voice message";
+"message.stopRecording" = "Finish and send";
+"message.recording" = "Recording";
+"message.microphoneRefused" = "The microphone was not allowed. Grant it in Settings to send voice messages.";
+"message.audioAttached" = "Voice message — tap to listen";

@@ -1141,3 +1141,8 @@
 "message.translated" = "Çeviri";
 "message.showOriginal" = "Orijinali göster";
 "message.showTranslation" = "Çeviriyi göster";
+"message.record" = "Sesli mesaj";
+"message.stopRecording" = "Bitir ve gönder";
+"message.recording" = "Kaydediliyor";
+"message.microphoneRefused" = "Mikrofon izni verilmedi. Ayarlar'dan izin verirseniz sesli mesaj gönderebilirsiniz.";
+"message.audioAttached" = "Sesli mesaj — dinlemek için dokunun";

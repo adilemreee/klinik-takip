@@ -9,15 +9,62 @@ const withHeader = (bytes: number[], offset = 0): Buffer => {
   return buffer;
 };
 
+/**
+ * An ISO base media header: `....ftyp` and then the brand.
+ *
+ * The brand is the whole point. Every MP4, M4A, MOV and HEIC begins the same
+ * way, and only what follows says which one it is.
+ */
+const isoHeader = (brand: string): Buffer => {
+  const buffer = Buffer.alloc(SNIFF_LENGTH);
+  buffer.write('ftyp', 4, 'latin1');
+  buffer.write(brand, 8, 'latin1');
+  return buffer;
+};
+
 describe('content type detection', () => {
   it.each([
     ['PDF', [0x25, 0x50, 0x44, 0x46], 0, 'application/pdf'],
     ['JPEG', [0xff, 0xd8, 0xff], 0, 'image/jpeg'],
     ['PNG', [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0, 'image/png'],
-    ['HEIC', [0x66, 0x74, 0x79, 0x70], 4, 'image/heic'],
     ['DICOM', [0x44, 0x49, 0x43, 0x4d], 128, 'application/dicom'],
+    ['MP3', [0x49, 0x44, 0x33], 0, 'audio/mpeg'],
   ])('recognises %s', (_label, bytes, offset, mime) => {
     expect(detectType(withHeader(bytes, offset))?.mime).toBe(mime);
+  });
+
+  it.each([
+    ['HEIC', 'heic', 'image/heic'],
+    ['HEIF', 'mif1', 'image/heic'],
+    ['M4A', 'M4A ', 'audio/mp4'],
+  ])('reads the brand of an ISO base media file: %s', (_label, brand, mime) => {
+    expect(detectType(isoHeader(brand))?.mime).toBe(mime);
+  });
+
+  /**
+   * The bug this replaced.
+   *
+   * "`ftyp` at offset 4" is every MP4, M4A and MOV ever made, so a patient's
+   * voice message was detected as `image/heic` and filed as a photograph. The
+   * sniffer exists precisely so a file is what its bytes say.
+   */
+  it('does not read a voice message as a photograph', () => {
+    expect(detectType(isoHeader('M4A '))?.mime).toBe('audio/mp4');
+    expect(detectType(isoHeader('M4A '))?.extension).toBe('m4a');
+  });
+
+  /// A brand nobody recognises is refused rather than filed as a guess — the
+  /// same conservative half of every other decision in this file.
+  it('refuses an ISO file whose brand it does not know', () => {
+    expect(detectType(isoHeader('qt  '))).toBeNull();
+    expect(detectType(isoHeader('avc1'))).toBeNull();
+  });
+
+  it('refuses a truncated ISO header', () => {
+    const truncated = Buffer.alloc(10);
+    truncated.write('ftyp', 4, 'latin1');
+
+    expect(detectType(truncated)).toBeNull();
   });
 
   it('returns null for content it does not recognise', () => {

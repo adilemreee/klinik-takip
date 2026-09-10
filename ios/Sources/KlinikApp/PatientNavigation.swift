@@ -74,6 +74,7 @@ struct PatientHomeView: View {
 
     @State private var path: [PatientDestination] = []
     @State private var health: HealthSync
+    @State private var voiceRecorder = VoiceRecorder()
 
     init(
         environment: AppEnvironment,
@@ -204,7 +205,11 @@ struct PatientHomeView: View {
                 // The same picker the documents screen uses, and the same
                 // types: the server accepts a superset for messages, so
                 // nothing offered here can be refused on arrival.
-                pickAttachment: { await FilePicker.present() }
+                pickAttachment: { await FilePicker.present() },
+                // Recording is offered on the patient's side only. A clinician
+                // dictating into a patient's thread is a different feature
+                // with a different consent question behind it.
+                voice: voiceRecorder.handle
             )
 
         case .assistant:

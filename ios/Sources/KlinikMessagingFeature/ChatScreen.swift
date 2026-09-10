@@ -19,12 +19,18 @@ public struct ChatScreen: View {
     /// the session rather than to a screen. Nil in previews and tests, where
     /// the thread simply does not update on its own.
     private let live: (any LiveChannel)?
+    /// Recording a voice message (spec M3). Nil leaves the button out rather
+    /// than showing one that cannot work.
+    private let voice: VoiceRecording?
 
     @State private var state = ChatState()
     @State private var draft = ""
     @State private var showingTemplates = false
     @State private var attaching = false
     @State private var viewing: ViewedAttachment?
+    @State private var recording = false
+    @State private var recordedFor = 0
+    @State private var microphoneRefused = false
 
     /**
      * The language to translate into.
@@ -47,7 +53,8 @@ public struct ChatScreen: View {
         live: (any LiveChannel)? = nil,
         onTyping: (@Sendable (String) -> Void)? = nil,
         openAssistant: (() -> Void)? = nil,
-        pickAttachment: (() async -> (url: URL, contentType: String)?)? = nil
+        pickAttachment: (() async -> (url: URL, contentType: String)?)? = nil,
+        voice: VoiceRecording? = nil
     ) {
         self.model = model
         self.canUseTemplates = canUseTemplates
@@ -55,6 +62,7 @@ public struct ChatScreen: View {
         self.openAssistant = openAssistant
         self.pickAttachment = pickAttachment
         self.live = live
+        self.voice = voice
     }
 
     public var body: some View {
@@ -218,11 +226,47 @@ public struct ChatScreen: View {
                     .disabled(attaching || state.sending)
                 }
 
+                if let voice, voice.isAvailable {
+                    Button {
+                        Task { await toggleRecording(voice) }
+                    } label: {
+                        Label(
+                            L10n.string(recording ? "message.stopRecording" : "message.record"),
+                            systemImage: recording ? "stop.circle.fill" : "mic"
+                        )
+                        .font(Tokens.Typography.calloutRelative)
+                    }
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                    .disabled(attaching || state.sending)
+                    .foregroundStyle(
+                        (recording ? Tone.critical.foreground : Tokens.Palette.accent)
+                            .resolve(for: scheme)
+                    )
+                }
+
                 Spacer(minLength: 0)
 
                 if attaching {
                     ProgressView().accessibilityLabel(L10n.string("message.attaching"))
                 }
+            }
+
+            if recording, let voice {
+                RecordingBar(
+                    seconds: recordedFor,
+                    cancel: {
+                        voice.cancel()
+                        recording = false
+                        recordedFor = 0
+                    }
+                )
+            }
+
+            if microphoneRefused {
+                Text(L10n.string("message.microphoneRefused"))
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tone.warning.foreground.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             LabelledField(
@@ -388,22 +432,37 @@ struct MessageRow: View {
 
     private var isTranslated: Bool { message.translatedText != nil && !showingOriginal }
 
+    /// A voice message shown as "dosya" is one a clinician has to guess at
+    /// before opening. `nonisolated` because a static on a `View` otherwise
+    /// inherits the view's main-actor isolation.
+    nonisolated static func symbol(for type: MessageType) -> String {
+        switch type {
+        case .image: return "photo"
+        case .audio: return "waveform"
+        default: return "paperclip"
+        }
+    }
+
+    nonisolated static func attachmentKey(for type: MessageType) -> String {
+        switch type {
+        case .image: return "message.photoAttached"
+        case .audio: return "message.audioAttached"
+        default: return "message.fileAttached"
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
             if message.hasAttachment {
                 // Says what it is and that it opens. "Ek" on its own reads as a
                 // message the app failed to render.
                 HStack(spacing: Tokens.Spacing.sm) {
-                    Image(systemName: message.type == .image ? "photo" : "paperclip")
+                    Image(systemName: MessageRow.symbol(for: message.type))
                         .font(Tokens.Typography.bodyRelative)
                         .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
                         .accessibilityHidden(true)
 
-                    Text(
-                        L10n.string(
-                            message.type == .image ? "message.photoAttached" : "message.fileAttached"
-                        )
-                    )
+                    Text(L10n.string(MessageRow.attachmentKey(for: message.type)))
                     .font(Tokens.Typography.subheadingRelative)
                     .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
 
@@ -688,5 +747,120 @@ extension ChatScreen {
         }
 
         live.join(conversationId)
+    }
+}
+
+
+extension ChatScreen {
+    /**
+     * Starts or finishes a recording.
+     *
+     * Tap to start, tap to stop — not press-and-hold. Somebody three days
+     * after an operation may be holding the phone in one hand, and a gesture
+     * that loses the message when a finger slips is a gesture that loses
+     * messages.
+     */
+    @MainActor
+    fileprivate func toggleRecording(_ voice: VoiceRecording) async {
+        if recording {
+            recording = false
+
+            guard let recorded = await voice.stop() else {
+                // Under a second: a tap that started and stopped. Sending it
+                // would give the clinician silence to wonder about.
+                recordedFor = 0
+                return
+            }
+
+            recordedFor = 0
+            attaching = true
+            defer { attaching = false }
+
+            await refresh {
+                await model.attach(fileURL: recorded.url, contentType: recorded.contentType)
+            }
+
+            // The upload has the bytes now; a copy in the temporary directory
+            // is somebody's voice left on the phone for no reason.
+            try? FileManager.default.removeItem(at: recorded.url)
+
+            return
+        }
+
+        microphoneRefused = false
+
+        guard await voice.start() else {
+            // Not a failure to apologise for: the person said no.
+            microphoneRefused = true
+            return
+        }
+
+        recording = true
+        recordedFor = 0
+
+        await tick(voice)
+    }
+
+    /// Counts while recording, and stops the recording at the ceiling rather
+    /// than letting a pocket recording run to three minutes of nothing.
+    @MainActor
+    fileprivate func tick(_ voice: VoiceRecording) async {
+        while recording {
+            try? await Task.sleep(for: .seconds(1))
+
+            guard recording else { return }
+
+            recordedFor += 1
+
+            if recordedFor >= Int(ChatScreen.maximumRecordingSeconds) {
+                await toggleRecording(voice)
+                return
+            }
+        }
+    }
+
+    /// Matches the recorder's own ceiling. `nonisolated` because a static on a
+    /// `View` otherwise inherits the view's main-actor isolation.
+    nonisolated static var maximumRecordingSeconds: TimeInterval { 180 }
+
+    /// mm:ss. A bare number of seconds reads as a countdown at 90.
+    nonisolated static func elapsed(_ seconds: Int) -> String {
+        String(format: "%d:%02d", seconds / 60, seconds % 60)
+    }
+}
+
+/// What is happening while the microphone is open.
+struct RecordingBar: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let seconds: Int
+    let cancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: Tokens.Spacing.sm) {
+            Image(systemName: "waveform")
+                .font(Tokens.Typography.bodyRelative)
+                // The words beside it say the same thing.
+                .accessibilityHidden(true)
+
+            Text(L10n.string("message.recording"))
+                .font(Tokens.Typography.captionRelative)
+
+            Text(ChatScreen.elapsed(seconds))
+                .font(Tokens.Typography.captionRelative)
+                .monospacedDigit()
+
+            Spacer(minLength: 0)
+
+            Button(L10n.string("common.cancel"), role: .destructive, action: cancel)
+                .font(Tokens.Typography.captionRelative)
+                .frame(minHeight: Tokens.minimumTouchTarget)
+        }
+        .foregroundStyle(Tone.critical.foreground.resolve(for: scheme))
+        .padding(.horizontal, Tokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Tone.critical.surface.resolve(for: scheme))
+        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

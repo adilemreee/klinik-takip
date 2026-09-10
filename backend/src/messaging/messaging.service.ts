@@ -15,7 +15,7 @@ import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
 import { Env } from '../config/env.schema';
-import { DOCUMENT_MIME_TYPES } from '../files/file-type';
+import { AUDIO_MIME_TYPES, DOCUMENT_MIME_TYPES } from '../files/file-type';
 import { FileService } from '../files/file.service';
 import { PrismaService } from '../infra/prisma.service';
 import { JOBS, QUEUES } from '../queue/queue.constants';
@@ -24,7 +24,7 @@ import { windowState } from './access-window';
 import { MessagingGateway } from './messaging.gateway';
 
 /** What a message may carry. Audio is allowed here and nowhere else. */
-export const MESSAGE_MIME_TYPES = new Set([...DOCUMENT_MIME_TYPES, 'audio/mp4', 'audio/mpeg']);
+export const MESSAGE_MIME_TYPES = new Set([...DOCUMENT_MIME_TYPES, ...AUDIO_MIME_TYPES]);
 
 export interface SendInput {
   body?: string;

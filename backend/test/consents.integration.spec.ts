@@ -327,4 +327,77 @@ describe('consents', () => {
         .expect(404);
     });
   });
+
+  describe('the form itself (spec M17)', () => {
+    const form = (token: string): request.Test =>
+      request(server).get('/me/consents/form').set('Authorization', `Bearer ${token}`);
+
+    /// A document that does not name the operation is not informed consent, so
+    /// the server builds it from the patient's own surgery record.
+    it('puts the patient procedure into the form', async () => {
+      const { token, patientId } = await patientWithFile();
+
+      await prisma.surgery.create({
+        data: {
+          patientId,
+          procedureName: 'Rinoplasti',
+          procedureCode: 'RHINOPLASTY',
+          performedAt: new Date('2026-11-02T09:00:00.000Z'),
+        },
+      });
+
+      const body = (await form(token).expect(200)).body as {
+        id: string;
+        version: number;
+        body: string;
+      };
+
+      expect(body.id).toBe('treatment-consent');
+      expect(body.version).toBe(1);
+      expect(body.body).toContain('Rinoplasti');
+      expect(body.body).not.toContain('{{islem}}');
+    });
+
+    /// Its own answer, because "no wording published" and "your operation is
+    /// not recorded" are different problems with different people to chase.
+    it('refuses when the clinic has not recorded the operation', async () => {
+      const { token } = await patientWithFile();
+
+      const response = await form(token).expect(404);
+
+      expect((response.body as { message: string }).message).toBe('PROCEDURE_NOT_RECORDED');
+    });
+
+    it('records the version that was on screen when it is signed', async () => {
+      const { token, patientId } = await patientWithFile();
+
+      await prisma.surgery.create({
+        data: {
+          patientId,
+          procedureName: 'Rinoplasti',
+          performedAt: new Date('2026-11-02T09:00:00.000Z'),
+        },
+      });
+
+      const shown = (await form(token).expect(200)).body as { version: number; body: string };
+
+      const created = await request(server)
+        .post('/me/consents')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: ConsentType.TREATMENT,
+          version: shown.version,
+          documentText: shown.body,
+          signature: PNG_BASE64,
+        })
+        .expect(201);
+
+      const stored = await prisma.consent.findUniqueOrThrow({
+        where: { id: (created.body as ConsentBody).id },
+      });
+
+      expect(stored.version).toBe(shown.version);
+      expect(stored.documentText).toContain('Rinoplasti');
+    });
+  });
 });

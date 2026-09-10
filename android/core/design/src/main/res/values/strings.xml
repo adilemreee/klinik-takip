@@ -316,6 +316,8 @@
     <string name="consent_notice_read">Okudum</string>
     <string name="consent_notice_title">Aydınlatma metni</string>
     <string name="consent_optional_note">Bu izinlerin hiçbiri tedavinizin şartı değildir. Vermeseniz de, sonradan geri alsanız da tedaviniz etkilenmez.</string>
+    <string name="consent_procedure_unknown">Klinik henüz hangi işlemi yaptıracağınızı kaydetmedi.</string>
+    <string name="consent_procedure_unknown_why">Yapılacak işlemi adıyla yazmayan bir onam formu geçerli bir aydınlatılmış onam değildir. Klinik işlem kaydını girdiğinde form burada açılır.</string>
     <string name="consent_read_and_sign">Metni oku ve imzala</string>
     <string name="consent_sign_hint">Parmağınızla buraya imzalayın</string>
     <string name="consent_signature">İmza</string>

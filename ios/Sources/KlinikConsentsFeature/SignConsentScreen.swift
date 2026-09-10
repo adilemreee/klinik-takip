@@ -5,10 +5,14 @@ import KlinikDesign
 
 public enum ConsentFormPhase: Sendable, Equatable {
     case loading
-    case loaded(LegalDocument)
-    /// The clinic has not published a consent form. Not a failure to retry:
-    /// there is nothing to sign until they do.
+    case loaded(ConsentForm)
+    /// The clinic has not published a consent form.
     case unpublished
+    /// The clinic has not recorded which operation this is. A different
+    /// problem with a different person to chase, so a different message: a
+    /// consent form that does not name the operation is not informed consent,
+    /// and the app refuses to show one rather than filling the gap itself.
+    case procedureUnknown
     case failed(String)
 }
 
@@ -32,15 +36,16 @@ public struct SignConsentState: Sendable, Equatable {
  * the argument it exists for.
  */
 public actor SignConsentModel {
-    private let legal: LegalAPI
     private let consents: ConsentsAPI
 
     private(set) public var state = SignConsentState()
 
-    public init(legal: LegalAPI, consents: ConsentsAPI) {
-        self.legal = legal
+    public init(consents: ConsentsAPI) {
         self.consents = consents
     }
+
+    /// What the server calls "we have not recorded your operation".
+    static let procedureMissing = "PROCEDURE_NOT_RECORDED"
 
     public func currentState() -> SignConsentState { state }
 
@@ -48,10 +53,14 @@ public actor SignConsentModel {
         state.phase = .loading
 
         do {
-            state.phase = .loaded(try await legal.treatmentConsent())
+            state.phase = .loaded(try await consents.treatmentForm())
         } catch let error as APIError {
-            if case .notFound = error {
-                state.phase = .unpublished
+            if case .notFound(let body) = error {
+                // The server says which of the two it is; guessing would send
+                // the patient to the wrong person.
+                state.phase = body.message == SignConsentModel.procedureMissing
+                    ? .procedureUnknown
+                    : .unpublished
             } else {
                 state.phase = .failed(L10n.message(for: error))
             }
@@ -149,6 +158,20 @@ public struct SignConsentScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+        case .procedureUnknown:
+            Card(tone: .warning) {
+                VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                    Text(L10n.string("consent.procedureUnknown"))
+                        .font(Tokens.Typography.bodyRelative)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(L10n.string("consent.procedureUnknownWhy"))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
         case .failed(let message):
             Card(tone: .critical) {
                 VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
@@ -172,7 +195,7 @@ public struct SignConsentScreen: View {
     }
 
     @ViewBuilder
-    private func form(_ document: LegalDocument) -> some View {
+    private func form(_ document: ConsentForm) -> some View {
         if state.signed {
             Card(tone: .success) {
                 Text(L10n.string("consent.signedThanks"))

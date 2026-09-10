@@ -326,6 +326,8 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "consent.noticeRead" to R.string.consent_notice_read,
     "consent.noticeTitle" to R.string.consent_notice_title,
     "consent.optionalNote" to R.string.consent_optional_note,
+    "consent.procedureUnknown" to R.string.consent_procedure_unknown,
+    "consent.procedureUnknownWhy" to R.string.consent_procedure_unknown_why,
     "consent.readAndSign" to R.string.consent_read_and_sign,
     "consent.signHint" to R.string.consent_sign_hint,
     "consent.signature" to R.string.consent_signature,

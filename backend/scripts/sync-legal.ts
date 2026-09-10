@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 /**
@@ -14,33 +14,32 @@ import { dirname, join } from 'node:path';
  */
 const DOCUMENTS = ['KVKK-AYDINLATMA-METNI.md'];
 
+const DOCUMENTS_ALSO = ['TEDAVI-ONAM-METNI.md'];
+
 /**
- * Texts the clinic supplies, copied only if they exist.
+ * Procedure-specific consent annexes, whichever ones exist.
  *
- * The treatment consent is the clinic's own document — its wording is a
- * medical-legal decision, not ours. Until the file is added the endpoint
- * answers 404 and the app does not offer signing, which is the only safe
- * behaviour: a placeholder that can be signed is worse than no form at all.
+ * The base consent covers what every operation shares; the risks of *this*
+ * operation are the clinic's to write, one file per procedure code, named
+ * `TEDAVI-ONAM-<CODE>.md` and matched against the surgery record. A clinic
+ * that has not written one yet still has a working form — with the general
+ * risks and the hekim's own explanation, which is what the law actually
+ * requires of the conversation.
  */
-const OPTIONAL_DOCUMENTS = ['TEDAVI-ONAM-METNI.md'];
+const ANNEX_PATTERN = /^TEDAVI-ONAM-(?!METNI\.md$).+\.md$/;
 
 const root = join(__dirname, '..', '..');
 const target = join(__dirname, '..', 'legal');
 
 mkdirSync(target, { recursive: true });
 
-for (const name of DOCUMENTS) {
-  const to = join(target, name);
-  mkdirSync(dirname(to), { recursive: true });
-  copyFileSync(join(root, 'docs', name), to);
-  console.log(`legal/${name}`);
-}
+const annexes = readdirSync(join(root, 'docs')).filter((name) => ANNEX_PATTERN.test(name));
 
-for (const name of OPTIONAL_DOCUMENTS) {
+for (const name of [...DOCUMENTS, ...DOCUMENTS_ALSO, ...annexes]) {
   const from = join(root, 'docs', name);
 
   if (!existsSync(from)) {
-    console.log(`legal/${name} — not supplied yet, skipped`);
+    console.log(`legal/${name} — not supplied, skipped`);
     continue;
   }
 

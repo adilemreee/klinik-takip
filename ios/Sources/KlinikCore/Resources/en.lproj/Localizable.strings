@@ -1146,3 +1146,5 @@
 "message.recording" = "Recording";
 "message.microphoneRefused" = "The microphone was not allowed. Grant it in Settings to send voice messages.";
 "message.audioAttached" = "Voice message — tap to listen";
+"consent.procedureUnknown" = "The clinic has not yet recorded which operation you are having.";
+"consent.procedureUnknownWhy" = "A consent form that does not name the operation is not valid informed consent. The form will open here once the clinic records it.";

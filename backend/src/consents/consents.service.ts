@@ -1,5 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { Readable } from 'node:stream';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Consent, ConsentType } from '@prisma/client';
 import { type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
@@ -47,8 +49,26 @@ const MAXIMUM_SIGNATURE_BYTES = 512 * 1024;
  *      deletes the record. Proving that consent existed while it was relied on
  *      is the controller's burden, and a deleted row proves nothing.
  */
+/**
+ * Which wording the treatment consent is.
+ *
+ * Bumped by hand when the text changes materially, because "materially" is a
+ * judgement a file's modification time cannot make. A bump means consents
+ * given against the old wording are visibly against the old wording.
+ */
+export const TREATMENT_CONSENT_VERSION = 1;
+
+export interface ConsentForm {
+  id: string;
+  version: number;
+  /** Markdown, with the patient's own procedure filled in. */
+  body: string;
+}
+
 @Injectable()
 export class ConsentsService {
+  private readonly logger = new Logger(ConsentsService.name);
+
   /**
    * Consents this system may record.
    *
@@ -151,6 +171,114 @@ export class ConsentsService {
     });
 
     return stored.key;
+  }
+
+  /**
+   * The treatment consent form this patient is about to sign (spec M17).
+   *
+   * Built rather than served flat, for one reason: **a document that does not
+   * name the operation is not informed consent.** The procedure, the surgeon
+   * and the planned date come from the patient's own surgery record, and if
+   * the clinic has not recorded one the form is refused — that is the clinic's
+   * missing data, not a missing file, and the app says which.
+   *
+   * A procedure-specific annex is appended when the clinic has written one.
+   * The base text covers what every operation shares; the risks of *this*
+   * operation are theirs to state.
+   */
+  async treatmentForm(user: AuthenticatedUser, patientId: string): Promise<ConsentForm> {
+    await this.access.assertCanAccess(user, patientId);
+
+    const base = await this.readLegal('TEDAVI-ONAM-METNI.md');
+
+    if (base === null) {
+      throw new NotFoundException('CONSENT_TEXT_UNPUBLISHED');
+    }
+
+    const surgery = await this.prisma.surgery.findFirst({
+      where: { patientId },
+      orderBy: { performedAt: 'desc' },
+      select: {
+        procedureName: true,
+        procedureCode: true,
+        performedAt: true,
+        surgeonId: true,
+      },
+    });
+
+    if (!surgery) {
+      // Deliberately its own answer. "The clinic has not published a form" and
+      // "the clinic has not recorded your operation" are different problems
+      // with different people to chase, and one message for both sends the
+      // patient to the wrong one.
+      throw new NotFoundException('PROCEDURE_NOT_RECORDED');
+    }
+
+    const annex = surgery.procedureCode
+      ? await this.readLegal(`TEDAVI-ONAM-${surgery.procedureCode}.md`)
+      : null;
+
+    // A separate read because `Surgery.surgeonId` carries no relation. Absent
+    // is a real state — an operation booked before the surgeon is assigned —
+    // and the form says so rather than naming nobody.
+    const surgeon = surgery.surgeonId
+      ? await this.prisma.staffProfile.findUnique({
+          where: { id: surgery.surgeonId },
+          select: { firstName: true, lastName: true },
+        })
+      : null;
+
+    const filled = ConsentsService.fill(base, {
+      islem: surgery.procedureName,
+      hekim: surgeon
+        ? `${surgeon.firstName} ${surgeon.lastName}`
+        : 'Klinik tarafından bildirilecek',
+      tarih: ConsentsService.day(surgery.performedAt),
+    });
+
+    return {
+      id: 'treatment-consent',
+      version: TREATMENT_CONSENT_VERSION,
+      body: annex ? `${filled}\n\n---\n\n${annex}` : filled,
+    };
+  }
+
+  /**
+   * Fills the `{{...}}` fields.
+   *
+   * Anything the template asks for and this does not have is replaced with a
+   * visible marker rather than left as `{{hekim}}`: a patient reading braces
+   * in a consent form is reading a bug, and a form that silently dropped the
+   * field would be worse still.
+   */
+  static fill(template: string, values: Record<string, string>): string {
+    return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+      const value = values[key]?.trim();
+
+      return value && value.length > 0 ? value : '—';
+    });
+  }
+
+  /** The day, as somebody reads it rather than as a timestamp. */
+  static day(at: Date): string {
+    return at.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Europe/Istanbul',
+    });
+  }
+
+  /** Nil rather than a fallback: a document that is not there is not there. */
+  private async readLegal(name: string): Promise<string | null> {
+    // dist/consents → dist → backend/legal, which sync-legal.ts fills.
+    const path = join(__dirname, '..', '..', 'legal', name);
+
+    try {
+      return await readFile(path, 'utf8');
+    } catch {
+      return null;
+    }
   }
 
   /**

@@ -6882,6 +6882,73 @@
         ]
       }
     },
+    "/me/consents/form": {
+      "get": {
+        "operationId": "MyConsentsController_form",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentFormDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The treatment consent form, with your procedure in it",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/me/consents/{consentId}/signature": {
       "get": {
         "operationId": "MyConsentsController_signature",
@@ -7422,68 +7489,6 @@
           }
         },
         "summary": "The privacy notice, as Markdown",
-        "tags": [
-          "legal"
-        ]
-      }
-    },
-    "/legal/treatment-consent": {
-      "get": {
-        "operationId": "LegalController_treatmentConsent",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LegalDocumentDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, invalid or revoked token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated but lacking the permission",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "The treatment consent form, as Markdown",
         "tags": [
           "legal"
         ]
@@ -17826,6 +17831,28 @@
         "required": [
           "type",
           "version"
+        ]
+      },
+      "ConsentFormDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "treatment-consent"
+          },
+          "version": {
+            "type": "number",
+            "example": 1
+          },
+          "body": {
+            "type": "string",
+            "description": "Markdown, with this patient's procedure filled in"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "body"
         ]
       },
       "SignatureLinkDto": {

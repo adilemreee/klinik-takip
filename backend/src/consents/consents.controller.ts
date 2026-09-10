@@ -12,7 +12,12 @@ import {
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { MeasurementsService } from '../measurements/measurements.service';
 import { ConsentsService } from './consents.service';
-import { ConsentDto, RecordConsentDto, SignatureLinkDto } from './dto/consent.dto';
+import {
+  ConsentDto,
+  ConsentFormDto,
+  RecordConsentDto,
+  SignatureLinkDto,
+} from './dto/consent.dto';
 
 const toDto = (consent: Consent): ConsentDto => ({
   id: consent.id,
@@ -76,6 +81,27 @@ export class MyConsentsController {
         userAgent: request.get('user-agent') ?? undefined,
       }),
     );
+  }
+
+  /**
+   * The form you are about to sign (spec M17).
+   *
+   * Declared before `:consentId` so `form` is not read as a consent id.
+   *
+   * 404 with `CONSENT_TEXT_UNPUBLISHED` when the clinic has published no
+   * wording, and with `PROCEDURE_NOT_RECORDED` when they have not recorded
+   * which operation you are having. Two different problems with two different
+   * people to chase; one message for both sends the patient to the wrong one.
+   */
+  @Get('form')
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'The treatment consent form, with your procedure in it' })
+  @ApiOkResponse({ type: ConsentFormDto })
+  @ApiStandardErrors()
+  async form(@CurrentUser() user: AuthenticatedUser): Promise<ConsentFormDto> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.consents.treatmentForm(user, patientId);
   }
 
   @Get(':consentId/signature')

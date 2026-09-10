@@ -145,10 +145,15 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
    Kontrol listesi hangi belgenin ulaştığını/eksik olduğunu gösteriyor ve eksik
    olanı yüklemeye götürüyor.
 
-   **Kliniğe bağlı olan:** onam metninin kendisi (bkz. KLINIKTEN 13) ve belge
-   listesinin gözden geçirilmesi (KLINIKTEN 14). Metin gelene kadar imzalama
-   ekranı açılmıyor — imzalanabilir boş bir taslak, hiç form olmamasından
-   kötüdür.
+   **Onam metni de yazıldı** (`docs/TEDAVI-ONAM-METNI.md`) ve belge listesi
+   tanımlandı. Form artık hastanın **kendi ameliyat kaydından** kuruluyor:
+   işlem adı, hekim ve tarih metne giriyor. Ameliyat kaydı yoksa form
+   açılmıyor — yapılacak işlemi adıyla anmayan bir belge aydınlatılmış onam
+   değildir.
+
+   **Kalan tek şey klinikte:** metni bir hekim ve bir avukatın okuması, ve
+   `[KLİNİK ADI]` gibi alanların doldurulması. İşleme özel riskler için
+   `TEDAVI-ONAM-<KOD>.md` mekanizması hazır.
 10. **WhatsApp kanalı (M6).** Şartnamede opsiyonel.
 11. **Android.** Bu belgedeki her şey **yalnız iOS**. Android'de temel iskelet
     ve ağ katmanı var; bu 38 ekranın hiçbiri yok.

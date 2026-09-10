@@ -62,3 +62,16 @@ export class SignatureLinkDto {
   @ApiProperty() url!: string;
   @ApiProperty() expiresAt!: Date;
 }
+
+/**
+ * The consent form as the patient will read it.
+ *
+ * Carries the version, because "they agreed" means nothing without saying to
+ * what — and the consent record stores the same number.
+ */
+export class ConsentFormDto {
+  @ApiProperty({ example: 'treatment-consent' }) id!: string;
+  @ApiProperty({ example: 1 }) version!: number;
+  @ApiProperty({ description: "Markdown, with this patient's procedure filled in" })
+  body!: string;
+}

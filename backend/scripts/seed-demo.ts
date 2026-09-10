@@ -39,7 +39,6 @@ import {
   PatientStatus,
   PrismaClient,
   Role,
-  Sex,
 } from '@prisma/client';
 import { foldForSearch } from '../src/patients/search-folding';
 
@@ -87,7 +86,15 @@ interface Story {
     targetWeightKg?: number;
     notes?: string;
   } | null;
-  surgery?: { name: string; daysAgo: number; location: string };
+  /**
+   * The operation, past or planned.
+   *
+   * A negative `daysAgo` is one that has not happened yet — which is how the
+   * clinic records a booking, and what the pre-operative checklist and the
+   * consent form both read. `code` matches a `TEDAVI-ONAM-<code>.md` annex
+   * and a procedure-specific checklist row when the clinic has written one.
+   */
+  surgery?: { name: string; daysAgo: number; location: string; code?: string };
   weights?: { from: number; to: number; overDays: number };
   vitals?: boolean;
   glucose?: boolean;
@@ -168,6 +175,14 @@ const STORIES: Story[] = [
       alcohol: true,
       targetWeightKg: 62,
       notes: 'Uçuş öncesi tansiyon takibi isteniyor.',
+    },
+    // Booked, not done: six days out, which is what the checklist and the
+    // consent form read to know which operation this patient is having.
+    surgery: {
+      name: 'Meme Büyütme',
+      code: 'BREAST_AUGMENTATION',
+      daysAgo: -6,
+      location: 'Ameliyathane 1',
     },
     weights: { from: 68.5, to: 66.2, overDays: 60 },
     vitals: true,
@@ -266,7 +281,12 @@ const STORIES: Story[] = [
       alcohol: false,
       targetWeightKg: 78,
     },
-    surgery: { name: 'Septorinoplasti', daysAgo: 95, location: 'Ameliyathane 2' },
+    surgery: {
+      name: 'Septorinoplasti',
+      code: 'SEPTORHINOPLASTY',
+      daysAgo: 95,
+      location: 'Ameliyathane 2',
+    },
     weights: { from: 84.0, to: 79.5, overDays: 95 },
     vitals: true,
     labs: [
@@ -326,7 +346,7 @@ async function main(): Promise<void> {
           lastName: story.lastName,
           searchText: foldForSearch(`${story.firstName} ${story.lastName}`),
           birthDate: new Date(Date.UTC(story.birthYear, 4, 12)),
-          sex: story.sex as Sex,
+          sex: story.sex,
           country: story.country,
           city: story.city ?? null,
           preferredLanguage: story.language,
@@ -399,6 +419,7 @@ async function fill(
       data: {
         patientId,
         procedureName: story.surgery.name,
+        procedureCode: story.surgery.code,
         performedAt: daysFromNow(-story.surgery.daysAgo, 9),
         surgeonId: staffId,
         location: story.surgery.location,

@@ -160,3 +160,91 @@ final class ConsentsModelTests: XCTestCase {
         XCTAssertEqual(state.phase, .notFound)
     }
 }
+
+/**
+ * Why the consent form will not open (spec M17).
+ *
+ * Two different problems with two different people to chase: the clinic has
+ * published no wording, or the clinic has not recorded which operation this
+ * is. One message for both sends the patient to the wrong one, so the model
+ * keeps them apart.
+ */
+final class ConsentFormTests: XCTestCase {
+    private func model(_ status: Int, _ body: String) async -> SignConsentModel {
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: NoRefresher())
+        try? await session.signIn(
+            with: SessionTokens(
+                accessToken: "access",
+                refreshToken: "refresh",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+        let client = APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: FixedTransport(status: status, body: body),
+            session: session
+        )
+
+        return SignConsentModel(consents: ConsentsAPI(client: client))
+    }
+
+    func testTheFormLoadsWithTheProcedureInIt() async {
+        let sut = await model(
+            200,
+            #"{"id":"treatment-consent","version":1,"body":"Planlanan işlem: **Rinoplasti**"}"#
+        )
+
+        await sut.load()
+
+        guard case .loaded(let form) = await sut.currentState().phase else {
+            return XCTFail("expected a loaded form")
+        }
+
+        XCTAssertEqual(form.version, 1)
+        XCTAssertTrue(form.body.contains("Rinoplasti"))
+    }
+
+    func testNoWordingPublishedIsItsOwnState() async {
+        let sut = await model(404, #"{"statusCode":404,"message":"CONSENT_TEXT_UNPUBLISHED"}"#)
+
+        await sut.load()
+
+        let phase = await sut.currentState().phase
+        XCTAssertEqual(phase, .unpublished)
+    }
+
+    /// The clinic has the text; what is missing is this patient's operation.
+    func testNoProcedureRecordedIsADifferentState() async {
+        let sut = await model(404, #"{"statusCode":404,"message":"PROCEDURE_NOT_RECORDED"}"#)
+
+        await sut.load()
+
+        let phase = await sut.currentState().phase
+        XCTAssertEqual(phase, .procedureUnknown)
+    }
+
+    func testAServerFailureIsNeitherOfThem() async {
+        let sut = await model(500, #"{"statusCode":500,"message":""}"#)
+
+        await sut.load()
+
+        guard case .failed = await sut.currentState().phase else {
+            return XCTFail("expected a failure")
+        }
+    }
+}
+
+private struct FixedTransport: HTTPTransport {
+    let status: Int
+    let body: String
+
+    func send(_ request: URLRequest) async throws -> HTTPResponse {
+        HTTPResponse(status: status, body: Data(body.utf8))
+    }
+}
+
+private struct NoRefresher: TokenRefresher {
+    func refresh(using refreshToken: String) async throws -> SessionTokens {
+        throw APIError.unknown(status: 0)
+    }
+}

@@ -103,6 +103,21 @@ private struct RecordConsentBody: Encodable {
     let signature: String?
 }
 
+/// The consent form, with the patient's own procedure in it.
+public struct ConsentForm: Decodable, Sendable, Equatable {
+    public let id: String
+    /// Which wording this is. "They agreed" means nothing without it.
+    public let version: Int
+    /// Markdown.
+    public let body: String
+
+    public init(id: String, version: Int, body: String) {
+        self.id = id
+        self.version = version
+        self.body = body
+    }
+}
+
 private struct SignatureLink: Decodable, Sendable {
     let url: String
     let expiresAt: Date
@@ -147,6 +162,23 @@ public struct ConsentsAPI: Sendable {
                 )
             ),
             as: Consent.self
+        )
+    }
+
+    /**
+     * The treatment consent form this patient is about to sign (spec M17).
+     *
+     * Built by the server from the patient's own surgery record, because a
+     * document that does not name the operation is not informed consent.
+     * Throws `notFound` carrying `CONSENT_TEXT_UNPUBLISHED` when the clinic
+     * has published no wording, or `PROCEDURE_NOT_RECORDED` when they have not
+     * said which operation this is — two different problems with two different
+     * people to chase.
+     */
+    public func treatmentForm() async throws -> ConsentForm {
+        try await client.send(
+            Endpoint(method: .get, path: "me/consents/form"),
+            as: ConsentForm.self
         )
     }
 

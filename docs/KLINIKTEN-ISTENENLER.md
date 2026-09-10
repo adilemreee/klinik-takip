@@ -382,43 +382,68 @@ duran maddelerden biridir.
 
 ---
 
-## 13. Tedavi onam metni (ameliyat onam formu)
+## 13. Tedavi onam metni — ✅ yazıldı, sizin okumanız gerekiyor
 
-**Ne lazım:** Hastanın ameliyattan önce okuyup imzalayacağı **onam metninin
-kendisi** — kliniğin kendi hukuki metni. `docs/TEDAVI-ONAM-METNI.md` olarak
-depoya eklenmesi yeterli; sunucu onu oradan alıp uygulamaya sunuyor.
+**Durum değişti.** Metin yazıldı ve depoda: [TEDAVI-ONAM-METNI.md](TEDAVI-ONAM-METNI.md).
+Uygulama artık formu gösteriyor, hasta parmağıyla imzalıyor, imza onam kaydına
+bağlanıyor.
 
-**Neden ben yazamıyorum:** Bir tedavi onam formunun içeriği tıbbi-hukuki bir
-belgedir; hangi riskin nasıl anlatıldığı, hangi alternatifin sayıldığı bir
-hekimin ve bir hukukçunun kararıdır. Benim yazdığım bir taslak, imzalandığı anda
-kliniği bağlayan bir belgeye dönüşür.
+**Sizden istenen artık onay değil, okuma.** Metnin yapısı Hasta Hakları
+Yönetmeliği m.15 ve m.24'ün saydığı unsurlara göre kuruldu — amaç, yöntem,
+diğer seçenekler, hiçbir şey yapılmaması hâli, komplikasyonlar, anestezi,
+ilaçlar, ameliyat sonrası yükümlülükler, acil durum, geri alma hakkı. Ama:
 
-**Şu an ne oluyor:** Makine tamamen hazır — hasta metni uygulamada okuyor,
-**parmağıyla imzalıyor**, imza PNG olarak kliniğin özel deposuna yazılıyor ve
-onam kaydına bağlanıyor; hekim hasta dosyasından imzayı açıp görebiliyor. Metin
-olmadığı için uç nokta **404 dönüyor** ve uygulama imzalama ekranını hiç
-açmıyor: "Klinik onam metnini henüz yayımlamadı" diyor.
+> Hiçbir metin **hekimin hastayla yaptığı konuşmanın** yerine geçmez, ve bu
+> metin hukuki görüş değildir. Gerçek hastaya imzalatmadan önce **bir hekim ve
+> bir avukat okusun.**
 
-**Bu kasıtlı.** İçi boş bir taslak koyup imzalatmak, "hasta hiçbir şey söylemeyen
-bir belgeyi onayladı" diyen bir kayıt üretirdi — hiç form olmamasından kötüdür.
+**Doldurulacak alanlar:** `[KLİNİK ADI]`, `[ADRES]`, `[TELEFON]`,
+`[ACİL TELEFON]`. Bunlar dururken metin yayında olmamalı.
 
-**Verdiğinizde ne değişir:** Dosyayı `docs/` altına koyup dağıtım yapmak
-yetiyor. Metin her değiştiğinde `legal.controller.ts` içindeki
-`TREATMENT_CONSENT_VERSION` elle bir artırılmalı — çünkü onam kaydı hangi
-sürüme rıza gösterildiğini yazıyor, ve "onayladı" hangi metne olduğu
+### İşleme özel riskler
+
+Genel riskler metinde. **Sizin işleminize özel riskler sizin yazacağınız
+şey** — rinoplastinin riski ile mide botoksunun riski aynı değil ve bunu
+yazmak bir hekimin işi.
+
+Yolu hazır: `docs/TEDAVI-ONAM-<İŞLEM KODU>.md` adında bir dosya açın; sunucu
+onu ana metnin sonuna ekliyor. Kod, ameliyat kaydındaki `procedure_code` ile
+eşleşiyor (örn. `TEDAVI-ONAM-RHINOPLASTY.md`). Ek yoksa form yine çalışıyor,
+yalnız genel riskleri taşıyor.
+
+### Sürüm
+
+Metin **maddi olarak** değişirse `TREATMENT_CONSENT_VERSION`
+(`backend/src/consents/consents.service.ts`) elle bir artırılmalı. Onam kaydı
+hangi sürüme rıza gösterildiğini yazıyor; "onayladı" hangi metne olduğu
 söylenmeden bir şey ifade etmiyor.
 
-## 14. Ameliyat öncesi belge listesi (kontrol listesi)
+### İşlem kaydı olmadan form açılmıyor
 
-**Ne lazım:** Hangi belgelerin ameliyattan önce klinikte olması gerektiği.
-Varsayılan olarak dört zorunlu (pasaport, kan tahlilleri, EKG, imzalı onam) ve
-bir isteğe bağlı (görüntüleme) satır tanımlı — **bunları gözden geçirin.**
+Bir hastanın ameliyat kaydı yoksa uç nokta `PROCEDURE_NOT_RECORDED` dönüyor ve
+uygulama "klinik henüz hangi işlemi yaptıracağınızı kaydetmedi" diyor.
+**Bu kasıtlı:** yapılacak işlemi adıyla anmayan bir belge aydınlatılmış onam
+değildir. Ameliyat kaydını (planlanan tarihle) girmek formu açıyor.
 
-**Neden bir onay istiyorum:** Liste veri, kod değil: bir satır eklemek veya
-zorunluluğunu değiştirmek `document_requirements` tablosuna bir satır yazmaktır,
-sürüm çıkmaz. Ama hangi belgenin zorunlu olduğu klinik bir karardır, benim
-varsayımım değil.
+## 14. Ameliyat öncesi belge listesi — ✅ tanımlandı, değiştirmek sizde
 
-**Ayrıca:** Bir belge yalnız o ameliyat için isteniyorsa satıra
-`procedure_type` yazın (ameliyat kaydındaki `procedure_code` ile eşleşmeli);
-boş bırakılan satır herkese sorulur.
+Beş satır tanımlı ve seed ile kuruluyor:
+
+| Belge | Zorunlu | Neden |
+|---|---|---|
+| Pasaport | Evet | Kimlik ve seyahat; sağlık turizminde dosyanın ilk şartı |
+| Kan tahlilleri | Evet | Anestezi öncesi asgari değerlendirme |
+| EKG | Evet | Anestezi öncesi kardiyak değerlendirme |
+| İmzalı onam formu | Evet | Madde 13'teki metin |
+| Görüntüleme | Hayır | Her işlemde gerekmiyor |
+
+**Bunlar veri, kod değil.** Bir satır eklemek, çıkarmak ya da zorunluluğunu
+değiştirmek `document_requirements` tablosuna bir satır yazmaktır — sürüm
+çıkmaz, uygulama bir sonraki açılışta yeni listeyi gösterir.
+
+**Bir belge yalnız belirli bir ameliyat için isteniyorsa** satıra
+`procedure_type` yazın; ameliyat kaydındaki `procedure_code` ile eşleşmeli.
+Boş bırakılan satır herkese sorulur.
+
+**Seed varsayılanları geri getirmez.** `npm run seed` yalnız *hiç yoksa*
+oluşturuyor; sizin düzenlediğiniz satır bir sonraki dağıtımda geri alınmıyor.

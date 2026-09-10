@@ -45,9 +45,6 @@ export class LegalController {
    */
   private static readonly PRIVACY_NOTICE_VERSION = 1;
 
-  /** Bumped by hand when the clinic changes the consent wording. */
-  private static readonly TREATMENT_CONSENT_VERSION = 1;
-
   @Get('privacy-notice')
   @Public()
   @Header('Cache-Control', 'public, max-age=300')
@@ -60,48 +57,6 @@ export class LegalController {
       version: LegalController.PRIVACY_NOTICE_VERSION,
       body: await this.read('KVKK-AYDINLATMA-METNI.md'),
     };
-  }
-
-  /**
-   * The treatment consent form the patient signs (spec M17).
-   *
-   * Answers 404 until the clinic supplies the text, and the app then does not
-   * offer signing at all. That is deliberate: a placeholder somebody can put
-   * their signature to is worse than no form — the record would say a patient
-   * consented to a document that says nothing.
-   *
-   * Not `@Public`: unlike the privacy notice, which somebody must be able to
-   * read before deciding to sign up, this is a document you are shown because
-   * you are a patient having a procedure.
-   */
-  @Get('treatment-consent')
-  @Header('Cache-Control', 'private, max-age=300')
-  @ApiOperation({ summary: 'The treatment consent form, as Markdown' })
-  @ApiOkResponse({ type: LegalDocumentDto })
-  @ApiStandardErrors()
-  async treatmentConsent(): Promise<LegalDocumentDto> {
-    const body = await this.readOptional('TEDAVI-ONAM-METNI.md');
-
-    if (body === null) {
-      throw new NotFoundException('The clinic has not published a treatment consent form');
-    }
-
-    return {
-      id: 'treatment-consent',
-      version: LegalController.TREATMENT_CONSENT_VERSION,
-      body,
-    };
-  }
-
-  /** Nil rather than a fallback: a document that is not there is not there. */
-  private async readOptional(name: string): Promise<string | null> {
-    const path = join(__dirname, '..', '..', 'legal', name);
-
-    try {
-      return await readFile(path, 'utf8');
-    } catch {
-      return null;
-    }
   }
 
   /**

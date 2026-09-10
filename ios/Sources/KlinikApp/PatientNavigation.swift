@@ -358,9 +358,7 @@ struct PatientHomeView: View {
             )
 
         case .signConsent:
-            SignConsentScreen(
-                model: SignConsentModel(legal: environment.legal, consents: environment.consents)
-            )
+            SignConsentScreen(model: SignConsentModel(consents: environment.consents))
         }
     }
 }

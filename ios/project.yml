@@ -38,6 +38,11 @@ targets:
           - en
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
+        # Declared here so every upload does not stop to ask. The app uses TLS
+        # and the platform's own Keychain and Data Protection, and implements
+        # no cryptography of its own — which is exactly the exemption in
+        # category 5, part 2 of the US export regulations.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         # Resolved from Config/Base.xcconfig, which includes an untracked
         # Local.xcconfig. This repository is public, so the clinic's hostnames

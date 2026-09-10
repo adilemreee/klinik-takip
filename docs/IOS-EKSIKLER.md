@@ -167,8 +167,14 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
     varsayılana bırakılmıştı), üç risk gerekçesiyle kabul edildi. **Sızma
     testi yapılmadı** — bu bir kod okuması.
 13. T7.5 beta (TestFlight / Play Internal)
-14. T7.6 mağaza hazırlığı
-15. T7.7 kullanım kılavuzları
+14. T7.6 mağaza hazırlığı ✅ **2026-09-11'de yapıldı** —
+    [MAGAZA-HAZIRLIGI.md](MAGAZA-HAZIRLIGI.md). Apple gizlilik beyanı koddan
+    çıkarıldı, App Review notu yazıldı (Apple bu uygulamayı hesapsız
+    açamaz), mağaza metni ve ekran görüntüsü listesi hazır,
+    `ITSAppUsesNonExemptEncryption` Info.plist'e eklendi.
+15. T7.7 kullanım kılavuzları ✅ **2026-09-11'de yapıldı** —
+    [KILAVUZ-HASTA.md](KILAVUZ-HASTA.md) ve
+    [KILAVUZ-PERSONEL.md](KILAVUZ-PERSONEL.md).
 
 ---
 

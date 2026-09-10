@@ -28,6 +28,16 @@ public struct LabResult: Decodable, Sendable, Equatable, Identifiable {
 
     public var numericValue: Double? { Double(value) }
 
+    /**
+     * Whether this one is outside its range.
+     *
+     * A result with no range is **not** normal — it is unclassified, and the
+     * table says so rather than showing a tick nobody earned.
+     */
+    public var isOutOfRange: Bool {
+        flag == .low || flag == .high || flag == .critical
+    }
+
     public var referenceText: String? {
         switch (refLow, refHigh) {
         case let (low?, high?): return "\(low) – \(high)"
@@ -35,6 +45,43 @@ public struct LabResult: Decodable, Sendable, Equatable, Identifiable {
         case let (low?, nil): return "> \(low)"
         default: return nil
         }
+    }
+}
+
+/**
+ * One lab report, as it was printed (spec M16).
+ *
+ * A trend answers "is this getting better"; a panel answers "what did the
+ * blood test say" — every analyte at once, each beside its reference range.
+ * The document travels with it so the reader can open the original: the table
+ * is what OCR read, and the PDF is what the laboratory printed.
+ */
+public struct LabPanel: Decodable, Sendable, Equatable, Identifiable {
+    public let measuredAt: Date
+    public let documentId: String?
+    public let documentName: String?
+    public let results: [LabResult]
+
+    /// Two reports on the same morning are two reports, so the document is
+    /// part of what makes this one identifiable.
+    public var id: String { "\(measuredAt.timeIntervalSince1970)|\(documentId ?? "")" }
+
+    /// How many fall outside their reference range — the number worth a badge,
+    /// and the reason somebody opens a report they were told was fine.
+    public var abnormal: Int {
+        results.filter(\.isOutOfRange).count
+    }
+
+    public init(
+        measuredAt: Date,
+        documentId: String? = nil,
+        documentName: String? = nil,
+        results: [LabResult]
+    ) {
+        self.measuredAt = measuredAt
+        self.documentId = documentId
+        self.documentName = documentName
+        self.results = results
     }
 }
 
@@ -133,6 +180,14 @@ public struct LabAPI: Sendable {
     }
 
     /// Confirmed values far enough outside their range to need attention now.
+    /// The reports, newest first. Confirmed results only — on both paths.
+    public func panels(subject: RecordSubject) async throws -> [LabPanel] {
+        try await client.send(
+            Endpoint(method: .get, path: subject.base("lab-results/panels")),
+            as: [LabPanel].self
+        )
+    }
+
     public func critical(patientId: String) async throws -> [LabResult] {
         try await client.send(
             Endpoint(method: .get, path: "patients/\(patientId)/lab-results/critical"),

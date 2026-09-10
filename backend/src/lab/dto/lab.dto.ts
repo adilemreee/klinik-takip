@@ -149,3 +149,25 @@ export class ReviewItemDto {
   @ApiProperty({ description: 'The printed name has no code yet' })
   awaitingMapping!: boolean;
 }
+
+/**
+ * One lab report, as it was printed.
+ *
+ * A trend answers "is this getting better"; a panel answers "what did the
+ * blood test say" — every analyte at once, each beside its reference range.
+ * The document id travels with it so the reader can open the original: the
+ * table is what OCR read, and the PDF is what the laboratory printed.
+ */
+export class LabPanelDto {
+  @ApiProperty({ type: String, format: 'date-time', description: 'When the sample was taken' })
+  measuredAt!: Date;
+
+  @ApiPropertyOptional({ nullable: true, format: 'uuid', description: 'The report it came from' })
+  documentId!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  documentName!: string | null;
+
+  @ApiProperty({ type: [LabResultDto], description: 'Alphabetical by analyte name' })
+  results!: LabResultDto[];
+}

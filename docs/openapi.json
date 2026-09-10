@@ -4478,6 +4478,76 @@
         ]
       }
     },
+    "/me/lab-results/panels": {
+      "get": {
+        "operationId": "MyLabController_panels",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabPanelDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Your confirmed results grouped by report, newest first",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/patients/{id}/lab-results/pending": {
       "get": {
         "operationId": "PatientLabController_pending",
@@ -4720,6 +4790,85 @@
           }
         ],
         "summary": "Confirmed results outside the range far enough to need attention",
+        "tags": [
+          "lab"
+        ]
+      }
+    },
+    "/patients/{id}/lab-results/panels": {
+      "get": {
+        "operationId": "PatientLabController_panels",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabPanelDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirmed results grouped by report, newest first",
         "tags": [
           "lab"
         ]
@@ -17149,6 +17298,37 @@
           "measuredAt",
           "ocrConfidence",
           "verifiedAt"
+        ]
+      },
+      "LabPanelDto": {
+        "type": "object",
+        "properties": {
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the sample was taken"
+          },
+          "documentId": {
+            "type": "object",
+            "nullable": true,
+            "format": "uuid",
+            "description": "The report it came from"
+          },
+          "documentName": {
+            "type": "object",
+            "nullable": true
+          },
+          "results": {
+            "description": "Alphabetical by analyte name",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabResultDto"
+            }
+          }
+        },
+        "required": [
+          "measuredAt",
+          "results"
         ]
       },
       "ReviewItemDto": {

@@ -40,6 +40,8 @@ public enum StaffDestination: Hashable, Sendable {
     case documents(patientId: String)
     case labReview(patientId: String)
     case labTrend(patientId: String)
+    /// The reports as they were printed (spec M16).
+    case labPanels(patientId: String)
     case photos(patientId: String)
     case followUp(patientId: String)
     case conversation(patientId: String)
@@ -382,6 +384,17 @@ struct StaffPatientsView: View {
         case .labReview(let patientId):
             LabReviewScreen(model: LabReviewModel(api: environment.lab, patientId: patientId))
 
+        case .labPanels(let patientId):
+            LabPanelsScreen(
+                model: LabPanelsModel(
+                    api: environment.lab,
+                    documents: environment.documents,
+                    subject: .patient(id: patientId)
+                ),
+                openReport: { openURL($0) },
+                openTrends: { push(.labTrend(patientId: patientId)) }
+            )
+
         case .labTrend(let patientId):
             LabTrendScreen(
                 model: LabTrendModel(
@@ -481,7 +494,7 @@ private extension StaffDestination {
         case .medications: self = .medications(patientId: patientId)
         case .documents: self = .documents(patientId: patientId)
         case .labReview: self = .labReview(patientId: patientId)
-        case .labTrend: self = .labTrend(patientId: patientId)
+        case .labTrend: self = .labPanels(patientId: patientId)
         case .photos: self = .photos(patientId: patientId)
         case .followUp: self = .followUp(patientId: patientId)
         case .appointments: self = .appointments(patientId: patientId)

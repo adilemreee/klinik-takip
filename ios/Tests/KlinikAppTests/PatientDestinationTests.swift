@@ -34,7 +34,7 @@ final class PatientDestinationTests: XCTestCase {
     @MainActor
     func testActionsLeadToTheirOwnDestinations() {
         XCTAssertEqual(PatientHomeView.destination(for: .messages), .messages)
-        XCTAssertEqual(PatientHomeView.destination(for: .uploadDocument), .documents)
+        XCTAssertEqual(PatientHomeView.destination(for: .uploadDocument), .documents())
         XCTAssertEqual(PatientHomeView.destination(for: .medications), .medications)
         // The tile adds a photograph; it does not open the gallery. Somebody
         // who tapped "add" and got a list of what they already have has to find

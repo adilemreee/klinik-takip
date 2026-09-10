@@ -1149,3 +1149,16 @@
 "consent.procedureUnknown" = "The clinic has not yet recorded which operation you are having.";
 "consent.procedureUnknownWhy" = "A consent form that does not name the operation is not valid informed consent. The form will open here once the clinic records it.";
 "app.name" = "Klinik Takip";
+
+/* The lab table (spec M16) */
+"lab.title" = "My lab results";
+"lab.trends" = "Trend";
+"lab.noResults" = "No confirmed results yet. A report you upload does not appear here until the clinic signs it off.";
+"lab.resultCount" = "%d results";
+"lab.abnormalCount" = "%d outside the range";
+"lab.openReport" = "Open the report itself";
+"lab.noRange" = "No reference range";
+"lab.reference" = "Reference";
+"lab.collapsed" = "Collapsed";
+"lab.expanded" = "Expanded";
+"lab.toggleHint" = "Tap to open or close";

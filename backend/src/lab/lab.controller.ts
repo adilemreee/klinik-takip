@@ -9,12 +9,13 @@ import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import {
   AnalyteTrendDto,
+  LabPanelDto,
   LabResultDto,
   ReviewItemDto,
   TrendQueryDto,
   VerifyLabResultDto,
 } from './dto/lab.dto';
-import { AnalyteTrend, LabService, ReviewItem } from './lab.service';
+import { AnalyteTrend, type LabPanel, LabService, ReviewItem } from './lab.service';
 
 @ApiTags('lab')
 @ApiBearerAuth()
@@ -71,6 +72,24 @@ export class PatientLabController {
     @Param('id', ParseUUIDPipe) patientId: string,
   ): Promise<LabResult[]> {
     return this.lab.critical(user, patientId);
+  }
+
+  /**
+   * The reports, as they were printed (spec M16).
+   *
+   * Declared before `@Get()` so `panels` is not read as a query on the list.
+   */
+  @Get('panels')
+  @RequirePermissions('medical.read')
+  @Audit({ entityType: 'lab_results', action: AuditAction.READ, patientIdParam: 'id' })
+  @ApiOperation({ summary: 'Confirmed results grouped by report, newest first' })
+  @ApiOkResponse({ type: [LabPanelDto] })
+  @ApiStandardErrors()
+  async panels(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) patientId: string,
+  ): Promise<LabPanel[]> {
+    return this.lab.panels(user, patientId);
   }
 
   @Get()
@@ -152,5 +171,23 @@ export class MyLabController {
     const patientId = await this.measurements.ownPatientId(user);
 
     return this.lab.trends(user, patientId, query.since);
+  }
+
+  /**
+   * Your reports, as they were printed.
+   *
+   * Confirmed results only — the same rule as everywhere else on the patient
+   * side. What OCR read is not clinical until a human has said so, and a
+   * number shown to the person it is about is as clinical as it gets.
+   */
+  @Get('panels')
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'Your confirmed results grouped by report, newest first' })
+  @ApiOkResponse({ type: [LabPanelDto] })
+  @ApiStandardErrors()
+  async panels(@CurrentUser() user: AuthenticatedUser): Promise<LabPanel[]> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.lab.panels(user, patientId);
   }
 }

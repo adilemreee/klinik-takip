@@ -620,6 +620,9 @@
     <string name="job_status_processing">Processing</string>
     <string name="job_status_queued">Waiting</string>
     <string name="job_status_skipped">Not processed</string>
+    <string name="lab_abnormal_count">%d outside the range</string>
+    <string name="lab_collapsed">Collapsed</string>
+    <string name="lab_expanded">Expanded</string>
     <string name="lab_field_analyte_code">LOINC code</string>
     <string name="lab_field_analyte_name">Analyte name</string>
     <string name="lab_field_ref_high">Reference high</string>
@@ -632,6 +635,11 @@
     <string name="lab_flag_normal">Normal</string>
     <string name="lab_interpret">Ask for an AI reading</string>
     <string name="lab_interpret_queued">Requested. It will land in your review queue, and nothing reaches the patient until you sign it off.</string>
+    <string name="lab_no_range">No reference range</string>
+    <string name="lab_no_results">No confirmed results yet. A report you upload does not appear here until the clinic signs it off.</string>
+    <string name="lab_open_report">Open the report itself</string>
+    <string name="lab_reference">Reference</string>
+    <string name="lab_result_count">%d results</string>
     <string name="lab_review_confirm">Confirm</string>
     <string name="lab_review_correct">Correct</string>
     <string name="lab_review_discard">Not a result, remove</string>
@@ -639,6 +647,8 @@
     <string name="lab_review_low_confidence">Uncertain reading — please check</string>
     <string name="lab_review_needs_mapping">Analyte not mapped</string>
     <string name="lab_review_notice">These values were read from the document automatically and are NOT IN THE PATIENT RECORD YET. Rows you confirm are added to it.</string>
+    <string name="lab_title">My lab results</string>
+    <string name="lab_toggle_hint">Tap to open or close</string>
     <string name="lab_trend_analyte">Analyte</string>
     <string name="lab_trend_critical_title">Critical values</string>
     <string name="lab_trend_empty">No confirmed lab results yet. The chart appears as results are confirmed.</string>
@@ -646,6 +656,7 @@
     <string name="lab_trend_reference">Reference range</string>
     <string name="lab_trend_reference_high">Reference high</string>
     <string name="lab_trend_reference_low">Reference low</string>
+    <string name="lab_trends">Trend</string>
     <string name="measurement_add">Add a reading</string>
     <string name="measurement_bmi">BMI</string>
     <string name="measurement_date">Date</string>

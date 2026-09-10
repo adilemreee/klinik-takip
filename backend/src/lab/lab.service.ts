@@ -52,6 +52,20 @@ export interface VerifiedFields {
   measuredAt?: Date;
 }
 
+/**
+ * One lab report, as it was printed.
+ *
+ * The abnormal count is computed rather than stored: it is a reading of the
+ * flags, and a second copy of it would be a number that could disagree with
+ * the rows under it.
+ */
+export interface LabPanel {
+  measuredAt: Date;
+  documentId: string | null;
+  documentName: string | null;
+  results: LabResult[];
+}
+
 @Injectable()
 export class LabService {
   private readonly logger = new Logger(LabService.name);
@@ -244,6 +258,50 @@ export class LabService {
       where: { patientId, verifiedAt: { not: null }, analyteCode },
       orderBy: { measuredAt: 'asc' },
     });
+  }
+
+  /**
+   * Confirmed results as the report they arrived on.
+   *
+   * A trend answers "is this getting better"; a panel answers "what did the
+   * blood test say". They are different questions and the second one is the
+   * one somebody holding a lab report is asking — every analyte at once, each
+   * beside its reference range, marked where it falls outside.
+   *
+   * Grouped by the moment the sample was taken **and** the document it came
+   * from: two reports on the same morning are two reports, and a reader
+   * looking for the one they were handed needs them apart. The document id
+   * travels with the group so the reader can open the original — the table is
+   * what OCR read, and the PDF is what the laboratory printed.
+   */
+  async panels(user: AuthenticatedUser, patientId: string): Promise<LabPanel[]> {
+    await this.access.assertCanAccess(user, patientId);
+
+    const results = await this.prisma.labResult.findMany({
+      where: { patientId, verifiedAt: { not: null } },
+      orderBy: [{ measuredAt: 'desc' }, { analyteName: 'asc' }],
+      include: { document: { select: { id: true, originalName: true } } },
+    });
+
+    const panels = new Map<string, LabPanel>();
+
+    for (const result of results) {
+      const key = `${result.measuredAt.toISOString()}|${result.documentId ?? ''}`;
+      const panel = panels.get(key);
+
+      if (panel) {
+        panel.results.push(result);
+      } else {
+        panels.set(key, {
+          measuredAt: result.measuredAt,
+          documentId: result.document?.id ?? null,
+          documentName: result.document?.originalName ?? null,
+          results: [result],
+        });
+      }
+    }
+
+    return [...panels.values()];
   }
 
   /**

@@ -1149,3 +1149,16 @@
 "consent.procedureUnknown" = "Klinik henüz hangi işlemi yaptıracağınızı kaydetmedi.";
 "consent.procedureUnknownWhy" = "Yapılacak işlemi adıyla yazmayan bir onam formu geçerli bir aydınlatılmış onam değildir. Klinik işlem kaydını girdiğinde form burada açılır.";
 "app.name" = "Klinik Takip";
+
+/* Tahlil tablosu (Şartname M16) */
+"lab.title" = "Tahlil sonuçlarım";
+"lab.trends" = "Eğri";
+"lab.noResults" = "Onaylanmış tahlil sonucu yok. Yüklediğiniz belge klinik onaylayana kadar burada görünmez.";
+"lab.resultCount" = "%d sonuç";
+"lab.abnormalCount" = "%d değer aralık dışı";
+"lab.openReport" = "Belgenin kendisini aç";
+"lab.noRange" = "Referans aralığı yok";
+"lab.reference" = "Referans";
+"lab.collapsed" = "Kapalı";
+"lab.expanded" = "Açık";
+"lab.toggleHint" = "Açmak ya da kapatmak için dokunun";

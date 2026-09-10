@@ -1278,6 +1278,25 @@
           }
         },
         {
+          "name": "Your confirmed results grouped by report, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/lab-results/panels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "lab-results",
+                "panels"
+              ]
+            },
+            "description": "Your confirmed results grouped by report, newest first"
+          }
+        },
+        {
           "name": "The reference photo for a consistent new capture",
           "request": {
             "method": "GET",
@@ -2201,6 +2220,32 @@
               ]
             },
             "description": "Confirmed results outside the range far enough to need attention"
+          }
+        },
+        {
+          "name": "Confirmed results grouped by report, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/lab-results/panels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "lab-results",
+                "panels"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Confirmed results grouped by report, newest first"
           }
         },
         {

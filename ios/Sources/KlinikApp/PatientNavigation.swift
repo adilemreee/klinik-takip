@@ -28,13 +28,17 @@ import KlinikTravelFeature
  */
 public enum PatientDestination: Hashable, Sendable {
     case messages
-    case documents
+    /// The upload screen, opened with a type already chosen when the
+    /// checklist sent the reader here for a particular missing document.
+    case documents(startWith: DocumentType = .lab)
     case medications
     case photos
     case addPhoto
     case measurements
     case followUp
     case labResults
+    /// The same results as a chart, for following one analyte over time.
+    case labTrends
     case complications
     case appointments
     case notificationSettings
@@ -151,7 +155,7 @@ struct PatientHomeView: View {
     static func destination(for action: HomeAction) -> PatientDestination? {
         switch action {
         case .messages: return .messages
-        case .uploadDocument: return .documents
+        case .uploadDocument: return .documents()
         case .medications: return .medications
         case .addPhoto: return .addPhoto
         case .emergency: return nil
@@ -224,7 +228,7 @@ struct PatientHomeView: View {
                 }
             )
 
-        case .documents:
+        case .documents(let startWith):
             DocumentListView(
                 model: DocumentsModel(
                     api: environment.documents,
@@ -249,7 +253,8 @@ struct PatientHomeView: View {
                 // The patient's own file. Nil until the clinic has linked one,
                 // which leaves the screen polling — which is what it did before
                 // any of this and is still correct.
-                watching: patientId
+                watching: patientId,
+                startWith: startWith
             )
 
         case .medications:
@@ -304,6 +309,19 @@ struct PatientHomeView: View {
             FollowUpScreen(model: FollowUpModel(api: environment.followUp))
 
         case .labResults:
+            // The table first: somebody holding a report is asking what it
+            // said, not whether it is trending. The chart is one tap away.
+            LabPanelsScreen(
+                model: LabPanelsModel(
+                    api: environment.lab,
+                    documents: environment.documents,
+                    subject: .me
+                ),
+                openReport: { openURL($0) },
+                openTrends: { path.append(.labTrends) }
+            )
+
+        case .labTrends:
             LabTrendScreen(model: LabTrendModel(api: environment.lab, subject: .me))
 
         case .complications:
@@ -352,9 +370,11 @@ struct PatientHomeView: View {
         case .checklist:
             ChecklistScreen(
                 model: ChecklistModel(api: environment.documents, subject: .me),
-                // Straight to the upload screen. A checklist that names what is
-                // missing and offers no way to send it is a list of complaints.
-                upload: { _ in path.append(.documents) }
+                // Straight to the upload screen, with the type already
+                // chosen. A checklist that names what is missing and then
+                // makes you pick it again from a list of eight has asked the
+                // same question twice.
+                upload: { type in path.append(.documents(startWith: type)) }
             )
 
         case .signConsent:

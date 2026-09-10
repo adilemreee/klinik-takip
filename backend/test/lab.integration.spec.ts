@@ -2,7 +2,15 @@ import type { Server } from 'node:http';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { AuditAction, LabFlag, PrismaClient, Role, Sex, UserStatus } from '@prisma/client';
+import {
+  AuditAction,
+  DocumentType,
+  LabFlag,
+  PrismaClient,
+  Role,
+  Sex,
+  UserStatus,
+} from '@prisma/client';
 import { generateSync } from 'otplib';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
@@ -88,6 +96,24 @@ describe('lab result review', () => {
     });
     patientIds.push(patient.id);
     return patient.id;
+  };
+
+  /// A document row to hang results off. The bytes never matter here — what
+  /// is under test is the grouping, and the panel carries the id so a reader
+  /// can open the original.
+  const makeDocument = async (patientId: string): Promise<string> => {
+    const document = await prisma.document.create({
+      data: {
+        patientId,
+        type: DocumentType.LAB,
+        fileKey: `2026/03/${Math.random().toString(36).slice(2)}.pdf`,
+        mime: 'application/pdf',
+        size: 2048,
+        originalName: 'tahlil.pdf',
+      },
+    });
+
+    return document.id;
   };
 
   const fileCandidates = async (
@@ -672,6 +698,112 @@ describe('lab result review', () => {
         .delete(`/lab-results/${row!.result.id}`)
         .set('Authorization', `Bearer ${doctor.token}`)
         .expect(400);
+    });
+  });
+
+  /**
+   * The report, as it was printed (spec M16).
+   *
+   * A trend answers "is this getting better"; a panel answers "what did the
+   * blood test say". The rules worth holding are that a patient never sees an
+   * unconfirmed number, and that two reports taken at the same moment stay
+   * apart.
+   */
+  describe('panels', () => {
+    it('groups confirmed results by the report they came from', async () => {
+      const patientId = await makePatient();
+      const documentId = await makeDocument(patientId);
+      const measuredAt = new Date('2026-03-26T11:29:00.000Z');
+
+      for (const [name, value] of [
+        ['ALT', 106],
+        ['ALP', 107],
+        ['AST', 48],
+      ] as const) {
+        await prisma.labResult.create({
+          data: {
+            patientId,
+            documentId,
+            analyteName: name,
+            value,
+            unit: 'U/L',
+            refLow: 10,
+            refHigh: 49,
+            flag: value > 49 ? LabFlag.HIGH : LabFlag.NORMAL,
+            measuredAt,
+            verifiedAt: new Date(),
+            verifiedById: doctor.userId,
+          },
+        });
+      }
+
+      const body = (
+        await request(server)
+          .get(`/patients/${patientId}/lab-results/panels`)
+          .set('Authorization', `Bearer ${doctor.token}`)
+          .expect(200)
+      ).body as { documentId: string | null; results: { analyteName: string }[] }[];
+
+      expect(body).toHaveLength(1);
+      expect(body[0]?.documentId).toBe(documentId);
+      // Alphabetical, so the same report reads the same way twice.
+      expect(body[0]?.results.map((r) => r.analyteName)).toEqual(['ALP', 'ALT', 'AST']);
+    });
+
+    /// What OCR read is not clinical until a human has said so, and a number
+    /// shown to the person it is about is as clinical as it gets.
+    it('leaves out a result nobody has confirmed', async () => {
+      const patientId = await makePatient();
+
+      await prisma.labResult.create({
+        data: {
+          patientId,
+          analyteName: 'CRP',
+          value: 78.8,
+          unit: 'mg/L',
+          measuredAt: new Date('2026-03-26T11:29:00.000Z'),
+        },
+      });
+
+      const body = (
+        await request(server)
+          .get(`/patients/${patientId}/lab-results/panels`)
+          .set('Authorization', `Bearer ${doctor.token}`)
+          .expect(200)
+      ).body as unknown[];
+
+      expect(body).toHaveLength(0);
+    });
+
+    /// Two draws on one morning are two reports, and a reader looking for the
+    /// one they were handed needs them apart.
+    it('keeps two reports from the same moment apart', async () => {
+      const patientId = await makePatient();
+      const measuredAt = new Date('2026-03-26T11:29:00.000Z');
+
+      for (const name of ['ALT', 'CRP']) {
+        await prisma.labResult.create({
+          data: {
+            patientId,
+            documentId: await makeDocument(patientId),
+            analyteName: name,
+            value: 10,
+            unit: 'U/L',
+            measuredAt,
+            verifiedAt: new Date(),
+            verifiedById: doctor.userId,
+          },
+        });
+      }
+
+      const body = (
+        await request(server)
+          .get(`/patients/${patientId}/lab-results/panels`)
+          .set('Authorization', `Bearer ${doctor.token}`)
+          .expect(200)
+      ).body as unknown[];
+
+      expect(body).toHaveLength(2);
     });
   });
 });

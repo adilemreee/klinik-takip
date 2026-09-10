@@ -22,7 +22,7 @@ public struct DocumentListView: View {
     private let watching: String?
 
     @State private var state = DocumentsState()
-    @State private var chosenType: DocumentType = .lab
+    @State private var chosenType: DocumentType
     @State private var previewing: PreviewedDocument?
     @State private var scanned: ScanResult?
     /// Why a document failed, fetched when somebody taps the failed row.
@@ -37,7 +37,8 @@ public struct DocumentListView: View {
         pickFile: @escaping () async -> (url: URL, contentType: String)?,
         scan: (() async -> (url: URL, contentType: String, preview: String)?)? = nil,
         jobs: (any JobChannel)? = nil,
-        watching: String? = nil
+        watching: String? = nil,
+        startWith: DocumentType = .lab
     ) {
         self.model = model
         self.canUpload = canUpload
@@ -45,6 +46,10 @@ public struct DocumentListView: View {
         self.scan = scan
         self.jobs = jobs
         self.watching = watching
+        // Arrived here from the checklist's "EKG is missing" button, the type
+        // is already known. Making somebody pick it again from a list of eight
+        // is asking them to answer a question they have just answered.
+        _chosenType = State(initialValue: startWith)
     }
 
     public var body: some View {

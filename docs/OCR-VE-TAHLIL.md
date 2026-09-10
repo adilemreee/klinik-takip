@@ -118,3 +118,42 @@ Bildirim gönderimi (push/SMS) T4.2'de.
 - **Cihaz üstü OCR** (Vision / ML Kit) — §3.2 birincil okuma olarak onu istiyor, sunucu
   fallback. Şu an yalnız sunucu tarafı var; cihaz üstü ön okuma T3.3'ün kalanı.
 - Kamera ile belge tarama (kenar tespiti, perspektif düzeltme) — §M16'nın ilk maddesi.
+
+
+## Tahlil Tablosu (2026-09-11)
+
+Hastanın gördüğü ilk şey artık **eğri değil, raporun kendisi**. Eğri "iyiye
+gidiyor mu" sorusunu yanıtlıyor; elinde tahlil raporu olan biri farklı bir şey
+soruyor — *bu tahlil ne dedi* — ve onun cevabı bütün değerler bir arada, her
+biri referans aralığının yanında.
+
+Sekiz ayrı grafik açarak bir sabahın kan tahlilini okumak, rapor okumak değil.
+
+### Gruplama
+
+`measured_at` **ve** `document_id` birlikte. Aynı sabah alınmış iki rapor iki
+rapordur; eline tutuşturulan belgeyi arayan okuyucunun onları ayrı görmesi
+gerekiyor.
+
+Grup başlığı katlanıyor: en yenisi açık, öncekiler kapalı. Bir yıllık takibi
+olan hastada bunlardan on tane oluyor ve hepsini açan bir ekran bu sabahınkini
+geçen baharınkinin altına gömüyor.
+
+### Aralığı olmayan değer normal değildir
+
+Ekran görüntüsündeki `hGFH (CKD-EPİ)` ve `BUN` gibi satırlar referans aralığı
+olmadan basılıyor. Bunlar **sınıflandırılmamış** — yeşil tik değil, soru
+işareti. Kimsenin yerleştiremediği bir sayının yanına onay işareti koymak,
+tablonun hastaya bilmediği bir şeyi söylemesidir.
+
+### Belge bir dokunuş ötede
+
+Her grup başlığından raporun kendisi açılıyor. **Tablo OCR'ın okuduğu,
+klinisyenin onayladığı şey; PDF laboratuvarın bastığı şey.** Bir tartışmayı
+ikincisi bitirir.
+
+### Onaylanmamış değer hastaya gitmiyor
+
+Panel uçları yalnız `verified_at` dolu satırları döndürüyor — her iki tarafta
+da. OCR'ın okuduğu, bir insan söyleyene kadar klinik değildir, ve bir sayının
+hakkında olduğu kişiye gösterilmesi kadar klinik bir şey yoktur.

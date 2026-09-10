@@ -217,6 +217,15 @@ describe('the morning briefing', () => {
       const doctor = await staffFor(Role.DOCTOR);
       const patientId = await makePatient();
 
+      // The same reason as below: the briefing counts the whole clinic, so
+      // what this test is really asserting is the difference its own fixture
+      // makes.
+      const before = (
+        await briefingWith(AI_OFF, capturing(NARRATIVE).fetchImpl).forUser(
+          doctorActor(doctor.userId),
+        )
+      ).facts.yesterday;
+
       await messageAt(patientId, yesterdayNoon, TriageLevel.ROUTINE);
       await messageAt(patientId, yesterdayNoon, TriageLevel.URGENT);
       await messageAt(patientId, todayNoon, TriageLevel.ROUTINE);
@@ -226,13 +235,29 @@ describe('the morning briefing', () => {
         doctorActor(doctor.userId),
       );
 
-      expect(briefing.facts.yesterday.newMessages).toBe(2);
-      expect(briefing.facts.yesterday.urgentMessages).toBe(1);
+      expect(briefing.facts.yesterday.newMessages - before.newMessages).toBe(2);
+      expect(briefing.facts.yesterday.urgentMessages - before.urgentMessages).toBe(1);
     });
 
+    /**
+     * Measured as a delta, not as an absolute.
+     *
+     * The briefing counts the whole clinic — that is what a daily briefing is
+     * — so asserting "exactly one complication yesterday" quietly assumes the
+     * database contains nothing but this test's own fixture. It does on a
+     * fresh CI database and it does not on a developer's, where a demo seed
+     * run this morning puts a complication squarely in yesterday. The
+     * difference the fixture makes is the thing under test either way.
+     */
     it('counts yesterday\'s emergencies, complications and critical labs', async () => {
       const doctor = await staffFor(Role.DOCTOR);
       const patientId = await makePatient();
+
+      const before = (
+        await briefingWith(AI_OFF, capturing(NARRATIVE).fetchImpl).forUser(
+          doctorActor(doctor.userId),
+        )
+      ).facts.yesterday;
 
       await prisma.emergencyEvent.create({
         data: { patientId, status: EmergencyStatus.RESOLVED, triggeredAt: yesterdayNoon },
@@ -256,9 +281,9 @@ describe('the morning briefing', () => {
         doctorActor(doctor.userId),
       );
 
-      expect(briefing.facts.yesterday.emergencies).toBe(1);
-      expect(briefing.facts.yesterday.complications).toBe(1);
-      expect(briefing.facts.yesterday.criticalLabs).toBe(1);
+      expect(briefing.facts.yesterday.emergencies - before.emergencies).toBe(1);
+      expect(briefing.facts.yesterday.complications - before.complications).toBe(1);
+      expect(briefing.facts.yesterday.criticalLabs - before.criticalLabs).toBe(1);
     });
   });
 

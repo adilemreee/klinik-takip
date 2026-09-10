@@ -21,6 +21,10 @@
  * running it twice does not double anybody's medication.
  *
  *   KLINIK_DEMO_SEED=yes npx ts-node scripts/seed-demo.ts
+ *
+ * Add KLINIK_DEMO_RESET=yes to remove the demo patients first, which is how a
+ * demo environment gets a seed that has since learnt more. It deletes, so it
+ * is a second opt-in rather than a flag on the first.
  */
 import {
   AppointmentStatus,
@@ -28,6 +32,7 @@ import {
   ComplicationStatus,
   ConsentType,
   Currency,
+  DocumentType,
   LabFlag,
   MeasurementSource,
   MeasurementType,
@@ -38,6 +43,7 @@ import {
   PaymentStatus,
   PatientStatus,
   PrismaClient,
+  ProcessingStatus,
   Role,
 } from '@prisma/client';
 import { foldForSearch } from '../src/patients/search-folding';
@@ -98,7 +104,33 @@ interface Story {
   weights?: { from: number; to: number; overDays: number };
   vitals?: boolean;
   glucose?: boolean;
-  labs?: { name: string; code: string; value: number; unit: string; low: number; high: number; flag: LabFlag; verified: boolean }[];
+  /**
+   * Lab results as the reports they arrived on.
+   *
+   * A panel rather than a loose list, because that is how a laboratory prints
+   * them and how the app now shows them: one moment, one document, every
+   * analyte on it. Seeding them a day apart each — which this used to do —
+   * produced a screen full of one-line reports that looked like a bug.
+   *
+   * `low`/`high` are optional. A report really does print values with no
+   * reference range (eGFR, BUN on some panels), and those are *unclassified*
+   * rather than normal — which is exactly the case worth having in demo data.
+   */
+  labPanels?: {
+    daysAgo: number;
+    documentName: string;
+    /** False for a panel still waiting in the review queue (spec M16). */
+    verified: boolean;
+    analytes: {
+      name: string;
+      code?: string;
+      value: number;
+      unit: string;
+      low?: number;
+      high?: number;
+      flag?: LabFlag;
+    }[];
+  }[];
   medication?: { drug: string; dose: string; rule: string; days: number; taken: number; missed: number; stopped: boolean };
   appointments?: { type: AppointmentType; status: AppointmentStatus; inDays: number; note?: string }[];
   followUp?: { surgeryDaysAgo: number; done: number };
@@ -186,10 +218,53 @@ const STORIES: Story[] = [
     },
     weights: { from: 68.5, to: 66.2, overDays: 60 },
     vitals: true,
-    labs: [
-      { name: 'Hemoglobin', code: '718-7', value: 9.1, unit: 'g/dL', low: 12, high: 16, flag: LabFlag.CRITICAL, verified: true },
-      { name: 'Lökosit', code: '6690-2', value: 7.4, unit: '10³/µL', low: 4, high: 11, flag: LabFlag.NORMAL, verified: false },
-      { name: 'Trombosit', code: '777-3', value: 240, unit: '10³/µL', low: 150, high: 400, flag: LabFlag.NORMAL, verified: false },
+    labPanels: [
+      // A real report's shape: biochemistry and a blood count drawn the same
+      // morning, printed as two panels. Values that are out of range, values
+      // that are not, and two that print with no reference range at all —
+      // which the table shows as unclassified rather than ticking them.
+      {
+        daysAgo: 3,
+        documentName: 'biyokimya.pdf',
+        verified: true,
+        analytes: [
+          { name: 'Alanin aminotransferaz (ALT)', code: '1742-6', value: 106, unit: 'U/L', low: 10, high: 49, flag: LabFlag.HIGH },
+          { name: 'Alkalen fosfataz (ALP)', code: '6768-6', value: 107, unit: 'U/L', low: 46, high: 116, flag: LabFlag.NORMAL },
+          { name: 'Aspartat aminotransferaz (AST)', code: '1920-8', value: 48, unit: 'U/L', low: 0, high: 34, flag: LabFlag.HIGH },
+          { name: 'C Reaktif Protein (CRP)', code: '1988-5', value: 78.8, unit: 'mg/L', low: 0, high: 5, flag: LabFlag.CRITICAL },
+          { name: 'Gamma glutamil transferaz (GGT)', code: '2324-2', value: 117, unit: 'U/L', low: 0, high: 73, flag: LabFlag.HIGH },
+          { name: 'Glukoz (Açlık)', code: '1558-6', value: 62, unit: 'mg/dL', low: 70, high: 100, flag: LabFlag.LOW },
+          // Printed without a range, as these often are.
+          { name: 'eGFR (CKD-EPİ)', code: '98979-8', value: 125.9, unit: 'mL/dk/1,73m²' },
+          { name: 'Kan Üre Azotu (BUN)', code: '3094-0', value: 9.5, unit: 'mg/dL', low: 9, high: 23, flag: LabFlag.NORMAL },
+          { name: 'Kreatinin', code: '2160-0', value: 0.76, unit: 'mg/dL', low: 0.7, high: 1.3, flag: LabFlag.NORMAL },
+          { name: 'Sedimantasyon 60 dk', code: '4537-7', value: 38, unit: 'mm/Saat', low: 0, high: 20, flag: LabFlag.HIGH },
+          { name: 'Ürik Asit', code: '3084-1', value: 8.8, unit: 'mg/dL', low: 3.7, high: 9.2, flag: LabFlag.NORMAL },
+        ],
+      },
+      {
+        daysAgo: 3,
+        documentName: 'hemogram.pdf',
+        verified: true,
+        analytes: [
+          { name: 'Bazofil (BASO#)', code: '704-7', value: 0.07, unit: '10³/µL', low: 0.01, high: 0.05, flag: LabFlag.HIGH },
+          { name: 'Bazofil (BASO%)', code: '706-2', value: 0.7, unit: '%', low: 0, high: 0.7, flag: LabFlag.NORMAL },
+          { name: 'Eozinofil (EO#)', code: '711-2', value: 0.37, unit: '10³/µL', low: 0.03, high: 0.44, flag: LabFlag.NORMAL },
+          { name: 'Eozinofil (EO%)', code: '713-8', value: 3.8, unit: '%', low: 0, high: 4.4, flag: LabFlag.NORMAL },
+          { name: 'Hematokrit (HCT)', code: '4544-3', value: 45.4, unit: '%', low: 36.2, high: 46.3, flag: LabFlag.NORMAL },
+          { name: 'Hemoglobin', code: '718-7', value: 9.1, unit: 'g/dL', low: 12, high: 16, flag: LabFlag.CRITICAL },
+        ],
+      },
+      // Still in the review queue: what OCR read and nobody has confirmed.
+      {
+        daysAgo: 1,
+        documentName: 'kontrol-hemogram.pdf',
+        verified: false,
+        analytes: [
+          { name: 'Lökosit', code: '6690-2', value: 7.4, unit: '10³/µL', low: 4, high: 11, flag: LabFlag.NORMAL },
+          { name: 'Trombosit', code: '777-3', value: 240, unit: '10³/µL', low: 150, high: 400, flag: LabFlag.NORMAL },
+        ],
+      },
     ],
     medication: { drug: 'Ramipril', dose: '5 mg', rule: 'FREQ=DAILY;COUNT=60;BYHOUR=9', days: 30, taken: 26, missed: 4, stopped: false },
     appointments: [
@@ -237,9 +312,16 @@ const STORIES: Story[] = [
     weights: { from: 101.0, to: 96.4, overDays: 90 },
     vitals: true,
     glucose: true,
-    labs: [
-      { name: 'HbA1c', code: '4548-4', value: 7.4, unit: '%', low: 4, high: 5.7, flag: LabFlag.HIGH, verified: true },
-      { name: 'Açlık glukozu', code: '1558-6', value: 132, unit: 'mg/dL', low: 70, high: 100, flag: LabFlag.HIGH, verified: true },
+    labPanels: [
+      {
+        daysAgo: 4,
+        documentName: 'biyokimya.pdf',
+        verified: true,
+        analytes: [
+          { name: 'HbA1c', code: '4548-4', value: 7.4, unit: '%', low: 4, high: 5.7, flag: LabFlag.HIGH },
+          { name: 'Glukoz (Açlık)', code: '1558-6', value: 132, unit: 'mg/dL', low: 70, high: 100, flag: LabFlag.HIGH },
+        ],
+      },
     ],
     medication: { drug: 'Metformin', dose: '1000 mg', rule: 'FREQ=DAILY;COUNT=120;BYHOUR=9,21', days: 40, taken: 68, missed: 12, stopped: false },
     appointments: [
@@ -289,9 +371,16 @@ const STORIES: Story[] = [
     },
     weights: { from: 84.0, to: 79.5, overDays: 95 },
     vitals: true,
-    labs: [
-      { name: 'Hemoglobin', code: '718-7', value: 14.2, unit: 'g/dL', low: 12, high: 16, flag: LabFlag.NORMAL, verified: true },
-      { name: 'CRP', code: '1988-5', value: 2.1, unit: 'mg/L', low: 0, high: 5, flag: LabFlag.NORMAL, verified: true },
+    labPanels: [
+      {
+        daysAgo: 5,
+        documentName: 'kontrol-tahlil.pdf',
+        verified: true,
+        analytes: [
+          { name: 'Hemoglobin', code: '718-7', value: 14.2, unit: 'g/dL', low: 12, high: 16, flag: LabFlag.NORMAL },
+          { name: 'C Reaktif Protein (CRP)', code: '1988-5', value: 2.1, unit: 'mg/L', low: 0, high: 5, flag: LabFlag.NORMAL },
+        ],
+      },
     ],
     medication: { drug: 'Amoksisilin', dose: '500 mg', rule: 'FREQ=DAILY;COUNT=16;BYHOUR=9,21', days: 8, taken: 15, missed: 1, stopped: true },
     appointments: [
@@ -308,6 +397,50 @@ const STORIES: Story[] = [
   },
 ];
 
+/**
+ * Removes the demo patients so the seed can lay them down again.
+ *
+ * Without this the demo data is written once and can never be updated: the
+ * seed leaves a patient who already has data alone, deliberately, so that
+ * running it twice does not double anybody's medication. That is the right
+ * default, and it also means a demo environment is stuck with whatever shape
+ * the seed had on the day it first ran.
+ *
+ * Matched by name, which is how the seed finds them in the first place. On a
+ * demo database that is the whole population; the two guards in `main` —
+ * never production, and an explicit opt-in — are what make the match safe.
+ */
+async function removeDemoPatients(): Promise<number> {
+  const patients = await prisma.patient.findMany({
+    where: {
+      OR: STORIES.map((story) => ({
+        firstName: story.firstName,
+        lastName: story.lastName,
+      })),
+    },
+    select: { id: true, userId: true, firstName: true, lastName: true },
+  });
+
+  if (patients.length === 0) return 0;
+
+  // The patient row cascades to everything hanging off it. The login does not
+  // cascade from the patient, so it goes separately — a demo account left
+  // behind would still be able to sign in to nothing.
+  await prisma.patient.deleteMany({ where: { id: { in: patients.map((p) => p.id) } } });
+
+  const userIds = patients.map((p) => p.userId).filter((id): id is string => id !== null);
+
+  if (userIds.length > 0) {
+    await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+  }
+
+  for (const patient of patients) {
+    console.log(`removed ${patient.firstName} ${patient.lastName}`);
+  }
+
+  return patients.length;
+}
+
 async function main(): Promise<void> {
   // `APP_ENV`, not `NODE_ENV`. Staging runs a production *build* — NODE_ENV is
   // `production` there and correctly so — and guarding on it blocked the one
@@ -319,6 +452,14 @@ async function main(): Promise<void> {
 
   if (process.env.KLINIK_DEMO_SEED !== 'yes') {
     throw new Error('Set KLINIK_DEMO_SEED=yes to confirm this is a demo database');
+  }
+
+  // Opt-in on top of the opt-in: this deletes, and deleting wants to be asked
+  // for twice. Without it the demo data written on day one can never be
+  // brought up to date with a seed that has since learnt more.
+  if (process.env.KLINIK_DEMO_RESET === 'yes') {
+    const removed = await removeDemoPatients();
+    console.log(`reset: removed ${removed} demo patient(s)`);
   }
 
   const doctor = await prisma.staffProfile.findFirst({
@@ -494,25 +635,49 @@ async function fill(
     });
   }
 
-  for (const [index, lab] of (story.labs ?? []).entries()) {
-    await prisma.labResult.create({
+  for (const panel of story.labPanels ?? []) {
+    const measuredAt = daysFromNow(-panel.daysAgo, 8);
+
+    // A document per panel, so the table's "open the report itself" button has
+    // something to open. No bytes behind it: this is demo data, and a fake key
+    // that resolves to nothing is more honest than a real file of invented
+    // results sitting in the bucket.
+    const document = await prisma.document.create({
       data: {
         patientId,
-        analyteCode: lab.code,
-        analyteName: lab.name,
-        value: lab.value,
-        unit: lab.unit,
-        refLow: lab.low,
-        refHigh: lab.high,
-        flag: lab.flag,
-        measuredAt: daysFromNow(-3 - index, 8),
-        // Unverified results carry an OCR confidence, because that is what they
-        // are: something a machine read and nobody has confirmed (spec M16).
-        ocrConfidence: lab.verified ? null : 0.82,
-        verifiedById: lab.verified ? staffUserId : null,
-        verifiedAt: lab.verified ? daysFromNow(-2 - index, 11) : null,
+        type: DocumentType.LAB,
+        fileKey: `demo/${panel.documentName}`,
+        originalName: panel.documentName,
+        mime: 'application/pdf',
+        size: 0,
+        ocrStatus: ProcessingStatus.DONE,
+        aiStatus: ProcessingStatus.DONE,
+        createdAt: measuredAt,
       },
     });
+
+    for (const analyte of panel.analytes) {
+      await prisma.labResult.create({
+        data: {
+          patientId,
+          documentId: document.id,
+          analyteCode: analyte.code,
+          analyteName: analyte.name,
+          value: analyte.value,
+          unit: analyte.unit,
+          refLow: analyte.low,
+          refHigh: analyte.high,
+          flag: analyte.flag,
+          measuredAt,
+          // Unverified results carry an OCR confidence, because that is what
+          // they are: something a machine read and nobody has confirmed
+          // (spec M16).
+          ocrConfidence: panel.verified ? null : 0.82,
+          verifiedById: panel.verified ? staffUserId : null,
+          verifiedAt: panel.verified ? daysFromNow(-panel.daysAgo + 1, 11) : null,
+        },
+      });
+    }
   }
 
   if (story.medication) {

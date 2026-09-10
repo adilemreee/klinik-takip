@@ -87,7 +87,18 @@ export class JobsGateway implements OnGatewayConnection, OnModuleInit, OnModuleD
       return;
     }
 
-    const subscriber = client.duplicate();
+    /*
+     * The offline queue is turned back on for this one.
+     *
+     * `RedisService` disables it deliberately: the permission cache sits on
+     * the request path, and a command parked forever there means a hanging
+     * request. A subscriber is the opposite case — it issues one command, at
+     * startup, and waiting for the socket is exactly what it should do.
+     * Inheriting the cache's setting made `subscribe()` fail with "Stream
+     * isn't writeable" on any machine where Redis was not already connected,
+     * which is every CI run.
+     */
+    const subscriber = client.duplicate({ enableOfflineQueue: true });
 
     subscriber.on('error', (error: Error) =>
       this.logger.warn(`Job event subscriber: ${error.message}`),
@@ -103,11 +114,19 @@ export class JobsGateway implements OnGatewayConnection, OnModuleInit, OnModuleD
       this.server?.to(room(event.patientId)).emit('job', event);
     });
 
-    void subscriber.subscribe(JOB_EVENTS_CHANNEL).catch((error: unknown) => {
-      // Said out loud rather than swallowed: the screens keep working, they
-      // simply stop being live, and nothing else would say why.
-      this.logger.warn(`Job events unavailable: ${String(error)}`);
-    });
+    // On `ready` as well as now: `subscribe` is re-issued after a reconnect,
+    // because a subscription does not survive one and a socket that looks
+    // connected while hearing nothing is the worst of the three states.
+    const listen = (): void => {
+      void subscriber.subscribe(JOB_EVENTS_CHANNEL).catch((error: unknown) => {
+        // Said out loud rather than swallowed: the screens keep working, they
+        // simply stop being live, and nothing else would say why.
+        this.logger.warn(`Job events unavailable: ${String(error)}`);
+      });
+    };
+
+    subscriber.on('ready', listen);
+    listen();
 
     this.subscriber = subscriber;
   }

@@ -5,6 +5,7 @@ import {
   PatientDocumentsController,
 } from './documents.controller';
 import { MeasurementsModule } from '../measurements/measurements.module';
+import { DocumentChecklistService } from './checklist.service';
 import { DocumentsService } from './documents.service';
 import { ResumableUploadService } from './resumable-upload.service';
 import {
@@ -25,7 +26,7 @@ import {
     PatientDocumentsController,
     DocumentsController,
   ],
-  providers: [DocumentsService, ResumableUploadService],
-  exports: [DocumentsService, ResumableUploadService],
+  providers: [DocumentsService, ResumableUploadService, DocumentChecklistService],
+  exports: [DocumentsService, ResumableUploadService, DocumentChecklistService],
 })
 export class DocumentsModule {}

@@ -46,6 +46,16 @@ public actor ConsentsModel {
     private let api: ConsentsAPI
 
     /**
+     * Whose consents these are.
+     *
+     * Nil is the caller's own, which is the only case that can give or
+     * withdraw anything. A clinician reading a patient's file gets the list
+     * and the signatures and nothing else: consenting on somebody else's
+     * behalf is not a thing this app does.
+     */
+    private let patientId: String?
+
+    /**
      * Which wording is being agreed to.
      *
      * Sent with every consent because "they agreed" names nothing without it —
@@ -56,10 +66,14 @@ public actor ConsentsModel {
 
     private(set) public var state = ConsentsState()
 
-    public init(api: ConsentsAPI, version: Int = 1) {
+    public init(api: ConsentsAPI, version: Int = 1, patientId: String? = nil) {
         self.api = api
         self.version = version
+        self.patientId = patientId
     }
+
+    /// Whether this model may change anything, or only read.
+    public var isReadOnly: Bool { patientId != nil }
 
     public func currentState() -> ConsentsState { state }
 
@@ -68,7 +82,11 @@ public actor ConsentsModel {
         state.error = nil
 
         do {
-            state.consents = try await api.mine()
+            if let patientId {
+                state.consents = try await api.forPatient(patientId)
+            } else {
+                state.consents = try await api.mine()
+            }
             state.phase = .loaded
         } catch let error as APIError {
             if case .notFound = error {
@@ -83,18 +101,36 @@ public actor ConsentsModel {
         }
     }
 
+    /**
+     * Gives a consent, with the signature drawn for it (spec M17).
+     *
+     * The signature is optional here because not every consent is signed —
+     * withdrawing photo permission is a tap, not a document. Where the screen
+     * asks for one it refuses to submit without it; this does not second-guess
+     * that, because which consents need a drawn signature is the clinic's
+     * decision and not this model's.
+     */
     @discardableResult
-    public func give(_ type: ConsentType) async -> Bool {
-        guard ConsentType.askable.contains(type) else { return false }
+    public func give(_ type: ConsentType, signature: Data? = nil) async -> Bool {
+        guard patientId == nil, ConsentType.askable.contains(type) else { return false }
 
         return await change(type) { [version] in
-            _ = try await self.api.give(type: type, version: version)
+            _ = try await self.api.give(type: type, version: version, signature: signature)
         }
+    }
+
+    /// A short-lived link to the signature drawn for one of these consents.
+    public func signatureURL(for consentId: String) async -> URL? {
+        if let patientId {
+            return try? await api.signatureURL(patientId: patientId, consentId: consentId)
+        }
+
+        return try? await api.signatureURL(consentId: consentId)
     }
 
     @discardableResult
     public func withdraw(_ type: ConsentType) async -> Bool {
-        guard let consent = state.active(type) else { return false }
+        guard patientId == nil, let consent = state.active(type) else { return false }
 
         return await change(type) {
             _ = try await self.api.withdraw(consent.id)

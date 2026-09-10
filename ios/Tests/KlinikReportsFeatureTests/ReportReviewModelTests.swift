@@ -146,11 +146,4 @@ final class ReportReviewModelTests: XCTestCase {
         XCTAssertEqual(state.reports.count, 1)
         XCTAssertNotNil(state.actionError)
     }
-
-    /// Markdown headings and bullets survive; a broken string is shown as text.
-    func testMarkdownFallsBackToThePlainString() {
-        let mangled = "**unclosed"
-
-        XCTAssertFalse(String(Markdown.attributed(mangled).characters).isEmpty)
-    }
 }

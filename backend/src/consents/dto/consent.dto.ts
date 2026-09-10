@@ -18,6 +18,22 @@ export class RecordConsentDto {
   @IsString()
   @MaxLength(20_000)
   documentText?: string;
+
+  /**
+   * The signature drawn with a finger, as base64 PNG (no data: prefix).
+   *
+   * Sent with the consent rather than uploaded separately on purpose: a
+   * consent row without its signature, or a signature with no consent, is a
+   * worse record than either alone. One request, one row, or nothing.
+   *
+   * The cap is generous for a signature — a 600x200 stroke drawing is a few
+   * kilobytes — and small enough that nobody posts a photograph through it.
+   */
+  @ApiPropertyOptional({ description: 'Finger signature as base64 PNG, no data: prefix' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(700_000)
+  signature?: string;
 }
 
 export class ConsentDto {
@@ -30,4 +46,19 @@ export class ConsentDto {
 
   @ApiProperty({ description: 'Whether it is in force right now' })
   active!: boolean;
+
+  @ApiProperty({ description: 'Whether a drawn signature was recorded with it' })
+  hasSignature!: boolean;
+}
+
+/**
+ * A short-lived link to a stored signature.
+ *
+ * A link rather than the bytes: the bucket is private, every other stored
+ * object is read this way, and a consent signature is exactly the sort of
+ * thing that must not become a URL somebody can pass around.
+ */
+export class SignatureLinkDto {
+  @ApiProperty() url!: string;
+  @ApiProperty() expiresAt!: Date;
 }

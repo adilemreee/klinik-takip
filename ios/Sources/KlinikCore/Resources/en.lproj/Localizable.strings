@@ -1088,3 +1088,33 @@
 "upload.waiting" = "File waiting to be sent";
 "upload.waitingCount" = "%d files waiting to be sent";
 "upload.of" = "%1$@ of %2$@";
+
+/* Finger signature and the document checklist (spec M17) */
+"consent.signature" = "Signature";
+"consent.signHint" = "Sign here with your finger";
+"consent.signed" = "Signed";
+"consent.notSigned" = "Not signed yet";
+"consent.clearSignature" = "Clear";
+"consent.signatureRequired" = "You need to sign before confirming.";
+"consent.viewSignature" = "View signature";
+"checklist.title" = "Documents before your operation";
+"checklist.complete" = "Everything required has reached the clinic.";
+"checklist.missingOne" = "1 required document missing";
+"checklist.missingCount" = "%d required documents missing";
+"checklist.received" = "Received";
+"checklist.missing" = "Missing";
+"checklist.optional" = "Optional";
+"checklist.upload" = "Upload";
+"checklist.empty" = "The clinic has not set out a document list yet.";
+"checklist.explain" = "These documents must be at the clinic before your operation. You can upload whatever is missing here.";
+"menu.checklist" = "Documents before your operation";
+"consent.formUnpublished" = "The clinic has not published the consent form yet. You will be able to sign it here once they do.";
+"consent.signedThanks" = "The consent form has been signed and has reached the clinic.";
+"consent.version" = "Wording version: %d";
+"consent.readAndSign" = "Read and sign";
+"consent.staffTitle" = "Consents and permissions";
+"consent.withdrawn" = "Withdrawn";
+"consent.signedAt" = "Signed";
+"consent.versionLabel" = "Wording version";
+"consent.noneRecorded" = "No consent has been recorded for this patient.";
+"menu.consents" = "Consents and permissions";

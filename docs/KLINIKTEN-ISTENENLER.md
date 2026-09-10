@@ -379,3 +379,46 @@ bildirimler telefonlara düşmeye başlar. Uygulamada değişiklik gerekmez.
 **Not:** Push gitmiyorken ilaç hatırlatmaları ve kritik değer uyarıları
 kullanıcıya **ulaşmaz**. Bu, uygulamanın gerçek hastayla kullanılmasının önünde
 duran maddelerden biridir.
+
+---
+
+## 13. Tedavi onam metni (ameliyat onam formu)
+
+**Ne lazım:** Hastanın ameliyattan önce okuyup imzalayacağı **onam metninin
+kendisi** — kliniğin kendi hukuki metni. `docs/TEDAVI-ONAM-METNI.md` olarak
+depoya eklenmesi yeterli; sunucu onu oradan alıp uygulamaya sunuyor.
+
+**Neden ben yazamıyorum:** Bir tedavi onam formunun içeriği tıbbi-hukuki bir
+belgedir; hangi riskin nasıl anlatıldığı, hangi alternatifin sayıldığı bir
+hekimin ve bir hukukçunun kararıdır. Benim yazdığım bir taslak, imzalandığı anda
+kliniği bağlayan bir belgeye dönüşür.
+
+**Şu an ne oluyor:** Makine tamamen hazır — hasta metni uygulamada okuyor,
+**parmağıyla imzalıyor**, imza PNG olarak kliniğin özel deposuna yazılıyor ve
+onam kaydına bağlanıyor; hekim hasta dosyasından imzayı açıp görebiliyor. Metin
+olmadığı için uç nokta **404 dönüyor** ve uygulama imzalama ekranını hiç
+açmıyor: "Klinik onam metnini henüz yayımlamadı" diyor.
+
+**Bu kasıtlı.** İçi boş bir taslak koyup imzalatmak, "hasta hiçbir şey söylemeyen
+bir belgeyi onayladı" diyen bir kayıt üretirdi — hiç form olmamasından kötüdür.
+
+**Verdiğinizde ne değişir:** Dosyayı `docs/` altına koyup dağıtım yapmak
+yetiyor. Metin her değiştiğinde `legal.controller.ts` içindeki
+`TREATMENT_CONSENT_VERSION` elle bir artırılmalı — çünkü onam kaydı hangi
+sürüme rıza gösterildiğini yazıyor, ve "onayladı" hangi metne olduğu
+söylenmeden bir şey ifade etmiyor.
+
+## 14. Ameliyat öncesi belge listesi (kontrol listesi)
+
+**Ne lazım:** Hangi belgelerin ameliyattan önce klinikte olması gerektiği.
+Varsayılan olarak dört zorunlu (pasaport, kan tahlilleri, EKG, imzalı onam) ve
+bir isteğe bağlı (görüntüleme) satır tanımlı — **bunları gözden geçirin.**
+
+**Neden bir onay istiyorum:** Liste veri, kod değil: bir satır eklemek veya
+zorunluluğunu değiştirmek `document_requirements` tablosuna bir satır yazmaktır,
+sürüm çıkmaz. Ama hangi belgenin zorunlu olduğu klinik bir karardır, benim
+varsayımım değil.
+
+**Ayrıca:** Bir belge yalnız o ameliyat için isteniyorsa satıra
+`procedure_type` yazın (ameliyat kaydındaki `procedure_code` ile eşleşmeli);
+boş bırakılan satır herkese sorulur.

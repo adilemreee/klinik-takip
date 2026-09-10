@@ -46,6 +46,10 @@ public enum PatientDestination: Hashable, Sendable {
     case travel
     /// What the app is holding and has not delivered (spec M15).
     case pendingChanges
+    /// Documents the clinic needs before the operation (spec M17).
+    case checklist
+    /// Reading and signing the treatment consent (spec M17).
+    case signConsent
 }
 
 /**
@@ -167,6 +171,7 @@ struct PatientHomeView: View {
             Button(L10n.string("consent.title")) { path.append(.consents) }
             Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
             Button(L10n.string("menu.account")) { path.append(.account) }
+            Button(L10n.string("menu.checklist")) { path.append(.checklist) }
             Button(L10n.string("menu.pendingChanges")) { path.append(.pendingChanges) }
 
             Divider()
@@ -303,7 +308,8 @@ struct PatientHomeView: View {
                     if let url = environment.privacyNoticeURL {
                         openURL(url)
                     }
-                }
+                },
+                signTreatmentConsent: { path.append(.signConsent) }
             )
 
         case .notificationSettings:
@@ -328,6 +334,19 @@ struct PatientHomeView: View {
 
         case .pendingChanges:
             PendingChangesScreen(sync: environment.sync)
+
+        case .checklist:
+            ChecklistScreen(
+                model: ChecklistModel(api: environment.documents, subject: .me),
+                // Straight to the upload screen. A checklist that names what is
+                // missing and offers no way to send it is a list of complaints.
+                upload: { _ in path.append(.documents) }
+            )
+
+        case .signConsent:
+            SignConsentScreen(
+                model: SignConsentModel(legal: environment.legal, consents: environment.consents)
+            )
         }
     }
 }

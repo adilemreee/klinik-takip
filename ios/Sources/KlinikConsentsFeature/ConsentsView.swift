@@ -21,16 +21,26 @@ import KlinikDesign
  * And it says, once and plainly, that refusing costs the patient nothing.
  */
 public struct ConsentsView: View {
+    @Environment(\.openURL) private var openURL
     @Environment(\.colorScheme) private var scheme
 
     private let model: ConsentsModel
     /// Opens the full privacy notice, supplied by the shell.
     private let openNotice: () -> Void
+    /// Opens the treatment consent form (spec M17). Nil where the clinic
+    /// collects it on paper, which leaves the section out rather than showing
+    /// a button that leads nowhere.
+    private let signTreatmentConsent: (() -> Void)?
 
     @State private var state = ConsentsState()
     @State private var noticeAcknowledged = false
 
-    public init(model: ConsentsModel, openNotice: @escaping () -> Void) {
+    public init(
+        model: ConsentsModel,
+        openNotice: @escaping () -> Void,
+        signTreatmentConsent: (() -> Void)? = nil
+    ) {
+        self.signTreatmentConsent = signTreatmentConsent
         self.model = model
         self.openNotice = openNotice
     }
@@ -143,7 +153,68 @@ public struct ConsentsView: View {
             Text(L10n.string("consent.forwardOnly"))
                 .font(Tokens.Typography.captionRelative)
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+            if let signTreatmentConsent {
+                treatmentConsent(open: signTreatmentConsent)
+            }
         }
+    }
+
+    /**
+     * The treatment consent, apart from the toggles above it.
+     *
+     * Not a switch, because it is not one: it is a document somebody reads and
+     * signs. Putting it in the same list as the photo permission would make
+     * the two look like the same kind of decision, and they are not — one is a
+     * KVKK consent that can be withdrawn with a tap, the other is the medical
+     * consent for a procedure.
+     */
+    private func treatmentConsent(open: @escaping () -> Void) -> some View {
+        let signed = state.consents.first { $0.type == .treatment && $0.active }
+
+        return Card(tone: signed == nil ? .warning : .success) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                Text(ConsentType.treatment.localizedName)
+                    .font(Tokens.Typography.subheadingRelative)
+                    .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+                if let signed {
+                    Badge(
+                        L10n.string("consent.signed"),
+                        tone: .success,
+                        symbol: "checkmark.circle.fill"
+                    )
+
+                    Text(signed.signedAt.formatted(date: .abbreviated, time: .shortened))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    // Their own signature, on their own record. A consent
+                    // somebody cannot look at afterwards is one they have to
+                    // take on trust.
+                    if signed.hasSignature {
+                        Button(L10n.string("consent.viewSignature")) {
+                            Task {
+                                if let url = await model.signatureURL(for: signed.id) {
+                                    openURL(url)
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .frame(minHeight: Tokens.minimumTouchTarget)
+                    }
+                } else {
+                    Text(L10n.string("consent.notSigned"))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tone.warning.foreground.resolve(for: scheme))
+
+                    Button(L10n.string("consent.readAndSign"), action: open)
+                        .buttonStyle(.borderedProminent)
+                        .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                }
+            }
+        }
+        .accessibilityElement(children: .contain)
     }
 
     private func refresh(_ work: () async -> Void) async {

@@ -1,17 +1,32 @@
+import { Readable } from 'node:stream';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Consent, ConsentType } from '@prisma/client';
 import { type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
+import { FileService } from '../files/file.service';
 import { PrismaService } from '../infra/prisma.service';
 
 export interface RecordConsentInput {
   type: ConsentType;
   version: number;
   documentText?: string;
-  signatureFileKey?: string;
+  /** The signature drawn with a finger, as base64 PNG without a data: prefix. */
+  signature?: string;
   ipAddress?: string;
   userAgent?: string;
 }
+
+/** The first bytes of every PNG. */
+const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/**
+ * A stroke drawing, not a photograph.
+ *
+ * Half a megabyte is far more than a signature needs and far less than a
+ * camera produces, which is the line worth drawing: this field must not become
+ * a way to put arbitrary images into the consent record.
+ */
+const MAXIMUM_SIGNATURE_BYTES = 512 * 1024;
 
 /**
  * Consent records (KVKK, spec §8).
@@ -51,6 +66,7 @@ export class ConsentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: PatientAccessService,
+    private readonly files: FileService,
   ) {}
 
   async list(user: AuthenticatedUser, patientId: string): Promise<Consent[]> {
@@ -77,6 +93,13 @@ export class ConsentsService {
       );
     }
 
+    // Stored before the row is written. A consent recorded with a signature
+    // key pointing at nothing would be a record that looks signed and is not;
+    // a stored image with no row is a stray object the sweep will collect.
+    const signatureFileKey = input.signature
+      ? await this.storeSignature(input.signature)
+      : undefined;
+
     // Giving the same consent again supersedes the previous one rather than
     // stacking: two active photo consents with different texts leaves nobody
     // able to say which one the patient actually agreed to.
@@ -91,11 +114,70 @@ export class ConsentsService {
         type: input.type,
         version: input.version,
         documentText: input.documentText,
-        signatureFileKey: input.signatureFileKey,
+        signatureFileKey,
         signedAt: new Date(),
         ipAddress: input.ipAddress,
         userAgent: input.userAgent,
       },
+    });
+  }
+
+  /**
+   * Stores the drawn signature and returns its object key.
+   *
+   * Checked against the PNG magic bytes rather than trusted: the field is a
+   * string from a client, and "it said it was a PNG" is not a reason to put
+   * arbitrary bytes in the bucket that serves clinical documents.
+   */
+  private async storeSignature(base64: string): Promise<string> {
+    const bytes = Buffer.from(base64, 'base64');
+
+    if (bytes.length === 0) {
+      throw new BadRequestException('The signature could not be read');
+    }
+
+    if (bytes.length > MAXIMUM_SIGNATURE_BYTES) {
+      throw new BadRequestException('The signature is too large');
+    }
+
+    if (!bytes.subarray(0, PNG_MAGIC.length).equals(PNG_MAGIC)) {
+      throw new BadRequestException('The signature must be a PNG');
+    }
+
+    const stored = await this.files.store('documents', Readable.from(bytes), {
+      mime: 'image/png',
+      extension: 'png',
+      maxBytes: MAXIMUM_SIGNATURE_BYTES,
+    });
+
+    return stored.key;
+  }
+
+  /**
+   * A short-lived link to the signature.
+   *
+   * Through the same signed-URL path as every other stored object: the bucket
+   * is private, and a consent signature is exactly the kind of thing that must
+   * not become a URL somebody can pass around.
+   */
+  async signatureUrl(
+    user: AuthenticatedUser,
+    patientId: string,
+    consentId: string,
+  ): Promise<{ url: string; expiresAt: Date }> {
+    await this.access.assertCanAccess(user, patientId);
+
+    const consent = await this.prisma.consent.findFirst({
+      where: { id: consentId, patientId },
+      select: { signatureFileKey: true },
+    });
+
+    if (!consent?.signatureFileKey) {
+      throw new NotFoundException('No signature was recorded with this consent');
+    }
+
+    return this.files.createDownloadUrl('documents', consent.signatureFileKey, {
+      filename: 'imza.png',
     });
   }
 

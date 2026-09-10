@@ -30,8 +30,10 @@ import { RequireAnyPermission } from '../authz/decorators/require-permissions.de
 import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { Env } from '../config/env.schema';
+import { DocumentChecklistService } from './checklist.service';
 import { DocumentsService } from './documents.service';
 import {
+  ChecklistDto,
   DocumentPageDto,
   DownloadUrlDto,
   JobDto,
@@ -47,7 +49,26 @@ export class PatientDocumentsController {
   constructor(
     private readonly documents: DocumentsService,
     private readonly config: ConfigService<Env, true>,
+    private readonly checklist: DocumentChecklistService,
   ) {}
+
+  /**
+   * What this patient still owes before their operation (spec M17).
+   *
+   * Declared first because Nest matches in declaration order.
+   */
+  @Get('checklist')
+  @RequirePermissions('documents.read')
+  @Audit({ entityType: 'documents', action: AuditAction.READ, patientIdParam: 'id' })
+  @ApiOperation({ summary: 'The pre-operative document checklist for this patient' })
+  @ApiOkResponse({ type: ChecklistDto })
+  @ApiStandardErrors()
+  async patientChecklist(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) patientId: string,
+  ): Promise<ChecklistDto> {
+    return this.checklist.forPatient(user, patientId);
+  }
 
   /**
    * The body is read as a stream rather than through a body parser: nothing
@@ -192,7 +213,23 @@ export class MyDocumentsController {
     private readonly documents: DocumentsService,
     private readonly measurements: MeasurementsService,
     private readonly config: ConfigService<Env, true>,
+    private readonly checklist: DocumentChecklistService,
   ) {}
+
+  /**
+   * Declared before `@Get()` on purpose — Nest matches in declaration order,
+   * and a later `:documentId` route would otherwise claim `checklist`.
+   */
+  @Get('checklist')
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'What you still have to send before your operation' })
+  @ApiOkResponse({ type: ChecklistDto })
+  @ApiStandardErrors()
+  async myChecklist(@CurrentUser() user: AuthenticatedUser): Promise<ChecklistDto> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.checklist.forPatient(user, patientId);
+  }
 
   @Get()
   @RequireAnyPermission('self.read')

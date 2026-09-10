@@ -4,6 +4,8 @@ import { MyConsentsController, PatientConsentsController } from './consents.cont
 import { ConsentsService } from './consents.service';
 
 @Module({
+  // FilesModule is @Global — it says so, and lists consent signatures as one
+  // of the reasons — so it is not imported here.
   imports: [MeasurementsModule],
   controllers: [MyConsentsController, PatientConsentsController],
   providers: [ConsentsService],

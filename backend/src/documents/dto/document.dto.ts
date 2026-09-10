@@ -152,3 +152,25 @@ export class UploadSessionDto {
   @ApiProperty({ format: 'uuid', nullable: true, description: 'Set once completed' })
   documentId!: string | null;
 }
+
+/**
+ * One line of the pre-operative document checklist (spec M17).
+ *
+ * Carries the label rather than a key the client would have to translate: the
+ * list is data a clinic edits, and a client that had to know each row's name
+ * in advance would need a release every time one was added.
+ */
+export class ChecklistItemDto {
+  @ApiProperty({ enum: DocumentType }) documentType!: DocumentType;
+  @ApiProperty({ example: 'Pasaport' }) label!: string;
+  @ApiProperty() mandatory!: boolean;
+  @ApiProperty({ description: 'Whether the clinic has a usable document of this kind' })
+  satisfied!: boolean;
+  @ApiPropertyOptional({ nullable: true }) documentId!: string | null;
+}
+
+export class ChecklistDto {
+  @ApiProperty({ type: [ChecklistItemDto] }) items!: ChecklistItemDto[];
+  @ApiProperty({ description: 'Mandatory items still missing' }) missingMandatory!: number;
+  @ApiProperty({ description: 'True when nothing mandatory is outstanding' }) complete!: boolean;
+}

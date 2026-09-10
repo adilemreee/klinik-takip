@@ -1088,3 +1088,33 @@
 "upload.waiting" = "Gönderilmeyi bekleyen dosya";
 "upload.waitingCount" = "%d dosya gönderilmeyi bekliyor";
 "upload.of" = "%1$@ / %2$@";
+
+/* Parmakla imza ve belge kontrol listesi (Şartname M17) */
+"consent.signature" = "İmza";
+"consent.signHint" = "Parmağınızla buraya imzalayın";
+"consent.signed" = "İmzalandı";
+"consent.notSigned" = "Henüz imzalanmadı";
+"consent.clearSignature" = "Temizle";
+"consent.signatureRequired" = "Onaylamadan önce imzalamanız gerekiyor.";
+"consent.viewSignature" = "İmzayı gör";
+"checklist.title" = "Ameliyat öncesi belgeler";
+"checklist.complete" = "Zorunlu belgelerin hepsi kliniğe ulaştı.";
+"checklist.missingOne" = "1 zorunlu belge eksik";
+"checklist.missingCount" = "%d zorunlu belge eksik";
+"checklist.received" = "Ulaştı";
+"checklist.missing" = "Eksik";
+"checklist.optional" = "İsteğe bağlı";
+"checklist.upload" = "Yükle";
+"checklist.empty" = "Klinik henüz bir belge listesi tanımlamadı.";
+"checklist.explain" = "Bu belgeler ameliyattan önce klinikte olmalı. Eksik olanları buradan yükleyebilirsiniz.";
+"menu.checklist" = "Ameliyat öncesi belgeler";
+"consent.formUnpublished" = "Klinik onam metnini henüz yayımlamadı. Yayımlandığında burada imzalayabileceksiniz.";
+"consent.signedThanks" = "Onam formu imzalandı ve kliniğe ulaştı.";
+"consent.version" = "Metin sürümü: %d";
+"consent.readAndSign" = "Metni oku ve imzala";
+"consent.staffTitle" = "Onaylar ve izinler";
+"consent.withdrawn" = "Geri alındı";
+"consent.signedAt" = "İmza tarihi";
+"consent.versionLabel" = "Metin sürümü";
+"consent.noneRecorded" = "Bu hasta için kayıtlı onay yok.";
+"menu.consents" = "Onaylar ve izinler";

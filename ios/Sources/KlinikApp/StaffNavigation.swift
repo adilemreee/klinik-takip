@@ -5,6 +5,7 @@ import KlinikAuditFeature
 import KlinikAuthFeature
 import KlinikBriefingFeature
 import KlinikComplicationsFeature
+import KlinikConsentsFeature
 import KlinikCore
 import KlinikDesign
 import KlinikAISettingsFeature
@@ -61,6 +62,10 @@ public enum StaffDestination: Hashable, Sendable {
     case aiSettings
     case surveys(patientId: String)
     case travel(patientId: String)
+    /// The pre-operative document checklist (spec M17).
+    case checklist(patientId: String)
+    /// What the patient consented to, and the signature they drew (M17).
+    case consents(patientId: String)
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -89,6 +94,8 @@ enum StaffTab: Hashable {
  */
 @MainActor
 struct StaffPatientsView: View {
+    @Environment(\.openURL) private var openURL
+
     let environment: AppEnvironment
     let signOut: () async -> Void
     /// The device-lock setting, owned by the shell and edited on the account
@@ -433,6 +440,22 @@ struct StaffPatientsView: View {
 
         case .pendingChanges:
             PendingChangesScreen(sync: environment.sync)
+
+        case .checklist(let patientId):
+            // No upload button: a clinician looking at a patient's file is not
+            // the person who sends their passport.
+            ChecklistScreen(
+                model: ChecklistModel(
+                    api: environment.documents,
+                    subject: .patient(id: patientId)
+                )
+            )
+
+        case .consents(let patientId):
+            PatientConsentsView(
+                model: ConsentsModel(api: environment.consents, patientId: patientId),
+                openSignature: { openURL($0) }
+            )
         }
     }
 }
@@ -452,6 +475,8 @@ private extension StaffDestination {
         case .appointments: self = .appointments(patientId: patientId)
         case .surveys: self = .surveys(patientId: patientId)
         case .travel: self = .travel(patientId: patientId)
+        case .checklist: self = .checklist(patientId: patientId)
+        case .consents: self = .consents(patientId: patientId)
         }
     }
 }

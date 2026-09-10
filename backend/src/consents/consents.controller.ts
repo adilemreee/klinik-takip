@@ -12,7 +12,7 @@ import {
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { MeasurementsService } from '../measurements/measurements.service';
 import { ConsentsService } from './consents.service';
-import { ConsentDto, RecordConsentDto } from './dto/consent.dto';
+import { ConsentDto, RecordConsentDto, SignatureLinkDto } from './dto/consent.dto';
 
 const toDto = (consent: Consent): ConsentDto => ({
   id: consent.id,
@@ -22,6 +22,7 @@ const toDto = (consent: Consent): ConsentDto => ({
   signedAt: consent.signedAt,
   revokedAt: consent.revokedAt,
   active: consent.revokedAt === null,
+  hasSignature: consent.signatureFileKey !== null,
 });
 
 /**
@@ -68,12 +69,27 @@ export class MyConsentsController {
         type: dto.type,
         version: dto.version,
         documentText: dto.documentText,
+        signature: dto.signature,
         // Recorded because proving a consent existed is the controller's
         // burden, and "somebody ticked a box" with no trace proves nothing.
         ipAddress: request.ip,
         userAgent: request.get('user-agent') ?? undefined,
       }),
     );
+  }
+
+  @Get(':consentId/signature')
+  @RequireAnyPermission('self.read')
+  @ApiOperation({ summary: 'A short-lived link to the signature you drew' })
+  @ApiOkResponse({ type: SignatureLinkDto })
+  @ApiStandardErrors()
+  async signature(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('consentId', ParseUUIDPipe) consentId: string,
+  ): Promise<SignatureLinkDto> {
+    const patientId = await this.measurements.ownPatientId(user);
+
+    return this.consents.signatureUrl(user, patientId, consentId);
   }
 
   @Delete(':consentId')
@@ -128,10 +144,25 @@ export class PatientConsentsController {
         type: dto.type,
         version: dto.version,
         documentText: dto.documentText,
+        signature: dto.signature,
         ipAddress: request.ip,
         userAgent: request.get('user-agent') ?? undefined,
       }),
     );
+  }
+
+  @Get(':consentId/signature')
+  @RequirePermissions('patients.read')
+  @Audit({ entityType: 'consents', action: AuditAction.READ, patientIdParam: 'id' })
+  @ApiOperation({ summary: 'A short-lived link to the signature the patient drew' })
+  @ApiOkResponse({ type: SignatureLinkDto })
+  @ApiStandardErrors()
+  async signature(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) patientId: string,
+    @Param('consentId', ParseUUIDPipe) consentId: string,
+  ): Promise<SignatureLinkDto> {
+    return this.consents.signatureUrl(user, patientId, consentId);
   }
 
   @Delete(':consentId')

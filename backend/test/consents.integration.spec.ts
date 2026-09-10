@@ -11,7 +11,6 @@ import { Env } from '../src/config/env.schema';
 import { hashPassword } from '../src/crypto/hashing';
 import { PrismaService } from '../src/infra/prisma.service';
 import { RedisService } from '../src/infra/redis.service';
-import { StorageService } from '../src/infra/storage.service';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +20,19 @@ interface ConsentBody {
   version: number;
   active: boolean;
   revokedAt: string | null;
+  hasSignature: boolean;
 }
+
+/**
+ * The smallest valid PNG: an 8x8 transparent image.
+ *
+ * A real signature is a few kilobytes of strokes; what matters here is that it
+ * is genuinely a PNG, because the server checks the magic bytes rather than
+ * trusting the client's word for it.
+ */
+const PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFklEQVQoU2NkYGD4z0AEYBxVSF' +
+  'JCAAB1sQIF2f0Q0gAAAABJRU5ErkJggg==';
 
 /**
  * Consent records (KVKK).
@@ -73,8 +84,8 @@ describe('consents', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
       .useValue(prisma)
-      .overrideProvider(StorageService)
-      .useValue({ ping: jest.fn().mockResolvedValue(undefined) })
+      // The real storage, not a stub: a consent can now carry a signature,
+      // and "it was stored" is the part worth testing.
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -232,5 +243,88 @@ describe('consents', () => {
     expect(stored!.documentText).toBe('v1');
     expect(stored!.userAgent).toContain('Klinik/0.1.0');
     expect(stored!.ipAddress).not.toBeNull();
+  });
+
+  describe('signature (spec M17)', () => {
+    it('records a consent with the signature drawn for it', async () => {
+      const { token, patientId } = await patientWithFile();
+
+      const response = await request(server)
+        .post('/me/consents')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ type: ConsentType.TREATMENT, version: 1, signature: PNG_BASE64 })
+        .expect(201);
+
+      expect((response.body as ConsentBody).hasSignature).toBe(true);
+
+      const stored = await prisma.consent.findFirstOrThrow({ where: { patientId } });
+      expect(stored.signatureFileKey).toEqual(expect.stringMatching(/\.png$/));
+    });
+
+    it('hands back a short-lived link rather than the bytes', async () => {
+      const { token } = await patientWithFile();
+
+      const created = await request(server)
+        .post('/me/consents')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ type: ConsentType.TREATMENT, version: 1, signature: PNG_BASE64 })
+        .expect(201);
+
+      const link = await request(server)
+        .get(`/me/consents/${(created.body as ConsentBody).id}/signature`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      const body = link.body as { url: string; expiresAt: string };
+      expect(body.url).toContain('http');
+      expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
+    });
+
+    /// A consent recorded with a signature that is not one would be a record
+    /// that looks signed and is not.
+    it('refuses anything that is not a PNG', async () => {
+      const { token, patientId } = await patientWithFile();
+
+      await request(server)
+        .post('/me/consents')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          type: ConsentType.TREATMENT,
+          version: 1,
+          signature: Buffer.from('this is not an image').toString('base64'),
+        })
+        .expect(400);
+
+      // And nothing was written: a rejected signature must not leave a consent
+      // behind claiming to have one.
+      expect(await prisma.consent.count({ where: { patientId } })).toBe(0);
+    });
+
+    it('says a consent has no signature when none was drawn', async () => {
+      const { token } = await patientWithFile();
+
+      const response = await request(server)
+        .post('/me/consents')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ type: ConsentType.PHOTO_USAGE, version: 1 })
+        .expect(201);
+
+      expect((response.body as ConsentBody).hasSignature).toBe(false);
+    });
+
+    it('has nothing to link to when no signature was drawn', async () => {
+      const { token } = await patientWithFile();
+
+      const created = await request(server)
+        .post('/me/consents')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ type: ConsentType.PHOTO_USAGE, version: 1 })
+        .expect(201);
+
+      await request(server)
+        .get(`/me/consents/${(created.body as ConsentBody).id}/signature`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(404);
+    });
   });
 });

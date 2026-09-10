@@ -74,7 +74,7 @@ olmayan istemci kodu bırakmak, bu çalışmanın şikâyet ettiği şeyin ta ke
 | M14 | Asenkron kuyruk | 🟡 | Durum rozetleri ve başarısızlık nedeni var; canlı WebSocket ilerlemesi yok |
 | M15 | Offline-first | 🟡 | Okumalar son bilinen yanıta düşüyor; **yazmalar kuyruğa giriyor, tekrar gönderiliyor ve ekranda gönderilmedi diye görünüyor**. Fotoğraf/belge yüklemeleri hâlâ kuyruk dışında |
 | M16 | Belge tarayıcı + OCR | 🟢 | VisionKit tarama, çok sayfa → PDF, cihaz üstü ön okuma |
-| M17 | Onam ve belge yönetimi | 🟡 | Hasta onam verebiliyor. **Parmakla imza ve belge kontrol listesi yok** |
+| M17 | Onam ve belge yönetimi | 🟢 | Onam verme/geri alma, **parmakla imza** (PNG olarak özel depoda, hekim dosyadan görüyor), **ameliyat öncesi belge kontrol listesi**. Onam metnini klinik yayımlayana kadar imzalama ekranı açılmıyor |
 | M18 | PROM anketleri | 🟢 | Hasta formu + doktorda eğilim ve bulgular |
 | M19 | Sağlık turizmi | 🟢 | `travel_plans` yazıldı: uçuş, otel, karşılama, tercüman, uçuş onayı + aracı kurumlar |
 | M20 | HealthKit | 🟢 | Kilo ve nabız, günde bir okuma, "cihazdan" etiketiyle |
@@ -118,7 +118,16 @@ Bunlar unutulmadı; her birinin neden yapılmadığı yazılı.
    [OFFLINE-VE-CAKISMA.md](OFFLINE-VE-CAKISMA.md).
 
    **Kalanı:** fotoğraf ve belge yüklemeleri (multipart) bu kuyruktan geçmiyor.
-9. **Parmakla imza + belge kontrol listesi (M17).**
+9. **Parmakla imza + belge kontrol listesi (M17).** ✅ **2026-09-10'da yapıldı.**
+   Hasta onam metnini okuyup parmağıyla imzalıyor; imza PNG olarak kliniğin özel
+   deposuna yazılıp onam kaydına bağlanıyor, hekim hasta dosyasından açabiliyor.
+   Kontrol listesi hangi belgenin ulaştığını/eksik olduğunu gösteriyor ve eksik
+   olanı yüklemeye götürüyor.
+
+   **Kliniğe bağlı olan:** onam metninin kendisi (bkz. KLINIKTEN 13) ve belge
+   listesinin gözden geçirilmesi (KLINIKTEN 14). Metin gelene kadar imzalama
+   ekranı açılmıyor — imzalanabilir boş bir taslak, hiç form olmamasından
+   kötüdür.
 10. **WhatsApp kanalı (M6).** Şartnamede opsiyonel.
 11. **Android.** Bu belgedeki her şey **yalnız iOS**. Android'de temel iskelet
     ve ağ katmanı var; bu 38 ekranın hiçbiri yok.

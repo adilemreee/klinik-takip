@@ -1163,6 +1163,25 @@
           }
         },
         {
+          "name": "What you still have to send before your operation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/documents/checklist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "documents",
+                "checklist"
+              ]
+            },
+            "description": "What you still have to send before your operation"
+          }
+        },
+        {
           "name": "Your documents, newest first",
           "request": {
             "method": "GET",
@@ -1414,13 +1433,39 @@
             "description": "Give a consent",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"TREATMENT\",\n  \"version\": 1,\n  \"documentText\": \"\"\n}",
+              "raw": "{\n  \"type\": \"TREATMENT\",\n  \"version\": 1,\n  \"documentText\": \"\",\n  \"signature\": \"\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
+          }
+        },
+        {
+          "name": "A short-lived link to the signature you drew",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me/consents/:consentId/signature",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "me",
+                "consents",
+                ":consentId",
+                "signature"
+              ],
+              "variable": [
+                {
+                  "key": "consentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A short-lived link to the signature you drew"
           }
         },
         {
@@ -1863,6 +1908,32 @@
                 }
               }
             }
+          }
+        },
+        {
+          "name": "The pre-operative document checklist for this patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/documents/checklist",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "documents",
+                "checklist"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "The pre-operative document checklist for this patient"
           }
         },
         {
@@ -2812,13 +2883,44 @@
             "description": "Record a consent the patient signed",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"type\": \"TREATMENT\",\n  \"version\": 1,\n  \"documentText\": \"\"\n}",
+              "raw": "{\n  \"type\": \"TREATMENT\",\n  \"version\": 1,\n  \"documentText\": \"\",\n  \"signature\": \"\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
+          }
+        },
+        {
+          "name": "A short-lived link to the signature the patient drew",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/patients/:id/consents/:consentId/signature",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "patients",
+                ":id",
+                "consents",
+                ":consentId",
+                "signature"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                },
+                {
+                  "key": "consentId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "A short-lived link to the signature the patient drew"
           }
         },
         {
@@ -2872,6 +2974,24 @@
               ]
             },
             "description": "The privacy notice, as Markdown"
+          }
+        },
+        {
+          "name": "The treatment consent form, as Markdown",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/legal/treatment-consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "legal",
+                "treatment-consent"
+              ]
+            },
+            "description": "The treatment consent form, as Markdown"
           }
         }
       ]

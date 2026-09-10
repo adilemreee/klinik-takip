@@ -3605,6 +3605,73 @@
         ]
       }
     },
+    "/me/documents/checklist": {
+      "get": {
+        "operationId": "MyDocumentsController_myChecklist",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What you still have to send before your operation",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/me/documents": {
       "get": {
         "operationId": "MyDocumentsController_list",
@@ -3806,6 +3873,82 @@
         "summary": "Upload one of your own documents",
         "tags": [
           "me"
+        ]
+      }
+    },
+    "/patients/{id}/documents/checklist": {
+      "get": {
+        "operationId": "PatientDocumentsController_patientChecklist",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChecklistDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The pre-operative document checklist for this patient",
+        "tags": [
+          "documents"
         ]
       }
     },
@@ -6739,6 +6882,82 @@
         ]
       }
     },
+    "/me/consents/{consentId}/signature": {
+      "get": {
+        "operationId": "MyConsentsController_signature",
+        "parameters": [
+          {
+            "name": "consentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignatureLinkDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A short-lived link to the signature you drew",
+        "tags": [
+          "me"
+        ]
+      }
+    },
     "/me/consents/{consentId}": {
       "delete": {
         "operationId": "MyConsentsController_withdraw",
@@ -6978,6 +7197,90 @@
         ]
       }
     },
+    "/patients/{id}/consents/{consentId}/signature": {
+      "get": {
+        "operationId": "PatientConsentsController_signature",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "consentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignatureLinkDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "A short-lived link to the signature the patient drew",
+        "tags": [
+          "consents"
+        ]
+      }
+    },
     "/patients/{id}/consents/{consentId}": {
       "delete": {
         "operationId": "PatientConsentsController_withdraw",
@@ -7119,6 +7422,68 @@
           }
         },
         "summary": "The privacy notice, as Markdown",
+        "tags": [
+          "legal"
+        ]
+      }
+    },
+    "/legal/treatment-consent": {
+      "get": {
+        "operationId": "LegalController_treatmentConsent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegalDocumentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid or revoked token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but lacking the permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or outside the caller’s scope — deliberately indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "The treatment consent form, as Markdown",
         "tags": [
           "legal"
         ]
@@ -16003,6 +16368,69 @@
           "jobId"
         ]
       },
+      "ChecklistItemDto": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "LAB",
+              "IMAGING",
+              "REPORT",
+              "CONSENT",
+              "INVOICE",
+              "PASSPORT",
+              "ECG",
+              "OTHER"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "Pasaport"
+          },
+          "mandatory": {
+            "type": "boolean"
+          },
+          "satisfied": {
+            "type": "boolean",
+            "description": "Whether the clinic has a usable document of this kind"
+          },
+          "documentId": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "documentType",
+          "label",
+          "mandatory",
+          "satisfied"
+        ]
+      },
+      "ChecklistDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChecklistItemDto"
+            }
+          },
+          "missingMandatory": {
+            "type": "number",
+            "description": "Mandatory items still missing"
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "True when nothing mandatory is outstanding"
+          }
+        },
+        "required": [
+          "items",
+          "missingMandatory",
+          "complete"
+        ]
+      },
       "DocumentDto": {
         "type": "object",
         "properties": {
@@ -16969,6 +17397,10 @@
           "active": {
             "type": "boolean",
             "description": "Whether it is in force right now"
+          },
+          "hasSignature": {
+            "type": "boolean",
+            "description": "Whether a drawn signature was recorded with it"
           }
         },
         "required": [
@@ -16977,7 +17409,8 @@
           "type",
           "version",
           "signedAt",
-          "active"
+          "active",
+          "hasSignature"
         ]
       },
       "RecordConsentDto": {
@@ -17000,11 +17433,31 @@
           "documentText": {
             "type": "string",
             "description": "The exact text shown, stored for proof"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Finger signature as base64 PNG, no data: prefix"
           }
         },
         "required": [
           "type",
           "version"
+        ]
+      },
+      "SignatureLinkDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
         ]
       },
       "LegalDocumentDto": {

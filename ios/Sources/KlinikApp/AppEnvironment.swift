@@ -24,6 +24,7 @@ public final class AppEnvironment {
     public let patients: PatientsAPI
     public let emergency: EmergencyAPI
     public let consents: ConsentsAPI
+    public let legal: LegalAPI
     public let messaging: MessagingAPI
     public let documents: DocumentsAPI
     public let measurements: MeasurementsAPI
@@ -118,6 +119,7 @@ public final class AppEnvironment {
         patients = PatientsAPI(client: client)
         emergency = EmergencyAPI(client: client)
         consents = ConsentsAPI(client: client)
+        legal = LegalAPI(client: client)
         messaging = MessagingAPI(client: client)
         documents = DocumentsAPI(client: client)
         measurements = MeasurementsAPI(client: client)

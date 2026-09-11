@@ -15,6 +15,7 @@ import xyz.klinik.feature.measurements.ui.MeasurementStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
 import xyz.klinik.feature.appointments.ui.AppointmentStrings
 import xyz.klinik.feature.consents.ui.ConsentStrings
+import xyz.klinik.feature.exports.ui.ExportsStrings
 import xyz.klinik.feature.finance.ui.FinanceStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
 import xyz.klinik.feature.medications.ui.MedicationStrings
@@ -407,6 +408,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.PendingReports -> getString(DesignR.string.report_pending_title)
     StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
     StaffDestination.Finance -> getString(DesignR.string.finance_title)
+    StaffDestination.Exports -> getString(DesignR.string.export_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
@@ -535,5 +537,56 @@ fun Context.financeStrings(): FinanceStrings = FinanceStrings(
     reverse = getString(DesignR.string.finance_reverse),
     recordCount = { count -> getString(DesignR.string.finance_record_count, count) },
     totalsIncomplete = getString(DesignR.string.finance_totals_incomplete),
+    message = { text -> resolve(text) },
+)
+
+/**
+ * Hands a signed link to the browser.
+ *
+ * Not fetched here: the link is short-lived and signed for this viewer, and a
+ * download belongs to the system's download manager rather than to a screen
+ * somebody might leave. Asking for it was already recorded in the audit log.
+ */
+fun Context.openLink(url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    runCatching { startActivity(intent) }
+}
+
+/**
+ * Taking data out of the clinic (spec M12).
+ *
+ * The omission and truncation sentences carry `{count}`, `{matched}` and
+ * `{rows}` — the shared catalogue's own placeholders, filled in here because
+ * they are not Android format specifiers and the resource has nothing to
+ * substitute.
+ */
+fun Context.exportsStrings(): ExportsStrings = ExportsStrings(
+    title = getString(DesignR.string.export_title),
+    notPermitted = getString(DesignR.string.export_not_permitted),
+    newTitle = getString(DesignR.string.export_new_title),
+    history = getString(DesignR.string.export_history),
+    noHistory = getString(DesignR.string.export_no_history),
+    columns = getString(DesignR.string.export_columns),
+    columnUnavailable = getString(DesignR.string.export_column_unavailable),
+    chosenCount = { count -> getString(DesignR.string.export_chosen_count, count) },
+    format = getString(DesignR.string.export_format),
+    formatName = { format -> stringForKey(format.stringKey) },
+    country = getString(DesignR.string.export_country),
+    request = getString(DesignR.string.export_request),
+    download = getString(DesignR.string.export_download),
+    expired = getString(DesignR.string.export_expired),
+    notAllowed = getString(DesignR.string.export_not_allowed),
+    auditNote = getString(DesignR.string.export_audit_note),
+    linkShortLived = getString(DesignR.string.export_link_short_lived),
+    omitted = getString(DesignR.string.export_omitted),
+    statusName = { request -> stringForKey(request.status.stringKey) },
+    omission = { key, count -> stringForKey(key).replace("{count}", count.toString()) },
+    truncation = { key, matched, rows ->
+        stringForKey(key)
+            .replace("{matched}", matched.toString())
+            .replace("{rows}", rows.toString())
+    },
     message = { text -> resolve(text) },
 )

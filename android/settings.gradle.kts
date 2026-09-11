@@ -104,6 +104,9 @@ include(":feature:analytics")
 // What has been billed and what has been paid (spec M11).
 include(":feature:finance")
 
+// Taking data out of the clinic, and what was left out of it (spec M12).
+include(":feature:exports")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -150,6 +153,9 @@ if (androidSdkAvailable) {
 
     // What has been billed and what has been paid (spec M11).
     include(":feature:finance-ui")
+
+    // Taking data out of the clinic (spec M12).
+    include(":feature:exports-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.klinik.design.Tokens
 import xyz.klinik.design.klinikColor
@@ -35,6 +36,8 @@ import xyz.klinik.feature.documents.DocumentsModel
 import xyz.klinik.feature.complications.ComplicationQueueModel
 import xyz.klinik.feature.complications.ui.ComplicationQueueScreen
 import xyz.klinik.feature.emergency.EmergencyQueueModel
+import xyz.klinik.feature.exports.ExportsModel
+import xyz.klinik.feature.exports.ui.ExportsScreen
 import xyz.klinik.feature.emergency.ui.EmergencyQueueScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
 import xyz.klinik.feature.finance.FinanceModel
@@ -222,6 +225,43 @@ fun StaffDestinationScreen(
                     },
                 )
             }
+        }
+
+        StaffDestination.Exports -> {
+            val model = remember { ExportsModel(environment.exports) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            // Only while something is still being produced. A finished export
+            // never changes, and a timer that keeps running on a screen of
+            // finished files is a battery complaint.
+            LaunchedEffect(state.hasUnfinished) {
+                while (state.hasUnfinished) {
+                    delay(3_000)
+                    model.refreshUnfinished()
+                }
+            }
+
+            ExportsScreen(
+                state = state,
+                strings = context.exportsStrings(),
+                nowIso = nowIso(),
+                onToggleColumn = { key -> model.toggle(key) },
+                onChooseFormat = { format -> model.choose(format) },
+                onRequest = { country ->
+                    scope.launch { model.requestPatientList(null, null, country) }
+                },
+                onDownload = { request ->
+                    scope.launch {
+                        // Opened in the browser rather than fetched here: the
+                        // link is signed for this viewer and short-lived, and
+                        // the download belongs to the system, not the app.
+                        model.download(request.id)?.let { url -> context.openLink(url) }
+                    }
+                },
+                modifier = modifier,
+            )
         }
 
         StaffDestination.NotificationSettings -> {

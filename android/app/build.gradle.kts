@@ -106,6 +106,7 @@ dependencies {
     implementation(project(":feature:assistant-ui"))
     implementation(project(":feature:surveys-ui"))
     implementation(project(":feature:analytics-ui"))
+    implementation(project(":feature:finance-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

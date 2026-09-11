@@ -16,6 +16,7 @@ import xyz.klinik.network.AuthApi
 import xyz.klinik.network.AppointmentsApi
 import xyz.klinik.network.ComplicationsApi
 import xyz.klinik.network.ConsentsApi
+import xyz.klinik.network.FinanceApi
 import xyz.klinik.network.FollowUpApi
 import xyz.klinik.network.DocumentsApi
 import xyz.klinik.network.LabApi
@@ -109,6 +110,7 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val assistant: AssistantApi by lazy { AssistantApi(client) }
     val surveys: SurveysApi by lazy { SurveysApi(client) }
     val analytics: AnalyticsApi by lazy { AnalyticsApi(client) }
+    val finance: FinanceApi by lazy { FinanceApi(client) }
 
     fun homeModel(): HomeModel = HomeModel(me)
     fun briefingModel(): BriefingModel = BriefingModel(briefing)

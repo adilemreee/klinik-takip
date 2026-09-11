@@ -1,5 +1,13 @@
 package xyz.klinik.app
 
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.FilterChip
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.AlertDialog
@@ -29,6 +37,8 @@ import xyz.klinik.feature.complications.ui.ComplicationQueueScreen
 import xyz.klinik.feature.emergency.EmergencyQueueModel
 import xyz.klinik.feature.emergency.ui.EmergencyQueueScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
+import xyz.klinik.feature.finance.FinanceModel
+import xyz.klinik.feature.finance.ui.FinanceScreen
 import xyz.klinik.feature.followup.FollowUpModel
 import xyz.klinik.feature.followup.ui.FollowUpScreen
 import xyz.klinik.feature.lab.LabReviewModel
@@ -47,7 +57,9 @@ import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
 import xyz.klinik.feature.reports.ReportReviewModel
 import xyz.klinik.feature.reports.ui.ReportReviewScreen
+import xyz.klinik.network.FinanceRecord
 import xyz.klinik.network.MeasurementSource
+import xyz.klinik.network.PaymentMethod
 import xyz.klinik.network.MeasurementSubject
 import xyz.klinik.network.RecordSubject
 import xyz.klinik.shell.FileSection
@@ -164,6 +176,52 @@ fun StaffDestinationScreen(
                 onChooseCurrency = { currency -> scope.launch { model.choose(currency) } },
                 modifier = modifier,
             )
+        }
+
+        StaffDestination.Finance -> {
+            val model = remember { FinanceModel(environment.finance) }
+            val state by model.state.collectAsStateWithLifecycle()
+            var paying by remember { mutableStateOf<FinanceRecord?>(null) }
+            var reversing by remember { mutableStateOf<FinanceRecord?>(null) }
+
+            LaunchedEffect(Unit) { model.load() }
+
+            FinanceScreen(
+                state = state,
+                strings = context.financeStrings(),
+                onChooseCurrency = { currency -> scope.launch { model.choose(currency) } },
+                onChooseStatus = { status -> scope.launch { model.choose(status) } },
+                onLoadMore = { scope.launch { model.loadMore() } },
+                onRecordPayment = { record -> paying = record },
+                onReverse = { record -> reversing = record },
+                modifier = modifier,
+            )
+
+            paying?.let { record ->
+                PaymentDialog(
+                    record = record,
+                    onDismiss = { paying = null },
+                    onSend = { amount, method, reference ->
+                        paying = null
+                        scope.launch { model.pay(record.id, amount, method, reference) }
+                    },
+                )
+            }
+
+            reversing?.let { record ->
+                // The payment to undo is the newest one that still counts:
+                // a reversal names a payment, not a record, and picking the
+                // wrong one would correct something nobody asked about.
+                val payment = record.livePayments.lastOrNull()
+
+                ReverseDialog(
+                    onDismiss = { reversing = null },
+                    onSend = { reason ->
+                        reversing = null
+                        payment?.let { scope.launch { model.reverse(it.id, reason) } }
+                    },
+                )
+            }
         }
 
         StaffDestination.NotificationSettings -> {
@@ -443,6 +501,130 @@ private fun ComplicationReplyDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
+                Text(context.getString(DesignR.string.common_cancel))
+            }
+        },
+    )
+}
+
+
+/**
+ * Money that arrived.
+ *
+ * The amount is typed rather than defaulted to the balance: a part payment is
+ * the ordinary case in this clinic, and a prefilled figure somebody has to
+ * clear is a figure somebody will forget to clear.
+ */
+@Composable
+private fun PaymentDialog(
+    record: FinanceRecord,
+    onDismiss: () -> Unit,
+    onSend: (amount: String, method: PaymentMethod, reference: String?) -> Unit,
+) {
+    val context = LocalContext.current
+    var amount by remember { mutableStateOf("") }
+    var reference by remember { mutableStateOf("") }
+    var method by remember { mutableStateOf(PaymentMethod.BANK_TRANSFER) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(context.getString(DesignR.string.finance_record_payment)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.sm)) {
+                // What is still owed, beside the box, so the number being
+                // typed has something to be checked against.
+                Text(
+                    "${context.getString(DesignR.string.finance_balance)}: " +
+                        "${record.currency.symbol}${record.balance}",
+                    color = klinikColor("textSecondary"),
+                )
+
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text(context.getString(DesignR.string.finance_amount)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.sm),
+                ) {
+                    PaymentMethod.entries.forEach { option ->
+                        FilterChip(
+                            selected = option == method,
+                            onClick = { method = option },
+                            label = { Text(context.stringForKey(option.stringKey)) },
+                            modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = reference,
+                    onValueChange = { reference = it },
+                    label = { Text(context.getString(DesignR.string.finance_reference)) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSend(amount.trim(), method, reference.trim().ifEmpty { null }) },
+                enabled = amount.isNotBlank(),
+                modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+            ) {
+                Text(context.getString(DesignR.string.common_send))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+            ) {
+                Text(context.getString(DesignR.string.common_cancel))
+            }
+        },
+    )
+}
+
+/**
+ * Undoing a payment, with the reason it was undone.
+ *
+ * Required, and the button stays off without one: a ledger that forgets its
+ * corrections is a ledger nobody can audit.
+ */
+@Composable
+private fun ReverseDialog(onDismiss: () -> Unit, onSend: (String) -> Unit) {
+    val context = LocalContext.current
+    var reason by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(context.getString(DesignR.string.finance_reverse)) },
+        text = {
+            OutlinedTextField(
+                value = reason,
+                onValueChange = { reason = it },
+                label = { Text(context.getString(DesignR.string.finance_reverse_reason)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSend(reason.trim()) },
+                enabled = reason.isNotBlank(),
+                modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+            ) {
+                Text(context.getString(DesignR.string.common_send))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+            ) {
                 Text(context.getString(DesignR.string.common_cancel))
             }
         },

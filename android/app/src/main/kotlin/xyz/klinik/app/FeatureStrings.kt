@@ -15,6 +15,7 @@ import xyz.klinik.feature.measurements.ui.MeasurementStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
 import xyz.klinik.feature.appointments.ui.AppointmentStrings
 import xyz.klinik.feature.consents.ui.ConsentStrings
+import xyz.klinik.feature.finance.ui.FinanceStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
 import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
@@ -405,6 +406,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.EmergencyQueue -> getString(DesignR.string.menu_emergency_queue)
     StaffDestination.PendingReports -> getString(DesignR.string.report_pending_title)
     StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
+    StaffDestination.Finance -> getString(DesignR.string.finance_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
@@ -502,4 +504,36 @@ fun Context.analyticsStrings(): AnalyticsStrings = AnalyticsStrings(
     totalOperations = { count -> getString(DesignR.string.analytics_total_operations, count) },
     patientCount = { count -> getString(DesignR.string.analytics_patient_count, count) },
     notice = { key -> stringForKey(key) },
+)
+
+/**
+ * The clinic's ledger (spec M11).
+ *
+ * Status and ageing names go through the catalogue rather than a local `when`:
+ * a payment status added on the server should show a word here rather than a
+ * blank beside somebody's invoice.
+ */
+fun Context.financeStrings(): FinanceStrings = FinanceStrings(
+    title = getString(DesignR.string.finance_title),
+    notPermitted = getString(DesignR.string.finance_not_permitted),
+    noRecords = getString(DesignR.string.finance_no_records),
+    loadMore = getString(DesignR.string.finance_load_more),
+    currency = getString(DesignR.string.finance_currency),
+    status = getString(DesignR.string.finance_status),
+    allStatuses = getString(DesignR.string.finance_all_statuses),
+    statusName = { status -> stringForKey(status.stringKey) },
+    outstandingTitle = getString(DesignR.string.finance_outstanding_title),
+    collectionsTitle = getString(DesignR.string.finance_collections_title),
+    ratesTitle = getString(DesignR.string.finance_rates_title),
+    ratesNone = getString(DesignR.string.finance_rates_none),
+    recordsTitle = getString(DesignR.string.finance_records),
+    ageingName = { key -> stringForKey(key) },
+    net = getString(DesignR.string.finance_net),
+    paid = getString(DesignR.string.finance_paid),
+    balance = getString(DesignR.string.finance_balance),
+    recordPayment = getString(DesignR.string.finance_record_payment),
+    reverse = getString(DesignR.string.finance_reverse),
+    recordCount = { count -> getString(DesignR.string.finance_record_count, count) },
+    totalsIncomplete = getString(DesignR.string.finance_totals_incomplete),
+    message = { text -> resolve(text) },
 )

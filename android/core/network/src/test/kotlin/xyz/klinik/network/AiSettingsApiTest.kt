@@ -56,15 +56,16 @@ class AiSettingsApiTest {
             """.trimIndent(),
         )
 
-        // These are the names the string generator produces from the iOS
-        // catalogue keys, so a mismatch here is a missing translation at
-        // runtime rather than a compile error.
+        // Catalogue keys, not Android resource names: the runtime lookup is
+        // keyed by the shared catalogue, and these once carried the resource
+        // spelling — which resolves to nothing, so an administrator would have
+        // read `ai_missing_api_key` where the missing setting should be named.
         assertEquals(
             listOf(
-                "ai_missing_model",
-                "ai_missing_api_key",
-                "ai_missing_input_price_per_mtok",
-                "ai_missing_output_price_per_mtok",
+                "ai.missing.model",
+                "ai.missing.apiKey",
+                "ai.missing.inputPricePerMTok",
+                "ai.missing.outputPricePerMTok",
             ),
             partial.missingStringKeys,
         )

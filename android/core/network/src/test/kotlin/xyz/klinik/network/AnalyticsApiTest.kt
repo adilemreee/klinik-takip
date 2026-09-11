@@ -118,7 +118,7 @@ class AnalyticsApiTest {
         )
 
         assertFalse(report.marginIsWhole)
-        assertTrue(report.caveatKeys.contains("analytics_cost_lines_unread"))
+        assertTrue(report.caveatKeys.contains("analytics.costLinesUnread"))
         assertEquals(0, report.averageByCurrency[0].value.compareTo(BigDecimal("4000.00")))
     }
 
@@ -139,7 +139,7 @@ class AnalyticsApiTest {
             """.trimIndent(),
         )
 
-        assertTrue(report.caveatKeys.contains("finance_totals_incomplete"))
+        assertTrue(report.caveatKeys.contains("finance.totals.incomplete"))
         assertFalse(report.marginIsWhole)
         // So a chart can mark the month rather than draw a dip that never happened.
         assertFalse(report.byMonth[0].converted)

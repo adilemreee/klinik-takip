@@ -80,11 +80,13 @@ data class AiSettings(
      */
     val readyForClinicalUse: Boolean get() = ready && zeroRetentionConfirmed
 
-    val missingStringKeys: List<String> get() = missing.map { "ai_missing_${it.toSnake()}" }
+    /**
+     * The catalogue names these with the server's own spelling —
+     * `ai.missing.inputPricePerMTok` — so what arrives is used as sent rather
+     * than reshaped into an Android resource name the lookup does not have.
+     */
+    val missingStringKeys: List<String> get() = missing.map { "ai.missing.$it" }
 }
-
-private fun String.toSnake(): String =
-    replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
 
 @Serializable
 data class AiConnectionTest(

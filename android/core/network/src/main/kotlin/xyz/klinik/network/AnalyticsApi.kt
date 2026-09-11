@@ -142,8 +142,8 @@ data class RevenueReport(
 
     val caveatKeys: List<String>
         get() = buildList {
-            if (unreadableCostLines > 0) add("analytics_cost_lines_unread")
-            if (!net.complete) add("finance_totals_incomplete")
+            if (unreadableCostLines > 0) add("analytics.costLinesUnread")
+            if (!net.complete) add("finance.totals.incomplete")
         }
 }
 

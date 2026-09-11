@@ -228,9 +228,19 @@ class StringCatalogueTest {
 
         assertTrue(sources.size > 20, "only ${sources.size} model files found")
 
-        // A literal assigned to something named `…Key`, which is this
-        // codebase's one convention for "the catalogue decides these words".
-        val pattern = Regex("""val \w*Key: String\??\s*get\(\) =([^\n]*)""")
+        /*
+         * A literal inside something named `…Key` or `…Keys`, which is this
+         * codebase's one convention for "the catalogue decides these words".
+         *
+         * The body runs to the next declaration rather than the end of the
+         * line, because `caveatKeys` builds a list over several lines and a
+         * line-bounded match read none of it — which is how two of these
+         * survived the first pass.
+         */
+        val pattern = Regex(
+            """val \w*Keys?\s*:.*?=(.*?)(?=\n\s*(?:val |fun |\}\n))""",
+            RegexOption.DOT_MATCHES_ALL,
+        )
 
         val missing = sources.flatMap { file ->
             pattern.findAll(file.readText()).flatMap { match ->

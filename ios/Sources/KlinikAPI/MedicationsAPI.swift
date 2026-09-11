@@ -329,23 +329,26 @@ public struct MedicationsAPI: Sendable {
         )
     }
 
-    /// Something the patient added is inert until this is called (spec M9).
-    public func approve(patientId: String, medicationId: String) async throws -> MedicationView {
+    /**
+     * Something the patient added is inert until this is called (spec M9).
+     *
+     * Addressed by the medication alone. It used to be sent to
+     * `patients/:id/medications/:id/approve`, which no route answers — the
+     * server mounts approve and stop on `medications`, because a medication id
+     * already names exactly one patient's record. What that meant on screen
+     * was a doctor pressing "Onayla" and getting a 404.
+     */
+    public func approve(medicationId: String) async throws -> MedicationView {
         try await client.send(
-            Endpoint(
-                method: .patch,
-                path: "patients/\(patientId)/medications/\(medicationId)/approve"
-            ),
+            Endpoint(method: .patch, path: "medications/\(medicationId)/approve"),
             as: MedicationView.self
         )
     }
 
-    public func stop(patientId: String, medicationId: String) async throws -> MedicationView {
+    /// Stops a course. Same addressing as `approve`, and the same history.
+    public func stop(medicationId: String) async throws -> MedicationView {
         try await client.send(
-            Endpoint(
-                method: .patch,
-                path: "patients/\(patientId)/medications/\(medicationId)/stop"
-            ),
+            Endpoint(method: .patch, path: "medications/\(medicationId)/stop"),
             as: MedicationView.self
         )
     }

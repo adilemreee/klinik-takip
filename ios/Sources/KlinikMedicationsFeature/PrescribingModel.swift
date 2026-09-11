@@ -100,13 +100,13 @@ public final class PrescribingModel {
 
     public func approve(_ medicationId: String) async {
         await write(medicationId) {
-            try await self.api.approve(patientId: self.patientId, medicationId: medicationId)
+            try await self.api.approve(medicationId: medicationId)
         }
     }
 
     public func stop(_ medicationId: String) async {
         await write(medicationId) {
-            try await self.api.stop(patientId: self.patientId, medicationId: medicationId)
+            try await self.api.stop(medicationId: medicationId)
         }
     }
 

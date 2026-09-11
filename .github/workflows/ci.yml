@@ -235,6 +235,12 @@ jobs:
       - name: Check screen titles and date localisation
         run: node design/scripts/check-screens.mjs
 
+      # A client calling a route nobody serves compiles, passes every unit
+      # test, and fails only in somebody's hands. `approve` and `stop` shipped
+      # addressed to a path the server has never had.
+      - name: Check the app only calls routes the server serves
+        run: node design/scripts/check-api-paths.mjs
+
       # Both clients generate from the shared sources. Sharing a document each
       # platform then transcribes by hand is not sharing — they drift within a
       # release. Regenerating and diffing is what makes it true.

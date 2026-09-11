@@ -84,18 +84,59 @@ bağlantı gelince gidecek, tekrar çekmenize gerek yok".
   olmayan rapor için **düğme hiç gösterilmiyor**. Baytları kaybolmuş gerçek
   bir belge için de doğru davranış.
 
-### [ ] A7. Android, hastanın yarısı — personelin hiçbiri
+### [~] A7. Android — personel tarafı açıldı, kalanı listelendi
 
-13 ekran, 16 modül, ~22 000 satır Kotlin. Ana ekran, sohbet, ilaçlar, ölçümler,
-belgeler, tahlil, kontrol takvimi, randevu, onamlar, bildirim ayarları var.
+2026-09-11/12'de yapıldı. **30 ekran, 54 modül** (13 ekrandan çıkıldı).
 
-**Yok:** personel tarafının tamamı (hasta listesi, reçete yazma, finans,
-istatistik, denetim, dışa aktarım, brifing, AI ayarları) ve son oturumlarda
-iOS'a eklenen her şey (tahlil tablosu, parmakla imza, belge kontrol listesi,
-çalışma saatleri, bekleyen değişiklikler, anketler, seyahat, asistan, davet
-ekranı, parola/iki faktör, veri indirme).
+**Bu turda eklenenler.** Personel kabuğu iOS'taki üç sekmeye hizalandı —
+gündem (brifing), hastalar, acil kuyruğu — her biri kendi geri yığınıyla.
+Üstüne klinik geneli taşma menüsü: onay bekleyen yapay zekâ yorumları,
+şikayet kuyruğu, istatistik, finans, dışa aktarım, AI sağlayıcısı, asistan
+kaynakları, denetim günlüğü, hesap, bildirim tercihleri. Hasta tarafına
+asistan, anketler, paylaşılan tahlil yorumları, seyahat planı ve hesap
+ekranı eklendi. Seyahat ayrıca hasta dosyasının bir bölümü.
 
-iOS'ta 46 ekran dosyası var; Android'de 13.
+**Sunucuda olup Android'de hiç istemcisi olmayan üç uç nokta yazıldı:**
+denetim günlüğü (`/audit`, `/audit/anomalies`), seyahat planı
+(`/patients/{id}/travel` + `cleared-to-fly`), protokol kitaplığı
+(`/protocols`). Beşi de hesap tarafında: `/auth/password`,
+`/auth/2fa/disable`, `/auth/sessions`, `/auth/logout-all`,
+`/auth/invitations`. `FinanceApi.records` para birimi parametresini
+almıyordu ve `/finance/rates`'in istemcisi yoktu.
+
+**Bu turda bulunan ve düzeltilen gizli hata:** modellerdeki 23 anahtar
+özelliği Android kaynak adı üretiyordu (`triage_level_urgent`), oysa
+arama katalog anahtarıyla yapılıyor (`triage.level.URGENT`). Hiçbiri
+henüz bir ekranda kullanılmadığı için görünmüyordu; ilk kullanan
+klinisyene ham anahtar gösterecekti. `StringCatalogueTest` artık 32
+`stringKey`'in hepsini ve modellerdeki her `…Key`/`…Keys` sabitini
+tarıyor — dizüstünde, cihazda değil.
+
+**Hâlâ yok (13 personel ekranı):**
+
+| Ekran | Uç nokta | Neden gerekiyor |
+| --- | --- | --- |
+| Tahlil panelleri tablosu | `lab-results/panels` | iOS'ta M16'da eklendi |
+| Reçete yazma (personel) | `patients/{id}/medications` | hasta tarafı var, personel yok |
+| Hastayı davet et | `auth/invitations` | istemci yazıldı, ekran yok |
+| Randevu takvimi | `appointments` | liste var, takvim yok |
+| Çalışma saatleri | `appointments/availability` | istemci yok |
+| Aracı kurumlar | `finance/agencies` | istemci yok |
+| İşaretli fotoğraflar | `photos?flagged` | iOS gündeminde var |
+| Personel gelen kutusu | `conversations` | hasta sohbeti var, klinik kutusu yok |
+| Anket eğilimi (personel) | `patients/{id}/surveys` | hasta tarafı yapıldı |
+| Belge kontrol listesi | `documents/checklist` | istemci yok |
+| Onam görüntüleme (personel) | `patients/{id}/consents` | hasta tarafı var |
+| Yeni hasta | `patients` POST | istemci yok |
+| Bekleyen değişiklikler | yerel kuyruk | kuyruk var, ekranı yok |
+
+Hasta tarafında kalanlar: davet kabul ekranı (istemci yazıldı), parmakla
+imza, fotoğraf bindirmesi (`photos/overlay`), acil yönlendirme metni
+(`emergency/guidance`), takvim aboneliği (`calendar.ics`).
+
+Bildirimler burada değil — **B1**'de, ve sizin kararınızı bekliyor.
+
+iOS'ta 46 ekran dosyası var; Android'de 30.
 
 ---
 
@@ -179,3 +220,20 @@ Gerçek hastaya açmadan önce sırayla:
 6. **B2, B3, B4** — klinik onayları; paralel yürüyebilir.
 
 A6 ve A7 bundan sonra.
+
+---
+
+## 2026-09-12 notu
+
+A1–A6 kapalı. A7'nin personel yarısı açıldı; yukarıdaki tablo kalanı
+madde madde veriyor.
+
+Bu turda ayrıca CI'da bir kararsızlık giderildi: backend işi MinIO
+imajını Docker Hub'dan anonim çekiyordu ve koşucunun paylaşılan IP
+kotası dolduğunda daemon bunu "pull access denied … repository does not
+exist" diye bildiriyor — imaj silinmiş gibi okunuyor. Yalnızca Android'e
+dokunan bir commit bu yüzden düştü. Artık quay.io'dan ve sürüm sabitli.
+
+`design/scripts` altındaki altı denetleyici yerelde saniyeler sürüyor ve
+CI'daki "Design tokens" işinin tamamı; ekran ekleyen her commit'ten önce
+koşturulmalı. Bu turda `touch-target-unchecked` bir kez CI'da yakalandı.

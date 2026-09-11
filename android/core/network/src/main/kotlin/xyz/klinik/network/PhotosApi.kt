@@ -11,7 +11,7 @@ enum class PhotoCategory {
     WOUND,
     ;
 
-    val stringKey: String get() = "photo_category_${name.lowercase()}"
+    val stringKey: String get() = "photo.category.$name"
 }
 
 @Serializable

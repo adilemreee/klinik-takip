@@ -12,7 +12,7 @@ enum class MilestoneStatus {
     SKIPPED,
     ;
 
-    val stringKey: String get() = "followup_status_${name.lowercase()}"
+    val stringKey: String get() = "followUp.status.$name"
 
     /** Whether the clinic is still waiting for this visit to happen. */
     val isOutstanding: Boolean get() = this == PENDING || this == NOTIFIED || this == MISSED
@@ -28,7 +28,7 @@ data class Milestone(
     val notifiedAt: String? = null,
     val completedAt: String? = null,
 ) {
-    val stringKey: String get() = "followup_milestone_${label.lowercase()}"
+    val stringKey: String get() = "followUp.milestone.$label"
 }
 
 @Serializable

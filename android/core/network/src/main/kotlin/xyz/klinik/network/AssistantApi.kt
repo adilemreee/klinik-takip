@@ -31,7 +31,7 @@ enum class HandoverReason {
      * them to rephrase until the bot answers, which is the opposite of what
      * these checks are for.
      */
-    val stringKey: String get() = "assistant_handover"
+    val stringKey: String get() = "assistant.handover"
 }
 
 @Serializable

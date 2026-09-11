@@ -85,7 +85,7 @@ class InteractionsApiTest {
     @Test
     fun `has a string key for every severity`() {
         for (severity in InteractionSeverity.entries) {
-            assertTrue(severity.stringKey.startsWith("interaction_severity_"))
+            assertTrue(severity.stringKey.startsWith("interaction.severity."))
         }
     }
 

@@ -79,7 +79,7 @@ class BriefingApiTest {
                 """{"patientId":"p1","patientName":"X","kind":"$wire","detail":"d","waitingMinutes":5}""",
             )
 
-            assertTrue(item.kind.stringKey.startsWith("briefing_risk_"))
+            assertTrue(item.kind.stringKey.startsWith("briefing.risk."))
         }
     }
 

@@ -22,7 +22,7 @@ enum class DoseStatus {
     SNOOZED,
     ;
 
-    val stringKey: String get() = "medication_status_${name.lowercase()}"
+    val stringKey: String get() = "medication.status.$name"
 
     /** Whether the patient still has something to do about this dose. */
     val isOpen: Boolean get() = this == PENDING || this == SNOOZED
@@ -91,7 +91,7 @@ enum class InteractionSeverity {
     MINOR,
     ;
 
-    val stringKey: String get() = "interaction_severity_${name.lowercase()}"
+    val stringKey: String get() = "interaction.severity.$name"
 
     /**
      * Whether this one has to interrupt.

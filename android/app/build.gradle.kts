@@ -101,6 +101,7 @@ dependencies {
     implementation(project(":feature:notifications-ui"))
     implementation(project(":feature:consents-ui"))
     implementation(project(":feature:emergency-ui"))
+    implementation(project(":feature:briefing-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

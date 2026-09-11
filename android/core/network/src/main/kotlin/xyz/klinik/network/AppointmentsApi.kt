@@ -11,7 +11,7 @@ enum class AppointmentType {
     VIDEO_CALL,
     ;
 
-    val stringKey: String get() = "appointment_type_${name.lowercase()}"
+    val stringKey: String get() = "appointment.type.$name"
 }
 
 @Serializable
@@ -24,7 +24,7 @@ enum class AppointmentStatus {
     NO_SHOW,
     ;
 
-    val stringKey: String get() = "appointment_status_${name.lowercase()}"
+    val stringKey: String get() = "appointment.status.$name"
 
     /** Whether the patient is still expected to come. */
     val isUpcoming: Boolean get() = this == REQUESTED || this == CONFIRMED

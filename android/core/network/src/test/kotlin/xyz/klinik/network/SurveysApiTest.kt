@@ -123,7 +123,7 @@ class SurveysApiTest {
         assertEquals(2, view.latestFindings[0].previous)
         // A severe finding stands on its own, with nothing to compare against.
         assertNull(view.latestFindings[1].previous)
-        assertEquals("survey_finding_worsened", view.latestFindings[0].kind.stringKey)
+        assertEquals("survey.finding.worsened", view.latestFindings[0].kind.stringKey)
     }
 
     @Test

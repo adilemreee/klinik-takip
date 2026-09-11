@@ -137,7 +137,7 @@ class MedicationsApiTest {
     @Test
     fun `has a string key for every dose status`() {
         for (status in DoseStatus.entries) {
-            assertTrue(status.stringKey.startsWith("medication_status_"))
+            assertTrue(status.stringKey.startsWith("medication.status."))
         }
     }
 }

@@ -21,7 +21,7 @@ enum class ExportStatus {
     FAILED,
     ;
 
-    val stringKey: String get() = "export_status_${name.lowercase()}"
+    val stringKey: String get() = "export.status.$name"
 
     /** Whether the app should keep asking. */
     val isPending: Boolean get() = this == QUEUED || this == PROCESSING
@@ -39,7 +39,7 @@ enum class ExportFormat {
     XLSX,
     ;
 
-    val stringKey: String get() = "export_format_${name.lowercase()}"
+    val stringKey: String get() = "export.format.$name"
 }
 
 /**
@@ -67,7 +67,7 @@ data class ExportOmission(
     val count: Int = 0,
 ) {
     /** Resource key for the sentence; `{count}` is substituted by the caller. */
-    val stringKey: String get() = "export_omission_${reason.replace('-', '_')}"
+    val stringKey: String get() = "export.omission.$reason"
 }
 
 @Serializable

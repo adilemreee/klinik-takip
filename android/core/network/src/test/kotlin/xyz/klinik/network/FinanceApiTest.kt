@@ -144,12 +144,12 @@ class FinanceApiTest {
     @Test
     fun `has a string key for every status, method and bucket`() {
         for (status in PaymentStatus.entries) {
-            assertTrue(status.stringKey.startsWith("finance_status_"))
+            assertTrue(status.stringKey.startsWith("finance.status."))
         }
         for (method in PaymentMethod.entries) {
-            assertTrue(method.stringKey.startsWith("finance_method_"))
+            assertTrue(method.stringKey.startsWith("finance.method."))
         }
-        assertEquals("finance_ageing_over90", AgeingBucket("over90", emptyTotals(), 0).stringKey)
+        assertEquals("finance.ageing.over90", AgeingBucket("over90", emptyTotals(), 0).stringKey)
     }
 
     @Test

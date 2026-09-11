@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +37,8 @@ import xyz.klinik.design.klinikColor
 import xyz.klinik.feature.auth.AuthFlowModel
 import xyz.klinik.feature.auth.AuthStep
 import xyz.klinik.feature.auth.ui.AuthFlowScreen
+import xyz.klinik.feature.briefing.BriefingModel
+import xyz.klinik.feature.briefing.ui.BriefingScreen
 import xyz.klinik.feature.home.HomeModel
 import xyz.klinik.feature.home.ui.HomeScreen
 import xyz.klinik.feature.patients.PatientListModel
@@ -56,6 +61,7 @@ import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.messageKey
 import xyz.klinik.shell.RootRoute
 import xyz.klinik.shell.StaffDestination
+import xyz.klinik.shell.StaffTab
 // Design-system resources live in their own R class, not the app's: since AGP
 // 8 the R class is non-transitive, so a library's resources are namespaced to
 // that library rather than merged into every module that depends on it. Only
@@ -258,61 +264,149 @@ private fun PatientHomeRoute(environment: AppEnvironment, model: RootViewModel) 
 
 @Composable
 private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
-    val patients: PatientListModel = remember { environment.patientListModel() }
-    val listState by patients.state.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
+    var tab by remember { mutableStateOf(StaffTab.AGENDA) }
 
     /*
-     * A stack, not one level.
+     * A stack per tab, not one between them.
      *
      * The patient side is one level deep and back goes home, which is right
      * there. A clinician goes list → file → section and back has to mean the
      * step before, not the beginning: landing on the search box after reading
      * a lab result is how somebody loses the patient they were looking at.
+     * Keeping one stack per tab means leaving the agenda for the queue and
+     * coming back returns to the file, rather than to the top.
      */
-    val stack = remember { mutableStateListOf<StaffDestination>() }
+    val stacks = remember {
+        StaffTab.entries.associateWith { mutableStateListOf<StaffDestination>() }
+    }
+    val stack = stacks.getValue(tab)
 
     BackHandler(enabled = stack.isNotEmpty()) { stack.removeAt(stack.lastIndex) }
+
+    Scaffold(
+        bottomBar = { StaffTabBar(current = tab, onSelect = { tab = it }) },
+        containerColor = klinikColor("background"),
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            val current = stack.lastOrNull()
+
+            if (current != null) {
+                TextButton(onClick = { stack.removeAt(stack.lastIndex) }) {
+                    Text(stringResource(DesignR.string.common_close))
+                }
+
+                StaffDestinationScreen(
+                    environment = environment,
+                    destination = current,
+                    onOpen = { destination -> stack.add(destination) },
+                )
+
+                return@Column
+            }
+
+            when (tab) {
+                StaffTab.AGENDA -> AgendaTab(
+                    environment = environment,
+                    model = model,
+                    onOpen = { destination -> stack.add(destination) },
+                )
+
+                StaffTab.PATIENTS -> PatientsTab(
+                    environment = environment,
+                    model = model,
+                    onOpen = { destination -> stack.add(destination) },
+                )
+
+                // The queue is this tab's content rather than something pushed
+                // onto it, so the tab itself is the way back to it.
+                StaffTab.EMERGENCY -> StaffDestinationScreen(
+                    environment = environment,
+                    destination = StaffDestination.EmergencyQueue,
+                    onOpen = { destination -> stack.add(destination) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StaffTabBar(current: StaffTab, onSelect: (StaffTab) -> Unit) {
+    NavigationBar(containerColor = klinikColor("surface")) {
+        StaffTab.entries.forEach { entry ->
+            val label = stringResource(
+                when (entry) {
+                    StaffTab.AGENDA -> DesignR.string.menu_agenda
+                    StaffTab.PATIENTS -> DesignR.string.menu_patients
+                    StaffTab.EMERGENCY -> DesignR.string.menu_emergency_queue
+                },
+            )
+
+            NavigationBarItem(
+                selected = entry == current,
+                onClick = { onSelect(entry) },
+                // A label and no icon on purpose: these three are told apart by
+                // the word, and an icon a reader has to learn is worse than one
+                // they can read. The label is never hidden for the same reason.
+                icon = { Text(label) },
+                alwaysShowLabel = false,
+            )
+        }
+    }
+}
+
+/** The clinician's morning (spec M5), and the screen the app opens on. */
+@Composable
+private fun AgendaTab(
+    environment: AppEnvironment,
+    model: RootViewModel,
+    onOpen: (StaffDestination) -> Unit,
+) {
+    val briefing: BriefingModel = remember { environment.briefingModel() }
+    val state by briefing.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) { briefing.refresh() }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = model::signOut) {
+                Text(stringResource(DesignR.string.auth_sign_out))
+            }
+        }
+
+        BriefingScreen(
+            state = state,
+            strings = context.briefingStrings(),
+            onRetry = { scope.launch { briefing.refresh() } },
+            onOpenPatient = { id, name -> onOpen(StaffDestination.File(id, name)) },
+        )
+    }
+}
+
+@Composable
+private fun PatientsTab(
+    environment: AppEnvironment,
+    model: RootViewModel,
+    onOpen: (StaffDestination) -> Unit,
+) {
+    val patients: PatientListModel = remember { environment.patientListModel() }
+    val listState by patients.state.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     // An empty query is the whole list; the screen opens on it.
     LaunchedEffect(Unit) { patients.search("") }
 
-    val current = stack.lastOrNull()
-
-    if (current != null) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            TextButton(onClick = { stack.removeAt(stack.lastIndex) }) {
-                Text(stringResource(DesignR.string.common_close))
-            }
-
-            StaffDestinationScreen(
-                environment = environment,
-                destination = current,
-                onOpen = { destination -> stack.add(destination) },
-            )
-        }
-
-        return
-    }
-
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalAlignment = Alignment.End,
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
         ) {
-            Row(horizontalArrangement = Arrangement.End) {
-                // Its own button rather than a menu item: a call nobody can
-                // find is a call nobody answers, and this is the one screen in
-                // the staff app with a clock running on it.
-                TextButton(onClick = { stack.add(StaffDestination.EmergencyQueue) }) {
-                    Text(stringResource(DesignR.string.menu_emergency_queue))
-                }
-
-                TextButton(onClick = model::signOut) {
-                    Text(stringResource(DesignR.string.auth_sign_out))
-                }
+            TextButton(onClick = model::signOut) {
+                Text(stringResource(DesignR.string.auth_sign_out))
             }
         }
 
@@ -321,9 +415,7 @@ private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
             strings = patientStrings(),
             query = listState.query,
             onQueryChange = { text -> scope.launch { patients.search(text) } },
-            onSelect = { patient ->
-                stack.add(StaffDestination.File(patient.id, patient.fullName))
-            },
+            onSelect = { patient -> onOpen(StaffDestination.File(patient.id, patient.fullName)) },
             onLoadMore = { scope.launch { patients.loadMore() } },
             onRetry = { scope.launch { patients.retry() } },
         )

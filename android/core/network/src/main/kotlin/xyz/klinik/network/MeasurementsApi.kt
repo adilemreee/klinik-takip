@@ -23,7 +23,7 @@ enum class MeasurementType {
     /** Blood pressure is the only reading that carries a second number. */
     val hasSecondaryValue: Boolean get() = this == BLOOD_PRESSURE
 
-    val stringKey: String get() = "measurement_type_${name.lowercase()}"
+    val stringKey: String get() = "measurement.type.$name"
 }
 
 @Serializable
@@ -33,7 +33,7 @@ enum class MeasurementSource {
     DEVICE,
     ;
 
-    val stringKey: String get() = "measurement_source_${name.lowercase()}"
+    val stringKey: String get() = "measurement.source.$name"
 }
 
 @Serializable
@@ -56,7 +56,7 @@ enum class BmiCategory {
     @SerialName("OBESE_III") OBESE_III,
     ;
 
-    val stringKey: String get() = "bmi_category_${name.lowercase()}"
+    val stringKey: String get() = "bmi.category.$name"
 }
 
 @Serializable

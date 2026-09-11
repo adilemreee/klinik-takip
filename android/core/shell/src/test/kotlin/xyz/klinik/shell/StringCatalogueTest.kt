@@ -1,8 +1,41 @@
 package xyz.klinik.shell
 
+import xyz.klinik.network.AgeingBucket
 import xyz.klinik.network.ApiError
+import xyz.klinik.network.AppointmentStatus
+import xyz.klinik.network.AppointmentType
 import xyz.klinik.network.AuthErrorCode
+import xyz.klinik.network.BmiCategory
+import xyz.klinik.network.ComplicationStatus
+import xyz.klinik.network.ConsentType
+import xyz.klinik.network.Currency
+import xyz.klinik.network.DocumentType
+import xyz.klinik.network.DoseStatus
+import xyz.klinik.network.EmergencyStatus
 import xyz.klinik.network.ErrorResponse
+import xyz.klinik.network.ExportFormat
+import xyz.klinik.network.ExportOmission
+import xyz.klinik.network.ExportStatus
+import xyz.klinik.network.HandoverReason
+import xyz.klinik.network.InteractionSeverity
+import xyz.klinik.network.LabFlag
+import xyz.klinik.network.MeasurementSource
+import xyz.klinik.network.MeasurementType
+import xyz.klinik.network.MessageStatus
+import xyz.klinik.network.Milestone
+import xyz.klinik.network.MilestoneStatus
+import xyz.klinik.network.NotificationChannel
+import xyz.klinik.network.NotificationDeliveryStatus
+import xyz.klinik.network.NotificationKind
+import xyz.klinik.network.PaymentMethod
+import xyz.klinik.network.PaymentStatus
+import xyz.klinik.network.PhotoCategory
+import xyz.klinik.network.ProcessingStatus
+import xyz.klinik.network.RiskKind
+import xyz.klinik.network.RiskLevel
+import xyz.klinik.network.SurveyFindingKind
+import xyz.klinik.network.Totals
+import xyz.klinik.network.TriageLevel
 import xyz.klinik.network.UserRole
 import xyz.klinik.network.messageKey
 import java.io.File
@@ -113,16 +146,74 @@ class StringCatalogueTest {
     }
 
     @Test
-    fun `every role has a display string`() {
-        // The role is shown to staff and to anyone the app has no home for; a
-        // missing one leaves a blank where the account type should be.
-        val missing = UserRole.entries
-            .map { it.stringKey }
-            .filterNot { it in lookup }
-            .sorted()
+    fun `every stringKey a model emits resolves to a string`() {
+        // `stringKey` is the one place the models name a string themselves, and
+        // nothing about the property's type says which spelling is right: the
+        // lookup is keyed by the shared catalogue (`role.DOCTOR`), not by the
+        // Android resource name (`role_doctor`). Twenty of these carried the
+        // resource spelling, which no lookup matches; they were only invisible
+        // because no screen had reached for them yet. Every one is listed here
+        // so a new key is checked on a laptop rather than by a reader seeing
+        // `emergency.status.TRIGGERED` where a sentence belongs.
+        val totals = Totals(currency = Currency.TRY, converted = "0")
+
+        val emitted = listOf(
+            UserRole.entries,
+            AppointmentType.entries,
+            AppointmentStatus.entries,
+            HandoverReason.entries,
+            RiskKind.entries,
+            ComplicationStatus.entries,
+            ConsentType.entries,
+            DocumentType.entries,
+            ProcessingStatus.entries,
+            EmergencyStatus.entries,
+            ExportStatus.entries,
+            ExportFormat.entries,
+            PaymentStatus.entries,
+            PaymentMethod.entries,
+            MilestoneStatus.entries,
+            LabFlag.entries,
+            MeasurementType.entries,
+            MeasurementSource.entries,
+            BmiCategory.entries,
+            DoseStatus.entries,
+            InteractionSeverity.entries,
+            MessageStatus.entries,
+            TriageLevel.entries,
+            NotificationChannel.entries,
+            NotificationDeliveryStatus.entries,
+            NotificationKind.entries,
+            PhotoCategory.entries,
+            RiskLevel.entries,
+            SurveyFindingKind.entries,
+        ).flatten().map { entry ->
+            // `stringKey` is declared per enum rather than on a shared
+            // interface, so it is read reflectively instead of widening the
+            // production types for a test's convenience.
+            entry.javaClass.getMethod("getStringKey").invoke(entry) as String
+        }
+
+        // The three that key off a server string instead of an enum. The values
+        // are the ones the server sends today; a new one needs a string adding
+        // here and to the catalogue together.
+        val fromServer =
+            milestoneLabels.map { Milestone(id = "m", label = it, dueAt = "2026-01-01").stringKey } +
+                ageingBuckets.map { AgeingBucket(bucket = it, totals = totals).stringKey } +
+                omissionReasons.map { ExportOmission(section = "photos", reason = it).stringKey }
+
+        val missing = (emitted + fromServer).distinct().filterNot { it in lookup }.sorted()
 
         assertTrue(missing.isEmpty(), "no string for: ${missing.joinToString()}")
     }
+
+    /** The follow-up phases, shared with the photo gallery. */
+    private val milestoneLabels = listOf("D1", "D3", "W1", "W2", "M1", "M2", "M3", "M6", "Y1")
+
+    private val ageingBuckets = listOf("current", "d30", "d60", "over90")
+
+    private val omissionReasons =
+        listOf("ai-unreviewed", "lab-unverified", "photo-no-consent", "photo-not-requested")
 
     @Test
     fun `the shell's own strings exist`() {

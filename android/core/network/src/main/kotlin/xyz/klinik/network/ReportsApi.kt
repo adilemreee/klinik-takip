@@ -11,7 +11,7 @@ enum class RiskLevel {
     CRITICAL,
     ;
 
-    val stringKey: String get() = "report_risk_${name.lowercase()}"
+    val stringKey: String get() = "report.risk.$name"
 
     /** Whether a clinician's list should mark this one out. */
     val needsAttention: Boolean get() = this == HIGH || this == CRITICAL

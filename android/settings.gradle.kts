@@ -86,6 +86,9 @@ include(":feature:followup")
 include(":feature:appointments")
 include(":feature:emergency")
 
+// What a clinician should look at first, and why (spec M5).
+include(":feature:briefing")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -114,6 +117,9 @@ if (androidSdkAvailable) {
     // The calls a clinic has not answered yet (spec M8). The first screen of a
     // shift: the API had the queue and nothing drew it.
     include(":feature:emergency-ui")
+
+    // The clinician's morning (spec M5).
+    include(":feature:briefing-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

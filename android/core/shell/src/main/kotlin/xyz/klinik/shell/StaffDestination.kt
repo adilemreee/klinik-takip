@@ -80,3 +80,20 @@ fun destinationFor(section: FileSection, patientId: String): StaffDestination = 
     FileSection.APPOINTMENTS -> StaffDestination.Appointments(patientId)
     FileSection.CONVERSATION -> StaffDestination.Conversation(patientId)
 }
+
+/**
+ * The three places the staff app opens onto, mirroring the iOS tab bar.
+ *
+ * Tabs rather than one stack with a menu, because each is a different job and
+ * a clinician moves between them mid-task: reading a file, then the queue,
+ * then back to the same file. Separate stacks are the point — a tab that
+ * forgot where it was would make the trip back cost as much as the trip out.
+ */
+enum class StaffTab {
+    /** The morning: who needs attention, and what came in overnight (spec M5). */
+    AGENDA,
+    PATIENTS,
+
+    /** Its own tab, not a pushed screen: there is a clock running on it. */
+    EMERGENCY,
+}

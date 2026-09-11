@@ -15,7 +15,7 @@ enum class DocumentType {
     OTHER,
     ;
 
-    val stringKey: String get() = "document_type_${name.lowercase()}"
+    val stringKey: String get() = "document.type.$name"
 }
 
 /**
@@ -35,7 +35,7 @@ enum class ProcessingStatus {
     SKIPPED,
     ;
 
-    val stringKey: String get() = "job_status_${name.lowercase()}"
+    val stringKey: String get() = "job.status.$name"
 
     /** Whether the clinic still expects this to finish on its own. */
     val isSettled: Boolean get() = this == DONE || this == FAILED || this == SKIPPED

@@ -16,7 +16,7 @@ enum class MessageStatus {
     FAILED,
     ;
 
-    val stringKey: String get() = "message_status_${name.lowercase()}"
+    val stringKey: String get() = "message.status.$name"
 }
 
 @Serializable
@@ -58,7 +58,7 @@ enum class TriageLevel {
     EMERGENCY,
     ;
 
-    val stringKey: String get() = "triage_level_${name.lowercase()}"
+    val stringKey: String get() = "triage.level.$name"
 }
 
 @Serializable

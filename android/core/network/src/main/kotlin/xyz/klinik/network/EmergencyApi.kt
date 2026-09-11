@@ -11,7 +11,7 @@ enum class EmergencyStatus {
     FALSE_ALARM,
     ;
 
-    val stringKey: String get() = "emergency_status_${name.lowercase()}"
+    val stringKey: String get() = "emergency.status.$name"
 
     /** Whether the clinic is still working on it. */
     val isOpen: Boolean get() = this == TRIGGERED || this == ACKNOWLEDGED

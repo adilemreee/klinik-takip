@@ -23,7 +23,7 @@ enum class RiskKind {
     REPORT_UNREVIEWED,
     ;
 
-    val stringKey: String get() = "briefing_risk_${name.lowercase()}"
+    val stringKey: String get() = "briefing.risk." + name.lowercase().replace('_', '-')
 }
 
 @Serializable

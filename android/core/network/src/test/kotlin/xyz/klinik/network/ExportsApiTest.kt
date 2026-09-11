@@ -81,8 +81,8 @@ class ExportsApiTest {
         )
 
         assertFalse(contents.isComplete)
-        assertEquals("export_omission_lab_unverified", contents.omissions[0].stringKey)
-        assertEquals("export_omission_photo_no_consent", contents.omissions[1].stringKey)
+        assertEquals("export.omission.lab-unverified", contents.omissions[0].stringKey)
+        assertEquals("export.omission.photo-no-consent", contents.omissions[1].stringKey)
         assertEquals(3, contents.omissions[0].count)
     }
 
@@ -157,7 +157,7 @@ class ExportsApiTest {
     @Test
     fun `has a string key for every status`() {
         for (status in ExportStatus.entries) {
-            assertTrue(status.stringKey.startsWith("export_status_"))
+            assertTrue(status.stringKey.startsWith("export.status."))
         }
     }
 }

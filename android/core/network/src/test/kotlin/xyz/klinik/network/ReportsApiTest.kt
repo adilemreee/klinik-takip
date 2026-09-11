@@ -84,7 +84,7 @@ class ReportsApiTest {
     @Test
     fun `has a string key for every risk level`() {
         for (risk in RiskLevel.entries) {
-            assertTrue(risk.stringKey.startsWith("report_risk_"))
+            assertTrue(risk.stringKey.startsWith("report.risk."))
         }
     }
 }

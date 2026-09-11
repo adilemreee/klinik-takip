@@ -11,7 +11,7 @@ enum class LabFlag {
     CRITICAL,
     ;
 
-    val stringKey: String get() = "lab_flag_${name.lowercase()}"
+    val stringKey: String get() = "lab.flag.$name"
 }
 
 @Serializable

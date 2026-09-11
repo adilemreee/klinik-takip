@@ -3,6 +3,7 @@ package xyz.klinik.app
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import xyz.klinik.feature.briefing.ui.BriefingStrings
 import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
 import xyz.klinik.feature.emergency.ui.EmergencyQueueStrings
@@ -331,4 +332,32 @@ fun Context.dial(phone: String) {
     // a button that does nothing.
     runCatching { startActivity(intent) }
 }
+
+/**
+ * The clinician's morning.
+ *
+ * Every string was already in the catalogue — what was missing was the screen,
+ * not the words for it.
+ */
+fun Context.briefingStrings(): BriefingStrings = BriefingStrings(
+    title = getString(DesignR.string.briefing_title),
+    quiet = getString(DesignR.string.briefing_quiet),
+    retry = getString(DesignR.string.common_retry),
+    atRisk = getString(DesignR.string.briefing_at_risk),
+    yesterday = getString(DesignR.string.briefing_yesterday),
+    today = getString(DesignR.string.briefing_today),
+    newMessages = getString(DesignR.string.briefing_new_messages),
+    urgentMessages = getString(DesignR.string.briefing_urgent_messages),
+    emergencies = getString(DesignR.string.briefing_emergencies),
+    complications = getString(DesignR.string.briefing_complications),
+    criticalLabs = getString(DesignR.string.briefing_critical_labs),
+    appointments = getString(DesignR.string.briefing_appointments),
+    followUps = getString(DesignR.string.briefing_follow_ups),
+    aiSummary = getString(DesignR.string.briefing_ai_summary),
+    aiDisclaimer = getString(DesignR.string.briefing_ai_disclaimer),
+    riskName = { kind -> stringForKey(kind.stringKey) },
+    waitingMinutes = { minutes -> getString(DesignR.string.briefing_waiting_minutes, minutes) },
+    waitingHours = { hours -> getString(DesignR.string.briefing_waiting_hours, hours) },
+    message = { text -> resolve(text) },
+)
 

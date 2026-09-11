@@ -10,7 +10,7 @@ enum class ComplicationStatus {
     RESOLVED,
     ;
 
-    val stringKey: String get() = "complication_status_${name.lowercase()}"
+    val stringKey: String get() = "complication.status.$name"
 }
 
 @Serializable

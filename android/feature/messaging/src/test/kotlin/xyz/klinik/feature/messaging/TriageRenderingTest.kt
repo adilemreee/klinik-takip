@@ -81,7 +81,7 @@ class TriageRenderingTest {
     @Test
     fun `has a string key for every level`() {
         for (level in TriageLevel.entries) {
-            assertTrue(level.stringKey.startsWith("triage_level_"))
+            assertTrue(level.stringKey.startsWith("triage.level."))
         }
     }
 }

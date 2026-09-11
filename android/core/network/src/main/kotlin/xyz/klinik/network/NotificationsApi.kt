@@ -12,7 +12,7 @@ enum class NotificationChannel {
     IN_APP,
     ;
 
-    val stringKey: String get() = "notification_channel_${name.lowercase()}"
+    val stringKey: String get() = "notification.channel.$name"
 }
 
 @Serializable
@@ -24,7 +24,7 @@ enum class NotificationDeliveryStatus {
     FAILED,
     ;
 
-    val stringKey: String get() = "notification_status_${name.lowercase()}"
+    val stringKey: String get() = "notification.status.$name"
 }
 
 /** The notification types a person can turn on or off, mirroring the server. */
@@ -38,7 +38,7 @@ enum class NotificationKind(val wire: String) {
     COMPLICATION_ANSWERED("complication.answered"),
     ;
 
-    val stringKey: String get() = "notification_type_${wire.replace('.', '_')}"
+    val stringKey: String get() = "notification.type.$wire"
 }
 
 @Serializable

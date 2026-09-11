@@ -3,6 +3,7 @@ package xyz.klinik.app
 import android.content.Context
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.CoroutineScope
+import xyz.klinik.feature.briefing.BriefingModel
 import xyz.klinik.feature.home.EmergencyModel
 import xyz.klinik.feature.home.EmergencyTrigger
 import xyz.klinik.feature.home.HomeModel
@@ -22,6 +23,7 @@ import xyz.klinik.network.MessagingApi
 import xyz.klinik.network.NotificationsApi
 import xyz.klinik.network.PhotosApi
 import xyz.klinik.network.ResumableUpload
+import xyz.klinik.network.BriefingApi
 import xyz.klinik.network.EmergencyApi
 import xyz.klinik.network.HttpTokenRefresher
 import xyz.klinik.network.JdkHttpTransport
@@ -98,8 +100,10 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val me: MeApi by lazy { MeApi(client) }
     val patients: PatientsApi by lazy { PatientsApi(client) }
     val emergency: EmergencyApi by lazy { EmergencyApi(client) }
+    val briefing: BriefingApi by lazy { BriefingApi(client) }
 
     fun homeModel(): HomeModel = HomeModel(me)
+    fun briefingModel(): BriefingModel = BriefingModel(briefing)
     fun patientListModel(): PatientListModel = PatientListModel(patients)
 
     /**

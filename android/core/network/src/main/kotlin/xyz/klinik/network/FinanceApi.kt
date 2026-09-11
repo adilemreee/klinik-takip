@@ -40,7 +40,7 @@ enum class PaymentStatus {
     CANCELLED,
     ;
 
-    val stringKey: String get() = "finance_status_${name.lowercase()}"
+    val stringKey: String get() = "finance.status.$name"
 
     /** Whether the clinic is still waiting for money. */
     val isOutstanding: Boolean get() = this == PENDING || this == PARTIAL
@@ -55,7 +55,7 @@ enum class PaymentMethod {
     OTHER,
     ;
 
-    val stringKey: String get() = "finance_method_${name.lowercase()}"
+    val stringKey: String get() = "finance.method.$name"
 }
 
 @Serializable
@@ -188,7 +188,7 @@ data class AgeingBucket(
     val totals: Totals,
     val recordCount: Int = 0,
 ) {
-    val stringKey: String get() = "finance_ageing_$bucket"
+    val stringKey: String get() = "finance.ageing.$bucket"
 }
 
 @Serializable

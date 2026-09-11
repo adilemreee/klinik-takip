@@ -87,7 +87,7 @@ enum class SurveyFindingKind {
     SEVERE,
     ;
 
-    val stringKey: String get() = "survey_finding_${name.lowercase()}"
+    val stringKey: String get() = "survey.finding.${name.lowercase()}"
 }
 
 @Serializable

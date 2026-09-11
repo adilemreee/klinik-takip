@@ -159,7 +159,16 @@ export class DocumentsController {
   constructor(private readonly documents: DocumentsService) {}
 
   @Get(':documentId/download')
-  @RequirePermissions('documents.read')
+  /*
+   * A patient opening their own document, as well as staff opening anybody's.
+   *
+   * `documents.read` is a staff permission, so this route answered 403 to the
+   * person whose document it is — which is every patient, on every lab report,
+   * on the screen built for reading them. The scoping that matters happens
+   * below: `findInScope` runs `assertCanAccess`, and a PATIENT's scope is
+   * `{ userId: user.id }`. The permission is the coarse gate, not the check.
+   */
+  @RequireAnyPermission('documents.read', 'self.read')
   @ApiOperation({ summary: 'A short-lived signed URL for the stored file' })
   @ApiOkResponse({ type: DownloadUrlDto })
   @ApiStandardErrors()

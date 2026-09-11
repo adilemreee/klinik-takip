@@ -168,7 +168,13 @@ export class PhotosController {
   }
 
   @Get(':photoId/url')
-  @RequirePermissions('photos.read')
+  /*
+   * A patient opening their own photograph, as well as staff opening
+   * anybody's. Same gap as the document download next door: `photos.read` is
+   * a staff permission, and the gallery is a patient screen. `findInScope`
+   * does the real scoping.
+   */
+  @RequireAnyPermission('photos.read', 'self.read')
   @ApiOperation({ summary: 'A short-lived signed URL for the image' })
   @ApiOkResponse({ type: PhotoUrlDto })
   @ApiStandardErrors()

@@ -597,4 +597,63 @@ describe('documents', () => {
         .expect(403);
     });
   });
+
+  /**
+   * The person whose document it is.
+   *
+   * `documents.read` is a staff permission, so the download route answered 403
+   * to every patient opening their own lab report — on the screen built for
+   * reading them. What keeps one patient out of another's file is not the
+   * permission but `findInScope`, and these two tests are the pair: the owner
+   * gets a link, and a stranger cannot tell the document exists.
+   */
+  describe('a patient downloading their own document', () => {
+    it('gives the owner a link', async () => {
+      const patient = await actorFor(Role.PATIENT);
+      const patientId = await makePatient(patient.userId);
+      const uploaded = (await upload(patientId, doctor.token, pdf())).body as Uploaded;
+      await remember(uploaded.id);
+
+      const response = await request(server)
+        .get(`/documents/${uploaded.id}/download`)
+        .set('Authorization', `Bearer ${patient.token}`)
+        .expect(200);
+
+      const body = response.body as { url: string; filename: string };
+      expect(body.url).toContain('http');
+      expect(body.filename).toBeTruthy();
+    });
+
+    /**
+     * Not found, not forbidden. A 403 would confirm the document exists, which
+     * is how somebody enumerates whether a given person is a patient here.
+     */
+    it('will not hand somebody else\'s document to a patient', async () => {
+      const stranger = await actorFor(Role.PATIENT);
+      await makePatient(stranger.userId);
+
+      const otherPatientId = await makePatient();
+      const uploaded = (await upload(otherPatientId, doctor.token, pdf())).body as Uploaded;
+      await remember(uploaded.id);
+
+      await request(server)
+        .get(`/documents/${uploaded.id}/download`)
+        .set('Authorization', `Bearer ${stranger.token}`)
+        .expect(404);
+    });
+
+    /** A role with neither permission is still refused at the gate. */
+    it('still refuses a role with no claim on it at all', async () => {
+      const patientId = await makePatient();
+      const uploaded = (await upload(patientId, doctor.token, pdf())).body as Uploaded;
+      await remember(uploaded.id);
+
+      const finance = await actorFor(Role.FINANCE);
+
+      await request(server)
+        .get(`/documents/${uploaded.id}/download`)
+        .set('Authorization', `Bearer ${finance.token}`)
+        .expect(403);
+    });
+  });
 });

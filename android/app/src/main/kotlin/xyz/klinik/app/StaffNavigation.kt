@@ -19,6 +19,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import xyz.klinik.design.Tokens
 import xyz.klinik.design.klinikColor
+import xyz.klinik.feature.analytics.AnalyticsModel
+import xyz.klinik.feature.analytics.ui.AnalyticsScreen
 import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.documents.DocumentsModel
@@ -147,6 +149,21 @@ fun StaffDestinationScreen(
                     },
                 )
             }
+        }
+
+        StaffDestination.Analytics -> {
+            val model = remember { AnalyticsModel(environment.analytics) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AnalyticsScreen(
+                state = state,
+                strings = context.analyticsStrings(),
+                onChooseRange = { range -> scope.launch { model.choose(range) } },
+                onChooseCurrency = { currency -> scope.launch { model.choose(currency) } },
+                modifier = modifier,
+            )
         }
 
         StaffDestination.NotificationSettings -> {

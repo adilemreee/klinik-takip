@@ -46,4 +46,24 @@ tasks.test {
     inputs.dir(
         rootProject.layout.projectDirectory.dir("core/design/src/main"),
     ).withPropertyName("designCatalogue").withPathSensitivity(PathSensitivity.RELATIVE)
+
+    // The models and the feature modules name strings by key; the catalogue
+    // test reads both looking for a key with nothing behind it.
+    inputs.dir(
+        rootProject.layout.projectDirectory.dir("core/network/src/main"),
+    ).withPropertyName("networkModels").withPathSensitivity(PathSensitivity.RELATIVE)
+
+    /*
+     * Each feature module's own source directory, one by one.
+     *
+     * Not the `feature` tree as a whole: it also contains every module's
+     * `build` output, and Gradle then reads this task as depending on the
+     * tasks that produce them — which it does not, since it only reads the
+     * Kotlin somebody wrote.
+     */
+    inputs.files(
+        rootProject.subprojects
+            .filter { it.path.startsWith(":feature:") }
+            .map { module -> module.layout.projectDirectory.dir("src/main").asFileTree },
+    ).withPropertyName("featureModels").withPathSensitivity(PathSensitivity.RELATIVE)
 }

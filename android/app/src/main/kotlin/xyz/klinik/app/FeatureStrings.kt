@@ -3,6 +3,7 @@ package xyz.klinik.app
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import xyz.klinik.feature.analytics.ui.AnalyticsStrings
 import xyz.klinik.feature.assistant.ui.AssistantStrings
 import xyz.klinik.feature.briefing.ui.BriefingStrings
 import xyz.klinik.feature.complications.ui.ComplicationStrings
@@ -403,6 +404,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Patients -> getString(DesignR.string.menu_patients)
     StaffDestination.EmergencyQueue -> getString(DesignR.string.menu_emergency_queue)
     StaffDestination.PendingReports -> getString(DesignR.string.report_pending_title)
+    StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
@@ -470,4 +472,34 @@ fun Context.myReportsStrings(): MyReportsStrings = MyReportsStrings(
     retry = getString(DesignR.string.common_retry),
     generatedAt = getString(DesignR.string.report_generated_at),
     message = { text -> resolve(text) },
+)
+
+/**
+ * The clinic's numbers (spec M11).
+ *
+ * `notice` resolves by catalogue key rather than taking the sentences as
+ * fields: the reports name their own caveats, and a caveat added on the server
+ * should appear here rather than silently not appearing.
+ */
+fun Context.analyticsStrings(): AnalyticsStrings = AnalyticsStrings(
+    title = getString(DesignR.string.analytics_title),
+    notPermitted = getString(DesignR.string.analytics_not_permitted),
+    nothingInRange = getString(DesignR.string.analytics_nothing_in_range),
+    range = getString(DesignR.string.analytics_range),
+    rangeName = { range -> stringForKey(range.stringKey) },
+    procedures = getString(DesignR.string.analytics_procedures_title),
+    geography = getString(DesignR.string.analytics_geography_title),
+    revenue = getString(DesignR.string.analytics_revenue_title),
+    channels = getString(DesignR.string.analytics_channels_title),
+    occupancy = getString(DesignR.string.analytics_occupancy_title),
+    tooFew = getString(DesignR.string.analytics_too_few),
+    net = getString(DesignR.string.analytics_net),
+    cost = getString(DesignR.string.analytics_cost),
+    commission = getString(DesignR.string.analytics_commission),
+    margin = getString(DesignR.string.analytics_margin),
+    conversion = getString(DesignR.string.analytics_conversion),
+    cityUnknown = { count -> getString(DesignR.string.analytics_city_unknown, count) },
+    totalOperations = { count -> getString(DesignR.string.analytics_total_operations, count) },
+    patientCount = { count -> getString(DesignR.string.analytics_patient_count, count) },
+    notice = { key -> stringForKey(key) },
 )

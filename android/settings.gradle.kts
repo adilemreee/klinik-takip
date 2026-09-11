@@ -98,6 +98,9 @@ include(":feature:assistant")
 // Patient-reported outcome questionnaires (spec M18).
 include(":feature:surveys")
 
+// The clinic's numbers (spec M11).
+include(":feature:analytics")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -138,6 +141,9 @@ if (androidSdkAvailable) {
 
     // Patient-reported outcome questionnaires (spec M18).
     include(":feature:surveys-ui")
+
+    // The clinic's numbers (spec M11).
+    include(":feature:analytics-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

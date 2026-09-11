@@ -57,6 +57,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** The clinic's numbers (spec M11). */
+    data object Analytics : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** The staff member's own notification preferences. */
     data object NotificationSettings : StaffDestination {
         override val patientId: String? = null
@@ -130,5 +135,6 @@ enum class StaffTab {
 val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.PendingReports,
     StaffDestination.ComplicationQueue,
+    StaffDestination.Analytics,
     StaffDestination.NotificationSettings,
 )

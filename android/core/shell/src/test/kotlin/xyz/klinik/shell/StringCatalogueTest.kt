@@ -221,9 +221,14 @@ class StringCatalogueTest {
      */
     @Test
     fun `every literal key in the models resolves to a string`() {
-        val sources = File(designModule.parentFile.parentFile.parentFile, "network/src/main")
-            .walkTopDown()
-            .filter { it.extension == "kt" }
+        // The models and the feature modules both declare keys now, so both
+        // are read. Not the Compose modules: those resolve strings through a
+        // `…Strings` record the app fills in, which the compiler checks.
+        val repository = designModule.parentFile.parentFile.parentFile.parentFile
+
+        val sources = listOf(File(repository, "core/network/src/main"), File(repository, "feature"))
+            .flatMap { root -> root.walkTopDown().filter { it.extension == "kt" } }
+            .filterNot { it.path.contains("/src/test/") }
             .toList()
 
         assertTrue(sources.size > 20, "only ${sources.size} model files found")

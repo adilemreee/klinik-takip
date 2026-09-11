@@ -176,6 +176,29 @@ private data class ReportMedicationBody(
     val startDate: String,
 )
 
+/**
+ * A prescription, as the clinician wrote it.
+ *
+ * `frequencyRule` is an RFC 5545 RRULE and the server refuses anything it does
+ * not support rather than guessing — a dose schedule guessed at is a patient
+ * taking a drug at the wrong hour. `timezone` travels with it because a dose
+ * is a wall-clock event: "nine in the morning" means the patient's morning,
+ * not the clinic's.
+ */
+@Serializable
+data class Prescription(
+    val drugName: String,
+    val dose: String,
+    val form: String? = null,
+    val frequencyRule: String,
+    val startDate: String,
+    val endDate: String? = null,
+    /** Wall-clock time of the first dose, e.g. `09:00`. */
+    val startTime: String? = null,
+    val timezone: String? = null,
+    val instructions: String? = null,
+)
+
 class MedicationsApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
@@ -223,6 +246,32 @@ class MedicationsApi(
                 ),
             ),
         )
+
+    /** A clinician writing a plan. The patient ticks the doses off. */
+    suspend fun prescribe(patientId: String, prescription: Prescription): MedicationView =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.POST,
+                    "patients/$patientId/medications",
+                    body = json.encodeToString(Prescription.serializer(), prescription),
+                ),
+            ),
+        )
+
+    /**
+     * Approves something the patient said they were already taking.
+     *
+     * Until this, the entry is inert: no doses are generated and nothing is
+     * counted against adherence. A clinic that treated a patient's word as a
+     * prescription would be prescribing by proxy.
+     */
+    suspend fun approve(medicationId: String): MedicationView =
+        decode(client.send(Endpoint(HttpMethod.PATCH, "medications/$medicationId/approve")))
+
+    /** Stops a course. The record stays; the schedule ends. */
+    suspend fun stop(medicationId: String): MedicationView =
+        decode(client.send(Endpoint(HttpMethod.PATCH, "medications/$medicationId/stop")))
 
     private inline fun <reified T> decode(body: String): T =
         runCatching { json.decodeFromString<T>(body) }

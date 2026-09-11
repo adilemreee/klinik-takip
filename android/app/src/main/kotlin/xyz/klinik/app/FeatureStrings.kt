@@ -22,6 +22,7 @@ import xyz.klinik.feature.exports.ui.ExportsStrings
 import xyz.klinik.feature.finance.ui.FinanceStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
 import xyz.klinik.feature.medications.ui.MedicationStrings
+import xyz.klinik.feature.medications.ui.PrescribingStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
@@ -284,6 +285,7 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.APPOINTMENTS -> getString(DesignR.string.menu_appointments)
     FileSection.CONVERSATION -> getString(DesignR.string.menu_messages)
     FileSection.TRAVEL -> getString(DesignR.string.travel_title)
+    FileSection.MEDICATIONS -> getString(DesignR.string.medication_staff_title)
 }
 
 /**
@@ -434,6 +436,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.Appointments -> stringForSection(FileSection.APPOINTMENTS)
     is StaffDestination.Conversation -> stringForSection(FileSection.CONVERSATION)
     is StaffDestination.Travel -> stringForSection(FileSection.TRAVEL)
+    is StaffDestination.Medications -> stringForSection(FileSection.MEDICATIONS)
 }
 
 /**
@@ -796,3 +799,40 @@ fun Context.shareDataExport(json: String) {
         )
     }
 }
+
+/**
+ * The clinician's side of the medication module (spec M9).
+ *
+ * The severity name goes through the catalogue so a level added to the
+ * reference shows a word rather than a key beside a drug interaction.
+ */
+fun Context.prescribingStrings(): PrescribingStrings = PrescribingStrings(
+    title = getString(DesignR.string.medication_staff_title),
+    empty = getString(DesignR.string.medication_empty_for_patient),
+    retry = getString(DesignR.string.common_retry),
+    prescribed = getString(DesignR.string.medication_prescribed),
+    awaitingApproval = getString(DesignR.string.medication_awaiting_approval),
+    stopped = getString(DesignR.string.medication_stopped),
+    approve = getString(DesignR.string.medication_approve_action),
+    stop = getString(DesignR.string.medication_stop_action),
+    nextDose = getString(DesignR.string.medication_next_dose),
+    interactionsTitle = getString(DesignR.string.interaction_title),
+    interactionDisclaimer = getString(DesignR.string.interaction_disclaimer),
+    interactionNone = getString(DesignR.string.interaction_none),
+    interactionNotChecked = getString(DesignR.string.interaction_not_checked),
+    interactionUnrecognised = getString(DesignR.string.interaction_unrecognised),
+    severityName = { severity -> stringForKey(severity.stringKey) },
+    newTitle = getString(DesignR.string.prescribe_title),
+    drugName = getString(DesignR.string.prescribe_drug_name),
+    dose = getString(DesignR.string.prescribe_dose),
+    form = getString(DesignR.string.prescribe_form),
+    instructions = getString(DesignR.string.prescribe_instructions),
+    timesPerDay = getString(DesignR.string.prescribe_times_per_day),
+    days = getString(DesignR.string.prescribe_days),
+    write = getString(DesignR.string.prescribe_action),
+    needName = getString(DesignR.string.prescribe_need_name),
+    summary = { times, days, total, hours ->
+        getString(DesignR.string.prescribe_summary, times, days, total, hours)
+    },
+    message = { text -> resolve(text) },
+)

@@ -55,6 +55,8 @@ import xyz.klinik.feature.lab.LabTrendModel
 import xyz.klinik.feature.lab.ui.LabReviewScreen
 import xyz.klinik.feature.lab.ui.LabTrendScreen
 import xyz.klinik.feature.measurements.MeasurementsModel
+import xyz.klinik.feature.medications.PrescribingModel
+import xyz.klinik.feature.medications.ui.PrescribingScreen
 import xyz.klinik.feature.measurements.ui.BodyChartScreen
 import xyz.klinik.feature.messaging.ChatModel
 import xyz.klinik.feature.messaging.ui.ChatScreen
@@ -327,6 +329,30 @@ fun StaffDestinationScreen(
                     scope.launch { model.retire(protocol.document.id) }
                 },
                 onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.Medications -> {
+            val model = remember(destination.patientId) {
+                PrescribingModel(environment.medications, destination.patientId)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            PrescribingScreen(
+                state = state,
+                strings = context.prescribingStrings(),
+                onPrescribe = { prescription -> scope.launch { model.prescribe(prescription) } },
+                onApprove = { view -> scope.launch { model.approve(view.medication.id) } },
+                onStop = { view -> scope.launch { model.stop(view.medication.id) } },
+                onRetry = { scope.launch { model.load() } },
+                // The device's zone stands in for the patient's until the file
+                // carries one: a dose is a wall-clock event, and sending none
+                // would have the server pick for us.
+                timezone = java.time.ZoneId.systemDefault().id,
+                todayIso = nowIso(),
                 modifier = modifier,
             )
         }

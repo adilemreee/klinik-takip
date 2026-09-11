@@ -169,6 +169,6 @@ export class MyMedicationsController {
     @Param('logId', ParseUUIDPipe) logId: string,
     @Body() dto: CheckInDto,
   ): Promise<MedicationLog> {
-    return this.medications.checkIn(user, logId, dto.action, dto.snoozeMinutes ?? 60);
+    return this.medications.checkIn(user, logId, dto.action, dto.snoozeMinutes ?? 60, dto.at);
   }
 }

@@ -11,6 +11,7 @@ import {
   summarise,
   type DoseLog,
 } from './adherence';
+import { MedicationsService } from './medications.service';
 import {
   MAX_OCCURRENCES,
   RecurrenceError,
@@ -485,5 +486,65 @@ describe('the renewal reminder', () => {
     expect(needsRenewal([dose('2026-03-01T09:00:00.000Z', MedicationLogStatus.TAKEN)], now)).toBe(
       false,
     );
+  });
+});
+
+/**
+ * When a check-in happened, as opposed to when it arrived.
+ *
+ * The dose is the one record in this product whose whole value is its
+ * timestamp. A patient who took their antibiotic at nine and could only say so
+ * at midnight used to get an adherence record wrong by three hours — and a
+ * clinician reading it could not tell that from a missed dose.
+ *
+ * The client says when; this decides whether to believe it. A phone's clock is
+ * not evidence.
+ */
+describe('when a dose was actually taken', () => {
+  const now = new Date('2026-03-01T21:00:00.000Z');
+
+  it('uses the arrival time when the client said nothing', () => {
+    expect(MedicationsService.actedAt(undefined, now)).toEqual(now);
+  });
+
+  it('believes a time from earlier today', () => {
+    const morning = new Date('2026-03-01T09:00:00.000Z');
+
+    expect(MedicationsService.actedAt(morning, now)).toEqual(morning);
+  });
+
+  it('believes a check-in the queue held for a week', () => {
+    const lastWeek = new Date('2026-02-23T09:00:00.000Z');
+
+    expect(MedicationsService.actedAt(lastWeek, now)).toEqual(lastWeek);
+  });
+
+  /** A clock that is out, not a dose taken tomorrow. */
+  it('refuses a time in the future', () => {
+    const tomorrow = new Date('2026-03-02T21:00:00.000Z');
+
+    expect(MedicationsService.actedAt(tomorrow, now)).toEqual(now);
+  });
+
+  /** Ordinary drift is not a wrong clock. */
+  it('allows a minute of drift', () => {
+    const slightlyAhead = new Date(now.getTime() + 60_000);
+
+    expect(MedicationsService.actedAt(slightlyAhead, now)).toEqual(slightlyAhead);
+  });
+
+  /**
+   * The app drains the queue every time it comes to the front, so nothing it
+   * holds is a month old. A claim that far back is a wrong clock or a patient
+   * backdating a dose nothing corroborates.
+   */
+  it('refuses a time older than the queue could be holding', () => {
+    const lastMonth = new Date('2026-01-20T09:00:00.000Z');
+
+    expect(MedicationsService.actedAt(lastMonth, now)).toEqual(now);
+  });
+
+  it('refuses an unparseable date', () => {
+    expect(MedicationsService.actedAt(new Date('nonsense'), now)).toEqual(now);
   });
 });

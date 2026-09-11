@@ -71,6 +71,18 @@ export interface MyMedications {
 /** How far from its scheduled time a dose may be marked and still count as on time. */
 const ON_TIME_MINUTES = 60;
 
+/** Ordinary clock drift. Beyond this, a future timestamp is a wrong clock. */
+const CLOCK_SKEW_MS = 2 * 60_000;
+
+/**
+ * The oldest check-in the offline queue could still be holding.
+ *
+ * The app drains every time it comes to the front, so anything older than this
+ * is not a delayed delivery — it is a device whose clock is wrong, or a claim
+ * about a fortnight ago that nothing corroborates.
+ */
+const MAX_QUEUED_AGE_MS = 14 * 24 * 60 * 60_000;
+
 @Injectable()
 export class MedicationsService {
   private readonly logger = new Logger(MedicationsService.name);
@@ -256,6 +268,7 @@ export class MedicationsService {
     logId: string,
     action: 'taken' | 'skipped' | 'snooze',
     snoozeMinutes = 60,
+    claimedAt?: Date,
   ): Promise<MedicationLog> {
     const log = await this.prisma.medicationLog.findUnique({
       where: { id: logId },
@@ -273,6 +286,9 @@ export class MedicationsService {
     }
 
     const now = new Date();
+    // When the patient acted, which is not when the request arrived if it sat
+    // in the offline queue first.
+    const acted = MedicationsService.actedAt(claimedAt, now);
 
     if (action === 'snooze') {
       return this.prisma.medicationLog.update({
@@ -301,16 +317,50 @@ export class MedicationsService {
      * to be able to see that the doses drifted.
      */
     const late =
-      Math.abs(now.getTime() - log.scheduledAt.getTime()) > ON_TIME_MINUTES * 60_000;
+      Math.abs(acted.getTime() - log.scheduledAt.getTime()) > ON_TIME_MINUTES * 60_000;
 
     return this.prisma.medicationLog.update({
       where: { id: logId },
       data: {
         status: late ? MedicationLogStatus.LATE : MedicationLogStatus.TAKEN,
-        takenAt: now,
+        takenAt: acted,
         snoozedUntil: null,
       },
     });
+  }
+
+  /**
+   * When the check-in happened, as opposed to when it arrived.
+   *
+   * The client says; this decides whether to believe it. A phone's clock is
+   * not evidence, so the claim is accepted only inside a window where it could
+   * plausibly be a delayed delivery rather than a wrong clock or a patient
+   * backdating a dose they did not take:
+   *
+   * - Anything in the future is a clock that is out, give or take the couple
+   *   of minutes ordinary drift accounts for.
+   * - Anything older than a fortnight is not something the queue was holding;
+   *   the app drains on every return to the foreground.
+   *
+   * Outside the window the arrival time is used, which is exactly what
+   * happened before any of this existed.
+   */
+  static actedAt(claimed: Date | undefined, now: Date): Date {
+    if (!claimed) {
+      return now;
+    }
+
+    const value = claimed.getTime();
+
+    if (!Number.isFinite(value)) {
+      return now;
+    }
+
+    if (value > now.getTime() + CLOCK_SKEW_MS || value < now.getTime() - MAX_QUEUED_AGE_MS) {
+      return now;
+    }
+
+    return claimed;
   }
 
   /** The clinician's view of one patient's medication and how it is going. */

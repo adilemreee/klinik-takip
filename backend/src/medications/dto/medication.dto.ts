@@ -84,6 +84,27 @@ export class CheckInDto {
   @Min(5)
   @Max(720)
   snoozeMinutes?: number;
+
+  /**
+   * When the patient actually acted.
+   *
+   * Sent by a client whose check-in waited in the offline queue. The dose is
+   * the one record in this product whose whole value is its timestamp: a
+   * patient who took their antibiotic at nine and could only say so at
+   * midnight has an adherence record that is wrong by three hours, and a
+   * clinician reading it cannot tell that from a missed dose.
+   *
+   * Believed only within a sane window — see `MedicationsService.actedAt`.
+   */
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    description: 'When the patient acted, for a check-in that waited offline',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  at?: Date;
 }
 
 export class MedicationDto {

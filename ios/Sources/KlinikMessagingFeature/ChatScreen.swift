@@ -22,6 +22,15 @@ public struct ChatScreen: View {
     /// Recording a voice message (spec M3). Nil leaves the button out rather
     /// than showing one that cannot work.
     private let voice: VoiceRecording?
+    /**
+     * Bumped whenever the offline queue actually delivered something.
+     *
+     * Rows the app is holding are drawn from the queue, and nothing told this
+     * screen when the queue emptied — so a reading or a message sent minutes
+     * ago kept its "not sent yet" badge until the reader navigated away and
+     * back.
+     */
+    private let queueRevision: Int
 
     @State private var state = ChatState()
     @State private var draft = ""
@@ -31,6 +40,11 @@ public struct ChatScreen: View {
     @State private var recording = false
     @State private var recordedFor = 0
     @State private var microphoneRefused = false
+    /// False until the first load has been placed at the bottom, so that jump
+    /// is instant and everything after it animates.
+    @State private var hasSettled = false
+    /// When the socket was last told somebody is writing. See `announceTyping`.
+    @State private var lastTypingSentAt = Date.distantPast
 
     /**
      * The language to translate into.
@@ -54,7 +68,8 @@ public struct ChatScreen: View {
         onTyping: (@Sendable (String) -> Void)? = nil,
         openAssistant: (() -> Void)? = nil,
         pickAttachment: (() async -> (url: URL, contentType: String)?)? = nil,
-        voice: VoiceRecording? = nil
+        voice: VoiceRecording? = nil,
+        queueRevision: Int = 0
     ) {
         self.model = model
         self.canUseTemplates = canUseTemplates
@@ -63,6 +78,7 @@ public struct ChatScreen: View {
         self.pickAttachment = pickAttachment
         self.live = live
         self.voice = voice
+        self.queueRevision = queueRevision
     }
 
     public var body: some View {
@@ -80,7 +96,20 @@ public struct ChatScreen: View {
             // named by the caller.
             await listen()
         }
+        .navigationTitle(L10n.string("menu.messages"))
+        .onChange(of: queueRevision) { _, _ in
+            Task { await refresh { await model.load() } }
+        }
         .onDisappear {
+            // A recording in progress belongs to a screen that no longer
+            // exists. Left running it holds the microphone and the audio
+            // session open for as long as the app is up.
+            if recording {
+                voice?.cancel()
+                recording = false
+                recordedFor = 0
+            }
+
             guard let conversationId = state.conversationId else { return }
 
             live?.leave(conversationId)
@@ -130,7 +159,8 @@ public struct ChatScreen: View {
                 AssistantOffer(isClinicClosed: state.willBeQueued, open: openAssistant)
             }
 
-            ScrollView {
+            ScrollViewReader { scroller in
+                ScrollView {
                 LazyVStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
                     if state.hasOlder {
                         Button(L10n.string("message.loadOlder")) {
@@ -186,8 +216,44 @@ public struct ChatScreen: View {
                             .font(Tokens.Typography.captionRelative)
                             .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
                     }
+
+                    // What everything scrolls to. An anchor of its own rather
+                    // than the last row, because "the bottom" has to keep
+                    // meaning the bottom when the last row is an unsent message
+                    // or the typing line.
+                    Color.clear
+                        .frame(height: 1)
+                        .id(ChatScreen.bottomAnchor)
+                        .accessibilityHidden(true)
                 }
                 .padding(Tokens.Spacing.lg)
+                }
+                /*
+                 * A conversation opens at its newest message.
+                 *
+                 * Without this the thread opened at the oldest message it had
+                 * loaded — months back, for a patient in follow-up — and stayed
+                 * there when the clinic answered. Every chat anybody has ever
+                 * used does this; a thread that does not reads as broken.
+                 *
+                 * Not animated on the first pass: sliding through a year of
+                 * history on open is a long way to travel to arrive where the
+                 * screen should have started.
+                 */
+                .onChange(of: state.messages.last?.id) { _, _ in
+                    // The last id, not the count: "load older" prepends, and
+                    // scrolling to the bottom for that would undo the tap.
+                    scrollToBottom(scroller, animated: hasSettled)
+                }
+                .onChange(of: state.unsent.count) { _, _ in
+                    scrollToBottom(scroller, animated: hasSettled)
+                }
+                .task(id: state.phase) {
+                    guard case .loaded = state.phase else { return }
+
+                    scrollToBottom(scroller, animated: false)
+                    hasSettled = true
+                }
             }
 
             if let error = state.error {
@@ -277,9 +343,7 @@ public struct ChatScreen: View {
                 keyboard: .default
             )
             .onChange(of: draft) { _, _ in
-                if let conversationId = state.conversationId {
-                    onTyping?(conversationId)
-                }
+                announceTyping()
             }
 
             PrimaryButton(
@@ -300,7 +364,13 @@ public struct ChatScreen: View {
         guard let pickAttachment, let picked = await pickAttachment() else { return }
 
         attaching = true
-        defer { attaching = false }
+        defer {
+            attaching = false
+            // The picker's copy. The upload has the bytes; what is left here is
+            // somebody's document sitting in the temporary directory, and the
+            // voice path next door already cleans up after itself.
+            try? FileManager.default.removeItem(at: picked.url)
+        }
 
         let caption = draft
         let sent = await refreshReturning {
@@ -325,6 +395,40 @@ public struct ChatScreen: View {
         }
 
         viewing = ViewedAttachment(id: message.id, url: url)
+    }
+
+    /**
+     * Tells the room somebody is writing, at most once every few seconds.
+     *
+     * The indicator means "this person is composing", which is true for as long
+     * as they keep typing — so it does not need to be said again for every
+     * character. Unthrottled, a two-hundred character message was two hundred
+     * socket frames.
+     */
+    private func announceTyping() {
+        guard let conversationId = state.conversationId else { return }
+
+        let now = Date()
+        guard now.timeIntervalSince(lastTypingSentAt) >= ChatScreen.typingInterval else { return }
+
+        lastTypingSentAt = now
+        onTyping?(conversationId)
+    }
+
+    /// Comfortably shorter than the indicator's own life on the other side, so
+    /// it never lapses while somebody is still writing.
+    nonisolated static let typingInterval: TimeInterval = 3
+
+    /// The id of the marker at the very bottom of the thread.
+    fileprivate static let bottomAnchor = "chat.bottom"
+
+    private func scrollToBottom(_ scroller: ScrollViewProxy, animated: Bool) {
+        guard animated else {
+            scroller.scrollTo(ChatScreen.bottomAnchor, anchor: .bottom)
+            return
+        }
+
+        withAnimation { scroller.scrollTo(ChatScreen.bottomAnchor, anchor: .bottom) }
     }
 
     private func refresh(_ work: () async -> Void) async {

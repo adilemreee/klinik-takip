@@ -203,9 +203,12 @@ public struct APIEmergencyTrigger: EmergencyTrigger {
         self.api = api
     }
 
-    public func trigger(note: String?) async throws {
+    /// Returns the number the server says reaches an ambulance where the
+    /// patient is, so a later failure — which by definition cannot ask — has
+    /// the right country's number already on the phone.
+    public func trigger(note: String?) async throws -> EmergencyNumber? {
         // Location is deliberately not waited for here: spec M8 says the alarm
         // goes now and the position follows.
-        _ = try await api.trigger(note: note)
+        try await api.trigger(note: note).guidance.emergencyNumber
     }
 }

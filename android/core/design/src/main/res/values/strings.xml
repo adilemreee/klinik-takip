@@ -65,7 +65,7 @@
     <string name="analytics_count">Adet</string>
     <string name="analytics_geography">Ülkeler</string>
     <string name="analytics_geography_title">Ülke dağılımı</string>
-    <string name="analytics_margin">Kâr</string>
+    <string name="analytics_margin">Marj</string>
     <string name="analytics_month">Ay</string>
     <string name="analytics_net">Net</string>
     <string name="analytics_not_permitted">Bu hesabın istatistik paneline erişimi yok.</string>
@@ -83,7 +83,7 @@
     <string name="analytics_record_count">%d kayıt</string>
     <string name="analytics_revenue">Gelir</string>
     <string name="analytics_revenue_title">Gelir ve gider</string>
-    <string name="analytics_revenue_withheld">Gelir kırılımı bu hesaba gösterilmiyor.</string>
+    <string name="analytics_revenue_withheld">Gelir sütunları yetkiniz olmadığı için gizlendi — sıfır anlamına gelmez.</string>
     <string name="analytics_title">İstatistikler</string>
     <string name="analytics_too_few">Yeterli veri yok</string>
     <string name="analytics_total_operations">Toplam %d ameliyat</string>
@@ -206,6 +206,7 @@
     <string name="biometrics_try_again">Doğrulanamadı. Tekrar deneyin ya da cihaz şifrenizi kullanın.</string>
     <string name="biometrics_unavailable">Bu cihazda biyometrik doğrulama kurulu değil.</string>
     <string name="biometrics_unlock_with">%@ ile aç</string>
+    <string name="biometrics_unlock_with_passcode">Parola ile aç</string>
     <string name="bmi_category_normal">Normal</string>
     <string name="bmi_category_obese_i">Obezite (1. derece)</string>
     <string name="bmi_category_obese_ii">Obezite (2. derece)</string>
@@ -277,10 +278,12 @@
     <string name="complication_answered">Yanıt</string>
     <string name="complication_awaiting_reply">Klinik henüz yanıtlamadı.</string>
     <string name="complication_body_area">Vücut bölgesi (isteğe bağlı)</string>
+    <string name="complication_my_title">Şikayetlerim</string>
     <string name="complication_no_body_area">Bölge belirtilmemiş</string>
     <string name="complication_overdue_count">Uzun süredir bekleyen</string>
     <string name="complication_photo_count">fotoğraf</string>
     <string name="complication_queue_empty">Bekleyen bildirim yok.</string>
+    <string name="complication_queue_title">Şikayet kuyruğu</string>
     <string name="complication_report_hint">Neyin ters gittiğini yazın. Acil bir durumdaysanız acil butonunu kullanın.</string>
     <string name="complication_report_title">Bir sorun bildir</string>
     <string name="complication_resolve">Kapat</string>
@@ -320,6 +323,7 @@
     <string name="consent_procedure_unknown">Klinik henüz hangi işlemi yaptıracağınızı kaydetmedi.</string>
     <string name="consent_procedure_unknown_why">Yapılacak işlemi adıyla yazmayan bir onam formu geçerli bir aydınlatılmış onam değildir. Klinik işlem kaydını girdiğinde form burada açılır.</string>
     <string name="consent_read_and_sign">Metni oku ve imzala</string>
+    <string name="consent_read_to_end_first">Onaylamadan önce metnin sonuna kadar okuyun.</string>
     <string name="consent_sign_hint">Parmağınızla buraya imzalayın</string>
     <string name="consent_signature">İmza</string>
     <string name="consent_signature_required">Onaylamadan önce imzalamanız gerekiyor.</string>
@@ -347,6 +351,7 @@
     <string name="document_scan_preview">Telefonunuzun okuduğu metin</string>
     <string name="document_scan_review">Tarama</string>
     <string name="document_scan_unreadable">Telefon bu taramada okunabilir bir metin bulamadı. Belge okunaksızsa daha iyi ışıkta tekrar çekin.</string>
+    <string name="document_title">Belgeler</string>
     <string name="document_type">Belge türü</string>
     <string name="document_type_consent">Onam formu</string>
     <string name="document_type_ecg">EKG</string>
@@ -410,6 +415,7 @@
     <string name="emergency_summary_medications">Kullandığı ilaçlar</string>
     <string name="emergency_summary_none">Kayıt yok</string>
     <string name="emergency_unanswered">Yanıtlanmadı</string>
+    <string name="emergency_universal_number_note">112 hemen her ülkede ambulansa ulaşır. Bulunduğunuz ülkenin kendi numarasını biliyorsanız onu arayın.</string>
     <string name="emergency_waiting_minutes">%d dk bekliyor</string>
     <string name="error_forbidden">Bu işlem için yetkiniz yok.</string>
     <string name="error_not_found">Kayıt bulunamadı.</string>
@@ -579,6 +585,7 @@
     <string name="follow_up_status_pending">Planlandı</string>
     <string name="follow_up_status_skipped">Atlandı</string>
     <string name="follow_up_surgery_date">Ameliyat tarihi</string>
+    <string name="follow_up_title">Kontrol takvimi</string>
     <string name="health_denied">Sağlık verisine erişim izni verilmedi. Ayarlar &gt; Sağlık\'tan değiştirebilirsiniz.</string>
     <string name="health_nothing_new">Son almadan bu yana yeni ölçüm yok.</string>
     <string name="health_queued">%d ölçüm alındı ama bağlantı yok. Telefonda duruyorlar, bağlantı gelince gönderilecek.</string>
@@ -647,6 +654,7 @@
     <string name="lab_review_low_confidence">Okuma şüpheli — kontrol edin</string>
     <string name="lab_review_needs_mapping">Analit eşleştirilmedi</string>
     <string name="lab_review_notice">Bu değerler belgeden otomatik okundu ve HENÜZ HASTA DOSYASINDA DEĞİL. Onayladığınız satırlar dosyaya işlenir.</string>
+    <string name="lab_review_title">Tahlil doğrulama</string>
     <string name="lab_title">Tahlil sonuçlarım</string>
     <string name="lab_toggle_hint">Açmak ya da kapatmak için dokunun</string>
     <string name="lab_trend_analyte">Analit</string>
@@ -656,9 +664,11 @@
     <string name="lab_trend_reference">Referans aralığı</string>
     <string name="lab_trend_reference_high">Referans üst sınır</string>
     <string name="lab_trend_reference_low">Referans alt sınır</string>
+    <string name="lab_trend_title">Tahlil eğrileri</string>
     <string name="lab_trends">Eğri</string>
     <string name="measurement_add">Ölçüm ekle</string>
     <string name="measurement_bmi">VKİ</string>
+    <string name="measurement_chart_title">Ölçümler</string>
     <string name="measurement_date">Tarih</string>
     <string name="measurement_diastolic">Küçük tansiyon</string>
     <string name="measurement_empty">Henüz ölçüm yok. İlk kilonuzu ekleyince eğri çizilmeye başlar.</string>
@@ -686,14 +696,15 @@
     <string name="medication_adherence">Uyum</string>
     <string name="medication_adherence_of">%1$d alındı · %2$d atlandı</string>
     <string name="medication_approve_action">Onayla</string>
-    <string name="medication_awaiting_approval">Onay bekliyor</string>
+    <string name="medication_awaiting_approval">Doktor onayı bekliyor</string>
     <string name="medication_badge_first_dose">İlk doz</string>
     <string name="medication_badge_four_weeks">4 hafta</string>
     <string name="medication_badge_one_week">1 hafta</string>
     <string name="medication_badge_three_days">3 gün</string>
-    <string name="medication_empty">Bu hastaya yazılmış ilaç yok.</string>
+    <string name="medication_empty">Henüz ilaç kaydı yok.</string>
+    <string name="medication_empty_for_patient">Bu hastaya yazılmış ilaç yok.</string>
     <string name="medication_interactions_title">Etkileşim uyarıları</string>
-    <string name="medication_next_dose">Sıradaki doz</string>
+    <string name="medication_next_dose">Sonraki doz</string>
     <string name="medication_no_interactions">Bilinen etkileşim bulunamadı.</string>
     <string name="medication_no_score_yet">Henüz doz zamanı gelmedi</string>
     <string name="medication_not_checked">Karşılaştırılacak ikinci bir ilaç yok.</string>
@@ -709,7 +720,7 @@
     <string name="medication_status_taken">İçildi</string>
     <string name="medication_stop_action">Kes</string>
     <string name="medication_stop_confirm">Bu ilaç kesilsin mi?</string>
-    <string name="medication_stopped">Kesildi</string>
+    <string name="medication_stopped">Durduruldu</string>
     <string name="medication_streak">%d gündür aksatmadınız</string>
     <string name="medication_taken">İçtim</string>
     <string name="medication_title">İlaçlarım</string>
@@ -867,6 +878,7 @@
     <string name="photo_clinical_use_only">Yalnızca klinik kullanım</string>
     <string name="photo_compare">Karşılaştır</string>
     <string name="photo_compare_slider">Karşılaştırma kaydırıcısı</string>
+    <string name="photo_comparison_title">Karşılaştırma</string>
     <string name="photo_consent_given">Kullanım onamı var</string>
     <string name="photo_empty">Henüz fotoğraf yok.</string>
     <string name="photo_finding_discharge">Akıntı</string>
@@ -874,6 +886,7 @@
     <string name="photo_finding_swelling">Şişlik</string>
     <string name="photo_finding_wound_open">Yara kenarları ayrık</string>
     <string name="photo_flagged_title">İncelenecek fotoğraflar</string>
+    <string name="photo_gallery_title">Fotoğraflar</string>
     <string name="photo_image">Klinik fotoğraf</string>
     <string name="photo_need_body_area">Karşılaştırma yapılabilmesi için bölgeyi yazın.</string>
     <string name="photo_no_body_area">Bölge belirtilmemiş</string>

@@ -17,10 +17,13 @@ import KlinikCore
  * opened its own would open a second one the next time somebody navigated back
  * into it.
  *
- * The token is fetched fresh on every connect. Sockets outlive access tokens —
- * an hour on a ward round is longer than a token's life — and a reconnect
- * carrying the expired one is refused at the handshake, which looks exactly
- * like the clinic being unreachable.
+ * The token is fetched fresh on every connect, and reconnection is driven here
+ * rather than left to the library. Sockets outlive access tokens — an hour on a
+ * ward round is longer than a token's life — and socket.io's own reconnect
+ * replays the handshake headers it was built with, so every attempt after the
+ * token expires is refused. What that looked like was a connection that worked
+ * for an hour and then went quiet until the app was restarted, with nothing on
+ * screen to say so.
  */
 @MainActor
 @Observable
@@ -44,6 +47,12 @@ public final class LiveConnection: LiveChannel, JobChannel {
 
     private var manager: SocketManager?
     private var socket: SocketIOClient?
+
+    /// True between `start()` and `stop()`. A dropped connection is worth
+    /// chasing only while somebody still wants one.
+    private var wantsConnection = false
+    private var reconnectTask: Task<Void, Never>?
+    private var failedAttempts = 0
 
     /// A second namespace over the same connection, not a second connection:
     /// socket.io multiplexes, and a phone holding two sockets to the same host
@@ -78,8 +87,19 @@ public final class LiveConnection: LiveChannel, JobChannel {
 
     /// Opens the connection. Does nothing if one is already open.
     public func start() async {
-        guard manager == nil else { return }
-        guard let token = try? await session.validAccessToken() else { return }
+        wantsConnection = true
+        await connect()
+    }
+
+    private func connect() async {
+        guard wantsConnection, manager == nil else { return }
+
+        guard let token = try? await session.validAccessToken() else {
+            // No token to hand over — the session may be refreshing, or gone.
+            // Worth another try; `stop()` is what says otherwise.
+            scheduleReconnect()
+            return
+        }
 
         let manager = SocketManager(
             socketURL: baseURL,
@@ -91,9 +111,10 @@ public final class LiveConnection: LiveChannel, JobChannel {
                 // outlives the connection that needed it.
                 .connectParams([:]),
                 .extraHeaders(["Authorization": "Bearer \(token)"]),
-                .reconnects(true),
-                .reconnectWait(2),
-                .reconnectWaitMax(30),
+                // Off, deliberately. The library would reconnect with the
+                // headers above, and the token in them is the thing that goes
+                // stale — see the note on this type.
+                .reconnects(false),
             ]
         )
 
@@ -104,7 +125,13 @@ public final class LiveConnection: LiveChannel, JobChannel {
         }
 
         socket.on(clientEvent: .disconnect) { [weak self] _, _ in
-            Task { @MainActor in self?.isConnected = false }
+            Task { @MainActor in self?.didDisconnect() }
+        }
+
+        socket.on(clientEvent: .error) { [weak self] _, _ in
+            // A refused handshake arrives here, which is exactly the case a
+            // stale token produces.
+            Task { @MainActor in self?.didDisconnect() }
         }
 
         socket.on("message") { [weak self] data, _ in
@@ -143,6 +170,10 @@ public final class LiveConnection: LiveChannel, JobChannel {
             Task { @MainActor in self?.didConnectJobs() }
         }
 
+        jobs.on(clientEvent: .disconnect) { [weak self] _, _ in
+            Task { @MainActor in self?.didDisconnect() }
+        }
+
         jobs.on("job") { [weak self] data, _ in
             guard
                 let update = LiveConnection.decode(JobUpdate.self, from: data),
@@ -165,6 +196,22 @@ public final class LiveConnection: LiveChannel, JobChannel {
     /// Closes it. Called when the session ends: a socket authenticated as one
     /// person must not still be delivering when the next one signs in.
     public func stop() {
+        wantsConnection = false
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        failedAttempts = 0
+
+        tearDown()
+
+        joined = []
+        watching = []
+        handlers = [:]
+        jobHandlers = [:]
+    }
+
+    /// Drops the sockets but keeps what has been subscribed to, so a reconnect
+    /// can put the rooms back.
+    private func tearDown() {
         socket?.removeAllHandlers()
         socket?.disconnect()
         jobs?.removeAllHandlers()
@@ -174,11 +221,42 @@ public final class LiveConnection: LiveChannel, JobChannel {
         socket = nil
         jobs = nil
         manager = nil
-        joined = []
-        watching = []
-        handlers = [:]
-        jobHandlers = [:]
         isConnected = false
+    }
+
+    private func didDisconnect() {
+        isConnected = false
+        scheduleReconnect()
+    }
+
+    /**
+     * Tries again, with a fresh token and a widening gap.
+     *
+     * The whole connection is rebuilt rather than resumed, because the point of
+     * trying again is the new token in the handshake. Backoff so a clinic
+     * behind a proxy that refuses the upgrade is not asked twice a second all
+     * day.
+     */
+    private func scheduleReconnect() {
+        guard wantsConnection, reconnectTask == nil else { return }
+
+        let delay = LiveConnection.backoff(afterFailures: failedAttempts)
+        failedAttempts += 1
+
+        reconnectTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+
+            guard !Task.isCancelled, let self else { return }
+
+            self.reconnectTask = nil
+            self.tearDown()
+            await self.connect()
+        }
+    }
+
+    /// Two seconds, doubling, capped at thirty.
+    nonisolated static func backoff(afterFailures failures: Int) -> Double {
+        min(30, 2 * pow(2, Double(min(failures, 4))))
     }
 
     // MARK: - Background work (spec M14)
@@ -233,6 +311,9 @@ public final class LiveConnection: LiveChannel, JobChannel {
 
     private func didConnect() async {
         isConnected = true
+        // A connection that lasted is the only evidence the backoff should
+        // start over from.
+        failedAttempts = 0
 
         for conversationId in joined {
             socket?.emit("join", ["conversationId": conversationId])

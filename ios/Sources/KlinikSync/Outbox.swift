@@ -162,6 +162,15 @@ public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
     public let documentType: String
 
     public let originalName: String
+
+    /**
+     * What the picker said the file was.
+     *
+     * Kept with the row and deliberately not sent: the server decides a
+     * document's type by reading its first bytes, because a `Content-Type` is
+     * a claim by an untrusted client. This is here for the queue's own record
+     * — what the phone believed it was holding when the transfer failed.
+     */
     public let contentType: String
     public let totalBytes: Int
     public let startedAt: Date
@@ -264,10 +273,6 @@ public actor InMemoryUploadStore: UploadStore {
     public func remember(_ upload: PendingUpload) async throws {
         uploads.removeAll { $0.id == upload.id }
         uploads.append(upload)
-    }
-
-    public func update(_ upload: PendingUpload) async throws {
-        try await remember(upload)
     }
 
     public func forget(id: String) async throws {

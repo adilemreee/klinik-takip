@@ -364,7 +364,8 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
     init(_ upload: PendingUpload) {
         id = upload.id
         sessionId = upload.sessionId
-        fileURL = upload.fileURL.path
+        // The name only. See `resolve`.
+        fileURL = upload.fileURL.lastPathComponent
         patientId = upload.patientId
         documentType = upload.documentType
         originalName = upload.originalName
@@ -379,7 +380,7 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
         PendingUpload(
             id: id,
             sessionId: sessionId,
-            fileURL: URL(fileURLWithPath: fileURL),
+            fileURL: UploadRow.resolve(fileURL),
             patientId: patientId,
             documentType: documentType,
             originalName: originalName,
@@ -389,6 +390,29 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
             attempts: attempts,
             lastError: lastError
         )
+    }
+
+    /**
+     * Where the bytes are now, rebuilt rather than remembered.
+     *
+     * iOS gives the app a new container directory on every update — the UUID
+     * in `/var/mobile/Containers/Data/Application/<UUID>/` is not stable — so
+     * an absolute path written before an update names nothing after one. What
+     * that looked like was every queued upload reporting "the file is gone"
+     * the first time somebody updated the app, with the files sitting there
+     * untouched under the new path.
+     *
+     * `lastPathComponent` rather than the stored string, so rows written by
+     * the older code are read correctly too.
+     */
+    static func resolve(_ stored: String) -> URL {
+        let name = URL(fileURLWithPath: stored).lastPathComponent
+
+        guard !name.isEmpty, let directory = try? PendingUpload.directory() else {
+            return URL(fileURLWithPath: stored)
+        }
+
+        return directory.appendingPathComponent(name)
     }
 }
 
@@ -478,16 +502,6 @@ public struct SQLiteUploadStore: UploadStore {
 
     public func remember(_ upload: PendingUpload) async throws {
         try await store.write { try UploadRow(upload).upsert($0) }
-    }
-
-    /// Only a row that is still queued: updating one already finished would
-    /// resurrect an upload the server has already assembled.
-    public func update(_ upload: PendingUpload) async throws {
-        try await store.write { database in
-            if try UploadRow.exists(database, key: upload.id) {
-                try UploadRow(upload).update(database)
-            }
-        }
     }
 
     public func forget(id: String) async throws {

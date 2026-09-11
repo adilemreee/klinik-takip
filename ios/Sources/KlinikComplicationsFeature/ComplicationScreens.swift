@@ -23,6 +23,8 @@ public struct ComplicationQueueView: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
+        .refreshable { await refresh { await model.load() } }
+        .navigationTitle(L10n.string("complication.queueTitle"))
         .sheet(item: $responding) { item in
             RespondSheet(
                 item: item,
@@ -254,6 +256,8 @@ public struct MyComplicationsView: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
+        .refreshable { await refresh { await model.load() } }
+        .navigationTitle(L10n.string("complication.myTitle"))
     }
 
     private var reportForm: some View {

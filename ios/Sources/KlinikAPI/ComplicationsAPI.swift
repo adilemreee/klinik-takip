@@ -54,6 +54,15 @@ public struct ComplicationsAPI: Sendable {
      * clinic if it is urgent. A queue is the right home for a report that
      * would otherwise be lost, and the wrong home for an emergency; the
      * emergency button deliberately does not use one.
+     *
+     * **No client timestamp, deliberately.** The dose check-in next door sends
+     * one because the minute a tablet was taken *is* the clinical record. A
+     * complaint is not that: what matters clinically is when the symptom
+     * started, which the patient writes in their own words, and the server's
+     * `reportedAt` is the clock the response-time target is measured against.
+     * Rewriting it with the phone's time would charge the clinic for hours it
+     * spent not knowing, and a second column beside it would be one nothing
+     * displays.
      */
     public func report(
         note: String,

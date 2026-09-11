@@ -197,7 +197,6 @@ public actor APIClient {
 
             if cacheable {
                 await cache?.store(response.body, for: key(for: endpoint))
-                await connection?.reachedServer()
             }
 
             return response.body
@@ -212,6 +211,12 @@ public actor APIClient {
             return cached.body
         } catch let error as APIError where endpoint.offline.isQueueable && error.isConnectivity {
             try await keep(endpoint, ratherThanFailingWith: error)
+        } catch let error as APIError where error.isConnectivity {
+            // A read with no cache behind it, or a write nobody chose to queue.
+            // Still evidence about the connection, and the bar at the top of
+            // every screen is drawn from exactly this.
+            await connection?.couldNotReachServer()
+            throw error
         }
     }
 
@@ -322,6 +327,20 @@ public actor APIClient {
         } else {
             response = try await transport.send(request)
         }
+
+        /*
+         * An answer arrived, so the clinic is reachable.
+         *
+         * Reported here rather than beside the cache, which is where it used to
+         * live: only reads were cached, so only reads ever cleared the offline
+         * bar. A patient who recorded a weight with no signal and then walked
+         * into coverage had their write go through and the bar stay up until
+         * something happened to read.
+         *
+         * "Reachable" is about the connection, not about the verdict — a 404 is
+         * a server answering, and the queue is entitled to know that.
+         */
+        await connection?.reachedServer()
 
         // One retry, and only for a 401 on an authenticated request. Retrying
         // more would spend refresh tokens the backend treats as single-use.

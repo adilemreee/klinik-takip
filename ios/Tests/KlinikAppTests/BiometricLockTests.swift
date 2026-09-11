@@ -1,4 +1,5 @@
 import XCTest
+import KlinikCore
 @testable import KlinikApp
 
 /**
@@ -110,5 +111,34 @@ final class BiometricLockTests: XCTestCase {
         let sut = lock(enabled: true, clock: Clock(), in: store())
 
         XCTAssertTrue(sut.isLocked)
+    }
+
+    /**
+     * The button names a check the device can actually make.
+     *
+     * A device with no enrolled biometry still has a passcode, and
+     * `deviceOwnerAuthentication` falls back to it — but `kind` is then `.none`
+     * and its name is the empty string, so the button read " ile aç" under a
+     * Face ID icon.
+     */
+    func testTheLockScreenDoesNotPromiseAFaceThatIsNotThere() {
+        XCTAssertEqual(LockedView.symbol(for: .faceID), "faceid")
+        XCTAssertEqual(LockedView.symbol(for: .touchID), "touchid")
+        XCTAssertEqual(LockedView.symbol(for: .none), "lock.fill")
+        XCTAssertEqual(LockedView.symbol(for: .other), "lock.fill")
+    }
+
+    func testEveryKindOfCheckHasAName() {
+        for kind in [BiometryKind.faceID, .touchID, .other] {
+            XCTAssertFalse(kind.localizedName.isEmpty, "\(kind) has no name")
+        }
+
+        // And the one that has none names the passcode instead, which is the
+        // check the device will actually run.
+        XCTAssertTrue(BiometryKind.none.localizedName.isEmpty)
+        XCTAssertNotEqual(
+            L10n.string("biometrics.unlockWithPasscode"),
+            "biometrics.unlockWithPasscode"
+        )
     }
 }

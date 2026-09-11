@@ -70,11 +70,26 @@ public struct ChecklistScreen: View {
     /// the person who uploads their passport.
     private let upload: ((DocumentType) -> Void)?
 
+    /**
+     * Bumped by whoever navigated away, so coming back re-reads the list.
+     *
+     * "Yükle" pushes the upload screen on top of this one, which is never
+     * removed — so `task` does not run again on the way back, and a patient who
+     * has just sent their passport is looking at a row that still says it is
+     * missing. Most of them upload it a second time.
+     */
+    private let refreshToken: Int
+
     @State private var state = ChecklistState()
 
-    public init(model: ChecklistModel, upload: ((DocumentType) -> Void)? = nil) {
+    public init(
+        model: ChecklistModel,
+        upload: ((DocumentType) -> Void)? = nil,
+        refreshToken: Int = 0
+    ) {
         self.model = model
         self.upload = upload
+        self.refreshToken = refreshToken
     }
 
     public var body: some View {
@@ -86,7 +101,7 @@ public struct ChecklistScreen: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .navigationTitle(L10n.string("checklist.title"))
-        .task { await reload() }
+        .task(id: refreshToken) { await reload() }
         .refreshable { await reload() }
     }
 

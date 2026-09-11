@@ -26,8 +26,6 @@ public struct LabResult: Decodable, Sendable, Equatable, Identifiable {
     public let ocrConfidence: String?
     public let verifiedAt: Date?
 
-    public var numericValue: Double? { Double(value) }
-
     /**
      * Whether this one is outside its range.
      *

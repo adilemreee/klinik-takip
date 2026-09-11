@@ -285,4 +285,28 @@ final class DocumentsModelTests: XCTestCase {
         XCTAssertEqual(state.documents.map(\.id), ["d1", "d2"])
         XCTAssertFalse(state.hasMore)
     }
+
+    /**
+     * The download's filename comes from the server.
+     *
+     * `appendingPathComponent` does not interpret `..`; it builds the path it
+     * is given. Nothing here needs the server's directory separators, so they
+     * do not survive.
+     */
+    func testAServerFilenameCannotChooseWhereTheFileLands() {
+        XCTAssertEqual(DocumentsModel.safeFilename("tahlil.pdf"), "tahlil.pdf")
+        XCTAssertEqual(DocumentsModel.safeFilename("../../etc/passwd"), ".._.._etc_passwd")
+        XCTAssertEqual(DocumentsModel.safeFilename("a/b/c.pdf"), "a_b_c.pdf")
+        XCTAssertEqual(DocumentsModel.safeFilename(".."), "document")
+        XCTAssertEqual(DocumentsModel.safeFilename(""), "document")
+        XCTAssertEqual(DocumentsModel.safeFilename("   "), "document")
+    }
+
+    /// Long enough for any real document, short enough that the path does not
+    /// run past what the filesystem will take.
+    func testAnAbsurdlyLongNameIsTrimmed() {
+        let long = String(repeating: "a", count: 500) + ".pdf"
+
+        XCTAssertLessThanOrEqual(DocumentsModel.safeFilename(long).count, 120)
+    }
 }

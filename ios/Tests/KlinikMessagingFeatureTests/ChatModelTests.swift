@@ -348,6 +348,42 @@ final class ChatModelTests: XCTestCase {
         let hasOlder = await chat.currentState().hasOlder
         XCTAssertTrue(hasOlder)
     }
+
+    /**
+     * "Yazıyor…" stops on its own.
+     *
+     * There is no event for somebody giving up on a message — which is the
+     * common case — so the indicator was switched on and never off, and stayed
+     * on screen for the rest of the session.
+     */
+    func testTheTypingIndicatorLapses() async {
+        let chat = await model(RecordingTransport(bodies: bodies()))
+
+        await chat.setTyping("nurse", isTyping: true)
+        var state = await chat.currentState()
+        XCTAssertTrue(state.typing.contains("nurse"))
+
+        await chat.setTyping("nurse", isTyping: false)
+        state = await chat.currentState()
+        XCTAssertFalse(state.typing.contains("nurse"))
+    }
+
+    /// A message from that person is the end of their typing, and does not
+    /// wait for the timer.
+    func testAMessageClearsItsSendersIndicator() async throws {
+        let chat = await model(RecordingTransport(bodies: bodies()))
+        await chat.load()
+        await chat.setTyping("nurse", isTyping: true)
+
+        let arrived = try JSONDecoder.klinik.decode(
+            ChatMessage.self,
+            from: Data(message("m9", sender: "\"nurse\"").utf8)
+        )
+        await chat.receive(arrived)
+
+        let state = await chat.currentState()
+        XCTAssertFalse(state.typing.contains("nurse"))
+    }
 }
 
 /**
@@ -755,4 +791,24 @@ final class VoiceMessageTests: XCTestCase {
         XCTAssertEqual(ChatScreen.elapsed(90), "1:30")
         XCTAssertEqual(ChatScreen.elapsed(180), "3:00")
     }
+
+    /**
+     * The type follows the key being sent, not the one the model is holding.
+     *
+     * An upload that succeeded and a send that failed left a pending key
+     * behind. The next plain-text message then went out labelled `IMAGE` with
+     * nothing attached to it.
+     */
+    func testAPlainMessageIsNotLabelledAsAnAttachment() {
+        XCTAssertNil(ChatModel.messageType(for: nil, pending: .image))
+        XCTAssertNil(ChatModel.messageType(for: nil, pending: nil))
+    }
+
+    func testAnAttachmentKeepsItsKind() {
+        XCTAssertEqual(ChatModel.messageType(for: "k", pending: .image), .image)
+        XCTAssertEqual(ChatModel.messageType(for: "k", pending: .audio), .audio)
+        // Nothing said, so the safe reading: a file.
+        XCTAssertEqual(ChatModel.messageType(for: "k", pending: nil), .file)
+    }
+
 }

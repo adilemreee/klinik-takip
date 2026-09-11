@@ -114,4 +114,29 @@ final class JobUpdateTests: XCTestCase {
     func testAnIncompletePayloadIsRefused() {
         XCTAssertNil(LiveConnection.decode(JobUpdate.self, from: payload(#"{"jobId":"j1"}"#)))
     }
+
+    /**
+     * Reconnection backs off, and starts over once a connection sticks.
+     *
+     * Reconnecting is this type's own job now, because socket.io's replays the
+     * handshake headers it was built with — and the access token in them is
+     * exactly the thing that goes stale. The connection used to work for an
+     * hour and then go quiet until the app was restarted.
+     */
+    func testReconnectionBacksOffAndIsCapped() {
+        XCTAssertEqual(LiveConnection.backoff(afterFailures: 0), 2)
+        XCTAssertEqual(LiveConnection.backoff(afterFailures: 1), 4)
+        XCTAssertEqual(LiveConnection.backoff(afterFailures: 2), 8)
+
+        // Capped: a clinic behind a proxy that refuses the upgrade must not be
+        // asked twice a second all day.
+        XCTAssertEqual(LiveConnection.backoff(afterFailures: 10), 30)
+        XCTAssertLessThanOrEqual(LiveConnection.backoff(afterFailures: 1_000), 30)
+    }
+
+    /// The first attempt waits, rather than hammering the moment a connection
+    /// drops — a dropped socket is usually a connection that is still going.
+    func testTheFirstRetryIsNotImmediate() {
+        XCTAssertGreaterThan(LiveConnection.backoff(afterFailures: 0), 0)
+    }
 }

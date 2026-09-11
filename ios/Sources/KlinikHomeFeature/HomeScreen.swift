@@ -41,20 +41,46 @@ public struct HomeScreen: View {
             await model.load()
             state = await model.currentState()
         }
-        .sheet(isPresented: .constant(isEmergencySheetShowing)) {
+        .task {
+            // Every change, not just the ones a tap causes. The countdown runs
+            // inside the model; read only after each tap, the number on screen
+            // would never move and the window would lapse behind a button that
+            // still looked live.
+            for await update in await emergency.updates() {
+                emergencyState = update
+            }
+        }
+        .sheet(isPresented: emergencySheetShowing) {
             EmergencySheet(state: emergencyState) { action in
                 switch action {
                 case .confirm: await emergency.confirm()
                 case .cancel: await emergency.cancel()
                 case .acknowledge: await emergency.acknowledge()
                 }
-                emergencyState = await emergency.currentState()
             }
+            // Nothing is dismissible while the alert is in flight: a sheet
+            // dragged away mid-send would leave somebody unsure whether the
+            // clinic was told.
+            .interactiveDismissDisabled(emergencyState.phase == .sending)
         }
     }
 
-    private var isEmergencySheetShowing: Bool {
-        emergencyState.phase != .idle
+    /**
+     * Whether the emergency sheet is up.
+     *
+     * A real binding rather than `.constant`: SwiftUI writes `false` back when
+     * the sheet is dragged away, and a constant binding swallowed that — which
+     * left the alert armed with nothing on screen to confirm or cancel it.
+     */
+    private var emergencySheetShowing: Binding<Bool> {
+        Binding(
+            get: { emergencyState.phase != .idle },
+            set: { showing in
+                guard !showing else { return }
+
+                Task { await emergency.cancel() }
+            }
+        )
     }
 
     @ViewBuilder
@@ -108,9 +134,9 @@ public struct HomeScreen: View {
                     scheme: scheme
                 ) {
                     if action == .emergency {
-                        // First tap only arms it (spec M8).
+                        // First tap only arms it (spec M8). The stream above
+                        // carries the new state back.
                         await emergency.arm()
-                        emergencyState = await emergency.currentState()
                     } else {
                         onSelect(action)
                     }
@@ -183,9 +209,10 @@ enum EmergencySheetAction {
 }
 
 /// The confirming step, the outcome, and — when the alert did not get through —
-/// the local emergency number.
+/// the number that reaches somebody without the clinic.
 struct EmergencySheet: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.openURL) private var openURL
 
     let state: EmergencyState
     let perform: (EmergencySheetAction) async -> Void
@@ -228,7 +255,7 @@ struct EmergencySheet: View {
                     await perform(.acknowledge)
                 }
 
-            case .failed(let message, _):
+            case .failed(let message, let canRetry):
                 // Says plainly that the clinic has not been told, and offers
                 // the number that will actually reach someone.
                 Image(systemName: Tokens.State.labCritical.iconName)
@@ -240,12 +267,34 @@ struct EmergencySheet: View {
                     .multilineTextAlignment(.center)
                     .font(Tokens.Typography.bodyRelative)
 
-                PrimaryButton(
-                    title: L10n.string("common.retry"),
-                    isBusy: false,
-                    isEnabled: true
-                ) {
-                    await perform(.confirm)
+                // Before the retry, and larger. Trying again is the app asking
+                // for another chance; this is the thing that reaches an
+                // ambulance whether or not the app ever works again.
+                dial(state.fallback.number, url: state.fallback.dialURL)
+
+                if let second = state.fallback.alsoTry {
+                    dial(second, url: state.fallback.secondDialURL, prominent: false)
+                }
+
+                if state.fallback.isUniversal {
+                    Text(L10n.string("emergency.universalNumberNote"))
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // Offered only when another attempt could plausibly work. A
+                // refused alert retried against the same refusal is a button
+                // that teaches somebody the app is broken.
+                if canRetry {
+                    PrimaryButton(
+                        title: L10n.string("common.retry"),
+                        isBusy: false,
+                        isEnabled: true
+                    ) {
+                        await perform(.confirm)
+                    }
                 }
 
                 Button(L10n.string("common.close")) { Task { await perform(.acknowledge) } }
@@ -258,5 +307,30 @@ struct EmergencySheet: View {
         .padding(Tokens.Spacing.xxl)
         .frame(maxWidth: .infinity)
         .background(Tokens.Palette.background.resolve(for: scheme))
+    }
+
+    /// A number, as something to press. Spelled out rather than hidden behind
+    /// "Acil numarayı ara": somebody may be reading it out to a stranger.
+    @ViewBuilder
+    private func dial(_ number: String, url: URL?, prominent: Bool = true) -> some View {
+        if let url {
+            Button { openURL(url) } label: {
+                Label(
+                    String(format: L10n.string("emergency.callNumber"), number),
+                    systemImage: "phone.fill"
+                )
+                .font(Tokens.Typography.subheadingRelative)
+                .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                .foregroundStyle(
+                    (prominent ? Tokens.Palette.accentText : Tokens.Palette.textPrimary)
+                        .resolve(for: scheme)
+                )
+                .background(
+                    (prominent ? Tokens.Palette.critical : Tokens.Palette.surface)
+                        .resolve(for: scheme)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+            }
+        }
     }
 }

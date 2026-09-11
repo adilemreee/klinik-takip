@@ -27,8 +27,21 @@ public struct QueuedWrite: Sendable, Equatable, Codable {
     public let entityType: String
     public let entityId: String
 
-    /// The version the record carried when the user started editing, for the
-    /// endpoints that have one. Nil for anything being created.
+    /**
+     * The version the record carried when the user started editing, for the
+     * endpoints that have one. Nil for anything being created.
+     *
+     * **Nil everywhere today.** All five writes that opt into the queue are
+     * additions — a reading, a dose log, a message, a questionnaire, a
+     * complaint — and an addition has no version to be stale against. So the
+     * server never answers `VERSION_CONFLICT` for a queued write, and the
+     * conflict half of `SyncEngine` (and the screen that shows both sides) does
+     * not run in this build.
+     *
+     * Kept rather than removed, and said out loud rather than left to be
+     * discovered: it is tested, and the first queueable *edit* — a travel plan,
+     * a medication the patient is correcting — turns it on by filling this in.
+     */
     public let baseVersion: Int?
 
     /// One line naming the change, in the user's language.

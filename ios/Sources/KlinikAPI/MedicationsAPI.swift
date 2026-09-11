@@ -240,7 +240,16 @@ public struct MedicationsAPI: Sendable {
                 method: .patch,
                 path: "me/medications/doses/\(logId)",
                 body: try JSONEncoder.klinik.encode(
-                    CheckInBody(action: action.rawValue, snoozeMinutes: snoozeMinutes)
+                    CheckInBody(
+                        action: action.rawValue,
+                        snoozeMinutes: snoozeMinutes,
+                        // Stamped now, not when the request lands. A check-in
+                        // that waits in the queue until the patient finds
+                        // signal at midnight would otherwise be recorded as a
+                        // dose taken at midnight — and shown to a clinician as
+                        // three hours late.
+                        at: Date()
+                    )
                 ),
                 offline: .queue(
                     QueuedWrite(
@@ -353,6 +362,9 @@ public struct MedicationsAPI: Sendable {
     private struct CheckInBody: Codable {
         let action: String
         let snoozeMinutes: Int?
+        /// When the patient tapped. The server believes it only inside a
+        /// window it decides; outside that it falls back to arrival time.
+        let at: Date
     }
 
     private struct ReportBody: Encodable {

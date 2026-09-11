@@ -30,6 +30,8 @@ public struct FollowUpScreen: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.refresh() } }
+        .refreshable { await refresh { await model.refresh() } }
+        .navigationTitle(L10n.string("followUp.title"))
     }
 
     /**

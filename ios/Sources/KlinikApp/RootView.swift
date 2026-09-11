@@ -23,6 +23,8 @@ public struct RootView: View {
     @State private var identityFailed = false
     @State private var lock = BiometricLock()
     @State private var push: PushRegistrar?
+    /// True while iOS is showing a prompt this app asked for. See the cover.
+    @State private var askingPermission = false
 
     @Environment(\.scenePhase) private var scenePhase
 
@@ -44,8 +46,27 @@ public struct RootView: View {
         // switcher's picture as the app goes inactive, and a card showing
         // somebody's lab results is a leak to whoever is holding the phone
         // next — no exploit required.
-        .overlay { PrivacyCover(hidden: scenePhase == .active || sessionState != .signedIn) }
+        .overlay {
+            PrivacyCover(
+                hidden: scenePhase == .active
+                    || sessionState != .signedIn
+                    // A system prompt this app asked for — Face ID, the push
+                    // permission — makes the app inactive without putting it
+                    // away. Covering for those flashes the shield over a
+                    // dialog the person is looking at.
+                    || lock.isPrompting
+                    || askingPermission
+            )
+        }
         .task { await start() }
+        .task {
+            // The session, for as long as the app is up. Read once at launch it
+            // would never show the moment a session lapses: every request would
+            // fail behind whatever screen was open, with no way back to sign-in.
+            for await state in await environment.session.updates() {
+                await apply(state)
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background:
@@ -98,7 +119,11 @@ public struct RootView: View {
         case nil:
             // Still asking who this is. Not a spinner over a login form: that
             // would flash sign-in at somebody already signed in, every launch.
-            LaunchView(failed: identityFailed) { await refreshIdentity() }
+            LaunchView(
+                failed: identityFailed,
+                retry: { await refreshIdentity() },
+                signOut: { await signOut() }
+            )
         }
     }
 
@@ -147,19 +172,42 @@ public struct RootView: View {
 
     private func start() async {
         environment.sync.start()
+        // Publishes into the stream above, which is what routes the app.
         await environment.session.restore()
-        await refresh()
     }
 
-    private func refresh() async {
-        sessionState = await environment.session.state
+    /**
+     * A session change, applied.
+     *
+     * The only place `sessionState` is written, so the screen on show and the
+     * session can never disagree. Identity is fetched when a session appears
+     * and dropped when one ends — a stale identity outliving a sign-out would
+     * route the next person to the last one's home screen.
+     */
+    private func apply(_ state: SessionState) async {
+        let wasSignedIn = sessionState == .signedIn
+        sessionState = state
 
-        guard sessionState == .signedIn else {
+        guard state == .signedIn else {
             identity = nil
+            identityFailed = false
+
+            // A session that lapsed while the app was open leaves a socket and
+            // a push registration belonging to somebody who is no longer here.
+            if wasSignedIn {
+                await endSideEffects()
+            }
+
             return
         }
 
+        guard identity == nil else { return }
+
         await refreshIdentity()
+    }
+
+    private func refresh() async {
+        await apply(await environment.session.state)
     }
 
     /// Push registration waits for a signed-in session: the token is stored
@@ -175,7 +223,9 @@ public struct RootView: View {
         push = registrar
         PushTokenBridge.shared.registrar = registrar
 
+        askingPermission = true
         await registrar.start()
+        askingPermission = false
     }
 
     private func refreshIdentity() async {
@@ -188,6 +238,10 @@ public struct RootView: View {
             // and opening it before we know who would be a connection nobody
             // could scope.
             await environment.live.start()
+        } catch let error as APIError where error.requiresReauthentication {
+            // The server has judged this session: revoked, locked, or gone.
+            // Offering a retry button would be offering to be refused again.
+            await signOut()
         } catch {
             // Not treated as signed out: a network blip is not a lapsed
             // session, and signing somebody out for one would lose their queued
@@ -199,13 +253,7 @@ public struct RootView: View {
     private func signOut() async {
         // Before the session ends, while the token can still be revoked with a
         // valid credential.
-        await push?.stop()
-        push = nil
-        PushTokenBridge.shared.registrar = nil
-
-        // A socket authenticated as one person must not still be delivering
-        // when the next one signs in.
-        environment.live.stop()
+        await endSideEffects()
 
         await environment.session.signOut()
         // The cache holds one person's clinical record. Left behind, the next
@@ -216,7 +264,21 @@ public struct RootView: View {
         // Left behind, they would be sent as whoever signs in next.
         await environment.sync.clearForSignOut()
         identity = nil
+        identityFailed = false
+        // `signOut` publishes, so `apply` sets this too — done here as well so
+        // the screen changes in the same frame as the tap.
         sessionState = .signedOut
+    }
+
+    /// Everything holding the session open besides the tokens themselves.
+    private func endSideEffects() async {
+        await push?.stop()
+        push = nil
+        PushTokenBridge.shared.registrar = nil
+
+        // A socket authenticated as one person must not still be delivering
+        // when the next one signs in.
+        environment.live.stop()
     }
 }
 
@@ -224,6 +286,10 @@ public struct RootView: View {
 struct LaunchView: View {
     let failed: Bool
     let retry: () async -> Void
+    /// The way out. Without it a session the server keeps refusing leaves the
+    /// app on this screen with a retry button and nothing else — which is not
+    /// a loading state, it is a locked door.
+    let signOut: () async -> Void
 
     var body: some View {
         VStack(spacing: Tokens.Spacing.lg) {
@@ -232,6 +298,8 @@ struct LaunchView: View {
                     .multilineTextAlignment(.center)
                 Button(L10n.string("app.retry")) { Task { await retry() } }
                     .buttonStyle(.borderedProminent)
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                Button(L10n.string("auth.signOut")) { Task { await signOut() } }
                     .frame(minHeight: Tokens.minimumTouchTarget)
             } else {
                 ProgressView()

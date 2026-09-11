@@ -109,10 +109,6 @@ public enum APIError: Error, Sendable, Equatable {
         }
     }
 
-    /// Whether the user's work survived. Not an error to apologise for: the
-    /// change is on the device and will be sent.
-    public var wasKept: Bool { self == .queuedForLater }
-
     /// Whether the session is over and the user has to sign in again.
     public var requiresReauthentication: Bool {
         switch self {

@@ -71,6 +71,15 @@ public final class BiometricLock {
     /// When the app was last put away. Nil while it is in front.
     private var leftAt: Date?
 
+    /**
+     * True while the device's own check is on screen.
+     *
+     * The Face ID sheet makes the app inactive without putting it away, and the
+     * shell's privacy cover keys off exactly that — so without this the shield
+     * flashes over the prompt the person is being asked to answer.
+     */
+    public private(set) var isPrompting = false
+
     public init(defaults: UserDefaults = .standard, now: @escaping @Sendable () -> Date = Date.init) {
         self.defaults = defaults
         self.now = now
@@ -165,6 +174,9 @@ public final class BiometricLock {
             return true
         }
 
+        isPrompting = true
+        defer { isPrompting = false }
+
         // Completion handler rather than `async`, as everywhere else a framework
         // object would otherwise be sent across an actor boundary: `LAContext`
         // is not `Sendable` in every SDK this is built against, and only the
@@ -206,7 +218,7 @@ struct LockedView: View {
         VStack(spacing: Tokens.Spacing.xl) {
             Spacer()
 
-            Image(systemName: lock.kind == .touchID ? "touchid" : "faceid")
+            Image(systemName: LockedView.symbol(for: lock.kind))
                 .font(.system(size: 56))
                 .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
                 .accessibilityHidden(true)
@@ -224,10 +236,7 @@ struct LockedView: View {
             }
 
             PrimaryButton(
-                title: String(
-                    format: L10n.string("biometrics.unlockWith"),
-                    lock.kind.localizedName
-                ),
+                title: unlockTitle,
                 isBusy: false,
                 isEnabled: true
             ) {
@@ -246,5 +255,32 @@ struct LockedView: View {
         // Asked as soon as the screen appears, so the common case is one glance
         // rather than a glance and a tap.
         .task { failed = !(await lock.unlock()) }
+    }
+
+    /**
+     * What the button says.
+     *
+     * A device with no enrolled biometry still has a passcode, and
+     * `deviceOwnerAuthentication` falls back to it — but `kind` is then `.none`
+     * and its name is the empty string, which made the button read " ile aç".
+     */
+    private var unlockTitle: String {
+        guard lock.kind != .none else {
+            return L10n.string("biometrics.unlockWithPasscode")
+        }
+
+        return String(format: L10n.string("biometrics.unlockWith"), lock.kind.localizedName)
+    }
+
+    /// `nonisolated` because a static on a `View` otherwise inherits the view's
+    /// main-actor isolation, and the tests call it directly.
+    nonisolated static func symbol(for kind: BiometryKind) -> String {
+        switch kind {
+        case .touchID: return "touchid"
+        case .faceID: return "faceid"
+        // Neither, so neither icon: a face on a phone that wants a passcode is
+        // a picture of the wrong instruction.
+        case .none, .other: return "lock.fill"
+        }
     }
 }

@@ -55,7 +55,7 @@ public struct PrescribingScreen: View {
                 case .empty:
                     interactions
 
-                    MessageState(icon: "pills", text: L10n.string("medication.empty"))
+                    MessageState(icon: "pills", text: L10n.string("medication.emptyForPatient"))
                         .frame(minHeight: 200)
 
                 case .loaded:

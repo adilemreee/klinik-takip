@@ -58,8 +58,14 @@ public struct DocumentListView: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
-        .task { await pollWhileProcessing() }
+        // Keyed, so a document uploaded after the first pass starts the watch
+        // again. A plain `.task` ran once, found nothing outstanding, returned
+        // — and then never looked at the document the patient uploaded a
+        // minute later, which sat at "kuyrukta" until they left the screen.
+        .task(id: state.hasUnsettledWork) { await pollWhileProcessing() }
         .task { watchJobs() }
+        .navigationTitle(L10n.string("document.title"))
+        .refreshable { await refresh { await model.load() } }
         .onDisappear {
             guard let jobs, let watching else { return }
 
@@ -71,7 +77,10 @@ public struct DocumentListView: View {
         }
         .alert(
             L10n.string("document.failedTitle"),
-            isPresented: .constant(failure != nil)
+            isPresented: Binding(
+                get: { failure != nil },
+                set: { showing in if !showing { failure = nil } }
+            )
         ) {
             Button(L10n.string("common.close")) { failure = nil }
         } message: {
@@ -87,6 +96,7 @@ public struct DocumentListView: View {
                     )
                 }
 
+                try? FileManager.default.removeItem(at: result.url)
                 scanned = nil
             }
         }
@@ -244,6 +254,12 @@ public struct DocumentListView: View {
     private func startUpload() async {
         guard let picked = await pickFile() else { return }
 
+        // The picker's copy, removed whatever happened. The queue takes its own
+        // copy into storage the app owns before `upload` returns, so there is
+        // nothing here worth keeping — and what was being kept was somebody's
+        // passport, once per attempt.
+        defer { try? FileManager.default.removeItem(at: picked.url) }
+
         await refresh {
             await model.upload(
                 fileURL: picked.url,
@@ -280,6 +296,8 @@ public struct DocumentListView: View {
     }
 
     private func pollWhileProcessing() async {
+        guard state.hasUnsettledWork else { return }
+
         for _ in 0..<40 {
             try? await Task.sleep(for: .seconds(3))
 

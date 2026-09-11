@@ -79,6 +79,9 @@ struct PatientHomeView: View {
     @State private var path: [PatientDestination] = []
     @State private var health: HealthSync
     @State private var voiceRecorder = VoiceRecorder()
+    /// Bumped when the checklist is returned to, so it re-reads what the
+    /// clinic has now. See `ChecklistScreen.refreshToken`.
+    @State private var checklistRefresh = 0
 
     init(
         environment: AppEnvironment,
@@ -126,6 +129,11 @@ struct PatientHomeView: View {
             }
             .navigationDestination(for: PatientDestination.self) { destination in
                 screen(for: destination)
+            }
+            .onChange(of: path) { _, now in
+                // Back on the checklist, most likely from the upload screen it
+                // sent the reader to. What it is showing is out of date.
+                if now.last == .checklist { checklistRefresh += 1 }
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) { menu }
@@ -213,18 +221,27 @@ struct PatientHomeView: View {
                 // Recording is offered on the patient's side only. A clinician
                 // dictating into a patient's thread is a different feature
                 // with a different consent question behind it.
-                voice: voiceRecorder.handle
+                voice: voiceRecorder.handle,
+                queueRevision: environment.sync.appliedRevision
             )
 
         case .assistant:
             AssistantScreen(
                 model: AssistantModel(api: environment.assistant),
                 openConversation: {
-                    // Replaces the assistant rather than stacking on it: going
-                    // back from the conversation should reach the home screen,
-                    // not the bot the patient chose to leave.
-                    path.removeLast()
-                    path.append(.messages)
+                    /*
+                     * Replaces the assistant rather than stacking on it: going
+                     * back from the conversation should reach the home screen,
+                     * not the bot the patient chose to leave.
+                     *
+                     * And the conversation is only pushed if it is not already
+                     * underneath. The assistant is reachable *from* the chat
+                     * screen, and popping one entry then pushing another left
+                     * two identical threads on the stack — with a back button
+                     * that went from the conversation to the conversation.
+                     */
+                    if path.last == .assistant { path.removeLast() }
+                    if path.last != .messages { path.append(.messages) }
                 }
             )
 
@@ -259,7 +276,8 @@ struct PatientHomeView: View {
 
         case .medications:
             MedicationsScreen(
-                model: MedicationsModel(api: environment.medications, queue: environment.queue)
+                model: MedicationsModel(api: environment.medications, queue: environment.queue),
+                queueRevision: environment.sync.appliedRevision
             )
 
         case .photos:
@@ -302,7 +320,8 @@ struct PatientHomeView: View {
                     source: .patient,
                     queue: environment.queue
                 ),
-                syncFromDevice: health.isAvailable ? { await syncHealth() } : nil
+                syncFromDevice: health.isAvailable ? { await syncHealth() } : nil,
+                queueRevision: environment.sync.appliedRevision
             )
 
         case .followUp:
@@ -374,7 +393,8 @@ struct PatientHomeView: View {
                 // chosen. A checklist that names what is missing and then
                 // makes you pick it again from a list of eight has asked the
                 // same question twice.
-                upload: { type in path.append(.documents(startWith: type)) }
+                upload: { type in path.append(.documents(startWith: type)) },
+                refreshToken: checklistRefresh
             )
 
         case .signConsent:

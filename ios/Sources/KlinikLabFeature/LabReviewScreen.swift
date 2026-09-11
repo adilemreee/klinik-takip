@@ -26,6 +26,8 @@ public struct LabReviewScreen: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
+        .refreshable { await refresh { await model.load() } }
+        .navigationTitle(L10n.string("lab.reviewTitle"))
         .sheet(item: $editing) { item in
             LabCorrectionSheet(item: item) { correction in
                 await refresh { await model.confirm(item.id, correction: correction) }

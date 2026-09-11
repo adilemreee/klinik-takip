@@ -78,6 +78,9 @@ public actor ChatModel {
 
     private(set) public var state = ChatState()
 
+    /// When each person's typing indicator stops being true. See `setTyping`.
+    private var typingExpiry: [String: Date] = [:]
+
     public init(
         api: MessagingAPI,
         queue: PendingWriteReader? = nil,
@@ -151,7 +154,7 @@ public actor ChatModel {
                 conversationId: conversationId,
                 body: trimmed.isEmpty ? nil : trimmed,
                 mediaKey: mediaKey,
-                type: messageType
+                type: ChatModel.messageType(for: mediaKey, pending: state.pendingMediaType)
             )
 
             // Appended from the server's answer, including its queued status, so
@@ -258,12 +261,25 @@ public actor ChatModel {
         return nil
     }
 
-    /// Images are sent as images so the conversation can show them inline; a
-    /// wound photograph rendered as "dosya" is a photograph nobody looks at.
-    private var messageType: MessageType? {
-        guard state.pendingMediaKey != nil else { return nil }
+    /**
+     * What kind of message this send makes.
+     *
+     * Decided by the key being sent, not by what the model happens to be
+     * holding. An upload that succeeded and a send that failed left a pending
+     * key behind; the next plain-text message then went out labelled `IMAGE`
+     * with nothing attached to it.
+     *
+     * `nonisolated` and static so the rule can be held to directly.
+     */
+    nonisolated static func messageType(
+        for mediaKey: String?,
+        pending: MessageType?
+    ) -> MessageType? {
+        guard mediaKey != nil else { return nil }
 
-        return state.pendingMediaType ?? .file
+        // Images are sent as images so the conversation can show them inline; a
+        // wound photograph rendered as "dosya" is a photograph nobody looks at.
+        return pending ?? .file
     }
 
     /**
@@ -313,15 +329,52 @@ public actor ChatModel {
         guard message.conversationId == state.conversationId else { return }
 
         append(message)
-        state.typing.remove(message.senderId ?? "")
+
+        // The message *is* the end of the typing, so the indicator goes now
+        // rather than waiting for its own timer.
+        if let sender = message.senderId {
+            setTyping(sender, isTyping: false)
+        }
     }
 
+    /**
+     * How long a "writing…" claim is believed.
+     *
+     * The other side announces that somebody is typing and never announces
+     * that they stopped — there is no such event, because the interesting case
+     * is the one where they put the phone down. Longer than the interval the
+     * sender repeats on, so it never lapses mid-sentence.
+     */
+    static let typingLifetime: TimeInterval = 8
+
     public func setTyping(_ userId: String, isTyping: Bool) {
-        if isTyping {
-            state.typing.insert(userId)
-        } else {
+        guard isTyping else {
             state.typing.remove(userId)
+            typingExpiry[userId] = nil
+            return
         }
+
+        state.typing.insert(userId)
+
+        let deadline = Date().addingTimeInterval(ChatModel.typingLifetime)
+        typingExpiry[userId] = deadline
+
+        // Cleared on a timer rather than on an event, because the event that
+        // would clear it — somebody giving up on a message — is one nothing
+        // sends. Without this the indicator stayed on screen for the rest of
+        // the session.
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(ChatModel.typingLifetime))
+            await self?.expireTyping(userId, after: deadline)
+        }
+    }
+
+    /// Removes the indicator unless something newer has renewed it.
+    private func expireTyping(_ userId: String, after deadline: Date) {
+        guard let current = typingExpiry[userId], current <= deadline else { return }
+
+        state.typing.remove(userId)
+        typingExpiry[userId] = nil
     }
 
     public func markRead() async {

@@ -129,8 +129,6 @@
 /* Emergency (spec M8) */
 "emergency.confirmTitle" = "Send an emergency alert?";
 "emergency.confirmHint" = "If you confirm, the clinic is notified immediately.";
-"emergency.confirmAction" = "Yes, notify them";
-"emergency.sending" = "Sending…";
 "emergency.sent" = "The clinic has been notified. They will call you.";
 "emergency.notSentRetry" = "The alert did NOT reach the clinic. Try again; if this is urgent, call your country's emergency number.";
 "emergency.callLocalNumber" = "Call emergency number";
@@ -350,7 +348,6 @@
 "appointment.confirm" = "Confirm";
 "appointment.cancel" = "Cancel";
 "appointment.request" = "Request an appointment";
-"appointment.addToCalendar" = "Add to calendar";
 
 "appointment.type.CONSULTATION" = "Consultation";
 "appointment.type.SURGERY" = "Surgery";
@@ -530,9 +527,7 @@
 "finance.totals.incomplete" = "This total is incomplete: amounts with no rate are listed below in their own currency.";
 "finance.rateMissing" = "No rate recorded for this day";
 
-"analytics.title" = "Dashboard";
 "analytics.tooFew" = "Not enough data";
-"analytics.revenueWithheld" = "Revenue columns are hidden because you may not see them — this does not mean zero.";
 "analytics.capacityUnconfigured" = "No working hours configured, so occupancy cannot be calculated.";
 "analytics.costLinesUnread" = "Some cost lines could not be read; the margin may be incomplete.";
 "analytics.procedures.title" = "Operations";
@@ -541,8 +536,6 @@
 "analytics.revenue.title" = "Revenue and cost";
 "analytics.occupancy.title" = "Diary occupancy";
 "analytics.conversion" = "Conversion";
-"analytics.margin" = "Margin";
-"analytics.cityUnknown" = "City not recorded";
 "analytics.average" = "Average fee";
 
 "notification.action.openExport" = "Open the file";
@@ -732,14 +725,11 @@
 "prescribe.needName" = "A medicine and a dose are required.";
 "prescribe.written" = "Prescription written";
 "medication.staffTitle" = "Medication";
-"medication.empty" = "Nothing has been prescribed for this patient.";
+"medication.emptyForPatient" = "Nothing has been prescribed for this patient.";
 "medication.stopAction" = "Stop";
 "medication.approveAction" = "Approve";
-"medication.awaitingApproval" = "Awaiting approval";
 "medication.patientReported" = "Added by the patient";
 "medication.prescribed" = "Prescribed";
-"medication.stopped" = "Stopped";
-"medication.nextDose" = "Next dose";
 "medication.adherenceOf" = "%1$d taken · %2$d missed";
 "medication.interactionsTitle" = "Interaction warnings";
 "medication.noInteractions" = "No known interaction found.";
@@ -821,7 +811,7 @@
 "analytics.cityUnknown" = "%d patients have no city recorded.";
 "analytics.channels" = "Where patients came from";
 "analytics.convertedOf" = "%1$d of %2$d became operations";
-"analytics.revenueWithheld" = "The revenue breakdown is not shown to this account.";
+"analytics.revenueWithheld" = "Revenue columns are hidden because you may not see them — this does not mean zero.";
 "analytics.occupancy" = "Occupancy";
 "menu.analytics" = "Statistics";
 
@@ -1038,7 +1028,6 @@
 "ai.retentionRecorded" = "Recorded declaration";
 "menu.aiSettings" = "AI settings";
 "measurement.emptySeries" = "No readings of this kind.";
-"measurement.diastolic" = "Diastolic";
 "lab.interpret" = "Ask for an AI reading";
 "lab.interpretQueued" = "Requested. It will land in your review queue, and nothing reaches the patient until you sign it off.";
 "document.failedTitle" = "The document could not be processed";
@@ -1162,3 +1151,17 @@
 "lab.collapsed" = "Collapsed";
 "lab.expanded" = "Expanded";
 "lab.toggleHint" = "Tap to open or close";
+
+/* Screen titles and the fixes from the iOS review */
+"document.title" = "Documents";
+"measurement.chartTitle" = "Measurements";
+"lab.trendTitle" = "Lab trends";
+"lab.reviewTitle" = "Lab review";
+"followUp.title" = "Check-up calendar";
+"photo.galleryTitle" = "Photos";
+"photo.comparisonTitle" = "Comparison";
+"complication.queueTitle" = "Complaint queue";
+"complication.myTitle" = "My complaints";
+"emergency.universalNumberNote" = "112 reaches an ambulance in almost every country. If you know the local number where you are, call that instead.";
+"biometrics.unlockWithPasscode" = "Unlock with your passcode";
+"consent.readToEndFirst" = "Please read to the end of the form before confirming.";

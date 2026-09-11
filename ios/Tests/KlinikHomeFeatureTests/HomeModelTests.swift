@@ -133,22 +133,33 @@ final class HomeModelTests: XCTestCase {
 // MARK: - Emergency
 
 private actor RecordingTrigger: EmergencyTrigger {
-    private let outcome: Result<Void, APIError>
+    private let outcome: Result<EmergencyNumber?, APIError>
     private(set) var callCount = 0
     private(set) var notes: [String?] = []
 
-    init(outcome: Result<Void, APIError> = .success(())) {
+    init(outcome: Result<EmergencyNumber?, APIError> = .success(nil)) {
         self.outcome = outcome
     }
 
-    func trigger(note: String?) async throws {
+    func trigger(note: String?) async throws -> EmergencyNumber? {
         callCount += 1
         notes.append(note)
-        try outcome.get()
+        return try outcome.get()
     }
 
     func count() -> Int { callCount }
     func sentNotes() -> [String?] { notes }
+}
+
+/// The server's answer, built from JSON because `EmergencyNumber` is decoded
+/// from the wire and has no other way in.
+private func emergencyNumber(_ number: String, alsoTry: String? = nil) throws -> EmergencyNumber {
+    let also = alsoTry.map { "\"\($0)\"" } ?? "null"
+    let json = """
+    {"number":"\(number)","countryCode":"TR","source":"country","alsoTry":\(also)}
+    """
+
+    return try JSONDecoder.klinik.decode(EmergencyNumber.self, from: Data(json.utf8))
 }
 
 final class EmergencyModelTests: XCTestCase {
@@ -273,6 +284,118 @@ final class EmergencyModelTests: XCTestCase {
         XCTAssertEqual(count, 2)
     }
 
+    /**
+     * The countdown is watchable.
+     *
+     * It used to run inside the actor while the screen read the state only
+     * after a tap — so the number on screen never moved, the window lapsed
+     * behind a button that still looked live, and the confirming tap was
+     * swallowed in silence. In a real emergency.
+     */
+    func testTheCountdownIsPublishedWhileItRuns() async throws {
+        let trigger = RecordingTrigger()
+        let model = EmergencyModel(
+            trigger: trigger,
+            confirmationWindowSeconds: 2,
+            defaultsSuite: UUID().uuidString
+        )
+
+        let seen = Collected()
+        let updates = await model.updates()
+
+        let watching = Task {
+            for await state in updates {
+                await seen.add(state.phase)
+                if state.phase == .idle, await seen.count() > 1 { break }
+            }
+        }
+
+        await model.arm()
+        try? await Task.sleep(for: .milliseconds(2600))
+        watching.cancel()
+
+        let phases = await seen.phases()
+
+        XCTAssertTrue(
+            phases.contains(.confirming(secondsRemaining: 2)),
+            "the armed state was never published: \(phases)"
+        )
+        XCTAssertTrue(
+            phases.contains(.confirming(secondsRemaining: 1)),
+            "the countdown never moved: \(phases)"
+        )
+        XCTAssertEqual(phases.last, .idle, "the lapse was never published")
+    }
+
+    /// "Tekrar dene" used to be refused by the same guard that protects the
+    /// armed state, so the button did nothing at all.
+    func testAFailedAlertCanBeConfirmedAgainWithoutRearming() async {
+        let trigger = RecordingTrigger(outcome: .failure(.offline))
+        let model = EmergencyModel(
+            trigger: trigger,
+            confirmationWindowSeconds: 5,
+            defaultsSuite: UUID().uuidString
+        )
+
+        await model.arm()
+        await model.confirm()
+        // Straight from `.failed`, which is what the retry button does.
+        await model.confirm()
+
+        let count = await trigger.count()
+        XCTAssertEqual(count, 2, "the retry button sent nothing")
+    }
+
+    /// A failure is exactly the case where no server answered, so the number
+    /// has to already be on the phone.
+    func testAFailureAlwaysHasANumberToOffer() async {
+        let trigger = RecordingTrigger(outcome: .failure(.offline))
+        let model = EmergencyModel(
+            trigger: trigger,
+            confirmationWindowSeconds: 5,
+            defaultsSuite: UUID().uuidString
+        )
+
+        await model.arm()
+        await model.confirm()
+
+        let state = await model.currentState()
+        XCTAssertEqual(state.fallback.number, "112")
+        XCTAssertTrue(state.fallback.isUniversal)
+        XCTAssertNotNil(state.fallback.dialURL)
+    }
+
+    /// And once the clinic has said which number reaches an ambulance where
+    /// the patient is, that is the one offered next time.
+    func testTheClinicsOwnNumberIsRememberedForTheNextFailure() async throws {
+        let suite = UUID().uuidString
+        defer { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+
+        let succeeding = RecordingTrigger(
+            outcome: .success(try emergencyNumber("155", alsoTry: "112"))
+        )
+        let first = EmergencyModel(
+            trigger: succeeding,
+            confirmationWindowSeconds: 5,
+            defaultsSuite: suite
+        )
+
+        await first.arm()
+        await first.confirm()
+
+        // A different launch, with no connection this time.
+        let second = EmergencyModel(
+            trigger: RecordingTrigger(outcome: .failure(.offline)),
+            confirmationWindowSeconds: 5,
+            defaultsSuite: suite
+        )
+
+        let state = await second.currentState()
+        XCTAssertEqual(state.fallback.number, "155")
+        XCTAssertEqual(state.fallback.alsoTry, "112")
+        XCTAssertFalse(state.fallback.isUniversal)
+    }
+
     func testArmingTwiceDoesNotRestartTheWindow() async {
         let trigger = RecordingTrigger()
         let model = EmergencyModel(trigger: trigger, confirmationWindowSeconds: 5)
@@ -284,4 +407,14 @@ final class EmergencyModelTests: XCTestCase {
         let notes = await trigger.sentNotes()
         XCTAssertEqual(notes, ["first"], "The armed alert keeps the note it was armed with")
     }
+}
+
+
+/// Collects what the stream published, off the test's own isolation.
+private actor Collected {
+    private var seen: [EmergencyPhase] = []
+
+    func add(_ phase: EmergencyPhase) { seen.append(phase) }
+    func count() -> Int { seen.count }
+    func phases() -> [EmergencyPhase] { seen }
 }

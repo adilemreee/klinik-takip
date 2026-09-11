@@ -130,6 +130,11 @@ public actor DocumentsModel {
                     contentType: contentType
                 )
             }
+        } catch APIError.queuedForLater {
+            // `sendResumable` already handed the file to the queue and said so
+            // in the state. Nothing else to do, and nothing to reload against a
+            // connection that is not there.
+            return true
         } catch let error as APIError where error.isConnectivity {
             return await hold(fileURL: fileURL, type: type, contentType: contentType, session: nil, failure: error)
         } catch let error as APIError {
@@ -188,16 +193,23 @@ public actor DocumentsModel {
                 return nil
             }
 
-            let (data, _) = try await URLSession.shared.data(from: remote)
+            let (data, _) = try await DocumentsModel.downloads.data(from: remote)
 
-            let directory = FileManager.default.temporaryDirectory
-                .appendingPathComponent("documents/\(documentId)", isDirectory: true)
+            let directory = DocumentsModel.previewDirectory
+                .appendingPathComponent(documentId, isDirectory: true)
+
+            // Replaced rather than added to. Without this every open left
+            // another copy of somebody's passport in the temporary directory,
+            // and the only thing that ever removed them was iOS deciding it
+            // wanted the space back.
+            try? FileManager.default.removeItem(at: directory)
             try FileManager.default.createDirectory(
                 at: directory,
                 withIntermediateDirectories: true
             )
 
-            let destination = directory.appendingPathComponent(link.filename)
+            let destination = directory
+                .appendingPathComponent(DocumentsModel.safeFilename(link.filename))
             try data.write(to: destination, options: .atomic)
 
             return destination
@@ -265,14 +277,22 @@ public actor DocumentsModel {
 
             _ = try await resumable.complete(sessionId: session.id, fileURL: fileURL)
         } catch let error as APIError where error.isConnectivity && queue != nil {
-            _ = await hold(
-                fileURL: fileURL,
-                type: type,
-                contentType: contentType,
-                session: session.id,
-                failure: error
-            )
-            return
+            guard
+                await hold(
+                    fileURL: fileURL,
+                    type: type,
+                    contentType: contentType,
+                    session: session.id,
+                    failure: error
+                )
+            else {
+                throw error
+            }
+
+            // Thrown so the caller stops rather than running a list request
+            // against the connection that just failed — which replaced "your
+            // file is safe and will be sent" with an error page.
+            throw APIError.queuedForLater
         } catch {
             // Releases the parts already sent. Best-effort: the sweep on the
             // server catches whatever this misses.
@@ -329,6 +349,50 @@ public actor DocumentsModel {
         let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
         return (attributes[.size] as? Int) ?? 0
     }
+
+    /// Where a document is put so the previewer can open it.
+    static var previewDirectory: URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("klinik-previews", isDirectory: true)
+    }
+
+    /**
+     * Every downloaded copy, removed.
+     *
+     * These are somebody's clinical documents in the temporary directory. The
+     * session ending is the moment they stop being theirs to leave lying about.
+     */
+    public static func purgePreviews() {
+        try? FileManager.default.removeItem(at: previewDirectory)
+    }
+
+    /**
+     * A filename safe to append to a path.
+     *
+     * The name comes from the server, and `appendingPathComponent` does not
+     * interpret `..` — it simply builds the path it is given. Nothing here
+     * needs the server's directory separators, so they do not survive.
+     */
+    static func safeFilename(_ proposed: String) -> String {
+        let stripped = proposed
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "\\", with: "_")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !stripped.isEmpty, stripped != ".", stripped != ".." else { return "document" }
+
+        return String(stripped.suffix(120))
+    }
+
+    /**
+     * The session downloads are fetched with.
+     *
+     * A signed URL carries its own authorisation, so this does not go through
+     * `APIClient` — but it still gets the app's timeouts rather than the sixty
+     * seconds `URLSession.shared` waits before admitting a hotel connection is
+     * not going to answer.
+     */
+    private static let downloads = URLSessionTransport.configured()
 
     private func fetchPage(cursor: String?) async {
         do {

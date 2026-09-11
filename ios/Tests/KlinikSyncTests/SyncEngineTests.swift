@@ -307,4 +307,56 @@ final class SyncEngineTests: XCTestCase {
         XCTAssertEqual(conflicts.map(\.id), ["conflict"])
         XCTAssertEqual(pending.map(\.id), ["rejected"])
     }
+
+    /**
+     * A change the server has refused is not sent again.
+     *
+     * `rejected` means "will never succeed as written". It was nonetheless
+     * pushed again on every run, for as long as it sat in the queue — one
+     * request per pass to be told the same no.
+     */
+    func testARejectedChangeIsNotSentAgainOnTheNextRun() async throws {
+        let sender = ScriptedSender(fallback: .rejected("validation failed"))
+        let (engine, _) = self.engine(sender)
+        try await engine.enqueue(entry("e1"))
+
+        _ = await engine.sync()
+        _ = await engine.sync()
+        _ = await engine.sync()
+
+        let sent = await sender.sent()
+        XCTAssertEqual(sent, ["e1"], "the server was asked again about a settled no")
+    }
+
+    /**
+     * And the person is told at once, not five runs later.
+     *
+     * Counting a rejection like a retryable failure left the screen saying
+     * "waiting to be sent" about something that was never going to be sent,
+     * while the only person who could fix it was not told.
+     */
+    func testARejectionNeedsAttentionImmediately() async throws {
+        let sender = ScriptedSender(fallback: .rejected("validation failed"))
+        let (engine, _) = self.engine(sender, maxAttempts: 5)
+        try await engine.enqueue(entry("e1"))
+
+        let state = await engine.sync()
+
+        XCTAssertEqual(state.status, .needsAttention(conflicts: 0, rejected: 1))
+    }
+
+    /// It is still held, with its reason. Nothing here throws away a person's
+    /// work on its own.
+    func testARejectedChangeIsStillThereToLookAt() async throws {
+        let sender = ScriptedSender(fallback: .rejected("validation failed"))
+        let (engine, store) = self.engine(sender)
+        try await engine.enqueue(entry("e1"))
+
+        _ = await engine.sync()
+        _ = await engine.sync()
+
+        let pending = try await store.pending()
+        XCTAssertEqual(pending.map(\.id), ["e1"])
+        XCTAssertEqual(pending.first?.lastError, "validation failed")
+    }
 }

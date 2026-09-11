@@ -247,4 +247,45 @@ private struct NoRefresher: TokenRefresher {
     func refresh(using refreshToken: String) async throws -> SessionTokens {
         throw APIError.unknown(status: 0)
     }
+
+    /**
+     * A signature on a document nobody scrolled through is a mark, not consent.
+     *
+     * The rule was written down twice in the screen's own documentation and
+     * implemented nowhere: the button opened as soon as something had been
+     * drawn.
+     */
+    func testConsentNeedsBothTheSignatureAndTheReading() {
+        let signature = [[CGPoint(x: 0, y: 0), CGPoint(x: 10, y: 10)]]
+
+        XCTAssertTrue(
+            SignConsentScreen.canSign(strokes: signature, readToEnd: true, submitting: false)
+        )
+        XCTAssertFalse(
+            SignConsentScreen.canSign(strokes: signature, readToEnd: false, submitting: false),
+            "signed without reaching the end of the wording"
+        )
+        XCTAssertFalse(
+            SignConsentScreen.canSign(strokes: [], readToEnd: true, submitting: false),
+            "read but not signed"
+        )
+    }
+
+    /// A single tap leaves one point, which is not a signature.
+    func testOneTapIsNotASignature() {
+        let tap = [[CGPoint(x: 4, y: 4)]]
+
+        XCTAssertFalse(
+            SignConsentScreen.canSign(strokes: tap, readToEnd: true, submitting: false)
+        )
+    }
+
+    /// And a second tap while the first is in flight sends nothing twice.
+    func testItCannotBeGivenTwiceAtOnce() {
+        let signature = [[CGPoint(x: 0, y: 0), CGPoint(x: 10, y: 10)]]
+
+        XCTAssertFalse(
+            SignConsentScreen.canSign(strokes: signature, readToEnd: true, submitting: true)
+        )
+    }
 }

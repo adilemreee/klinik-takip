@@ -42,11 +42,20 @@ public struct SignaturePad: View {
 
     private let labels: Labels
     private let lineWidth: CGFloat
+    /// Told when a stroke starts and ends, so a scrolling container can hold
+    /// still. See the gesture below for why that is not optional in practice.
+    private let onDrawing: ((Bool) -> Void)?
 
-    public init(strokes: Binding<[[CGPoint]]>, labels: Labels, lineWidth: CGFloat = 2.5) {
+    public init(
+        strokes: Binding<[[CGPoint]]>,
+        labels: Labels,
+        lineWidth: CGFloat = 2.5,
+        onDrawing: ((Bool) -> Void)? = nil
+    ) {
         _strokes = strokes
         self.labels = labels
         self.lineWidth = lineWidth
+        self.onDrawing = onDrawing
     }
 
     /// Whether anything has been drawn. A single tap is not a signature, so a
@@ -97,15 +106,29 @@ public struct SignaturePad: View {
                 .strokeBorder(Tokens.Palette.border.resolve(for: scheme))
         )
         .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous))
-        .gesture(
-            // Zero distance, so a short signature registers from the first
-            // pixel. The default minimum would swallow the start of a small
-            // hand's stroke.
+        .highPriorityGesture(
+            /*
+             * High priority, not `.gesture`.
+             *
+             * This pad sits inside a scrolling document — a consent form is
+             * longer than a screen — and an ordinary gesture loses to the
+             * scroll view's own pan recogniser. What that looked like was a
+             * signature whose horizontal strokes drew and whose vertical ones
+             * scrolled the page instead: an unusable pad that appeared to work.
+             *
+             * Zero distance, so a short signature registers from the first
+             * pixel. The default minimum would swallow the start of a small
+             * hand's stroke.
+             */
             DragGesture(minimumDistance: 0)
-                .onChanged { value in current.append(value.location) }
+                .onChanged { value in
+                    if current.isEmpty { onDrawing?(true) }
+                    current.append(value.location)
+                }
                 .onEnded { _ in
                     if current.count > 1 { strokes.append(current) }
                     current = []
+                    onDrawing?(false)
                 }
         )
         // One element to VoiceOver, because a canvas of strokes has nothing a

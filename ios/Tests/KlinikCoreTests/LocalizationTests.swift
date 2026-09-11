@@ -41,6 +41,133 @@ final class LocalizationTests: XCTestCase {
         }
     }
 
+    /// Every line that defines a key, in file order — duplicates included.
+    ///
+    /// `loadCatalogues` builds a dictionary, which is exactly why the twelve
+    /// duplicate definitions below went unnoticed for months: the second
+    /// silently replaced the first and every test saw one key.
+    private func definedKeys(_ language: String) throws -> [String] {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources/KlinikCore/Resources")
+            .appendingPathComponent("\(language).lproj")
+            .appendingPathComponent("Localizable.strings")
+
+        return try String(contentsOf: url, encoding: .utf8)
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.hasPrefix("\"") }
+            .compactMap { line in
+                let parts = line.components(separatedBy: "\" = \"")
+                guard parts.count == 2 else { return nil }
+                return String(parts[0].dropFirst())
+            }
+    }
+
+    /**
+     * No key is defined twice.
+     *
+     * A `.strings` file keeps the *last* definition, so a duplicate is not a
+     * harmless repetition: it is one piece of wording silently overriding
+     * another. That is how the patient's medication screen came to say "Bu
+     * hastaya yazılmış ilaç yok" — a sentence written for a clinician.
+     */
+    func testNoKeyIsDefinedTwice() throws {
+        for language in ["tr", "en"] {
+            let keys = try definedKeys(language)
+            let duplicates = Set(keys.filter { key in keys.filter { $0 == key }.count > 1 })
+
+            XCTAssertEqual(
+                duplicates,
+                [],
+                "\(language): defined more than once — the later one silently wins: "
+                    + "\(duplicates.sorted())"
+            )
+        }
+    }
+
+    /**
+     * A format string is used with `String(format:)`, and only then.
+     *
+     * Both mistakes show the reader a raw specifier or an argument with
+     * nowhere to go. The patient's medication screen used to read
+     * "%d gündür aksatmadınız: 7".
+     */
+    func testFormatStringsAreUsedAsFormatStrings() throws {
+        let catalogue = try loadCatalogues()[0].entries
+        let sources = try swiftSources()
+        let specifier = try NSRegularExpression(pattern: "%(?:\\d+\\$)?[@dfsu]")
+
+        func hasPlaceholder(_ value: String) -> Bool {
+            let range = NSRange(value.startIndex..., in: value)
+            return specifier.firstMatch(in: value, range: range) != nil
+        }
+
+        // One pass over the sources rather than two `contains` per key: there
+        // are a thousand keys and a megabyte of Swift, and the naive version
+        // took the best part of a minute.
+        var formatted: Set<String> = []
+        var plain: Set<String> = []
+
+        let call = try NSRegularExpression(
+            pattern: "(format:\\s*)?L10n\\.string\\(\"([^\"]+)\"\\)"
+        )
+        let whole = NSRange(sources.startIndex..., in: sources)
+
+        for match in call.matches(in: sources, range: whole) {
+            guard
+                let keyRange = Range(match.range(at: 2), in: sources)
+            else { continue }
+
+            let key = String(sources[keyRange])
+
+            if match.range(at: 1).location == NSNotFound {
+                plain.insert(key)
+            } else {
+                formatted.insert(key)
+            }
+        }
+
+        for key in plain.subtracting(formatted) {
+            XCTAssertFalse(
+                hasPlaceholder(catalogue[key] ?? ""),
+                "\(key) carries a placeholder but is read without String(format:)"
+            )
+        }
+
+        for key in formatted {
+            XCTAssertTrue(
+                hasPlaceholder(catalogue[key] ?? ""),
+                "\(key) is used with String(format:) but carries no placeholder"
+            )
+        }
+    }
+
+    /// Every Swift file in the package, concatenated. Read from disk because
+    /// the question is about the source, not about what it compiled to.
+    private func swiftSources() throws -> String {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Sources")
+
+        guard let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil)
+        else {
+            return ""
+        }
+
+        var joined = ""
+
+        for case let url as URL in files where url.pathExtension == "swift" {
+            joined += (try? String(contentsOf: url, encoding: .utf8)) ?? ""
+        }
+
+        return joined
+    }
+
     /// The invariant that matters: a key present in one language and missing in
     /// the other means English text appearing mid-sentence in a Turkish screen,
     /// or the raw key showing to a patient.

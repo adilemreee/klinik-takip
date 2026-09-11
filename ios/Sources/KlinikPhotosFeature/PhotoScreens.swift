@@ -29,6 +29,8 @@ public struct PhotoGalleryView: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
+        .refreshable { await refresh { await model.load() } }
+        .navigationTitle(L10n.string("photo.galleryTitle"))
         .sheet(isPresented: $comparing) {
             if let pair = state.comparison {
                 PhotoComparisonView(pair: pair, linkFor: linkFor)
@@ -219,6 +221,7 @@ public struct PhotoComparisonView: View {
             beforeURL = await linkFor(pair.before.id)
             afterURL = await linkFor(pair.after.id)
         }
+        .navigationTitle(L10n.string("photo.comparisonTitle"))
     }
 
     private func label(_ photo: ClinicalPhoto, key: String) -> some View {

@@ -194,10 +194,50 @@ final class AvailabilityTests: XCTestCase {
         XCTAssertFalse(AddWindowSheet.isOrdered(nine, nine, calendar: calendar), "Zero length is not a window")
     }
 
-    func testSundayIsDayZeroLikeTheServer() {
-        let calendar = Calendar(identifier: .gregorian)
+    /**
+     * Sunday is day zero, as it is on the server — and the name is the
+     * reader's, not the compiler's.
+     *
+     * Pinned to a real locale rather than compared against whatever calendar
+     * the subject happens to use. The version of this test that did the latter
+     * passed for months while the screen showed "Mon" and "Tue" above a Turkish
+     * clinician's working hours: both sides were asking the same wrong object.
+     */
+    func testSundayIsDayZeroAndTheNamesAreLocalised() {
+        var turkish = Calendar(identifier: .gregorian)
+        turkish.locale = Locale(identifier: "tr_TR")
 
-        XCTAssertEqual(AvailabilityScreen.dayName(0), calendar.weekdaySymbols[0].capitalized)
-        XCTAssertEqual(AvailabilityScreen.dayName(6), calendar.weekdaySymbols[6].capitalized)
+        XCTAssertEqual(AvailabilityScreen.dayName(0, calendar: turkish), "Pazar")
+        XCTAssertEqual(AvailabilityScreen.dayName(6, calendar: turkish), "Cumartesi")
+
+        var english = Calendar(identifier: .gregorian)
+        english.locale = Locale(identifier: "en_GB")
+
+        XCTAssertEqual(AvailabilityScreen.dayName(0, calendar: english), "Sunday")
+        XCTAssertEqual(AvailabilityScreen.dayName(6, calendar: english), "Saturday")
+    }
+
+    /// Out of range says something rather than crashing: the server's week is
+    /// 0–6 and a seventh day would be a contract change, not a reason to fall
+    /// over on a clinician's screen.
+    func testAnImpossibleDayIsShownAsItself() {
+        XCTAssertEqual(AvailabilityScreen.dayName(9), "9")
+        XCTAssertEqual(AvailabilityScreen.dayName(-1), "-1")
+    }
+
+    /// A day is read down the page, so the windows in it are in the order the
+    /// clock runs — whatever order the server sent them in.
+    func testWindowsInADayAreSortedByStart() {
+        var state = AvailabilityState()
+        state.windows = [
+            AvailabilityWindow(
+                id: "b", staffId: "s", dayOfWeek: 1, startTime: "14:00", endTime: "17:00"
+            ),
+            AvailabilityWindow(
+                id: "a", staffId: "s", dayOfWeek: 1, startTime: "09:00", endTime: "12:00"
+            ),
+        ]
+
+        XCTAssertEqual(state.byDay.first?.windows.map(\.id), ["a", "b"])
     }
 }

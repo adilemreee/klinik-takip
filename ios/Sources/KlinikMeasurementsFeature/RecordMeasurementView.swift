@@ -96,6 +96,14 @@ public struct RecordMeasurementView: View {
                 type: type,
                 value: parsed,
                 secondaryValue: type.hasSecondaryValue ? DecimalEntry.parse(secondaryValue) : nil,
+                // Stamped here, not left to the server.
+                //
+                // A reading typed with no signal waits in the queue until the
+                // connection comes back, which may be the next morning — and
+                // the server's default is the moment it arrives. Without this
+                // the weight somebody recorded in a hotel is filed a day late,
+                // which is a hole in the follow-up curve nobody can see.
+                measuredAt: Date(),
                 note: note.isEmpty ? nil : note
             )
         )

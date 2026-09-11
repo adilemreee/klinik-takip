@@ -215,4 +215,90 @@ final class SessionManagerTests: XCTestCase {
             XCTAssertTrue(apiError.requiresReauthentication)
         }
     }
+
+    /**
+     * A refresh that never reached a server does not end the session.
+     *
+     * The catch-all used to wipe the Keychain for any failure at all, so an
+     * access token expiring on an aeroplane signed the patient out — and took
+     * their queued writes with them, which is the one thing the queue exists
+     * to prevent.
+     */
+    func testAnOfflineRefreshKeepsTheSession() async throws {
+        let store = InMemoryTokenStore()
+        let refresher = CountingRefresher(outcome: .failure(.offline))
+        let session = SessionManager(store: store, refresher: refresher)
+        try await session.signIn(with: tokens(expiresIn: -10))
+
+        do {
+            _ = try await session.validAccessToken()
+            XCTFail("Expected the connection failure to surface")
+        } catch {
+            // The caller is told; the session is not ended behind their back.
+        }
+
+        let state = await session.state
+        XCTAssertEqual(state, .signedIn)
+        XCTAssertNotNil(try store.load(), "the tokens were cleared for a network blip")
+    }
+
+    /// A server that is struggling has not judged the refresh token either.
+    func testAServerFailureKeepsTheSession() async throws {
+        let store = InMemoryTokenStore()
+        let refresher = CountingRefresher(
+            outcome: .failure(.server(ErrorResponse(statusCode: 502, message: "")))
+        )
+        let session = SessionManager(store: store, refresher: refresher)
+        try await session.signIn(with: tokens(expiresIn: -10))
+
+        _ = try? await session.validAccessToken()
+
+        let state = await session.state
+        XCTAssertEqual(state, .signedIn)
+        XCTAssertNotNil(try store.load())
+    }
+
+    /// A refusal is different: the chain is over and holding the tokens would
+    /// only produce more failures.
+    func testARefusedRefreshEndsTheSession() async throws {
+        let store = InMemoryTokenStore()
+        let refresher = CountingRefresher(
+            outcome: .failure(.unauthorized(ErrorResponse(statusCode: 401, message: "")))
+        )
+        let session = SessionManager(store: store, refresher: refresher)
+        try await session.signIn(with: tokens(expiresIn: -10))
+
+        _ = try? await session.validAccessToken()
+
+        let state = await session.state
+        XCTAssertEqual(state, .expired)
+        XCTAssertNil(try store.load())
+    }
+
+    /**
+     * The session is watchable.
+     *
+     * Read once at launch and never again, a session that lapsed mid-use left
+     * the app on whatever screen was open, failing every request, with no way
+     * back to sign-in short of deleting the app.
+     */
+    func testStateChangesArePublished() async throws {
+        let refresher = CountingRefresher(outcome: .success(tokens(expiresIn: 900)))
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: refresher)
+
+        let stream = await session.updates()
+        var iterator = stream.makeAsyncIterator()
+
+        // The current state arrives first, so a listener starts from the truth.
+        let first = await iterator.next()
+        XCTAssertEqual(first, .signedOut)
+
+        try await session.signIn(with: tokens(expiresIn: 900))
+        let second = await iterator.next()
+        XCTAssertEqual(second, .signedIn)
+
+        await session.signOut()
+        let third = await iterator.next()
+        XCTAssertEqual(third, .signedOut)
+    }
 }

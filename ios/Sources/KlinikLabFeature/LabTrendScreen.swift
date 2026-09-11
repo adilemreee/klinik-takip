@@ -28,6 +28,8 @@ public struct LabTrendScreen: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
+        .refreshable { await refresh { await model.load() } }
+        .navigationTitle(L10n.string("lab.trendTitle"))
     }
 
     @ViewBuilder

@@ -109,10 +109,12 @@ final class SQLiteStoreTests: XCTestCase {
         // memory it dies with the process, and a patient uploading a 20 MB scan
         // starts again from nothing.
         let store = SQLiteUploadStore(store: try SQLiteStore(url: fileURL))
+        let kept = try PendingUpload.directory().appendingPathComponent("scan.pdf")
+
         try await store.remember(
             PendingUpload(
                 id: "s1",
-                fileURL: URL(fileURLWithPath: "/tmp/scan.pdf"),
+                fileURL: kept,
                 patientId: "p1",
                 documentType: "LAB",
                 originalName: "tahlil.pdf",
@@ -124,8 +126,39 @@ final class SQLiteStoreTests: XCTestCase {
         let unfinished = try await afterRelaunch.unfinished()
 
         XCTAssertEqual(unfinished.map(\.id), ["s1"])
-        XCTAssertEqual(unfinished[0].fileURL.path, "/tmp/scan.pdf")
+        XCTAssertEqual(unfinished[0].fileURL, kept)
         XCTAssertEqual(unfinished[0].totalBytes, 20_000_000)
+    }
+
+    /**
+     * The container moves; the row still finds the bytes.
+     *
+     * iOS gives the app a new container directory on every update, so the
+     * absolute path this store used to write named nothing afterwards — and
+     * every queued upload reported its file as gone the first time somebody
+     * updated the app, with the files sitting there untouched.
+     *
+     * Simulated by writing a row whose path is somewhere the app will never
+     * be again, and asking for it back.
+     */
+    func testAnUploadIsFoundAfterTheContainerMoves() async throws {
+        let store = SQLiteUploadStore(store: try SQLiteStore(url: fileURL))
+        try await store.remember(
+            PendingUpload(
+                id: "s1",
+                fileURL: URL(
+                    fileURLWithPath: "/var/mobile/Containers/Data/Application/OLD/scan.pdf"
+                ),
+                documentType: "LAB",
+                originalName: "tahlil.pdf",
+                totalBytes: 10
+            )
+        )
+
+        let unfinished = try await store.unfinished()
+        let expected = try PendingUpload.directory().appendingPathComponent("scan.pdf")
+
+        XCTAssertEqual(unfinished.first?.fileURL, expected)
     }
 
     // MARK: - Ordering

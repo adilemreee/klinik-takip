@@ -153,6 +153,21 @@ public actor SyncEngine {
                 continue
             }
 
+            /*
+             * Something a person has to decide about is not something to keep
+             * sending.
+             *
+             * Without this an entry the server had already refused was pushed
+             * again on every single run, for as long as it sat in the queue —
+             * spending a request each time to be told the same no, and letting
+             * `attempts` climb with nothing counting it. It is still held, and
+             * still shown; it is simply not retried behind the user's back.
+             */
+            guard entry.attempts < maxAttempts else {
+                blocked.insert(key)
+                continue
+            }
+
             switch await sender.send(entry) {
             case .applied:
                 try? await store.remove(id: entry.id)
@@ -181,7 +196,17 @@ public actor SyncEngine {
 
             case .rejected(let message):
                 var updated = entry
-                updated.attempts += 1
+                /*
+                 * Straight to the limit, not one step towards it.
+                 *
+                 * `rejected` means the request will never succeed as written —
+                 * a validation failure, a permission the account no longer has.
+                 * Counting it like a retryable failure left the screen saying
+                 * "waiting to be sent" for five more runs about something that
+                 * was never going to be sent, and the person who could fix it
+                 * was not told until the count ran out.
+                 */
+                updated.attempts = maxAttempts
                 updated.lastError = message
                 try? await store.update(updated)
 

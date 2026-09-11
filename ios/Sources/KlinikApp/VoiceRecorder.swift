@@ -33,6 +33,9 @@ public final class VoiceRecorder {
 #if canImport(AVFoundation) && os(iOS)
     private var recorder: AVAudioRecorder?
     private var fileURL: URL?
+    /// When `record` was called. See `stop()` for why the recorder's own clock
+    /// is not enough.
+    private var startedAt: Date?
 
     /**
      * Asks for the microphone, then starts.
@@ -73,6 +76,7 @@ public final class VoiceRecorder {
 
             self.recorder = recorder
             fileURL = url
+            startedAt = Date()
 
             return true
         } catch {
@@ -90,10 +94,24 @@ public final class VoiceRecorder {
     public func stop() -> (url: URL, contentType: String)? {
         guard let recorder, let url = fileURL else { return nil }
 
-        let duration = recorder.currentTime
+        /*
+         * How long was recorded, from whichever clock still knows.
+         *
+         * `currentTime` reads zero once the recorder has stopped — and it stops
+         * itself at the ceiling passed to `record(forDuration:)`, and again if
+         * a phone call interrupts it. Trusting it alone meant a full three
+         * minutes of somebody describing a symptom was measured as zero
+         * seconds and deleted as an accidental tap.
+         */
+        let duration = recorder.isRecording
+            ? recorder.currentTime
+            : Date().timeIntervalSince(startedAt ?? Date())
+
         recorder.stop()
         release()
 
+        // Under a second: a tap that started and stopped. Sending it would give
+        // the clinician silence to wonder about.
         guard duration >= 1 else {
             try? FileManager.default.removeItem(at: url)
             return nil
@@ -117,6 +135,7 @@ public final class VoiceRecorder {
     private func release() {
         recorder = nil
         fileURL = nil
+        startedAt = nil
 
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }

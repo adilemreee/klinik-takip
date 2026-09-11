@@ -22,7 +22,12 @@ public struct AvailabilityState: Sendable, Equatable {
 
     public var byDay: [(day: Int, windows: [AvailabilityWindow])] {
         (0..<7).compactMap { day in
-            let forDay = windows.filter { $0.dayOfWeek == day }
+            // Sorted here rather than relying on the server's order: a day is
+            // read down the page, and "09:00–12:00" under "14:00–17:00" is a
+            // list somebody has to reorder in their head.
+            let forDay = windows
+                .filter { $0.dayOfWeek == day }
+                .sorted { $0.startTime < $1.startTime }
 
             return forDay.isEmpty ? nil : (day, forDay)
         }
@@ -177,7 +182,10 @@ public struct AvailabilityScreen: View {
                 )
                 state = await model.currentState()
 
-                return published
+                // The reason, handed back to the sheet. It is what the reader
+                // is looking at; a banner on the screen behind it is a message
+                // nobody sees.
+                return published ? nil : state.error ?? L10n.string("error.server")
             }
         }
         .task { await reload() }
@@ -186,6 +194,13 @@ public struct AvailabilityScreen: View {
 
     @ViewBuilder
     private var content: some View {
+        // Outside the switch: a window refused from the empty state set this
+        // and then had nowhere to appear, which left the save button looking
+        // like it did nothing at all.
+        if let error = state.error {
+            ErrorBanner(message: error)
+        }
+
         switch state.phase {
         case .loading:
             SkeletonCard(lines: 4)
@@ -224,10 +239,6 @@ public struct AvailabilityScreen: View {
             }
 
         case .loaded:
-            if let error = state.error {
-                ErrorBanner(message: error)
-            }
-
             Text(L10n.string("availability.explain"))
                 .font(Tokens.Typography.captionRelative)
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
@@ -261,11 +272,19 @@ public struct AvailabilityScreen: View {
         state = await model.currentState()
     }
 
-    /// The clinic's own week. `nonisolated` because a static on a `View`
-    /// otherwise inherits the view's main-actor isolation, and the tests call
-    /// it directly.
-    nonisolated static func dayName(_ dayOfWeek: Int) -> String {
-        let symbols = Calendar(identifier: .gregorian).weekdaySymbols
+    /**
+     * The clinic's own week, in the reader's language.
+     *
+     * `Calendar.current`, not `Calendar(identifier: .gregorian)`. The latter
+     * carries no locale and answers with the fixed English abbreviations —
+     * "Mon", "Tue" — which is what a Turkish clinician was reading above their
+     * own working hours.
+     *
+     * `nonisolated` because a static on a `View` otherwise inherits the view's
+     * main-actor isolation, and the tests call it directly.
+     */
+    nonisolated static func dayName(_ dayOfWeek: Int, calendar: Calendar = .current) -> String {
+        let symbols = calendar.weekdaySymbols
 
         // 0 = Sunday, matching the server, which is also Foundation's order.
         guard dayOfWeek >= 0, dayOfWeek < symbols.count else {
@@ -352,12 +371,14 @@ struct AddWindowSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
 
-    let publish: (Int, String, String) async -> Bool
+    /// Returns the reason it was refused, or nil when it was accepted.
+    let publish: (Int, String, String) async -> String?
 
     @State private var day = 1
     @State private var start = AddWindowSheet.time(hour: 9)
     @State private var end = AddWindowSheet.time(hour: 17)
     @State private var saving = false
+    @State private var error: String?
 
     var body: some View {
         NavigationStack {
@@ -385,6 +406,13 @@ struct AddWindowSheet: View {
                         .font(Tokens.Typography.captionRelative)
                         .foregroundStyle(Tone.critical.foreground.resolve(for: scheme))
                 }
+
+                if let error {
+                    Text(error)
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tone.critical.foreground.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .navigationTitle(L10n.string("availability.add"))
             .toolbar {
@@ -396,14 +424,16 @@ struct AddWindowSheet: View {
                     Button(L10n.string("common.save")) {
                         Task {
                             saving = true
-                            let ok = await publish(
+                            error = nil
+                            let refusal = await publish(
                                 day,
                                 AddWindowSheet.text(from: start),
                                 AddWindowSheet.text(from: end)
                             )
                             saving = false
+                            error = refusal
 
-                            if ok { dismiss() }
+                            if refusal == nil { dismiss() }
                         }
                     }
                     .disabled(saving || !AddWindowSheet.isOrdered(start, end))

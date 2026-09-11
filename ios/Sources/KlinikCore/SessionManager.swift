@@ -29,11 +29,46 @@ public actor SessionManager {
 
     private var tokens: SessionTokens?
     private var refreshTask: Task<SessionTokens, Error>?
-    private(set) public var state: SessionState = .signedOut
+    private var listeners: [UUID: AsyncStream<SessionState>.Continuation] = [:]
+
+    private(set) public var state: SessionState = .signedOut {
+        didSet {
+            guard state != oldValue else { return }
+
+            for continuation in listeners.values {
+                continuation.yield(state)
+            }
+        }
+    }
 
     public init(store: TokenStore, refresher: TokenRefresher) {
         self.store = store
         self.refresher = refresher
+    }
+
+    /**
+     * Every change to the session, starting with the one in force now.
+     *
+     * Without this the shell reads the state at launch and never again — so a
+     * session that lapses mid-use leaves the app on whatever screen it was on,
+     * failing every request, with no way to sign in again short of deleting it.
+     * The first value is sent immediately so a listener starts from the truth.
+     */
+    public func updates() -> AsyncStream<SessionState> {
+        let (stream, continuation) = AsyncStream<SessionState>.makeStream()
+        let id = UUID()
+
+        listeners[id] = continuation
+        continuation.onTermination = { [weak self] _ in
+            Task { await self?.stopListening(id) }
+        }
+        continuation.yield(state)
+
+        return stream
+    }
+
+    private func stopListening(_ id: UUID) {
+        listeners[id] = nil
     }
 
     /// Reads whatever was persisted, so a relaunch does not force a sign-in.
@@ -116,13 +151,50 @@ public actor SessionManager {
         } catch {
             refreshTask = nil
 
-            // A rejected refresh means the chain is over: either the token was
-            // already spent, or the server revoked the family. Holding on to it
-            // would only produce more failures.
+            /*
+             * A refresh that never reached the server says nothing about the
+             * session.
+             *
+             * Ending it here would sign somebody out for being on an aeroplane
+             * — and take their queued writes with them, which is the one thing
+             * the queue exists to prevent. The tokens are kept, the caller sees
+             * the connection error, and the next attempt with signal decides.
+             */
+            if SessionManager.wasUnreachable(error) {
+                throw error
+            }
+
+            // A *rejected* refresh means the chain is over: either the token
+            // was already spent, or the server revoked the family. Holding on
+            // to it would only produce more failures.
             tokens = nil
             try? store.clear()
             state = .expired
             throw error
+        }
+    }
+
+    /// Whether the refresh failed to reach a server at all, as opposed to
+    /// being turned down by one.
+    static func wasUnreachable(_ error: Error) -> Bool {
+        switch error {
+        case let api as APIError:
+            // A 5xx is the server struggling, not the session ending: a gateway
+            // that answers 502 has not judged the refresh token.
+            if case .server = api { return true }
+            if case .rateLimited = api { return true }
+
+            return api.isConnectivity
+
+        case is CancellationError:
+            return true
+
+        default:
+            // Anything this layer does not recognise — a transport that throws
+            // its own type, a decoding failure on a truncated body — is far
+            // more likely to be a bad connection than a revoked session, and
+            // the cost of guessing wrong in that direction is one extra 401.
+            return true
         }
     }
 }

@@ -83,7 +83,7 @@
     <string name="analytics_record_count">%d records</string>
     <string name="analytics_revenue">Revenue</string>
     <string name="analytics_revenue_title">Revenue and cost</string>
-    <string name="analytics_revenue_withheld">The revenue breakdown is not shown to this account.</string>
+    <string name="analytics_revenue_withheld">Revenue columns are hidden because you may not see them — this does not mean zero.</string>
     <string name="analytics_title">Statistics</string>
     <string name="analytics_too_few">Not enough data</string>
     <string name="analytics_total_operations">%d operations in total</string>
@@ -206,6 +206,7 @@
     <string name="biometrics_try_again">That did not work. Try again, or use your device passcode.</string>
     <string name="biometrics_unavailable">This device has no biometric check set up.</string>
     <string name="biometrics_unlock_with">Unlock with %@</string>
+    <string name="biometrics_unlock_with_passcode">Unlock with your passcode</string>
     <string name="bmi_category_normal">Normal</string>
     <string name="bmi_category_obese_i">Obesity (class I)</string>
     <string name="bmi_category_obese_ii">Obesity (class II)</string>
@@ -277,10 +278,12 @@
     <string name="complication_answered">Reply</string>
     <string name="complication_awaiting_reply">The clinic has not replied yet.</string>
     <string name="complication_body_area">Body area (optional)</string>
+    <string name="complication_my_title">My complaints</string>
     <string name="complication_no_body_area">No body area given</string>
     <string name="complication_overdue_count">Waiting a long time</string>
     <string name="complication_photo_count">photo(s)</string>
     <string name="complication_queue_empty">No reports waiting.</string>
+    <string name="complication_queue_title">Complaint queue</string>
     <string name="complication_report_hint">Describe what is wrong. If this is an emergency, use the emergency button.</string>
     <string name="complication_report_title">Report a problem</string>
     <string name="complication_resolve">Close</string>
@@ -320,6 +323,7 @@
     <string name="consent_procedure_unknown">The clinic has not yet recorded which operation you are having.</string>
     <string name="consent_procedure_unknown_why">A consent form that does not name the operation is not valid informed consent. The form will open here once the clinic records it.</string>
     <string name="consent_read_and_sign">Read and sign</string>
+    <string name="consent_read_to_end_first">Please read to the end of the form before confirming.</string>
     <string name="consent_sign_hint">Sign here with your finger</string>
     <string name="consent_signature">Signature</string>
     <string name="consent_signature_required">You need to sign before confirming.</string>
@@ -347,6 +351,7 @@
     <string name="document_scan_preview">What your phone could read</string>
     <string name="document_scan_review">Scan</string>
     <string name="document_scan_unreadable">Your phone found no readable text in this scan. If the document is unclear, take it again in better light.</string>
+    <string name="document_title">Documents</string>
     <string name="document_type">Document type</string>
     <string name="document_type_consent">Consent form</string>
     <string name="document_type_ecg">ECG</string>
@@ -410,6 +415,7 @@
     <string name="emergency_summary_medications">Current medication</string>
     <string name="emergency_summary_none">Nothing on file</string>
     <string name="emergency_unanswered">Unanswered</string>
+    <string name="emergency_universal_number_note">112 reaches an ambulance in almost every country. If you know the local number where you are, call that instead.</string>
     <string name="emergency_waiting_minutes">waiting %d min</string>
     <string name="error_forbidden">You do not have permission for this.</string>
     <string name="error_not_found">Record not found.</string>
@@ -579,6 +585,7 @@
     <string name="follow_up_status_pending">Scheduled</string>
     <string name="follow_up_status_skipped">Skipped</string>
     <string name="follow_up_surgery_date">Operation date</string>
+    <string name="follow_up_title">Check-up calendar</string>
     <string name="health_denied">Access to health data was not granted. You can change it in Settings › Health.</string>
     <string name="health_nothing_new">Nothing new since the last import.</string>
     <string name="health_queued">%d readings taken, but there is no connection. They are on this phone and will be sent when it returns.</string>
@@ -647,6 +654,7 @@
     <string name="lab_review_low_confidence">Uncertain reading — please check</string>
     <string name="lab_review_needs_mapping">Analyte not mapped</string>
     <string name="lab_review_notice">These values were read from the document automatically and are NOT IN THE PATIENT RECORD YET. Rows you confirm are added to it.</string>
+    <string name="lab_review_title">Lab review</string>
     <string name="lab_title">My lab results</string>
     <string name="lab_toggle_hint">Tap to open or close</string>
     <string name="lab_trend_analyte">Analyte</string>
@@ -656,9 +664,11 @@
     <string name="lab_trend_reference">Reference range</string>
     <string name="lab_trend_reference_high">Reference high</string>
     <string name="lab_trend_reference_low">Reference low</string>
+    <string name="lab_trend_title">Lab trends</string>
     <string name="lab_trends">Trend</string>
     <string name="measurement_add">Add a reading</string>
     <string name="measurement_bmi">BMI</string>
+    <string name="measurement_chart_title">Measurements</string>
     <string name="measurement_date">Date</string>
     <string name="measurement_diastolic">Diastolic</string>
     <string name="measurement_empty">No readings yet. The curve starts once you add your first weight.</string>
@@ -686,12 +696,13 @@
     <string name="medication_adherence">Adherence</string>
     <string name="medication_adherence_of">%1$d taken · %2$d missed</string>
     <string name="medication_approve_action">Approve</string>
-    <string name="medication_awaiting_approval">Awaiting approval</string>
+    <string name="medication_awaiting_approval">Waiting for your doctor</string>
     <string name="medication_badge_first_dose">First dose</string>
     <string name="medication_badge_four_weeks">4 weeks</string>
     <string name="medication_badge_one_week">1 week</string>
     <string name="medication_badge_three_days">3 days</string>
-    <string name="medication_empty">Nothing has been prescribed for this patient.</string>
+    <string name="medication_empty">No medications recorded yet.</string>
+    <string name="medication_empty_for_patient">Nothing has been prescribed for this patient.</string>
     <string name="medication_interactions_title">Interaction warnings</string>
     <string name="medication_next_dose">Next dose</string>
     <string name="medication_no_interactions">No known interaction found.</string>
@@ -867,6 +878,7 @@
     <string name="photo_clinical_use_only">Clinical use only</string>
     <string name="photo_compare">Compare</string>
     <string name="photo_compare_slider">Comparison slider</string>
+    <string name="photo_comparison_title">Comparison</string>
     <string name="photo_consent_given">Usage consent given</string>
     <string name="photo_empty">No photos yet.</string>
     <string name="photo_finding_discharge">Discharge</string>
@@ -874,6 +886,7 @@
     <string name="photo_finding_swelling">Swelling</string>
     <string name="photo_finding_wound_open">Wound edges apart</string>
     <string name="photo_flagged_title">Photographs to review</string>
+    <string name="photo_gallery_title">Photos</string>
     <string name="photo_image">Clinical photograph</string>
     <string name="photo_need_body_area">Name the area so the photos can be compared.</string>
     <string name="photo_no_body_area">No body area given</string>

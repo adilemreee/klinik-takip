@@ -129,8 +129,6 @@
 /* Acil durum (Şartname M8) */
 "emergency.confirmTitle" = "Acil durum bildirilsin mi?";
 "emergency.confirmHint" = "Onaylarsanız klinik hemen haberdar edilir.";
-"emergency.confirmAction" = "Evet, bildir";
-"emergency.sending" = "Bildiriliyor…";
 "emergency.sent" = "Klinik haberdar edildi. Sizi arayacaklar.";
 "emergency.notSentRetry" = "Bildirim kliniğe ULAŞMADI. Tekrar deneyin; acilse bulunduğunuz ülkenin acil numarasını arayın.";
 "emergency.callLocalNumber" = "Acil numarayı ara";
@@ -350,7 +348,6 @@
 "appointment.confirm" = "Onayla";
 "appointment.cancel" = "İptal et";
 "appointment.request" = "Randevu iste";
-"appointment.addToCalendar" = "Takvime ekle";
 
 "appointment.type.CONSULTATION" = "Muayene";
 "appointment.type.SURGERY" = "Ameliyat";
@@ -530,9 +527,7 @@
 "finance.totals.incomplete" = "Bu toplam eksik: kuru olmayan tutarlar aşağıda kendi para biriminde listelendi.";
 "finance.rateMissing" = "Bu güne ait kur kaydı yok";
 
-"analytics.title" = "Panel";
 "analytics.tooFew" = "Yeterli veri yok";
-"analytics.revenueWithheld" = "Gelir sütunları yetkiniz olmadığı için gizlendi — sıfır anlamına gelmez.";
 "analytics.capacityUnconfigured" = "Çalışma saatleri tanımlı değil; doluluk oranı hesaplanamıyor.";
 "analytics.costLinesUnread" = "Bazı maliyet satırları okunamadı; marj eksik olabilir.";
 "analytics.procedures.title" = "Ameliyatlar";
@@ -541,8 +536,6 @@
 "analytics.revenue.title" = "Gelir ve gider";
 "analytics.occupancy.title" = "Randevu doluluğu";
 "analytics.conversion" = "Dönüşüm";
-"analytics.margin" = "Marj";
-"analytics.cityUnknown" = "Şehri girilmemiş";
 "analytics.average" = "Ortalama ücret";
 
 "notification.action.openExport" = "Dosyayı aç";
@@ -732,14 +725,11 @@
 "prescribe.needName" = "İlaç adı ve doz gerekli.";
 "prescribe.written" = "Reçete yazıldı";
 "medication.staffTitle" = "İlaçlar";
-"medication.empty" = "Bu hastaya yazılmış ilaç yok.";
+"medication.emptyForPatient" = "Bu hastaya yazılmış ilaç yok.";
 "medication.stopAction" = "Kes";
 "medication.approveAction" = "Onayla";
-"medication.awaitingApproval" = "Onay bekliyor";
 "medication.patientReported" = "Hasta ekledi";
 "medication.prescribed" = "Reçeteli";
-"medication.stopped" = "Kesildi";
-"medication.nextDose" = "Sıradaki doz";
 "medication.adherenceOf" = "%1$d alındı · %2$d atlandı";
 "medication.interactionsTitle" = "Etkileşim uyarıları";
 "medication.noInteractions" = "Bilinen etkileşim bulunamadı.";
@@ -811,7 +801,7 @@
 "analytics.count" = "Adet";
 "analytics.revenue" = "Gelir";
 "analytics.net" = "Net";
-"analytics.margin" = "Kâr";
+"analytics.margin" = "Marj";
 "analytics.cost" = "Maliyet";
 "analytics.commission" = "Aracı komisyonu";
 "analytics.recordCount" = "%d kayıt";
@@ -821,7 +811,7 @@
 "analytics.cityUnknown" = "%d hastanın şehri girilmemiş.";
 "analytics.channels" = "Geliş kaynakları";
 "analytics.convertedOf" = "%1$d / %2$d ameliyata dönüştü";
-"analytics.revenueWithheld" = "Gelir kırılımı bu hesaba gösterilmiyor.";
+"analytics.revenueWithheld" = "Gelir sütunları yetkiniz olmadığı için gizlendi — sıfır anlamına gelmez.";
 "analytics.occupancy" = "Doluluk";
 "menu.analytics" = "İstatistikler";
 
@@ -1038,7 +1028,6 @@
 "ai.retentionRecorded" = "Kayıtlı beyan";
 "menu.aiSettings" = "Yapay zekâ ayarları";
 "measurement.emptySeries" = "Bu ölçüm türünde kayıt yok.";
-"measurement.diastolic" = "Küçük tansiyon";
 "lab.interpret" = "Yapay zekâ yorumu iste";
 "lab.interpretQueued" = "Yorum istendi. Hazır olunca onay kuyruğunuza düşecek; siz onaylamadan hastaya gitmez.";
 "document.failedTitle" = "Belge işlenemedi";
@@ -1162,3 +1151,17 @@
 "lab.collapsed" = "Kapalı";
 "lab.expanded" = "Açık";
 "lab.toggleHint" = "Açmak ya da kapatmak için dokunun";
+
+/* Ekran başlıkları ve kontrol şemasından gelen düzeltmeler */
+"document.title" = "Belgeler";
+"measurement.chartTitle" = "Ölçümler";
+"lab.trendTitle" = "Tahlil eğrileri";
+"lab.reviewTitle" = "Tahlil doğrulama";
+"followUp.title" = "Kontrol takvimi";
+"photo.galleryTitle" = "Fotoğraflar";
+"photo.comparisonTitle" = "Karşılaştırma";
+"complication.queueTitle" = "Şikayet kuyruğu";
+"complication.myTitle" = "Şikayetlerim";
+"emergency.universalNumberNote" = "112 hemen her ülkede ambulansa ulaşır. Bulunduğunuz ülkenin kendi numarasını biliyorsanız onu arayın.";
+"biometrics.unlockWithPasscode" = "Parola ile aç";
+"consent.readToEndFirst" = "Onaylamadan önce metnin sonuna kadar okuyun.";

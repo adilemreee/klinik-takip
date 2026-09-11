@@ -123,6 +123,11 @@ public struct SignConsentScreen: View {
     @State private var state = SignConsentState()
     @State private var strokes: [[CGPoint]] = []
     @State private var padSize: CGSize = .zero
+    /// True once the end of the wording has been on screen. The button waits
+    /// for it — see `form(_:)`.
+    @State private var readToEnd = false
+    /// True while a stroke is in progress, so the document holds still.
+    @State private var drawing = false
 
     public init(model: SignConsentModel) {
         self.model = model
@@ -135,9 +140,17 @@ public struct SignConsentScreen: View {
             }
             .padding(Tokens.Spacing.lg)
         }
+        // The pad below is a drag surface inside this scroll view. The pad
+        // takes the gesture first, and this stops the page moving under the
+        // hand that is drawing on it.
+        .scrollDisabled(drawing)
         .background(Tokens.Palette.background.resolve(for: scheme))
         .navigationTitle(L10n.string("consent.type.TREATMENT"))
         .task {
+            await model.load()
+            state = await model.currentState()
+        }
+        .refreshable {
             await model.load()
             state = await model.currentState()
         }
@@ -209,20 +222,42 @@ public struct SignConsentScreen: View {
                     .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
             }
 
+            /*
+             * The end of the wording.
+             *
+             * Nothing is drawn; what matters is that it has been on screen,
+             * which is the closest an app can get to "read it". A consent
+             * recorded against a document the patient never scrolled through
+             * is worth nothing in the argument it exists for — and a document
+             * short enough to fit on one screen satisfies this immediately,
+             * which is also correct.
+             */
+            Color.clear
+                .frame(height: 1)
+                .onAppear { readToEnd = true }
+                .accessibilityHidden(true)
+
             SectionHeader(
                 title: L10n.string("consent.signature"),
                 subtitle: L10n.string("consent.signHint")
             )
 
-            SignaturePad(strokes: $strokes, labels: SignConsentScreen.labels)
-                .background(
-                    // Measured rather than assumed: the PNG has to be rendered
-                    // at the size the strokes were drawn at, or the signature
-                    // arrives stretched.
-                    GeometryReader { proxy in
-                        Color.clear.onAppear { padSize = proxy.size }
-                    }
-                )
+            SignaturePad(
+                strokes: $strokes,
+                labels: SignConsentScreen.labels,
+                onDrawing: { drawing = $0 }
+            )
+            .background(
+                // Measured rather than assumed, and watched rather than read
+                // once: the PNG is rendered at the size the strokes were drawn
+                // at, and a rotation or a text-size change after `onAppear`
+                // would leave that number stale and the signature stretched.
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { padSize = proxy.size }
+                        .onChange(of: proxy.size) { _, size in padSize = size }
+                }
+            )
 
             HStack(spacing: Tokens.Spacing.md) {
                 Button(L10n.string("consent.clearSignature")) { strokes = [] }
@@ -232,16 +267,27 @@ public struct SignConsentScreen: View {
                 PrimaryButton(
                     title: L10n.string("consent.give"),
                     isBusy: state.submitting,
-                    isEnabled: SignaturePad.isSigned(strokes) && !state.submitting
+                    isEnabled: SignConsentScreen.canSign(
+                        strokes: strokes,
+                        readToEnd: readToEnd,
+                        submitting: state.submitting
+                    )
                 ) {
                     await submit()
                 }
             }
 
-            if !SignaturePad.isSigned(strokes) {
+            // One reason at a time, and the one that is actually in the way.
+            if !readToEnd {
+                Text(L10n.string("consent.readToEndFirst"))
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if !SignaturePad.isSigned(strokes) {
                 Text(L10n.string("consent.signatureRequired"))
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if let error = state.error {
@@ -264,6 +310,21 @@ public struct SignConsentScreen: View {
         _ = await model.sign(png)
         state = await model.currentState()
         #endif
+    }
+
+    /**
+     * Whether the consent may be given.
+     *
+     * Both conditions, not either: a signature on a document nobody scrolled
+     * through is a mark, not consent. `nonisolated` so the tests can hold the
+     * rule directly rather than through a screen.
+     */
+    nonisolated static func canSign(
+        strokes: [[CGPoint]],
+        readToEnd: Bool,
+        submitting: Bool
+    ) -> Bool {
+        readToEnd && SignaturePad.isSigned(strokes) && !submitting
     }
 
     /// `nonisolated` because a static on a `View` otherwise inherits the

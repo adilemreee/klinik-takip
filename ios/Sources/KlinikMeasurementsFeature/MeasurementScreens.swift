@@ -67,14 +67,26 @@ public struct BodyChartView: View {
     /// - Parameter canRecord: staff without `medical.write` still read the
     ///   chart. Hiding the button they would be refused anyway is kinder than
     ///   showing them a 403.
+    /**
+     * Bumped whenever the offline queue actually delivered something.
+     *
+     * Rows the app is holding are drawn from the queue, and nothing told this
+     * screen when the queue emptied — so a reading or a message sent minutes
+     * ago kept its "not sent yet" badge until the reader navigated away and
+     * back.
+     */
+    private let queueRevision: Int
+
     public init(
         model: MeasurementsModel,
         canRecord: Bool = true,
-        syncFromDevice: (() async -> String?)? = nil
+        syncFromDevice: (() async -> String?)? = nil,
+        queueRevision: Int = 0
     ) {
         self.model = model
         self.canRecord = canRecord
         self.syncFromDevice = syncFromDevice
+        self.queueRevision = queueRevision
     }
 
     public var body: some View {
@@ -119,6 +131,11 @@ public struct BodyChartView: View {
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
         .task { await refresh { await model.load() } }
+        .refreshable { await refresh { await model.load() } }
+        .onChange(of: queueRevision) { _, _ in
+            Task { await refresh { await model.load() } }
+        }
+        .navigationTitle(L10n.string("measurement.chartTitle"))
         .sheet(isPresented: $recording) {
             RecordMeasurementView(model: model) { await refresh { } }
         }

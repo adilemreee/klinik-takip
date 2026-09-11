@@ -11,8 +11,19 @@ public struct MedicationsScreen: View {
 
     @State private var state = MedicationsState()
 
-    public init(model: MedicationsModel) {
+    /**
+     * Bumped whenever the offline queue actually delivered something.
+     *
+     * Rows the app is holding are drawn from the queue, and nothing told this
+     * screen when the queue emptied — so a reading or a message sent minutes
+     * ago kept its "not sent yet" badge until the reader navigated away and
+     * back.
+     */
+    private let queueRevision: Int
+
+    public init(model: MedicationsModel, queueRevision: Int = 0) {
         self.model = model
+        self.queueRevision = queueRevision
     }
 
     public var body: some View {
@@ -22,6 +33,10 @@ public struct MedicationsScreen: View {
         .background(Tokens.Palette.background.resolve(for: scheme))
         .navigationTitle(L10n.string("medication.title"))
         .task { await refresh { await model.refresh() } }
+        .refreshable { await refresh { await model.refresh() } }
+        .onChange(of: queueRevision) { _, _ in
+            Task { await refresh { await model.refresh() } }
+        }
     }
 
     @ViewBuilder
@@ -130,7 +145,7 @@ struct AdherenceCard: View {
             }
 
             if adherence.streak > 0 {
-                Text("\(L10n.string("medication.streak")): \(adherence.streak)")
+                Text(String(format: L10n.string("medication.streak"), adherence.streak))
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
             }

@@ -3,6 +3,7 @@ package xyz.klinik.app
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import xyz.klinik.feature.aisettings.ui.AiSettingsStrings
 import xyz.klinik.feature.analytics.ui.AnalyticsStrings
 import xyz.klinik.feature.assistant.ui.AssistantStrings
 import xyz.klinik.feature.briefing.ui.BriefingStrings
@@ -409,6 +410,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
     StaffDestination.Finance -> getString(DesignR.string.finance_title)
     StaffDestination.Exports -> getString(DesignR.string.export_title)
+    StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
@@ -588,5 +590,46 @@ fun Context.exportsStrings(): ExportsStrings = ExportsStrings(
             .replace("{matched}", matched.toString())
             .replace("{rows}", rows.toString())
     },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * Which model service the clinic uses (spec 3.4, 14.5).
+ *
+ * `{last4}` and `{model}` are the shared catalogue's placeholders and are
+ * filled in here: they are not Android format specifiers, so `getString` has
+ * nothing to substitute.
+ */
+fun Context.aiSettingsStrings(): AiSettingsStrings = AiSettingsStrings(
+    title = getString(DesignR.string.ai_settings_title),
+    notPermitted = getString(DesignR.string.ai_not_permitted),
+    retry = getString(DesignR.string.common_retry),
+    provider = getString(DesignR.string.ai_provider),
+    model = getString(DesignR.string.ai_model),
+    apiKey = getString(DesignR.string.ai_settings_api_key),
+    apiKeyWriteOnly = getString(DesignR.string.ai_settings_api_key_write_only),
+    apiKeyStored = { last4 ->
+        getString(DesignR.string.ai_settings_api_key_stored).replace("{last4}", last4)
+    },
+    inputPrice = getString(DesignR.string.ai_input_price),
+    outputPrice = getString(DesignR.string.ai_output_price),
+    priceHint = getString(DesignR.string.ai_settings_price_hint),
+    pricingPage = getString(DesignR.string.ai_pricing_page),
+    budget = getString(DesignR.string.ai_settings_budget),
+    retention = getString(DesignR.string.ai_retention),
+    zeroRetention = getString(DesignR.string.ai_settings_zero_retention),
+    zeroRetentionCleared = getString(DesignR.string.ai_settings_zero_retention_cleared),
+    retentionNote = getString(DesignR.string.ai_retention_recorded),
+    ready = getString(DesignR.string.ai_ready),
+    notReady = getString(DesignR.string.ai_not_ready),
+    notClinicalReady = getString(DesignR.string.ai_settings_not_clinical_ready),
+    save = getString(DesignR.string.common_save),
+    test = getString(DesignR.string.ai_settings_test),
+    testOk = { model ->
+        getString(DesignR.string.ai_settings_test_ok).replace("{model}", model)
+    },
+    testFailed = getString(DesignR.string.ai_settings_test_failed),
+    clear = getString(DesignR.string.ai_settings_clear),
+    missingName = { key -> stringForKey(key) },
     message = { text -> resolve(text) },
 )

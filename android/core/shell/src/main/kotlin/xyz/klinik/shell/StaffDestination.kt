@@ -72,6 +72,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** Which model service the clinic uses, and on what terms (spec 3.4). */
+    data object AiSettings : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** The staff member's own notification preferences. */
     data object NotificationSettings : StaffDestination {
         override val patientId: String? = null
@@ -148,5 +153,6 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.Analytics,
     StaffDestination.Finance,
     StaffDestination.Exports,
+    StaffDestination.AiSettings,
     StaffDestination.NotificationSettings,
 )

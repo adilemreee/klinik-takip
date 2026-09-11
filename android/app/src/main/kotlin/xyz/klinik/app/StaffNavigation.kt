@@ -28,6 +28,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.klinik.design.Tokens
 import xyz.klinik.design.klinikColor
+import xyz.klinik.feature.aisettings.AiSettingsModel
+import xyz.klinik.feature.aisettings.ui.AiSettingsScreen
 import xyz.klinik.feature.analytics.AnalyticsModel
 import xyz.klinik.feature.analytics.ui.AnalyticsScreen
 import xyz.klinik.feature.appointments.AppointmentsModel
@@ -260,6 +262,26 @@ fun StaffDestinationScreen(
                         model.download(request.id)?.let { url -> context.openLink(url) }
                     }
                 },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.AiSettings -> {
+            val model = remember { AiSettingsModel(environment.aiSettings) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AiSettingsScreen(
+                state = state,
+                strings = context.aiSettingsStrings(),
+                onChooseProvider = { provider -> model.choose(provider) },
+                onEdit = { change -> model.edit(change) },
+                onSave = { scope.launch { model.save() } },
+                onTest = { scope.launch { model.test() } },
+                onClear = { scope.launch { model.clear() } },
+                onOpenPricing = { url -> context.openLink(url) },
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
         }

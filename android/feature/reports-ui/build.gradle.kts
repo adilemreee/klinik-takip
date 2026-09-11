@@ -1,14 +1,10 @@
 plugins {
-    // AGP 9 has Kotlin support built in; applying org.jetbrains.kotlin.android
-    // alongside it is an error rather than a redundancy.
     id("com.android.library")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
-    namespace = "xyz.klinik.design"
-    // The current Compose libraries require 37; the compile SDK is independent
-    // of minSdk, so this does not narrow the devices the app runs on.
+    namespace = "xyz.klinik.feature.reports.ui"
     compileSdk = 37
 
     defaultConfig {
@@ -26,10 +22,8 @@ android {
 }
 
 dependencies {
-    // The markdown parser lives in a plain JVM module so a clinical document
-    // that renders as one run-on line fails on a laptop; this is the drawing
-    // half of it.
-    api(project(":core:shell"))
+    api(project(":feature:reports"))
+    implementation(project(":core:design"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)

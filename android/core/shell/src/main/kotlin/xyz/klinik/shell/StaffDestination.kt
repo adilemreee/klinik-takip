@@ -41,6 +41,27 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /**
+     * The interpretations waiting on a clinician's signature (spec M5).
+     *
+     * Clinic-wide, like the two queues above it: the server holds every AI
+     * output until somebody signs it off, so a queue nobody can open is a
+     * queue that only grows.
+     */
+    data object PendingReports : StaffDestination {
+        override val patientId: String? = null
+    }
+
+    /** What patients have reported, across the clinic (spec M7). */
+    data object ComplicationQueue : StaffDestination {
+        override val patientId: String? = null
+    }
+
+    /** The staff member's own notification preferences. */
+    data object NotificationSettings : StaffDestination {
+        override val patientId: String? = null
+    }
+
     data class File(override val patientId: String, val name: String) : StaffDestination
     data class Measurements(override val patientId: String) : StaffDestination
     data class Documents(override val patientId: String) : StaffDestination
@@ -97,3 +118,17 @@ enum class StaffTab {
     /** Its own tab, not a pushed screen: there is a clock running on it. */
     EMERGENCY,
 }
+
+/**
+ * The clinic-wide screens behind the overflow menu, in menu order.
+ *
+ * A list rather than a `when` over every destination: these are the ones that
+ * belong in a menu, and a patient's lab results do not. Naming them here means
+ * a screen that exists and has no way in shows up as a screen missing from
+ * this list, which is the failure that put eight patient screens out of reach.
+ */
+val staffMenuDestinations: List<StaffDestination> = listOf(
+    StaffDestination.PendingReports,
+    StaffDestination.ComplicationQueue,
+    StaffDestination.NotificationSettings,
+)

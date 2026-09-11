@@ -89,6 +89,9 @@ include(":feature:emergency")
 // What a clinician should look at first, and why (spec M5).
 include(":feature:briefing")
 
+// The sign-off queue every AI interpretation waits in (spec M5).
+include(":feature:reports")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -120,6 +123,9 @@ if (androidSdkAvailable) {
 
     // The clinician's morning (spec M5).
     include(":feature:briefing-ui")
+
+    // The sign-off queue every AI interpretation waits in (spec M5).
+    include(":feature:reports-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

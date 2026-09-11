@@ -22,6 +22,7 @@ import xyz.klinik.network.MedicationsApi
 import xyz.klinik.network.MessagingApi
 import xyz.klinik.network.NotificationsApi
 import xyz.klinik.network.PhotosApi
+import xyz.klinik.network.ReportsApi
 import xyz.klinik.network.ResumableUpload
 import xyz.klinik.network.BriefingApi
 import xyz.klinik.network.EmergencyApi
@@ -101,6 +102,7 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val patients: PatientsApi by lazy { PatientsApi(client) }
     val emergency: EmergencyApi by lazy { EmergencyApi(client) }
     val briefing: BriefingApi by lazy { BriefingApi(client) }
+    val reports: ReportsApi by lazy { ReportsApi(client) }
 
     fun homeModel(): HomeModel = HomeModel(me)
     fun briefingModel(): BriefingModel = BriefingModel(briefing)

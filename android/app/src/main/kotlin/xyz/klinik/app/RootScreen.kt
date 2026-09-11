@@ -62,6 +62,7 @@ import xyz.klinik.network.messageKey
 import xyz.klinik.shell.RootRoute
 import xyz.klinik.shell.StaffDestination
 import xyz.klinik.shell.StaffTab
+import xyz.klinik.shell.staffMenuDestinations
 // Design-system resources live in their own R class, not the app's: since AGP
 // 8 the R class is non-transitive, so a library's resources are namespaced to
 // that library rather than merged into every module that depends on it. Only
@@ -329,6 +330,52 @@ private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
     }
 }
 
+/**
+ * The clinic-wide screens, and the way out.
+ *
+ * The three tabs are the work; everything else a clinic needs — the sign-off
+ * queue, the complication queue, notification preferences — goes here. Built
+ * from [staffMenuDestinations] rather than written out, so a screen that
+ * exists and has no way in is a screen missing from one list rather than one
+ * nobody notices.
+ */
+@Composable
+private fun StaffToolbar(model: RootViewModel, onOpen: (StaffDestination) -> Unit) {
+    val context = LocalContext.current
+    var menuOpen by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        Box {
+            TextButton(onClick = { menuOpen = true }) {
+                Text(stringResource(DesignR.string.common_more))
+            }
+
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                staffMenuDestinations.forEach { entry ->
+                    DropdownMenuItem(
+                        text = { Text(context.stringForStaffDestination(entry)) },
+                        onClick = {
+                            menuOpen = false
+                            onOpen(entry)
+                        },
+                    )
+                }
+
+                DropdownMenuItem(
+                    text = { Text(stringResource(DesignR.string.auth_sign_out)) },
+                    onClick = {
+                        menuOpen = false
+                        model.signOut()
+                    },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun StaffTabBar(current: StaffTab, onSelect: (StaffTab) -> Unit) {
     NavigationBar(containerColor = klinikColor("surface")) {
@@ -369,14 +416,7 @@ private fun AgendaTab(
     LaunchedEffect(Unit) { briefing.refresh() }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = model::signOut) {
-                Text(stringResource(DesignR.string.auth_sign_out))
-            }
-        }
+        StaffToolbar(model = model, onOpen = onOpen)
 
         BriefingScreen(
             state = state,
@@ -401,14 +441,7 @@ private fun PatientsTab(
     LaunchedEffect(Unit) { patients.search("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = model::signOut) {
-                Text(stringResource(DesignR.string.auth_sign_out))
-            }
-        }
+        StaffToolbar(model = model, onOpen = onOpen)
 
         PatientListScreen(
             state = listState,

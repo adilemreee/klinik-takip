@@ -11,11 +11,10 @@ kotlin {
 
 dependencies {
     api(project(":core:network"))
+    implementation(libs.kotlinx.coroutines.core)
 
-    // Walks the sealed hierarchy so a destination added without a way in
-    // fails a test rather than existing unreachably.
-    testImplementation(kotlin("reflect"))
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 tasks.test {

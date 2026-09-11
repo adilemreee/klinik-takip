@@ -18,8 +18,10 @@ import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
+import xyz.klinik.feature.reports.ui.ReportReviewStrings
 import xyz.klinik.network.UiText
 import xyz.klinik.shell.FileSection
+import xyz.klinik.shell.StaffDestination
 import xyz.klinik.design.R as DesignR
 
 /**
@@ -361,3 +363,47 @@ fun Context.briefingStrings(): BriefingStrings = BriefingStrings(
     message = { text -> resolve(text) },
 )
 
+
+/**
+ * The sign-off queue every AI interpretation waits in (spec M5).
+ *
+ * The risk label goes through the catalogue rather than a local `when`, so a
+ * risk level added to the API shows the clinic a word instead of a key.
+ */
+fun Context.reportReviewStrings(): ReportReviewStrings = ReportReviewStrings(
+    title = getString(DesignR.string.report_pending_title),
+    empty = getString(DesignR.string.report_pending_empty),
+    retry = getString(DesignR.string.common_retry),
+    doctorView = getString(DesignR.string.report_doctor_view),
+    patientView = getString(DesignR.string.report_patient_view),
+    noPatientText = getString(DesignR.string.report_no_patient_text),
+    releaseAction = getString(DesignR.string.report_release_action),
+    holdAction = getString(DesignR.string.report_hold_action),
+    generatedAt = getString(DesignR.string.report_generated_at),
+    riskName = { level -> stringForKey(level.stringKey) },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * What each clinic-wide screen is called in the staff menu.
+ *
+ * A `when` rather than a property on the destination: the shell module holds
+ * what the routing may say and knows nothing about Android resources, and the
+ * compiler still refuses a destination nobody named.
+ */
+fun Context.stringForStaffDestination(destination: StaffDestination): String = when (destination) {
+    StaffDestination.Patients -> getString(DesignR.string.menu_patients)
+    StaffDestination.EmergencyQueue -> getString(DesignR.string.menu_emergency_queue)
+    StaffDestination.PendingReports -> getString(DesignR.string.report_pending_title)
+    StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
+    StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
+    is StaffDestination.File -> destination.name
+    is StaffDestination.Measurements -> stringForSection(FileSection.MEASUREMENTS)
+    is StaffDestination.Documents -> stringForSection(FileSection.DOCUMENTS)
+    is StaffDestination.LabReview -> stringForSection(FileSection.LAB_REVIEW)
+    is StaffDestination.LabTrend -> stringForSection(FileSection.LAB_TREND)
+    is StaffDestination.Photos -> stringForSection(FileSection.PHOTOS)
+    is StaffDestination.FollowUp -> stringForSection(FileSection.FOLLOW_UP)
+    is StaffDestination.Appointments -> stringForSection(FileSection.APPOINTMENTS)
+    is StaffDestination.Conversation -> stringForSection(FileSection.CONVERSATION)
+}

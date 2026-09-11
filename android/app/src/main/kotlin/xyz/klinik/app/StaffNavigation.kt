@@ -2,12 +2,16 @@ package xyz.klinik.app
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -18,6 +22,8 @@ import xyz.klinik.design.klinikColor
 import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.documents.DocumentsModel
+import xyz.klinik.feature.complications.ComplicationQueueModel
+import xyz.klinik.feature.complications.ui.ComplicationQueueScreen
 import xyz.klinik.feature.emergency.EmergencyQueueModel
 import xyz.klinik.feature.emergency.ui.EmergencyQueueScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
@@ -34,13 +40,18 @@ import xyz.klinik.feature.messaging.ui.ChatScreen
 import xyz.klinik.feature.patients.PatientDetailModel
 import xyz.klinik.feature.patients.ui.PatientDetailScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
+import xyz.klinik.feature.notifications.NotificationSettingsModel
+import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
+import xyz.klinik.feature.reports.ReportReviewModel
+import xyz.klinik.feature.reports.ui.ReportReviewScreen
 import xyz.klinik.network.MeasurementSource
 import xyz.klinik.network.MeasurementSubject
 import xyz.klinik.network.RecordSubject
 import xyz.klinik.shell.FileSection
 import xyz.klinik.shell.StaffDestination
 import xyz.klinik.shell.destinationFor
+import xyz.klinik.design.R as DesignR
 
 /**
  * One staff screen.
@@ -78,6 +89,79 @@ fun StaffDestinationScreen(
                 // one with a clock on it — works now.
                 onResolve = {},
                 onCall = { phone -> context.dial(phone) },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.PendingReports -> {
+            val model = remember { ReportReviewModel(environment.reports) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.refresh() }
+
+            ReportReviewScreen(
+                state = state,
+                strings = context.reportReviewStrings(),
+                onRetry = { scope.launch { model.refresh() } },
+                onReview = { id, release -> scope.launch { model.review(id, release) } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.ComplicationQueue -> {
+            val model = remember { ComplicationQueueModel(environment.complications) }
+            val state by model.state.collectAsStateWithLifecycle()
+            // Answering and closing both need a sentence from the clinician,
+            // so the row opens a box for one rather than sending an empty
+            // reply the patient would read as being ignored.
+            var replying by remember { mutableStateOf<ComplicationReply?>(null) }
+
+            LaunchedEffect(Unit) { model.load() }
+
+            ComplicationQueueScreen(
+                state = state,
+                strings = context.complicationStrings(),
+                onRetry = { scope.launch { model.load() } },
+                onAnswer = { view ->
+                    replying = ComplicationReply(view.complication.id, resolve = false)
+                },
+                onResolve = { view ->
+                    replying = ComplicationReply(view.complication.id, resolve = true)
+                },
+                modifier = modifier,
+            )
+
+            replying?.let { reply ->
+                ComplicationReplyDialog(
+                    resolve = reply.resolve,
+                    onDismiss = { replying = null },
+                    onSend = { message ->
+                        replying = null
+                        scope.launch {
+                            if (reply.resolve) {
+                                model.resolve(reply.id, message)
+                            } else {
+                                model.acknowledge(reply.id, message)
+                            }
+                        }
+                    },
+                )
+            }
+        }
+
+        StaffDestination.NotificationSettings -> {
+            val model = remember { NotificationSettingsModel(environment.notifications) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            NotificationSettingsScreen(
+                state = state,
+                strings = context.notificationStrings(),
+                onRetry = { scope.launch { model.load() } },
+                onToggle = { kind, channel, on ->
+                    scope.launch { model.set(kind, channel, on) }
+                },
                 modifier = modifier,
             )
         }
@@ -292,4 +376,58 @@ fun StaffDestinationScreen(
             )
         }
     }
+}
+
+
+/** Which complication a clinician is writing back about, and whether it closes it. */
+private data class ComplicationReply(val id: String, val resolve: Boolean)
+
+/**
+ * The sentence that goes back to the patient.
+ *
+ * Required rather than optional: a complication marked answered with nothing
+ * written reads, on the patient's screen, as having been dismissed.
+ */
+@Composable
+private fun ComplicationReplyDialog(
+    resolve: Boolean,
+    onDismiss: () -> Unit,
+    onSend: (String) -> Unit,
+) {
+    var message by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                if (resolve) {
+                    context.getString(DesignR.string.complication_resolve)
+                } else {
+                    context.getString(DesignR.string.complication_answer)
+                },
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = message,
+                onValueChange = { message = it },
+                label = { Text(context.getString(DesignR.string.complication_your_answer)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSend(message.trim()) },
+                enabled = message.isNotBlank(),
+            ) {
+                Text(context.getString(DesignR.string.common_send))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(context.getString(DesignR.string.common_cancel))
+            }
+        },
+    )
 }

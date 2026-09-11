@@ -50,8 +50,10 @@ import xyz.klinik.feature.finance.FinanceModel
 import xyz.klinik.feature.finance.ui.FinanceScreen
 import xyz.klinik.feature.followup.FollowUpModel
 import xyz.klinik.feature.followup.ui.FollowUpScreen
+import xyz.klinik.feature.lab.LabPanelsModel
 import xyz.klinik.feature.lab.LabReviewModel
 import xyz.klinik.feature.lab.LabTrendModel
+import xyz.klinik.feature.lab.ui.LabPanelsScreen
 import xyz.klinik.feature.lab.ui.LabReviewScreen
 import xyz.klinik.feature.lab.ui.LabTrendScreen
 import xyz.klinik.feature.measurements.MeasurementsModel
@@ -327,6 +329,35 @@ fun StaffDestinationScreen(
                 },
                 onRetire = { protocol ->
                     scope.launch { model.retire(protocol.document.id) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.LabPanels -> {
+            val model = remember(destination.patientId) {
+                LabPanelsModel(environment.lab, RecordSubject.Patient(destination.patientId))
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            LabPanelsScreen(
+                state = state,
+                strings = context.labPanelsStrings(),
+                onToggle = { panel -> model.toggle(panel) },
+                onOpenReport = { panel ->
+                    panel.documentId?.let { id ->
+                        // A fresh link each time, opened by the system: these
+                        // are short-lived and signed for this reader, so the
+                        // app never stores one.
+                        scope.launch {
+                            runCatching { environment.documents.downloadLink(id).url }
+                                .getOrNull()
+                                ?.let { context.openLink(it) }
+                        }
+                    }
                 },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,

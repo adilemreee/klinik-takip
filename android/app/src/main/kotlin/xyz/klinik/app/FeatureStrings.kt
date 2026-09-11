@@ -12,6 +12,7 @@ import xyz.klinik.feature.briefing.ui.BriefingStrings
 import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
 import xyz.klinik.feature.emergency.ui.EmergencyQueueStrings
+import xyz.klinik.feature.lab.ui.LabPanelsStrings
 import xyz.klinik.feature.lab.ui.LabReviewStrings
 import xyz.klinik.feature.lab.ui.LabTrendStrings
 import xyz.klinik.feature.measurements.ui.MeasurementStrings
@@ -286,6 +287,7 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.CONVERSATION -> getString(DesignR.string.menu_messages)
     FileSection.TRAVEL -> getString(DesignR.string.travel_title)
     FileSection.MEDICATIONS -> getString(DesignR.string.medication_staff_title)
+    FileSection.LAB_PANELS -> getString(DesignR.string.lab_title)
 }
 
 /**
@@ -305,6 +307,7 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Documents -> getString(DesignR.string.menu_documents)
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
+    PatientDestination.LabPanels -> getString(DesignR.string.lab_title)
     PatientDestination.LabResults -> getString(DesignR.string.menu_lab_results)
     PatientDestination.Complications -> getString(DesignR.string.menu_complications)
     PatientDestination.Medications -> getString(DesignR.string.medication_title)
@@ -437,6 +440,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.Conversation -> stringForSection(FileSection.CONVERSATION)
     is StaffDestination.Travel -> stringForSection(FileSection.TRAVEL)
     is StaffDestination.Medications -> stringForSection(FileSection.MEDICATIONS)
+    is StaffDestination.LabPanels -> stringForSection(FileSection.LAB_PANELS)
 }
 
 /**
@@ -834,5 +838,22 @@ fun Context.prescribingStrings(): PrescribingStrings = PrescribingStrings(
     summary = { times, days, total, hours ->
         getString(DesignR.string.prescribe_summary, times, days, total, hours)
     },
+    message = { text -> resolve(text) },
+)
+
+/** Confirmed results, as the laboratory printed them (spec M16). */
+fun Context.labPanelsStrings(): LabPanelsStrings = LabPanelsStrings(
+    title = getString(DesignR.string.lab_title),
+    empty = getString(DesignR.string.lab_no_results),
+    retry = getString(DesignR.string.common_retry),
+    reference = getString(DesignR.string.lab_reference),
+    noRange = getString(DesignR.string.lab_no_range),
+    openReport = getString(DesignR.string.lab_open_report),
+    resultCount = { count -> getString(DesignR.string.lab_result_count, count) },
+    abnormalCount = { count -> getString(DesignR.string.lab_abnormal_count, count) },
+    flagName = { flag -> stringForKey(flag.stringKey) },
+    toggleHint = getString(DesignR.string.lab_toggle_hint),
+    expanded = getString(DesignR.string.lab_expanded),
+    collapsed = getString(DesignR.string.lab_collapsed),
     message = { text -> resolve(text) },
 )

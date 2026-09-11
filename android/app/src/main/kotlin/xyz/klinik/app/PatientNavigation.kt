@@ -31,7 +31,9 @@ import xyz.klinik.feature.documents.ui.DocumentListScreen
 import xyz.klinik.feature.followup.FollowUpModel
 import xyz.klinik.feature.followup.ui.FollowUpScreen
 import xyz.klinik.feature.home.HomeAction
+import xyz.klinik.feature.lab.LabPanelsModel
 import xyz.klinik.feature.lab.LabTrendModel
+import xyz.klinik.feature.lab.ui.LabPanelsScreen
 import xyz.klinik.feature.lab.ui.LabTrendScreen
 import xyz.klinik.feature.measurements.MeasurementsModel
 import xyz.klinik.feature.measurements.ui.BodyChartScreen
@@ -85,6 +87,15 @@ sealed interface PatientDestination {
 
     /** Password, devices, and a copy of everything the clinic holds (T7.3). */
     data object Account : PatientDestination
+
+    /**
+     * Confirmed results as the laboratory printed them (spec M16).
+     *
+     * Separate from [LabResults], which charts one analyte over time: a
+     * patient asking "what did my blood test say" wants the sheet, and one
+     * asking "is it getting better" wants the line.
+     */
+    data object LabPanels : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -129,6 +140,7 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.MyReports,
     PatientDestination.Travel,
     PatientDestination.Measurements,
+    PatientDestination.LabPanels,
     PatientDestination.LabResults,
     PatientDestination.FollowUp,
     PatientDestination.Appointments,
@@ -313,6 +325,30 @@ fun PatientDestinationScreen(
                 strings = context.labTrendStrings(),
                 onRetry = { scope.launch { model.load() } },
                 onSelect = model::select,
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.LabPanels -> {
+            val model = remember { LabPanelsModel(environment.lab, RecordSubject.Me) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            LabPanelsScreen(
+                state = state,
+                strings = context.labPanelsStrings(),
+                onToggle = { panel -> model.toggle(panel) },
+                onOpenReport = { panel ->
+                    panel.documentId?.let { id ->
+                        scope.launch {
+                            runCatching { environment.documents.downloadLink(id).url }
+                                .getOrNull()
+                                ?.let { context.openLink(it) }
+                        }
+                    }
+                },
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
         }

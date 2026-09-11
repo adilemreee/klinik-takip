@@ -40,6 +40,47 @@ data class LabResult(
         }
 }
 
+/**
+ * One report's worth of results, as the printed sheet had them.
+ *
+ * A lab report is read as a panel — the whole sheet from one blood draw — and
+ * a screen that scattered those rows into per-analyte lists would make a
+ * clinician reassemble on their own what the laboratory already grouped.
+ */
+@Serializable
+data class LabPanel(
+    /** When the sample was taken, not when it was uploaded. */
+    val measuredAt: String,
+    /** The report it came from. */
+    val documentId: String? = null,
+    val documentName: String? = null,
+    /**
+     * False when the row names a report that has no bytes behind it.
+     *
+     * The button to open it is not drawn in that case: a download that always
+     * fails is worse than no download, because it looks like a broken app
+     * rather than a missing file.
+     */
+    val documentAvailable: Boolean = false,
+    /** Alphabetical by analyte name. */
+    val results: List<LabResult> = emptyList(),
+) {
+    /** Whether anything on this sheet is outside its range. */
+    val hasAbnormal: Boolean
+        get() = results.any { it.flag == LabFlag.HIGH || it.flag == LabFlag.LOW }
+
+    val hasCritical: Boolean get() = results.any { it.flag == LabFlag.CRITICAL }
+
+    /**
+     * Results with no range printed beside them.
+     *
+     * Unclassified rather than normal — the report carried no reference, and
+     * drawing them as normal would be the client deciding something the
+     * laboratory did not.
+     */
+    val unclassified: List<LabResult> get() = results.filter { it.flag == null }
+}
+
 @Serializable
 data class LabReviewItem(
     val result: LabResult,
@@ -113,6 +154,16 @@ class LabApi(
                 ),
             ),
         )
+
+    /**
+     * Confirmed results grouped the way the laboratory printed them.
+     *
+     * Works for either subject: a patient reads their own panels through
+     * `me/…`, a clinician reads a file through `patients/<id>/…`, and the
+     * server decides what each may see.
+     */
+    suspend fun panels(subject: RecordSubject): List<LabPanel> =
+        decode(client.send(Endpoint(HttpMethod.GET, subject.base("lab-results/panels"))))
 
     /** Confirmed values far enough outside their range to need attention now. */
     suspend fun critical(patientId: String): List<LabResult> =

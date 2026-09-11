@@ -76,16 +76,35 @@ jobs:
 
       # Object storage, started the same way as Redis and for the same reason:
       # service containers cannot take a command, and MinIO needs one.
+      #
+      # From quay.io rather than Docker Hub: an anonymous pull from a GitHub
+      # runner shares one heavily-used IP allowance, and when it runs out the
+      # daemon reports it as "pull access denied … repository does not exist",
+      # which reads like the image was removed. A commit touching only Android
+      # failed on it. Pinned as well, so the storage under the tests is not a
+      # tag that moved overnight.
       - name: Start MinIO
         run: |
           docker run -d --name ci-minio -p 9000:9000 \
             -e MINIO_ROOT_USER=ciaccess -e MINIO_ROOT_PASSWORD=cisecret123 \
-            minio/minio:latest server /data
+            quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z server /data
+          ready=""
           for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1 && break
+            if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1; then
+              ready=yes
+              break
+            fi
             sleep 1
           done
-          docker run --rm --network host --entrypoint sh minio/mc:latest -c '
+          if [ -z "$ready" ]; then
+            # Said here rather than surfacing three lines down as an mc error
+            # about an alias, which is not what went wrong.
+            echo "MinIO did not become ready" >&2
+            docker logs ci-minio >&2 || true
+            exit 1
+          fi
+          docker run --rm --network host --entrypoint sh \
+            quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z -c '
             mc alias set ci http://127.0.0.1:9000 ciaccess cisecret123
             mc mb --ignore-existing ci/klinik-documents
             mc mb --ignore-existing ci/klinik-photos

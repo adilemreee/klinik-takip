@@ -132,7 +132,9 @@ export class FileService {
 
     const stat = await this.stat(bucket, key);
 
-    const url = await this.storage.client.presignedGetObject(
+    // `signing`, not `client`: the host is part of the signature, so the URL
+    // has to be signed against the address the reader's browser will use.
+    const url = await this.storage.signing.presignedGetObject(
       this.bucketName(bucket),
       key,
       ttl,

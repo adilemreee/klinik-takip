@@ -54,6 +54,23 @@ export const envSchema = z.object({
 
   // --- Object storage ------------------------------------------------------
   S3_ENDPOINT: z.string().url(),
+
+  /**
+   * Where a *browser* reaches the same storage.
+   *
+   * `S3_ENDPOINT` is how this process reaches MinIO, which in a compose
+   * deployment is a name on the internal network — `http://minio:9000`. A
+   * download URL signed against that host is one nothing outside Docker can
+   * resolve, and the patient gets a page that never loads.
+   *
+   * The host is part of what gets signed, so it cannot be swapped afterwards:
+   * the URL has to be signed against the address the client will actually
+   * use. That is this.
+   *
+   * Optional. Left unset — a local run, where both are the same address —
+   * signing falls back to `S3_ENDPOINT` and behaves exactly as before.
+   */
+  S3_PUBLIC_ENDPOINT: optional(z.string().url()),
   S3_REGION: z.string().min(1).default('eu-central-1'),
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),

@@ -8,7 +8,7 @@
     <string name="account_current_password">Mevcut parola</string>
     <string name="account_disable_two_factor">İki faktörü kapat</string>
     <string name="account_disable_two_factor_hint">Kapatmak için doğrulayıcınızdaki altı haneli kodu girin.</string>
-    <string name="account_last_seen">Son görülme: %@</string>
+    <string name="account_last_seen">Son görülme: %s</string>
     <string name="account_new_password">Yeni parola</string>
     <string name="account_no_other_devices">Başka bir cihazda açık oturum yok.</string>
     <string name="account_other_devices">Diğer cihazlar</string>
@@ -65,7 +65,7 @@
     <string name="ai_settings_zero_retention_cleared">Sağlayıcı değişti; beyan sıfırlandı, yeniden onaylayın.</string>
     <string name="ai_usage_budget_used">Bütçenin kullanılan oranı</string>
     <string name="ai_usage_calls">%1$d çağrı, %2$d tanesi başarısız ya da reddedildi</string>
-    <string name="ai_usage_of_budget">/ %@ üst sınır</string>
+    <string name="ai_usage_of_budget">/ %s üst sınır</string>
     <string name="ai_usage_title">Bu ayki harcama</string>
     <string name="ai_usage_tokens">%1$d giriş, %2$d çıkış token</string>
     <string name="analytics_average">Ortalama ücret</string>
@@ -230,7 +230,7 @@
     <string name="biometrics_touch_id">Touch ID</string>
     <string name="biometrics_try_again">Doğrulanamadı. Tekrar deneyin ya da cihaz şifrenizi kullanın.</string>
     <string name="biometrics_unavailable">Bu cihazda biyometrik doğrulama kurulu değil.</string>
-    <string name="biometrics_unlock_with">%@ ile aç</string>
+    <string name="biometrics_unlock_with">%s ile aç</string>
     <string name="biometrics_unlock_with_passcode">Parola ile aç</string>
     <string name="bmi_category_normal">Normal</string>
     <string name="bmi_category_obese_i">Obezite (1. derece)</string>
@@ -323,7 +323,7 @@
     <string name="complication_your_answer">Yanıtınız</string>
     <string name="connection_offline">Çevrimdışısınız</string>
     <string name="connection_offline_detail">Bağlantı gelince kaldığınız yerden devam edecek.</string>
-    <string name="connection_showing_cached">Çevrimdışısınız — %@ tarihindeki son bilgiler gösteriliyor.</string>
+    <string name="connection_showing_cached">Çevrimdışısınız — %s tarihindeki son bilgiler gösteriliyor.</string>
     <string name="connection_syncing">Eşitleniyor…</string>
     <string name="connection_unreachable">Kliniğe ulaşılamıyor. Bağlantınızı kontrol edin.</string>
     <string name="connection_up_to_date">Güncel</string>
@@ -401,9 +401,10 @@
     <string name="emergency_already_open">Zaten açık bir acil çağrınız var</string>
     <string name="emergency_blood_type">Kan grubu</string>
     <string name="emergency_button">Acil Durum</string>
+    <string name="emergency_call_action">Ara</string>
     <string name="emergency_call_local_number">Acil numarayı ara</string>
-    <string name="emergency_call_number">%@ ara</string>
-    <string name="emergency_call_patient_at">Hastayı ara: %@</string>
+    <string name="emergency_call_number">%s ara</string>
+    <string name="emergency_call_patient_at">Hastayı ara: %s</string>
     <string name="emergency_cancel_action">Yanlışlıkla bastım</string>
     <string name="emergency_cancelled">Çağrı iptal edildi</string>
     <string name="emergency_chronic">Kronik hastalıklar</string>
@@ -946,7 +947,7 @@
     <string name="prescribe_instructions">Kullanım notu (isteğe bağlı)</string>
     <string name="prescribe_need_name">İlaç adı ve doz gerekli.</string>
     <string name="prescribe_start_date">Başlangıç</string>
-    <string name="prescribe_summary">Günde %1$d kez, %2$d gün — toplam %3$d doz. Saatler: %4$@</string>
+    <string name="prescribe_summary">Günde %1$d kez, %2$d gün — toplam %3$d doz. Saatler: %4$s</string>
     <string name="prescribe_times_per_day">Günde kaç kez</string>
     <string name="prescribe_title">İlaç yaz</string>
     <string name="prescribe_written">Reçete yazıldı</string>
@@ -996,7 +997,7 @@
     <string name="sessions_sign_out">Çıkış yap</string>
     <string name="sessions_sign_out_everywhere">Tüm cihazlardan çık</string>
     <string name="sessions_title">Cihazlarım</string>
-    <string name="survey_answered_on">%@ tarihinde</string>
+    <string name="survey_answered_on">%s tarihinde</string>
     <string name="survey_best">En iyi</string>
     <string name="survey_closed">Bu formun süresi doldu</string>
     <string name="survey_finding_severe">Eşiği aştı</string>
@@ -1027,13 +1028,13 @@
     <string name="sync_item_dose_skipped">İlaç: atlandı olarak işaretlendi</string>
     <string name="sync_item_dose_snoozed">İlaç: ertelendi</string>
     <string name="sync_item_dose_taken">İlaç: içildi olarak işaretlendi</string>
-    <string name="sync_item_measurement">Ölçüm: %@</string>
-    <string name="sync_item_message">Mesaj: %@</string>
+    <string name="sync_item_measurement">Ölçüm: %s</string>
+    <string name="sync_item_message">Mesaj: %s</string>
     <string name="sync_item_survey">Anket yanıtları</string>
     <string name="sync_keep_mine">Benimkini gönder</string>
     <string name="sync_keep_server">Klinikteki kalsın</string>
-    <string name="sync_last_error">Son yanıt: %@</string>
-    <string name="sync_last_synced">Son gönderim: %@</string>
+    <string name="sync_last_error">Son yanıt: %s</string>
+    <string name="sync_last_synced">Son gönderim: %s</string>
     <string name="sync_needs_attention">Bekleyen kayıtlar ilginizi bekliyor</string>
     <string name="sync_open">Bekleyenleri gör</string>
     <string name="sync_pending_count">%d kayıt gönderilmeyi bekliyor</string>
@@ -1058,7 +1059,7 @@
     <string name="travel_check_out">Çıkış</string>
     <string name="travel_clearance_forbidden">Uçuş onayını yalnız klinik karar yetkisi olan biri verebilir.</string>
     <string name="travel_clearance_toggle">Bu hasta uçabilir</string>
-    <string name="travel_cleared_by">Onaylayan: %1$@ · %2$@</string>
+    <string name="travel_cleared_by">Onaylayan: %1$s · %2$s</string>
     <string name="travel_cleared_to_fly">Doktorunuz uçabileceğinizi onayladı.</string>
     <string name="travel_departure_at">Dönüş zamanı</string>
     <string name="travel_departure_flight">Dönüş uçuşu</string>
@@ -1088,7 +1089,7 @@
     <string name="triage_summary_disclaimer">Bu özet yapay zeka tarafından üretilmiştir, tıbbi tanı yerine geçmez. Hastanın kendi mesajı aşağıdadır.</string>
     <string name="triage_summary_title">Yapay zeka özeti</string>
     <string name="upload_file_gone">Dosya telefonda bulunamadı. Yeniden seçip göndermeniz gerekiyor.</string>
-    <string name="upload_of">%1$@ / %2$@</string>
+    <string name="upload_of">%1$s / %2$s</string>
     <string name="upload_waiting">Gönderilmeyi bekleyen dosya</string>
     <string name="upload_waiting_count">%d dosya gönderilmeyi bekliyor</string>
 </resources>

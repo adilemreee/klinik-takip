@@ -1,8 +1,11 @@
 package xyz.klinik.app
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
+import xyz.klinik.feature.emergency.ui.EmergencyQueueStrings
 import xyz.klinik.feature.lab.ui.LabReviewStrings
 import xyz.klinik.feature.lab.ui.LabTrendStrings
 import xyz.klinik.feature.measurements.ui.MeasurementStrings
@@ -285,5 +288,47 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.NotificationSettings ->
         getString(DesignR.string.notification_settings_title)
     PatientDestination.Consents -> getString(DesignR.string.consent_title)
+}
+
+/**
+ * The staff emergency queue.
+ *
+ * Every string already existed in the catalogue — the screen is what was
+ * missing, not the words for it.
+ */
+fun Context.emergencyQueueStrings(): EmergencyQueueStrings = EmergencyQueueStrings(
+    title = getString(DesignR.string.emergency_queue_title),
+    empty = getString(DesignR.string.emergency_queue_empty),
+    retry = getString(DesignR.string.common_retry),
+    unanswered = getString(DesignR.string.emergency_unanswered),
+    waitingMinutes = { minutes ->
+        getString(DesignR.string.emergency_waiting_minutes, minutes)
+    },
+    acknowledge = getString(DesignR.string.emergency_acknowledge_action),
+    resolve = getString(DesignR.string.emergency_resolve_action),
+    bloodType = getString(DesignR.string.emergency_summary_blood_type),
+    allergies = getString(DesignR.string.emergency_summary_allergies),
+    conditions = getString(DesignR.string.emergency_summary_conditions),
+    medications = getString(DesignR.string.emergency_summary_medications),
+    lastSurgery = getString(DesignR.string.emergency_summary_last_surgery),
+    none = getString(DesignR.string.emergency_summary_none),
+    call = getString(DesignR.string.emergency_call_action),
+    message = { text -> resolve(text) },
+)
+
+/**
+ * Opens the dialler with a number in it.
+ *
+ * The dialler, not a call: placing one without the person pressing the green
+ * button is an app deciding to ring somebody. `ACTION_DIAL` needs no
+ * permission for the same reason.
+ */
+fun Context.dial(phone: String) {
+    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    // A device with no dialler is a tablet, and crashing on one is worse than
+    // a button that does nothing.
+    runCatching { startActivity(intent) }
 }
 

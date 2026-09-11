@@ -1215,3 +1215,4 @@
 "message.templateBody" = "Metin";
 "finance.rates.title" = "Bu ayki kurlar";
 "finance.rates.none" = "Bu ay için kur kaydı yok. Farklı para birimindeki tutarlar toplama katılmıyor.";
+"emergency.callAction" = "Ara";

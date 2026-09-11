@@ -65,6 +65,17 @@ const escapeXml = (value) =>
     .replace(/"/g, '\\"');
 
 /**
+ * An iOS format string, as Android spells it.
+ *
+ * `%@` is Foundation's "any object"; Android's formatter has never heard of
+ * it and `getString(id, arg)` on one either prints the specifier or throws.
+ * Eleven strings carried it across untouched, and none of them had an Android
+ * caller yet — so the first one to pass an argument would have been the bug
+ * report. `%1$@` keeps its position and becomes `%1$s`.
+ */
+const androidFormat = (value) => value.replace(/%(\d+\$)?@/g, (_, position) => `%${position ?? ''}s`);
+
+/**
  * Guarded so importing this module for `parseStrings` and `toAndroidName` does
  * not rewrite the resource files as a side effect — which is exactly what the
  * checker doing so would hide.
@@ -82,7 +93,7 @@ function generate() {
       // Sorted, so the file is deterministic and a diff shows only real changes.
       ...Object.keys(entries)
         .sort()
-        .map((key) => `    <string name="${toAndroidName(key)}">${escapeXml(entries[key])}</string>`),
+        .map((key) => `    <string name="${toAndroidName(key)}">${androidFormat(escapeXml(entries[key]))}</string>`),
       '</resources>',
     ];
 

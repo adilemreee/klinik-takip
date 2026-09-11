@@ -18,6 +18,8 @@ import xyz.klinik.design.klinikColor
 import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.documents.DocumentsModel
+import xyz.klinik.feature.emergency.EmergencyQueueModel
+import xyz.klinik.feature.emergency.ui.EmergencyQueueScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
 import xyz.klinik.feature.followup.FollowUpModel
 import xyz.klinik.feature.followup.ui.FollowUpScreen
@@ -59,6 +61,26 @@ fun StaffDestinationScreen(
 
     when (destination) {
         StaffDestination.Patients -> Unit
+
+        StaffDestination.EmergencyQueue -> {
+            val model = remember { EmergencyQueueModel(environment.emergency) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.refresh() }
+
+            EmergencyQueueScreen(
+                state = state,
+                strings = context.emergencyQueueStrings(),
+                onRetry = { scope.launch { model.refresh() } },
+                onAcknowledge = { id -> scope.launch { model.acknowledge(id) } },
+                // Closing a call needs a sentence saying what happened; the
+                // form for it is the next slice. Acknowledging — which is the
+                // one with a clock on it — works now.
+                onResolve = {},
+                onCall = { phone -> context.dial(phone) },
+                modifier = modifier,
+            )
+        }
 
         is StaffDestination.File -> {
             val model = remember(destination.patientId) {

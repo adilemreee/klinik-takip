@@ -8,7 +8,7 @@
     <string name="account_current_password">Current password</string>
     <string name="account_disable_two_factor">Turn off two-factor</string>
     <string name="account_disable_two_factor_hint">Enter the six-digit code from your authenticator to turn it off.</string>
-    <string name="account_last_seen">Last seen: %@</string>
+    <string name="account_last_seen">Last seen: %s</string>
     <string name="account_new_password">New password</string>
     <string name="account_no_other_devices">No other device is signed in.</string>
     <string name="account_other_devices">Other devices</string>
@@ -65,7 +65,7 @@
     <string name="ai_settings_zero_retention_cleared">The provider changed; the declaration was cleared and must be made again.</string>
     <string name="ai_usage_budget_used">Share of the budget used</string>
     <string name="ai_usage_calls">%1$d calls, %2$d failed or refused</string>
-    <string name="ai_usage_of_budget">/ %@ cap</string>
+    <string name="ai_usage_of_budget">/ %s cap</string>
     <string name="ai_usage_title">Spent this month</string>
     <string name="ai_usage_tokens">%1$d tokens in, %2$d out</string>
     <string name="analytics_average">Average fee</string>
@@ -230,7 +230,7 @@
     <string name="biometrics_touch_id">Touch ID</string>
     <string name="biometrics_try_again">That did not work. Try again, or use your device passcode.</string>
     <string name="biometrics_unavailable">This device has no biometric check set up.</string>
-    <string name="biometrics_unlock_with">Unlock with %@</string>
+    <string name="biometrics_unlock_with">Unlock with %s</string>
     <string name="biometrics_unlock_with_passcode">Unlock with your passcode</string>
     <string name="bmi_category_normal">Normal</string>
     <string name="bmi_category_obese_i">Obesity (class I)</string>
@@ -323,7 +323,7 @@
     <string name="complication_your_answer">Your reply</string>
     <string name="connection_offline">You are offline</string>
     <string name="connection_offline_detail">This will continue where it left off once you are back online.</string>
-    <string name="connection_showing_cached">You are offline — showing what was last seen at %@.</string>
+    <string name="connection_showing_cached">You are offline — showing what was last seen at %s.</string>
     <string name="connection_syncing">Syncing…</string>
     <string name="connection_unreachable">The clinic cannot be reached. Check your connection.</string>
     <string name="connection_up_to_date">Up to date</string>
@@ -401,9 +401,10 @@
     <string name="emergency_already_open">You already have an emergency call open</string>
     <string name="emergency_blood_type">Blood type</string>
     <string name="emergency_button">Emergency</string>
+    <string name="emergency_call_action">Call</string>
     <string name="emergency_call_local_number">Call emergency number</string>
-    <string name="emergency_call_number">Call %@</string>
-    <string name="emergency_call_patient_at">Call the patient: %@</string>
+    <string name="emergency_call_number">Call %s</string>
+    <string name="emergency_call_patient_at">Call the patient: %s</string>
     <string name="emergency_cancel_action">I pressed it by accident</string>
     <string name="emergency_cancelled">Call cancelled</string>
     <string name="emergency_chronic">Chronic conditions</string>
@@ -946,7 +947,7 @@
     <string name="prescribe_instructions">How to take it (optional)</string>
     <string name="prescribe_need_name">A medicine and a dose are required.</string>
     <string name="prescribe_start_date">Starts</string>
-    <string name="prescribe_summary">%1$d times a day for %2$d days — %3$d doses. At: %4$@</string>
+    <string name="prescribe_summary">%1$d times a day for %2$d days — %3$d doses. At: %4$s</string>
     <string name="prescribe_times_per_day">Times a day</string>
     <string name="prescribe_title">Prescribe</string>
     <string name="prescribe_written">Prescription written</string>
@@ -996,7 +997,7 @@
     <string name="sessions_sign_out">Sign out</string>
     <string name="sessions_sign_out_everywhere">Sign out everywhere</string>
     <string name="sessions_title">My devices</string>
-    <string name="survey_answered_on">on %@</string>
+    <string name="survey_answered_on">on %s</string>
     <string name="survey_best">Best</string>
     <string name="survey_closed">This questionnaire has closed</string>
     <string name="survey_finding_severe">Past the threshold</string>
@@ -1027,13 +1028,13 @@
     <string name="sync_item_dose_skipped">Medication: marked as skipped</string>
     <string name="sync_item_dose_snoozed">Medication: snoozed</string>
     <string name="sync_item_dose_taken">Medication: marked as taken</string>
-    <string name="sync_item_measurement">Reading: %@</string>
-    <string name="sync_item_message">Message: %@</string>
+    <string name="sync_item_measurement">Reading: %s</string>
+    <string name="sync_item_message">Message: %s</string>
     <string name="sync_item_survey">Questionnaire answers</string>
     <string name="sync_keep_mine">Send mine</string>
     <string name="sync_keep_server">Keep the clinic\'s</string>
-    <string name="sync_last_error">Last answer: %@</string>
-    <string name="sync_last_synced">Last sent: %@</string>
+    <string name="sync_last_error">Last answer: %s</string>
+    <string name="sync_last_synced">Last sent: %s</string>
     <string name="sync_needs_attention">Some entries need you to look at them</string>
     <string name="sync_open">See what is waiting</string>
     <string name="sync_pending_count">%d entries waiting to be sent</string>
@@ -1058,7 +1059,7 @@
     <string name="travel_check_out">Check-out</string>
     <string name="travel_clearance_forbidden">Only somebody with clinical decision rights can confirm a flight.</string>
     <string name="travel_clearance_toggle">This patient may fly</string>
-    <string name="travel_cleared_by">Confirmed by %1$@ · %2$@</string>
+    <string name="travel_cleared_by">Confirmed by %1$s · %2$s</string>
     <string name="travel_cleared_to_fly">Your doctor has confirmed you may fly.</string>
     <string name="travel_departure_at">Departs</string>
     <string name="travel_departure_flight">Departing flight</string>
@@ -1088,7 +1089,7 @@
     <string name="triage_summary_disclaimer">This summary was produced by AI and is not a medical diagnosis. The patient\'s own message is below.</string>
     <string name="triage_summary_title">AI summary</string>
     <string name="upload_file_gone">The file is no longer on this phone. You will need to choose it again.</string>
-    <string name="upload_of">%1$@ of %2$@</string>
+    <string name="upload_of">%1$s of %2$s</string>
     <string name="upload_waiting">File waiting to be sent</string>
     <string name="upload_waiting_count">%d files waiting to be sent</string>
 </resources>

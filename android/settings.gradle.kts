@@ -111,6 +111,10 @@ if (androidSdkAvailable) {
     include(":feature:notifications-ui")
     include(":feature:consents-ui")
 
+    // The calls a clinic has not answered yet (spec M8). The first screen of a
+    // shift: the API had the queue and nothing drew it.
+    include(":feature:emergency-ui")
+
     // The installable app. Last, because it depends on all of them.
     include(":app")
 } else {

@@ -1215,3 +1215,4 @@
 "message.templateBody" = "Text";
 "finance.rates.title" = "Rates this month";
 "finance.rates.none" = "No exchange rate has been recorded this month. Amounts in other currencies stay out of the totals.";
+"emergency.callAction" = "Call";

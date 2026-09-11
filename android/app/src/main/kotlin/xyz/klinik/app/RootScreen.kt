@@ -302,8 +302,17 @@ private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
                 .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.End,
         ) {
-            TextButton(onClick = model::signOut) {
-                Text(stringResource(DesignR.string.auth_sign_out))
+            Row(horizontalArrangement = Arrangement.End) {
+                // Its own button rather than a menu item: a call nobody can
+                // find is a call nobody answers, and this is the one screen in
+                // the staff app with a clock running on it.
+                TextButton(onClick = { stack.add(StaffDestination.EmergencyQueue) }) {
+                    Text(stringResource(DesignR.string.menu_emergency_queue))
+                }
+
+                TextButton(onClick = model::signOut) {
+                    Text(stringResource(DesignR.string.auth_sign_out))
+                }
             }
         }
 

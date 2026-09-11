@@ -31,6 +31,16 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /**
+     * The calls nobody has answered yet (spec M8).
+     *
+     * Clinic-wide rather than one patient's, which is the point of a triage
+     * queue: it is read to find out *whose* it is.
+     */
+    data object EmergencyQueue : StaffDestination {
+        override val patientId: String? = null
+    }
+
     data class File(override val patientId: String, val name: String) : StaffDestination
     data class Measurements(override val patientId: String) : StaffDestination
     data class Documents(override val patientId: String) : StaffDestination

@@ -411,6 +411,7 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "emergency.alreadyOpen" to R.string.emergency_already_open,
     "emergency.bloodType" to R.string.emergency_blood_type,
     "emergency.button" to R.string.emergency_button,
+    "emergency.callAction" to R.string.emergency_call_action,
     "emergency.callLocalNumber" to R.string.emergency_call_local_number,
     "emergency.callNumber" to R.string.emergency_call_number,
     "emergency.callPatientAt" to R.string.emergency_call_patient_at,

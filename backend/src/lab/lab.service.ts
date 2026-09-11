@@ -63,6 +63,15 @@ export interface LabPanel {
   measuredAt: Date;
   documentId: string | null;
   documentName: string | null;
+  /**
+   * Whether there are bytes behind the document.
+   *
+   * A row can name a report that has none — demo data does exactly this, on
+   * purpose, because a fabricated PDF of invented results sitting in a
+   * clinic's bucket is worse than nothing. Without this the reader is offered
+   * "open the report" and gets an error; with it the offer is simply not made.
+   */
+  documentAvailable: boolean;
   results: LabResult[];
 }
 
@@ -280,7 +289,7 @@ export class LabService {
     const results = await this.prisma.labResult.findMany({
       where: { patientId, verifiedAt: { not: null } },
       orderBy: [{ measuredAt: 'desc' }, { analyteName: 'asc' }],
-      include: { document: { select: { id: true, originalName: true } } },
+      include: { document: { select: { id: true, originalName: true, size: true } } },
     });
 
     const panels = new Map<string, LabPanel>();
@@ -296,6 +305,7 @@ export class LabService {
           measuredAt: result.measuredAt,
           documentId: result.document?.id ?? null,
           documentName: result.document?.originalName ?? null,
+          documentAvailable: (result.document?.size ?? 0) > 0,
           results: [result],
         });
       }

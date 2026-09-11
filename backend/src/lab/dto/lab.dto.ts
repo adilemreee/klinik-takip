@@ -168,6 +168,11 @@ export class LabPanelDto {
   @ApiPropertyOptional({ nullable: true })
   documentName!: string | null;
 
+  @ApiProperty({
+    description: 'False when the row names a report that has no bytes behind it',
+  })
+  documentAvailable!: boolean;
+
   @ApiProperty({ type: [LabResultDto], description: 'Alphabetical by analyte name' })
   results!: LabResultDto[];
 }

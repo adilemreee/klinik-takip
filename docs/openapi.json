@@ -17318,6 +17318,10 @@
             "type": "object",
             "nullable": true
           },
+          "documentAvailable": {
+            "type": "boolean",
+            "description": "False when the row names a report that has no bytes behind it"
+          },
           "results": {
             "description": "Alphabetical by analyte name",
             "type": "array",
@@ -17328,6 +17332,7 @@
         },
         "required": [
           "measuredAt",
+          "documentAvailable",
           "results"
         ]
       },

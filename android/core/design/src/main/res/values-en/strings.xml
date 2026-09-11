@@ -370,7 +370,9 @@
     <string name="consent_withdrawn_at">Withdrawn</string>
     <string name="data_export_explain">You can take a machine-readable copy of what the clinic holds about you. Once the file is ready you can save it or send it wherever you like.</string>
     <string name="data_export_failed">The file could not be prepared. Check your connection and try again.</string>
+    <string name="data_export_not_included">Left out of this file</string>
     <string name="data_export_prepare">Prepare the file</string>
+    <string name="data_export_rows">%d records in the file</string>
     <string name="data_export_share">Save or send the file</string>
     <string name="data_export_title">My records</string>
     <string name="document_empty">No documents yet. You can upload a lab result or a report here.</string>

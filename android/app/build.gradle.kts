@@ -112,6 +112,7 @@ dependencies {
     implementation(project(":feature:audit-ui"))
     implementation(project(":feature:protocols-ui"))
     implementation(project(":feature:travel-ui"))
+    implementation(project(":feature:account-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

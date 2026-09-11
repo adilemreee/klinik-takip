@@ -28,6 +28,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.klinik.design.Tokens
 import xyz.klinik.design.klinikColor
+import xyz.klinik.feature.account.AccountModel
+import xyz.klinik.feature.account.ui.AccountScreen
 import xyz.klinik.feature.aisettings.AiSettingsModel
 import xyz.klinik.feature.aisettings.ui.AiSettingsScreen
 import xyz.klinik.feature.analytics.AnalyticsModel
@@ -351,6 +353,28 @@ fun StaffDestinationScreen(
                 onEdit = { change -> model.edit(change) },
                 onSave = { scope.launch { model.save() } },
                 onSetClearedToFly = { on -> scope.launch { model.setClearedToFly(on) } },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Account -> {
+            val model = remember { AccountModel(environment.auth, environment.me) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AccountScreen(
+                state = state,
+                strings = context.accountStrings(),
+                onChangePassword = { current, next ->
+                    scope.launch { model.changePassword(current, next) }
+                },
+                onDisableTwoFactor = { code -> scope.launch { model.disableTwoFactor(code) } },
+                onEndSession = { session -> scope.launch { model.endSession(session.familyId) } },
+                onSignOutEverywhere = { scope.launch { model.signOutEverywhere() } },
+                onExport = { scope.launch { model.export() } },
+                onSaveExport = { json -> context.shareDataExport(json) },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

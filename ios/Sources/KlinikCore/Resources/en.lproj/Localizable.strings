@@ -1200,6 +1200,8 @@
 "dataExport.prepare" = "Prepare the file";
 "dataExport.share" = "Save or send the file";
 "dataExport.failed" = "The file could not be prepared. Check your connection and try again.";
+"dataExport.rows" = "%d records in the file";
+"dataExport.notIncluded" = "Left out of this file";
 "photo.held" = "The photograph is saved on your phone and will be sent when there is a connection. You do not need to take it again.";
 
 /* AI spend (spec 3.4) */

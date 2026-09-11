@@ -55,6 +55,55 @@ data class TokensResponse(
 @Serializable
 data class TotpSetup(val secret: String, val uri: String)
 
+/**
+ * A device holding a session.
+ *
+ * `familyId` is what gets revoked: the server rotates refresh tokens and keeps
+ * a family per sign-in, so ending one here ends that device rather than that
+ * one token.
+ */
+@Serializable
+data class SessionSummary(
+    val familyId: String,
+    val deviceName: String? = null,
+    val platform: String? = null,
+    val ipAddress: String? = null,
+    val lastSeenAt: String,
+    /** True for the device making this request. */
+    val current: Boolean = false,
+)
+
+/**
+ * An invitation, returned once.
+ *
+ * The code is shown exactly once because only its hash is stored — a screen
+ * that expects to fetch it again later will show somebody a blank instead.
+ */
+@Serializable
+data class Invitation(
+    val id: String,
+    val code: String,
+    val expiresAt: String,
+)
+
+@Serializable
+private data class ChangePasswordBody(val currentPassword: String, val newPassword: String)
+
+@Serializable
+private data class AcceptInvitationBody(
+    val identifier: String,
+    val code: String,
+    val password: String,
+)
+
+@Serializable
+private data class CreateInvitationBody(
+    val email: String? = null,
+    val phone: String? = null,
+    val role: UserRole,
+    val patientId: String? = null,
+)
+
 @Serializable
 private data class TotpCode(val code: String)
 
@@ -103,6 +152,93 @@ class AuthApi(
             ),
         )
     }
+
+    /**
+     * Turns two-factor off, with a current code.
+     *
+     * The code is required by the server and asked for here: somebody who has
+     * walked away from an unlocked phone should not be able to remove the
+     * second factor from the account they left open.
+     */
+    suspend fun disableTotp(code: String) {
+        client.send(
+            Endpoint(
+                method = HttpMethod.POST,
+                path = "auth/2fa/disable",
+                body = json.encodeToString(TotpCode(code)),
+            ),
+        )
+    }
+
+    /** Changing a password. The current one is required; the server checks it. */
+    suspend fun changePassword(currentPassword: String, newPassword: String) {
+        client.send(
+            Endpoint(
+                method = HttpMethod.POST,
+                path = "auth/password",
+                body = json.encodeToString(
+                    ChangePasswordBody.serializer(),
+                    ChangePasswordBody(currentPassword, newPassword),
+                ),
+            ),
+        )
+    }
+
+    /** Every device holding a session, with this one marked. */
+    suspend fun sessions(): List<SessionSummary> =
+        decode(client.send(Endpoint(method = HttpMethod.GET, path = "auth/sessions")))
+
+    /** Ends one device's session. */
+    suspend fun endSession(familyId: String) {
+        client.send(Endpoint(method = HttpMethod.DELETE, path = "auth/sessions/$familyId"))
+    }
+
+    /** Ends every session, including this one. */
+    suspend fun signOutEverywhere() {
+        client.send(Endpoint(method = HttpMethod.POST, path = "auth/logout-all"))
+    }
+
+    /**
+     * Invites somebody. The code comes back once and is delivered by the
+     * clinic — the server keeps only its hash.
+     */
+    suspend fun invite(
+        role: UserRole,
+        email: String? = null,
+        phone: String? = null,
+        patientId: String? = null,
+    ): Invitation =
+        decode(
+            client.send(
+                Endpoint(
+                    method = HttpMethod.POST,
+                    path = "auth/invitations",
+                    body = json.encodeToString(
+                        CreateInvitationBody.serializer(),
+                        CreateInvitationBody(email, phone, role, patientId),
+                    ),
+                ),
+            ),
+        )
+
+    /** Redeems an invitation and signs the new account in. */
+    suspend fun acceptInvitation(
+        identifier: String,
+        code: String,
+        password: String,
+    ): LoginResponse =
+        decode(
+            client.send(
+                Endpoint(
+                    method = HttpMethod.POST,
+                    path = "auth/invitations/accept",
+                    body = json.encodeToString(
+                        AcceptInvitationBody.serializer(),
+                        AcceptInvitationBody(identifier, code, password),
+                    ),
+                ),
+            ),
+        )
 
     suspend fun signOut() {
         client.send(Endpoint(method = HttpMethod.POST, path = "auth/logout"))

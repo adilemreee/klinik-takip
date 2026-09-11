@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import xyz.klinik.feature.aisettings.ui.AiSettingsStrings
+import xyz.klinik.feature.account.ui.AccountStrings
 import xyz.klinik.feature.analytics.ui.AnalyticsStrings
 import xyz.klinik.feature.assistant.ui.AssistantStrings
 import xyz.klinik.feature.audit.ui.AuditStrings
@@ -31,6 +32,7 @@ import xyz.klinik.feature.surveys.ui.SurveyStrings
 import xyz.klinik.feature.travel.ui.TravelStrings
 import xyz.klinik.network.UiText
 import xyz.klinik.shell.FileSection
+import xyz.klinik.shell.PasswordRules
 import xyz.klinik.shell.StaffDestination
 import xyz.klinik.design.R as DesignR
 
@@ -297,6 +299,7 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Surveys -> getString(DesignR.string.survey_title)
     PatientDestination.MyReports -> getString(DesignR.string.report_my_reports_title)
     PatientDestination.Travel -> getString(DesignR.string.travel_title)
+    PatientDestination.Account -> getString(DesignR.string.account_title)
     PatientDestination.Documents -> getString(DesignR.string.menu_documents)
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
@@ -417,6 +420,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Exports -> getString(DesignR.string.export_title)
     StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
     StaffDestination.Audit -> getString(DesignR.string.audit_title)
+    StaffDestination.Account -> getString(DesignR.string.account_title)
     StaffDestination.Protocols -> getString(DesignR.string.protocol_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
@@ -723,3 +727,72 @@ fun Context.protocolsStrings(): ProtocolsStrings = ProtocolsStrings(
     chunks = { count -> getString(DesignR.string.protocol_chunks, count) },
     message = { text -> resolve(text) },
 )
+
+/**
+ * The account somebody signed in with (spec T7.3).
+ *
+ * The password rules carry their own number, so the sentence about length says
+ * how long rather than being a fixed string that drifts from the policy.
+ */
+fun Context.accountStrings(): AccountStrings = AccountStrings(
+    title = getString(DesignR.string.account_title),
+    retry = getString(DesignR.string.common_retry),
+    security = getString(DesignR.string.account_security),
+    changePassword = getString(DesignR.string.account_change_password),
+    changePasswordHint = getString(DesignR.string.account_change_password_hint),
+    currentPassword = getString(DesignR.string.account_current_password),
+    newPassword = getString(DesignR.string.account_new_password),
+    passwordChanged = getString(DesignR.string.account_password_changed),
+    twoFactor = getString(DesignR.string.account_two_factor),
+    twoFactorOn = getString(DesignR.string.account_two_factor_on),
+    twoFactorCode = getString(DesignR.string.account_two_factor_code),
+    disableTwoFactor = getString(DesignR.string.account_disable_two_factor),
+    disableTwoFactorHint = getString(DesignR.string.account_disable_two_factor_hint),
+    twoFactorDisabled = getString(DesignR.string.account_two_factor_disabled),
+    twoFactorMandatory = getString(DesignR.string.account_two_factor_mandatory),
+    otherDevices = getString(DesignR.string.account_other_devices),
+    noOtherDevices = getString(DesignR.string.account_no_other_devices),
+    thisDevice = getString(DesignR.string.account_this_device),
+    unknownDevice = getString(DesignR.string.account_unknown_device),
+    lastSeen = { at -> getString(DesignR.string.account_last_seen, at) },
+    revoke = getString(DesignR.string.account_revoke),
+    signOutEverywhere = getString(DesignR.string.account_sign_out_everywhere),
+    signOutEverywhereConfirm = getString(DesignR.string.account_sign_out_everywhere_confirm),
+    dataExport = getString(DesignR.string.data_export_title),
+    dataExportHint = getString(DesignR.string.data_export_explain),
+    exportRows = { rows -> getString(DesignR.string.data_export_rows, rows) },
+    exportOmitted = getString(DesignR.string.data_export_not_included),
+    save = getString(DesignR.string.data_export_share),
+    rule = { problem ->
+        when (problem) {
+            is PasswordRules.Problem.TooShort ->
+                getString(DesignR.string.password_rule_length, problem.minimum)
+
+            else -> stringForKey(problem.stringKey)
+        }
+    },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * Hands the portability file to whatever the person wants to keep it in.
+ *
+ * Shared as text the system can write anywhere rather than downloaded by the
+ * app: the file is the patient's, and where it goes is theirs to choose. The
+ * bytes are the server's own, unchanged — re-encoding a portability document
+ * through this client's model is how a field nobody modelled goes missing.
+ */
+fun Context.shareDataExport(json: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/json"
+        putExtra(Intent.EXTRA_TITLE, getString(DesignR.string.data_export_title))
+        putExtra(Intent.EXTRA_TEXT, json)
+    }
+
+    runCatching {
+        startActivity(
+            Intent.createChooser(intent, getString(DesignR.string.data_export_share))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}

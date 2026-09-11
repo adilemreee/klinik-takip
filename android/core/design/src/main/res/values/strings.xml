@@ -370,7 +370,9 @@
     <string name="consent_withdrawn_at">Geri alındı</string>
     <string name="data_export_explain">Kliniğin sizinle ilgili tuttuğu kayıtların makine tarafından okunabilir bir kopyasını alabilirsiniz. Dosya hazırlandıktan sonra istediğiniz yere kaydedebilir veya gönderebilirsiniz.</string>
     <string name="data_export_failed">Dosya hazırlanamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="data_export_not_included">Bu dosyaya girmeyenler</string>
     <string name="data_export_prepare">Dosyayı hazırla</string>
+    <string name="data_export_rows">Dosyada %d kayıt var</string>
     <string name="data_export_share">Dosyayı kaydet veya gönder</string>
     <string name="data_export_title">Kayıtlarım</string>
     <string name="document_empty">Henüz belge yok. Tahlil sonucunuzu veya raporunuzu buradan yükleyebilirsiniz.</string>

@@ -43,6 +43,8 @@ import xyz.klinik.feature.messaging.ui.ChatScreen
 import xyz.klinik.feature.notifications.NotificationSettingsModel
 import xyz.klinik.feature.assistant.AssistantModel
 import xyz.klinik.feature.assistant.ui.AssistantScreen
+import xyz.klinik.feature.account.AccountModel
+import xyz.klinik.feature.account.ui.AccountScreen
 import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.reports.MyReportsModel
 import xyz.klinik.feature.reports.ui.MyReportsScreen
@@ -80,6 +82,9 @@ sealed interface PatientDestination {
 
     /** The flight, the hotel, and whether a doctor cleared the trip (spec M14). */
     data object Travel : PatientDestination
+
+    /** Password, devices, and a copy of everything the clinic holds (T7.3). */
+    data object Account : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -130,6 +135,7 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.Complications,
     PatientDestination.Consents,
     PatientDestination.NotificationSettings,
+    PatientDestination.Account,
 )
 
 /**
@@ -426,6 +432,28 @@ fun PatientDestinationScreen(
                 onEdit = {},
                 onSave = {},
                 onSetClearedToFly = {},
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.Account -> {
+            val model = remember { AccountModel(environment.auth, environment.me) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AccountScreen(
+                state = state,
+                strings = context.accountStrings(),
+                onChangePassword = { current, next ->
+                    scope.launch { model.changePassword(current, next) }
+                },
+                onDisableTwoFactor = { code -> scope.launch { model.disableTwoFactor(code) } },
+                onEndSession = { session -> scope.launch { model.endSession(session.familyId) } },
+                onSignOutEverywhere = { scope.launch { model.signOutEverywhere() } },
+                onExport = { scope.launch { model.export() } },
+                onSaveExport = { json -> context.shareDataExport(json) },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

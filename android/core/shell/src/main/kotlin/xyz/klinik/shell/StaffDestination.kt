@@ -87,6 +87,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** The account somebody signed in with — password, devices (spec T7.3). */
+    data object Account : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** The staff member's own notification preferences. */
     data object NotificationSettings : StaffDestination {
         override val patientId: String? = null
@@ -171,5 +176,6 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.AiSettings,
     StaffDestination.Protocols,
     StaffDestination.Audit,
+    StaffDestination.Account,
     StaffDestination.NotificationSettings,
 )

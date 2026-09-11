@@ -1200,6 +1200,8 @@
 "dataExport.prepare" = "Dosyayı hazırla";
 "dataExport.share" = "Dosyayı kaydet veya gönder";
 "dataExport.failed" = "Dosya hazırlanamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+"dataExport.rows" = "Dosyada %d kayıt var";
+"dataExport.notIncluded" = "Bu dosyaya girmeyenler";
 "photo.held" = "Fotoğraf telefonunuzda kayıtlı ve bağlantı gelince kliniğe gönderilecek. Tekrar çekmenize gerek yok.";
 
 /* Yapay zeka harcamasi (sartname 3.4) */

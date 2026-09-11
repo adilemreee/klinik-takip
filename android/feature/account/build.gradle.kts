@@ -1,0 +1,24 @@
+plugins {
+    id("org.jetbrains.kotlin.jvm")
+}
+
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        allWarningsAsErrors.set(true)
+    }
+}
+
+dependencies {
+    api(project(":core:network"))
+    // The password rules the form checks while somebody types.
+    api(project(":core:shell"))
+    implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}

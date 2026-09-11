@@ -119,6 +119,9 @@ include(":feature:protocols")
 // Who did what to whose record (spec M13).
 include(":feature:audit")
 
+// The account somebody signed in with (spec T7.3).
+include(":feature:account")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -180,6 +183,9 @@ if (androidSdkAvailable) {
 
     // Who did what to whose record (spec M13).
     include(":feature:audit-ui")
+
+    // The account somebody signed in with (spec T7.3).
+    include(":feature:account-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

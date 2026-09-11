@@ -2,6 +2,7 @@ package xyz.klinik.network
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Who is signed in (spec section 2).
@@ -59,6 +60,56 @@ data class PatientHomeSummary(
     val missingDocuments: Int,
 )
 
+/**
+ * Everything the clinic holds about one patient, as a file they can keep.
+ *
+ * The counts are what a screen shows; the sections themselves are opaque here
+ * on purpose. This is a portability file — its shape is the server's promise
+ * to the patient, and a client that re-modelled every row would quietly drop
+ * whatever it did not recognise from a document meant to be complete.
+ */
+@Serializable
+data class DataExport(
+    val exportedAt: String,
+    /** Format identifier, e.g. `klinik-portability-1`. */
+    val format: String,
+    val patient: JsonElement,
+    val medicalProfile: JsonElement? = null,
+    val measurements: List<JsonElement> = emptyList(),
+    val documents: List<JsonElement> = emptyList(),
+    /** Confirmed results only; an unreviewed OCR reading is not a lab result. */
+    val labResults: List<JsonElement> = emptyList(),
+    val photos: List<JsonElement> = emptyList(),
+    val appointments: List<JsonElement> = emptyList(),
+    val medications: List<JsonElement> = emptyList(),
+    val complications: List<JsonElement> = emptyList(),
+    val consents: List<JsonElement> = emptyList(),
+    val surveyResponses: List<JsonElement> = emptyList(),
+    /**
+     * What this file deliberately leaves out.
+     *
+     * Shown, never hidden: a portability file with silent gaps is worse than
+     * one that names them, because the patient believes they have everything.
+     */
+    val notIncluded: List<String> = emptyList(),
+) {
+    /** Section name to row count, in the order the file lists them. */
+    val sectionCounts: List<Pair<String, Int>>
+        get() = listOf(
+            "measurements" to measurements.size,
+            "documents" to documents.size,
+            "labResults" to labResults.size,
+            "photos" to photos.size,
+            "appointments" to appointments.size,
+            "medications" to medications.size,
+            "complications" to complications.size,
+            "consents" to consents.size,
+            "surveyResponses" to surveyResponses.size,
+        )
+
+    val rowCount: Int get() = sectionCounts.sumOf { it.second }
+}
+
 class MeApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
@@ -69,6 +120,20 @@ class MeApi(
 
     suspend fun summary(): PatientHomeSummary =
         decode<PatientHomeSummary>(client.send(Endpoint(HttpMethod.GET, "me/summary")))
+
+    /**
+     * Everything the clinic holds about this patient, as one file.
+     *
+     * The whole document comes back in one response, so the caller writes it
+     * out rather than paging it: a portability file assembled from pages is a
+     * file that can be half-written.
+     */
+    suspend fun dataExport(): DataExport =
+        decode<DataExport>(client.send(Endpoint(HttpMethod.GET, "me/data-export")))
+
+    /** The same document, verbatim, for writing to a file the patient keeps. */
+    suspend fun dataExportJson(): String =
+        client.send(Endpoint(HttpMethod.GET, "me/data-export"))
 
     private inline fun <reified T> decode(body: String): T =
         runCatching { json.decodeFromString<T>(body) }

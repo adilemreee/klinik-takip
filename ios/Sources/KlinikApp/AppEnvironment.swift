@@ -110,7 +110,14 @@ public final class AppEnvironment {
         )
 
         queue = SyncEngine(store: opened.outbox, sender: APIOutboxSender(client: client))
-        fileQueue = UploadQueue(store: opened.uploads, uploads: ResumableUpload(client: client))
+        fileQueue = UploadQueue(
+            store: opened.uploads,
+            uploads: ResumableUpload(client: client),
+            // Built here rather than from the `photos` property below, which
+            // does not exist yet: `PhotosAPI` is a value over the same client,
+            // so a second one costs nothing.
+            photos: APIPhotoUploader(api: PhotosAPI(client: client))
+        )
         sync = SyncCoordinator(
             engine: queue,
             files: fileQueue,
@@ -212,3 +219,36 @@ public struct APIEmergencyTrigger: EmergencyTrigger {
         try await api.trigger(note: note).guidance.emergencyNumber
     }
 }
+
+/**
+ * Sending a queued photograph.
+ *
+ * An adapter rather than handing `PhotosAPI` to the queue, for the same reason
+ * the emergency trigger is one: the queue's job is to remember what has not
+ * been sent, and it should not also know what a body area is.
+ */
+public struct APIPhotoUploader: QueuedPhotoUploader {
+    private let api: PhotosAPI
+
+    public init(api: PhotosAPI) {
+        self.api = api
+    }
+
+    public func upload(
+        fileURL: URL,
+        subject: RecordSubject,
+        fields: [String: String]
+    ) async throws {
+        _ = try await api.upload(
+            subject: subject,
+            fileURL: fileURL,
+            // A queued photograph always carries its category. A row without
+            // one was written by a build that did not, and a wound photograph
+            // filed under the wrong heading beats one that is dropped.
+            category: fields["category"].flatMap(PhotoCategory.init(rawValue:)) ?? .wound,
+            bodyArea: fields["bodyArea"],
+            phaseLabel: fields["phaseLabel"]
+        )
+    }
+}
+

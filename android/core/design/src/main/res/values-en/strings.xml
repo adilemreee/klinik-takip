@@ -3,15 +3,27 @@
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
     <string name="account_address">Connected from</string>
+    <string name="account_change_password">Change password</string>
+    <string name="account_change_password_hint">Changing the password signs you out everywhere, including this device.</string>
+    <string name="account_current_password">Current password</string>
+    <string name="account_disable_two_factor">Turn off two-factor</string>
+    <string name="account_disable_two_factor_hint">Enter the six-digit code from your authenticator to turn it off.</string>
     <string name="account_last_seen">Last seen: %@</string>
+    <string name="account_new_password">New password</string>
     <string name="account_no_other_devices">No other device is signed in.</string>
     <string name="account_other_devices">Other devices</string>
+    <string name="account_password_changed">Your password has changed. Every device has been signed out for safety; sign in again with the new one.</string>
     <string name="account_revoke">End this device\'s session</string>
     <string name="account_security">Security</string>
     <string name="account_sign_out_everywhere">Sign out everywhere</string>
     <string name="account_sign_out_everywhere_confirm">Every session will end, including this one. Continue?</string>
     <string name="account_this_device">This device</string>
     <string name="account_title">Account</string>
+    <string name="account_two_factor">Two-factor authentication</string>
+    <string name="account_two_factor_code">Verification code</string>
+    <string name="account_two_factor_disabled">Two-factor authentication is off.</string>
+    <string name="account_two_factor_mandatory">Two-factor authentication is required for clinic staff and cannot be turned off.</string>
+    <string name="account_two_factor_on">On</string>
     <string name="account_unknown_device">Unnamed device</string>
     <string name="agency_add">Add an agency</string>
     <string name="agency_commission">Commission percentage</string>
@@ -51,6 +63,11 @@
     <string name="ai_settings_title">AI provider</string>
     <string name="ai_settings_zero_retention">A zero-retention agreement is in place with this provider</string>
     <string name="ai_settings_zero_retention_cleared">The provider changed; the declaration was cleared and must be made again.</string>
+    <string name="ai_usage_budget_used">Share of the budget used</string>
+    <string name="ai_usage_calls">%1$d calls, %2$d failed or refused</string>
+    <string name="ai_usage_of_budget">/ %@ cap</string>
+    <string name="ai_usage_title">Spent this month</string>
+    <string name="ai_usage_tokens">%1$d tokens in, %2$d out</string>
     <string name="analytics_average">Average fee</string>
     <string name="analytics_average_per_currency">Average per currency</string>
     <string name="analytics_capacity_unconfigured">No working hours configured, so occupancy cannot be calculated.</string>
@@ -163,6 +180,8 @@
     <string name="audit_not_permitted">This account cannot read the audit trail.</string>
     <string name="audit_title">Audit trail</string>
     <string name="audit_trail">Entries</string>
+    <string name="auth_choose_password">Choose a password</string>
+    <string name="auth_confirm_password">Repeat the password</string>
     <string name="auth_error_account_inactive">Your account is not active. Please contact your clinic.</string>
     <string name="auth_error_account_locked">Too many attempts. Try again in a little while.</string>
     <string name="auth_error_account_locked_for">Too many attempts. Try again in %d minutes.</string>
@@ -170,8 +189,14 @@
     <string name="auth_error_mfa_invalid">That code is not right. Wait for the next one and try again.</string>
     <string name="auth_error_password_too_weak">That password is not strong enough.</string>
     <string name="auth_forgot_password">I forgot my password</string>
+    <string name="auth_have_invitation">I have an invitation code</string>
     <string name="auth_identifier">E-mail or phone</string>
+    <string name="auth_invitation_action">Open the account</string>
+    <string name="auth_invitation_code">Invitation code</string>
+    <string name="auth_invitation_hint">Enter the code the clinic sent you, along with the e-mail or phone it arrived at, then choose your own password.</string>
+    <string name="auth_invitation_title">Open an account with an invitation</string>
     <string name="auth_password">Password</string>
+    <string name="auth_passwords_differ">The two passwords do not match.</string>
     <string name="auth_session_expired">Your session expired. Please sign in again.</string>
     <string name="auth_sign_in">Sign in</string>
     <string name="auth_sign_out">Sign out</string>
@@ -269,6 +294,7 @@
     <string name="common_loading">Loading…</string>
     <string name="common_minutes_short">min</string>
     <string name="common_more">More</string>
+    <string name="common_off">Off</string>
     <string name="common_retry">Try again</string>
     <string name="common_save">Save</string>
     <string name="common_send">Send</string>
@@ -342,6 +368,11 @@
     <string name="consent_withdraw">Withdraw permission</string>
     <string name="consent_withdrawn">Withdrawn</string>
     <string name="consent_withdrawn_at">Withdrawn</string>
+    <string name="data_export_explain">You can take a machine-readable copy of what the clinic holds about you. Once the file is ready you can save it or send it wherever you like.</string>
+    <string name="data_export_failed">The file could not be prepared. Check your connection and try again.</string>
+    <string name="data_export_prepare">Prepare the file</string>
+    <string name="data_export_share">Save or send the file</string>
+    <string name="data_export_title">My records</string>
     <string name="document_empty">No documents yet. You can upload a lab result or a report here.</string>
     <string name="document_failed_no_reason">The server gave no reason. Try uploading it again.</string>
     <string name="document_failed_title">The document could not be processed</string>
@@ -547,6 +578,8 @@
     <string name="finance_payment_reversed">Corrected</string>
     <string name="finance_payments_title">Payments</string>
     <string name="finance_rate_missing">No rate recorded for this day</string>
+    <string name="finance_rates_none">No exchange rate has been recorded this month. Amounts in other currencies stay out of the totals.</string>
+    <string name="finance_rates_title">Rates this month</string>
     <string name="finance_record_count">%d records</string>
     <string name="finance_record_payment">Record a payment</string>
     <string name="finance_records">Records</string>
@@ -779,6 +812,11 @@
     <string name="message_status_read">Read</string>
     <string name="message_status_sent">Sent</string>
     <string name="message_stop_recording">Finish and send</string>
+    <string name="message_template_add">New</string>
+    <string name="message_template_body">Text</string>
+    <string name="message_template_new">New quick reply</string>
+    <string name="message_template_shared">Clinic</string>
+    <string name="message_template_title">Title</string>
     <string name="message_templates">Quick replies</string>
     <string name="message_translate">Translate</string>
     <string name="message_translated">Translation</string>
@@ -825,6 +863,9 @@
     <string name="notification_type_lab_ready">Lab result ready</string>
     <string name="notification_type_medication_due">Medication time</string>
     <string name="notification_type_message_new">New message</string>
+    <string name="password_rule_length">At least %d characters</string>
+    <string name="password_rule_letters_and_digits">Both letters and numbers</string>
+    <string name="password_rule_not_your_identifier">Cannot contain your e-mail or phone number</string>
     <string name="patient_age_years">%d years old</string>
     <string name="patient_birth_date">Date of birth</string>
     <string name="patient_city">City</string>
@@ -887,6 +928,7 @@
     <string name="photo_finding_wound_open">Wound edges apart</string>
     <string name="photo_flagged_title">Photographs to review</string>
     <string name="photo_gallery_title">Photos</string>
+    <string name="photo_held">The photograph is saved on your phone and will be sent when there is a connection. You do not need to take it again.</string>
     <string name="photo_image">Clinical photograph</string>
     <string name="photo_need_body_area">Name the area so the photos can be compared.</string>
     <string name="photo_no_body_area">No body area given</string>

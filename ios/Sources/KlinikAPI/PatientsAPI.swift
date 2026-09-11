@@ -177,6 +177,12 @@ public struct MeAPI: Sendable {
         try await client.send(endpoint, as: type)
     }
 
+    /// The bytes, unparsed. For the portability export, which is the record
+    /// itself rather than this app's reading of it.
+    func rawData(_ endpoint: Endpoint) async throws -> Data {
+        try await client.data(for: endpoint)
+    }
+
     public func summary() async throws -> PatientHomeSummary {
         try await client.send(
             Endpoint(method: .get, path: "me/summary"),

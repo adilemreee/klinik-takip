@@ -24,14 +24,43 @@ public struct AuthFlowView: View {
         Group {
             switch state.step {
             case .credentials:
-                CredentialsView(state: state) { identifier, password in
-                    await model.submitCredentials(
-                        identifier: identifier,
-                        password: password,
-                        deviceName: deviceName
-                    )
-                    await refresh()
-                }
+                CredentialsView(
+                    state: state,
+                    submit: { identifier, password in
+                        await model.submitCredentials(
+                            identifier: identifier,
+                            password: password,
+                            deviceName: deviceName
+                        )
+                        await refresh()
+                    },
+                    openInvitation: {
+                        Task {
+                            await model.showInvitation()
+                            await refresh()
+                        }
+                    }
+                )
+
+            case .invitation:
+                InvitationView(
+                    state: state,
+                    submit: { identifier, code, password in
+                        await model.redeemInvitation(
+                            identifier: identifier,
+                            code: code,
+                            password: password,
+                            deviceName: deviceName
+                        )
+                        await refresh()
+                    },
+                    cancel: {
+                        Task {
+                            await model.cancelInvitation()
+                            await refresh()
+                        }
+                    }
+                )
 
             case .twoFactorCode:
                 TwoFactorCodeView(state: state) { code in
@@ -63,6 +92,8 @@ struct CredentialsView: View {
 
     let state: AuthState
     let submit: (String, String) async -> Void
+    /// The way in for somebody who has a code and no account yet.
+    let openInvitation: () -> Void
 
     @State private var identifier = ""
     @State private var password = ""
@@ -97,7 +128,134 @@ struct CredentialsView: View {
             ) {
                 await submit(identifier, password)
             }
+
+            // Under the sign-in button, not beside it: almost everybody
+            // opening this screen already has an account, and a first-run
+            // form competing with the ordinary one helps nobody.
+            Button(L10n.string("auth.haveInvitation"), action: openInvitation)
+                .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
         }
+    }
+}
+
+/**
+ * Redeeming an invitation: who you are, the code, and a password you choose.
+ *
+ * The password rules are shown as they are broken rather than after the
+ * server refuses: a rejection arriving from the network, on a form somebody
+ * has just filled in, reads as the app being broken.
+ */
+struct InvitationView: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let state: AuthState
+    let submit: (String, String, String) async -> Void
+    let cancel: () -> Void
+
+    @State private var identifier = ""
+    @State private var code = ""
+    @State private var password = ""
+
+    private var problems: [String] {
+        password.isEmpty ? [] : PasswordRules.problems(with: password, identifier: identifier)
+    }
+
+    private var canSubmit: Bool {
+        !identifier.isEmpty
+            && code.count == InvitationView.codeLength
+            && problems.isEmpty
+            && !password.isEmpty
+    }
+
+    var body: some View {
+        FormScaffold(title: L10n.string("auth.invitationTitle")) {
+            Text(L10n.string("auth.invitationHint"))
+                .font(Tokens.Typography.calloutRelative)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                .fixedSize(horizontal: false, vertical: true)
+
+            LabelledField(
+                label: L10n.string("auth.identifier"),
+                text: $identifier,
+                isSecure: false,
+                contentType: .username,
+                keyboard: .emailAddress
+            )
+
+            LabelledField(
+                label: L10n.string("auth.invitationCode"),
+                text: $code,
+                isSecure: false,
+                contentType: .oneTimeCode,
+                keyboard: .numberPad
+            )
+
+            LabelledField(
+                label: L10n.string("auth.choosePassword"),
+                text: $password,
+                isSecure: true,
+                contentType: .newPassword,
+                keyboard: .default
+            )
+
+            PasswordRuleList(problems: problems, showAll: password.isEmpty)
+
+            ErrorBanner(message: state.errorMessage, isLockout: state.isLockedOut)
+
+            PrimaryButton(
+                title: L10n.string("auth.invitationAction"),
+                isBusy: state.isSubmitting,
+                isEnabled: canSubmit
+            ) {
+                await submit(identifier, code, password)
+            }
+
+            Button(L10n.string("common.cancel"), action: cancel)
+                .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+        }
+    }
+
+    /// Six digits, matching the server's `@Length(6, 6)`.
+    ///
+    /// `nonisolated` because a static on a `View` otherwise inherits the view's
+    /// main-actor isolation, and the tests read it directly.
+    nonisolated static let codeLength = 6
+}
+
+/**
+ * What is wrong with the password, or what is being asked for.
+ *
+ * Before anything is typed it reads as a list of requirements; afterwards only
+ * the unmet ones stay. Telling somebody a rule they have already satisfied is
+ * noise, and noise is what makes people stop reading the list.
+ */
+struct PasswordRuleList: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let problems: [String]
+    let showAll: Bool
+
+    var body: some View {
+        if showAll {
+            rules(PasswordRules.problems(with: "", identifier: ""), tone: .neutral)
+        } else if !problems.isEmpty {
+            rules(problems, tone: .warning)
+        }
+    }
+
+    private func rules(_ lines: [String], tone: Tone) -> some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+            ForEach(lines, id: \.self) { line in
+                Text("• \(line)")
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(tone.foreground.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }
 

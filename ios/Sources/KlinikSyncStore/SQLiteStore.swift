@@ -225,6 +225,22 @@ public actor SQLiteStore {
             try database.create(index: "upload_startedAt", on: "upload", columns: ["startedAt"])
         }
 
+        /*
+         * The queue carries photographs as well as documents.
+         *
+         * Added rather than dropped this time: rows here are somebody's files
+         * waiting to be sent, and by now a released build can have written
+         * one. Existing rows are documents — that is all the queue could hold
+         * — so the default says so, and `fields` is empty because a document's
+         * only field is its type.
+         */
+        migrator.registerMigration("v5-uploads-carry-photographs") { database in
+            try database.alter(table: "upload") { table in
+                table.add(column: "kind", .text).notNull().defaults(to: "document")
+                table.add(column: "fields", .text).notNull().defaults(to: "{}")
+            }
+        }
+
         return migrator
     }
 
@@ -354,6 +370,8 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
     var fileURL: String
     var patientId: String?
     var documentType: String
+    var kind: String
+    var fields: String
     var originalName: String
     var contentType: String
     var totalBytes: Int
@@ -368,6 +386,8 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
         fileURL = upload.fileURL.lastPathComponent
         patientId = upload.patientId
         documentType = upload.documentType
+        kind = upload.kind.rawValue
+        fields = UploadRow.encode(upload.fields)
         originalName = upload.originalName
         contentType = upload.contentType
         totalBytes = upload.totalBytes
@@ -383,6 +403,10 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
             fileURL: UploadRow.resolve(fileURL),
             patientId: patientId,
             documentType: documentType,
+            // A row whose kind this build does not recognise is read as a
+            // document, which is what every row written before v5 is.
+            kind: PendingUploadKind(rawValue: kind) ?? .document,
+            fields: UploadRow.decode(fields),
             originalName: originalName,
             contentType: contentType,
             totalBytes: totalBytes,
@@ -405,6 +429,16 @@ private struct UploadRow: Codable, FetchableRecord, PersistableRecord {
      * `lastPathComponent` rather than the stored string, so rows written by
      * the older code are read correctly too.
      */
+    private static func encode(_ fields: [String: String]) -> String {
+        guard !fields.isEmpty, let data = try? JSONEncoder().encode(fields) else { return "{}" }
+
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func decode(_ stored: String) -> [String: String] {
+        (try? JSONDecoder().decode([String: String].self, from: Data(stored.utf8))) ?? [:]
+    }
+
     static func resolve(_ stored: String) -> URL {
         let name = URL(fileURLWithPath: stored).lastPathComponent
 

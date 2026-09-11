@@ -8,6 +8,14 @@ import SwiftUI
 public enum FieldPurpose: Sendable {
     case username
     case password
+    /**
+     * A password being *chosen*, not recalled.
+     *
+     * Distinct from `password` because iOS treats them differently: this asks
+     * the keychain to suggest a strong one and stops it autofilling the
+     * existing password into a field meant to replace it.
+     */
+    case newPassword
     case oneTimeCode
     case plain
 }
@@ -241,6 +249,7 @@ extension FieldPurpose {
         switch self {
         case .username: return .username
         case .password: return .password
+        case .newPassword: return .newPassword
         case .oneTimeCode: return .oneTimeCode
         case .plain: return nil
         }

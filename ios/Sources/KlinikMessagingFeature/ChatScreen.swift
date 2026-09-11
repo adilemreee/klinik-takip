@@ -263,10 +263,23 @@ public struct ChatScreen: View {
             composer
         }
         .sheet(isPresented: $showingTemplates) {
-            QuickReplyList(replies: state.quickReplies) { reply in
-                draft = reply.body
-                showingTemplates = false
-            }
+            QuickReplyList(
+                replies: state.quickReplies,
+                onPick: { reply in
+                    draft = reply.body
+                    showingTemplates = false
+                },
+                onSave: { title, body in
+                    let saved = await model.saveQuickReply(title: title, body: body)
+                    state = await model.currentState()
+
+                    return saved
+                },
+                onDelete: { id in
+                    await model.removeQuickReply(id: id)
+                    state = await model.currentState()
+                }
+            )
         }
         .sheet(item: $viewing) { attachment in
             AttachmentViewer(url: attachment.url)
@@ -620,25 +633,102 @@ struct QuickReplyList: View {
 
     let replies: [QuickReply]
     let onPick: (QuickReply) -> Void
+    /// Saves a new one. Returns true when the server took it.
+    let onSave: (String, String) async -> Bool
+    let onDelete: (String) async -> Void
+
+    @State private var adding = false
+    @State private var title = ""
+    @State private var body_ = ""
+    @State private var saving = false
 
     var body: some View {
-        List(replies) { reply in
-            Button {
-                onPick(reply)
-            } label: {
-                VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
-                    Text(reply.title)
-                        .font(Tokens.Typography.subheadingRelative)
-                        .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+        NavigationStack {
+            List {
+                ForEach(replies) { reply in
+                    Button {
+                        onPick(reply)
+                    } label: {
+                        VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+                            HStack(spacing: Tokens.Spacing.sm) {
+                                Text(reply.title)
+                                    .font(Tokens.Typography.subheadingRelative)
+                                    .foregroundStyle(
+                                        Tokens.Palette.textPrimary.resolve(for: scheme)
+                                    )
 
-                    Text(reply.body)
-                        .font(Tokens.Typography.captionRelative)
-                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                                if reply.isShared {
+                                    Badge(L10n.string("message.templateShared"))
+                                }
+                            }
+
+                            Text(reply.body)
+                                .font(Tokens.Typography.captionRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textSecondary.resolve(for: scheme)
+                                )
+                        }
+                    }
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                    // Only your own. A shared reply belongs to the clinic, and
+                    // the server refuses to let one person retire everybody's.
+                    .swipeActions(edge: .trailing) {
+                        if !reply.isShared {
+                            Button(L10n.string("common.delete"), role: .destructive) {
+                                Task { await onDelete(reply.id) }
+                            }
+                        }
+                    }
+                }
+
+                if adding {
+                    Section(L10n.string("message.templateNew")) {
+                        LabelledField(
+                            label: L10n.string("message.templateTitle"),
+                            text: $title,
+                            isSecure: false,
+                            contentType: .plain,
+                            keyboard: .default
+                        )
+
+                        LabelledField(
+                            label: L10n.string("message.templateBody"),
+                            text: $body_,
+                            isSecure: false,
+                            contentType: .plain,
+                            keyboard: .default
+                        )
+
+                        PrimaryButton(
+                            title: L10n.string("common.save"),
+                            isBusy: saving,
+                            isEnabled: !title.trimmingCharacters(in: .whitespaces).isEmpty
+                                && !body_.trimmingCharacters(in: .whitespaces).isEmpty
+                                && !saving
+                        ) {
+                            saving = true
+
+                            if await onSave(title, body_) {
+                                title = ""
+                                body_ = ""
+                                adding = false
+                            }
+
+                            saving = false
+                        }
+                    }
                 }
             }
-            .frame(minHeight: Tokens.minimumTouchTarget)
+            .listStyle(.plain)
+            .navigationTitle(L10n.string("message.templates"))
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(L10n.string(adding ? "common.cancel" : "message.templateAdd")) {
+                        adding.toggle()
+                    }
+                }
+            }
         }
-        .listStyle(.plain)
     }
 }
 

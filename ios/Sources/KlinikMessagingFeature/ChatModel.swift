@@ -387,6 +387,41 @@ public actor ChatModel {
         state.quickReplies = (try? await api.quickReplies()) ?? []
     }
 
+    /// Saves a reply of the caller's own and puts it in the list.
+    @discardableResult
+    public func saveQuickReply(title: String, body: String) async -> Bool {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedBody = body.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedTitle.isEmpty, !trimmedBody.isEmpty else { return false }
+
+        do {
+            let saved = try await api.createQuickReply(title: trimmedTitle, body: trimmedBody)
+            state.quickReplies.append(saved)
+
+            return true
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return false
+    }
+
+    /// Retires one of the caller's own. Shared replies belong to the clinic and
+    /// the list does not offer this for them.
+    public func removeQuickReply(id: String) async {
+        do {
+            try await api.removeQuickReply(id: id)
+            state.quickReplies.removeAll { $0.id == id }
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+    }
+
     /**
      * Appends, or replaces an existing row.
      *

@@ -15,6 +15,9 @@ public struct AISettingsState: Sendable, Equatable {
     public var settings: AISettings?
     public var providers: [AIProviderInfo] = []
     public var testResult: AIConnectionTest?
+    /// This month's spend. Nil until it loads, and nil for an account that may
+    /// change the settings but not read the clinic's numbers.
+    public var usage: AIUsage?
     public var saving = false
     public var error: String?
 
@@ -56,6 +59,16 @@ public final class AISettingsModel {
             state.settings = try await settings
             state.providers = try await providers
             state.phase = .loaded
+
+            /*
+             * The spend, separately and best-effort.
+             *
+             * A different permission guards it (`analytics.read` rather than
+             * `permissions.manage`), so an account can legitimately have one
+             * and not the other — and failing the whole screen because the
+             * cost panel is not this person's to see would be absurd.
+             */
+            state.usage = try? await api.usage()
         } catch APIError.forbidden {
             state.phase = .notPermitted
         } catch let error as APIError {
@@ -187,6 +200,7 @@ public struct AISettingsScreen: View {
 
                 case .loaded:
                     status
+                    spend
                     chooser
                     pricing
                     retention
@@ -460,6 +474,91 @@ public struct AISettingsScreen: View {
             .foregroundStyle(Tokens.Palette.critical.resolve(for: scheme))
             .disabled(state.saving)
         }
+    }
+
+    /**
+     * What the month has cost so far.
+     *
+     * Beside the settings rather than on a page of its own, because the number
+     * that matters is read by the person who set the cap. Shown as money
+     * first: tokens are the unit the provider bills in and not the unit
+     * anybody budgets in.
+     */
+    @ViewBuilder
+    private var spend: some View {
+        if let usage = state.usage, usage.enabled {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+                SectionHeader(
+                    title: L10n.string("ai.usage.title"),
+                    subtitle: AISettingsScreen.month(usage.monthStart)
+                )
+
+                Card(tone: usage.isNearBudget ? .warning : .neutral) {
+                    VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                        HStack(alignment: .firstTextBaseline, spacing: Tokens.Spacing.sm) {
+                            Text(AISettingsScreen.money(usage.spentUsd))
+                                .font(Tokens.Typography.titleRelative)
+                                .monospacedDigit()
+                                .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+                            if let budget = usage.budgetUsd {
+                                Text(
+                                    String(
+                                        format: L10n.string("ai.usage.ofBudget"),
+                                        AISettingsScreen.money(budget)
+                                    )
+                                )
+                                .font(Tokens.Typography.calloutRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textSecondary.resolve(for: scheme)
+                                )
+                            }
+
+                            Spacer(minLength: 0)
+                        }
+
+                        if let fraction = usage.budgetUsedFraction {
+                            ProgressView(value: min(fraction, 1))
+                                .accessibilityLabel(L10n.string("ai.usage.budgetUsed"))
+                                .accessibilityValue("\(Int(fraction * 100))%")
+                        }
+
+                        Text(
+                            String(
+                                format: L10n.string("ai.usage.calls"),
+                                usage.calls,
+                                usage.failed
+                            )
+                        )
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+
+                        Text(
+                            String(
+                                format: L10n.string("ai.usage.tokens"),
+                                usage.tokensIn,
+                                usage.tokensOut
+                            )
+                        )
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .accessibilityElement(children: .contain)
+            }
+        }
+    }
+
+    /// `nonisolated` because statics on a `View` otherwise inherit the view's
+    /// main-actor isolation, and the tests call these directly.
+    nonisolated static func money(_ amount: Double) -> String {
+        String(format: "$%.2f", amount)
+    }
+
+    nonisolated static func month(_ start: Date) -> String {
+        start.formatted(.dateTime.month(.wide).year())
     }
 
     private func reload() async {

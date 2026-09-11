@@ -1165,3 +1165,53 @@
 "emergency.universalNumberNote" = "112 reaches an ambulance in almost every country. If you know the local number where you are, call that instead.";
 "biometrics.unlockWithPasscode" = "Unlock with your passcode";
 "consent.readToEndFirst" = "Please read to the end of the form before confirming.";
+
+/* Password rules and opening an account from an invitation (M1) */
+"password.rule.length" = "At least %d characters";
+"password.rule.lettersAndDigits" = "Both letters and numbers";
+"password.rule.notYourIdentifier" = "Cannot contain your e-mail or phone number";
+"auth.haveInvitation" = "I have an invitation code";
+"auth.invitationTitle" = "Open an account with an invitation";
+"auth.invitationHint" = "Enter the code the clinic sent you, along with the e-mail or phone it arrived at, then choose your own password.";
+"auth.invitationCode" = "Invitation code";
+"auth.choosePassword" = "Choose a password";
+"auth.invitationAction" = "Open the account";
+
+/* Account: password and two-factor */
+"account.changePassword" = "Change password";
+"account.currentPassword" = "Current password";
+"account.newPassword" = "New password";
+"account.passwordChanged" = "Your password has changed. Every device has been signed out for safety; sign in again with the new one.";
+"account.changePasswordHint" = "Changing the password signs you out everywhere, including this device.";
+"account.twoFactor" = "Two-factor authentication";
+"account.twoFactorOn" = "On";
+"account.disableTwoFactor" = "Turn off two-factor";
+"account.disableTwoFactorHint" = "Enter the six-digit code from your authenticator to turn it off.";
+"account.twoFactorCode" = "Verification code";
+"account.twoFactorDisabled" = "Two-factor authentication is off.";
+"account.twoFactorMandatory" = "Two-factor authentication is required for clinic staff and cannot be turned off.";
+"auth.confirmPassword" = "Repeat the password";
+"auth.passwordsDiffer" = "The two passwords do not match.";
+"common.off" = "Off";
+
+/* KVKK art.11 — the patient's right to their own records */
+"dataExport.title" = "My records";
+"dataExport.explain" = "You can take a machine-readable copy of what the clinic holds about you. Once the file is ready you can save it or send it wherever you like.";
+"dataExport.prepare" = "Prepare the file";
+"dataExport.share" = "Save or send the file";
+"dataExport.failed" = "The file could not be prepared. Check your connection and try again.";
+"photo.held" = "The photograph is saved on your phone and will be sent when there is a connection. You do not need to take it again.";
+
+/* AI spend (spec 3.4) */
+"ai.usage.title" = "Spent this month";
+"ai.usage.ofBudget" = "/ %@ cap";
+"ai.usage.budgetUsed" = "Share of the budget used";
+"ai.usage.calls" = "%1$d calls, %2$d failed or refused";
+"ai.usage.tokens" = "%1$d tokens in, %2$d out";
+"message.templateShared" = "Clinic";
+"message.templateAdd" = "New";
+"message.templateNew" = "New quick reply";
+"message.templateTitle" = "Title";
+"message.templateBody" = "Text";
+"finance.rates.title" = "Rates this month";
+"finance.rates.none" = "No exchange rate has been recorded this month. Amounts in other currencies stay out of the totals.";

@@ -142,6 +142,20 @@ public actor InMemoryOutboxStore: OutboxStore {
  * all has no session yet — there was no server to open one with — and the
  * queue's job is to hold the *intention*, not the protocol state.
  */
+/**
+ * What kind of transfer a queued file is.
+ *
+ * The two protocols are genuinely different, not a detail: a document is
+ * opened as a session and sent in chunks so twenty megabytes survive a dropped
+ * connection, and a photograph is one multipart POST with the clinical fields
+ * beside it. Carrying both in one queue is right — the patient's question is
+ * "did my thing get sent" either way — but the sending is not shared.
+ */
+public enum PendingUploadKind: String, Sendable, Equatable, Codable {
+    case document
+    case photo
+}
+
 public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
     /// Generated on the device. Not the server's session: that arrives later,
     /// and may be replaced if it expires before the connection returns.
@@ -158,8 +172,20 @@ public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
     public let patientId: String?
 
     /// Which kind of document this is, kept because the session has to be
-    /// opened with it later.
+    /// opened with it later. The photograph's category for a photo.
     public let documentType: String
+
+    public let kind: PendingUploadKind
+
+    /**
+     * The rest of the form, for an endpoint that takes one.
+     *
+     * A photograph carries the body area and the phase label it was taken
+     * for, and a wound photograph filed under no area is one a clinician
+     * cannot compare with anything. Empty for a document, whose only field is
+     * its type.
+     */
+    public let fields: [String: String]
 
     public let originalName: String
 
@@ -184,6 +210,8 @@ public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
         fileURL: URL,
         patientId: String? = nil,
         documentType: String,
+        kind: PendingUploadKind = .document,
+        fields: [String: String] = [:],
         originalName: String,
         contentType: String = "application/octet-stream",
         totalBytes: Int,
@@ -196,6 +224,8 @@ public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
         self.fileURL = fileURL
         self.patientId = patientId
         self.documentType = documentType
+        self.kind = kind
+        self.fields = fields
         self.originalName = originalName
         self.contentType = contentType
         self.totalBytes = totalBytes
@@ -252,6 +282,17 @@ public struct PendingUpload: Sendable, Equatable, Identifiable, Codable {
 }
 
 /// Where unfinished uploads are remembered between launches.
+/**
+ * Sending one queued photograph.
+ *
+ * A port, because the queue lives in this module and `PhotosAPI` lives in the
+ * networking one — and because a photo upload is one call rather than the
+ * three-step session a document needs.
+ */
+public protocol QueuedPhotoUploader: Sendable {
+    func upload(fileURL: URL, subject: RecordSubject, fields: [String: String]) async throws
+}
+
 public protocol UploadStore: Sendable {
     func unfinished() async throws -> [PendingUpload]
     func remember(_ upload: PendingUpload) async throws

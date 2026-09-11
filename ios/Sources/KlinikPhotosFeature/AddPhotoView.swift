@@ -90,6 +90,15 @@ public struct AddPhotoView: View {
                         Text(L10n.string("photo.uploading"))
                             .font(Tokens.Typography.bodyRelative)
                     }
+                } else if state.queued {
+                    // Not a tick and not an error: the photograph is on the
+                    // phone and will go. Saying "uploaded" would be a lie, and
+                    // saying nothing is how somebody takes it again.
+                    Card(tone: .warning) {
+                        Label(L10n.string("photo.held"), systemImage: "clock.arrow.circlepath")
+                            .font(Tokens.Typography.bodyRelative)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 } else if sent {
                     Label(L10n.string("photo.uploaded"), systemImage: "checkmark.circle")
                         .font(Tokens.Typography.bodyRelative)

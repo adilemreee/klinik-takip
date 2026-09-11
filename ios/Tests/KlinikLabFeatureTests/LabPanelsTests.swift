@@ -123,4 +123,55 @@ final class LabPanelsTests: XCTestCase {
         XCTAssertTrue(text.contains("2026"))
         XCTAssertTrue(text.contains(":"))
     }
+
+    /**
+     * A report row that names a file with nothing behind it.
+     *
+     * Demo data does this on purpose — a fabricated PDF of invented results
+     * sitting in a clinic's bucket is worse than nothing — and a real document
+     * whose bytes went missing does it by accident. Either way the reader is
+     * not offered a button that opens an error.
+     */
+    func testTheReportIsNotOfferedWhenThereAreNoBytesBehindIt() {
+        let withoutFile = LabPanel(
+            measuredAt: Date(),
+            documentId: "d1",
+            documentName: "hemogram.pdf",
+            documentAvailable: false,
+            results: []
+        )
+
+        XCTAssertFalse(withoutFile.canOpenReport)
+
+        let withFile = LabPanel(
+            measuredAt: Date(),
+            documentId: "d1",
+            documentName: "hemogram.pdf",
+            documentAvailable: true,
+            results: []
+        )
+
+        XCTAssertTrue(withFile.canOpenReport)
+    }
+
+    /// No document at all is the other way to have nothing to open.
+    func testAPanelWithNoDocumentOffersNothing() {
+        let panel = LabPanel(measuredAt: Date(), documentAvailable: true, results: [])
+
+        XCTAssertFalse(panel.canOpenReport)
+    }
+
+    /// A server that does not send the field yet is read as "no file", which
+    /// is the safe reading: no offer rather than a broken one.
+    func testAMissingFieldMeansNoOffer() throws {
+        let json = #"""
+        {"measuredAt":"2026-09-01T08:00:00.000Z","documentId":"d1",
+         "documentName":"a.pdf","results":[]}
+        """#
+
+        let panel = try JSONDecoder.klinik.decode(LabPanel.self, from: Data(json.utf8))
+
+        XCTAssertFalse(panel.documentAvailable)
+        XCTAssertFalse(panel.canOpenReport)
+    }
 }

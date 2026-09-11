@@ -24,6 +24,15 @@ public struct GalleryState: Sendable, Equatable {
     public var uploading = false
     public var error: String?
 
+    /**
+     * The last photograph could not be sent and is being held (spec M15).
+     *
+     * Not an error: the bytes are on the phone and will go when there is a
+     * connection. A wound photograph taken in a hotel with no signal used to
+     * be lost here with a red message.
+     */
+    public var queued = false
+
     public var selectedGroup: GalleryGroup? {
         groups.first { $0.id == selectedArea } ?? groups.first
     }
@@ -51,12 +60,57 @@ public struct GalleryState: Sendable, Equatable {
 public actor PhotoGalleryModel {
     private let api: PhotosAPI
     private let subject: RecordSubject
+    /// Where a photograph goes when the connection cannot carry it. Nil in
+    /// tests that have nothing to say about it.
+    private let queue: PendingUploadQueue?
 
     private(set) public var state = GalleryState()
 
-    public init(api: PhotosAPI, subject: RecordSubject) {
+    public init(api: PhotosAPI, subject: RecordSubject, queue: PendingUploadQueue? = nil) {
         self.api = api
         self.subject = subject
+        self.queue = queue
+    }
+
+    /**
+     * Hands a photograph the connection could not carry to the queue.
+     *
+     * Reports success, because from the patient's side the photograph *is*
+     * taken — what is outstanding is the delivery, and the screen says so.
+     * With no queue attached the failure is reported exactly as before.
+     */
+    private func hold(
+        fileURL: URL,
+        category: PhotoCategory,
+        bodyArea: String?,
+        phaseLabel: String?,
+        failure: APIError
+    ) async -> Bool {
+        guard let queue else {
+            state.error = L10n.message(for: failure)
+            return false
+        }
+
+        var fields = ["category": category.rawValue]
+        if let bodyArea { fields["bodyArea"] = bodyArea }
+        if let phaseLabel { fields["phaseLabel"] = phaseLabel }
+
+        do {
+            try await queue.keepPhoto(
+                fileURL: fileURL,
+                subject: subject,
+                contentType: "image/jpeg",
+                fields: fields
+            )
+        } catch {
+            // The queue is the only reason to claim the photograph is safe.
+            state.error = L10n.message(for: failure)
+            return false
+        }
+
+        state.queued = true
+
+        return true
     }
 
     public func currentState() -> GalleryState { state }
@@ -100,6 +154,7 @@ public actor PhotoGalleryModel {
 
         state.uploading = true
         state.error = nil
+        state.queued = false
         defer { state.uploading = false }
 
         do {
@@ -109,6 +164,14 @@ public actor PhotoGalleryModel {
                 category: category,
                 bodyArea: bodyArea,
                 phaseLabel: phaseLabel
+            )
+        } catch let error as APIError where error.isConnectivity && queue != nil {
+            return await hold(
+                fileURL: fileURL,
+                category: category,
+                bodyArea: bodyArea,
+                phaseLabel: phaseLabel,
+                failure: error
             )
         } catch let error as APIError {
             // The server refuses a format whose location data it cannot strip,

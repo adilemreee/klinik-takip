@@ -321,4 +321,58 @@ final class SQLiteStoreTests: XCTestCase {
         let seen = try await reader.pending().map(\.id)
         XCTAssertEqual(seen, ["e1"])
     }
+
+    /**
+     * A photograph in the queue, across a relaunch.
+     *
+     * The queue used to hold documents only, so a wound photograph taken with
+     * no signal was lost with a red message. A photograph carries the clinical
+     * fields a document does not — the category and the body area — and a
+     * photograph filed under no area is one a clinician cannot compare with
+     * anything.
+     */
+    func testAQueuedPhotographKeepsItsFields() async throws {
+        let store = SQLiteUploadStore(store: try SQLiteStore(url: fileURL))
+        let kept = try PendingUpload.directory().appendingPathComponent("wound.jpg")
+
+        try await store.remember(
+            PendingUpload(
+                id: "p1",
+                fileURL: kept,
+                documentType: "OTHER",
+                kind: .photo,
+                fields: ["category": "WOUND", "bodyArea": "karın"],
+                originalName: "wound.jpg",
+                contentType: "image/jpeg",
+                totalBytes: 4096
+            )
+        )
+
+        let afterRelaunch = SQLiteUploadStore(store: try SQLiteStore(url: fileURL))
+        let unfinished = try await afterRelaunch.unfinished()
+
+        XCTAssertEqual(unfinished.first?.kind, .photo)
+        XCTAssertEqual(unfinished.first?.fields["category"], "WOUND")
+        XCTAssertEqual(unfinished.first?.fields["bodyArea"], "karın")
+    }
+
+    /// A row written before v5 has no kind, and a document is what it is.
+    func testARowWithNoKindReadsAsADocument() async throws {
+        let store = SQLiteUploadStore(store: try SQLiteStore(url: fileURL))
+
+        try await store.remember(
+            PendingUpload(
+                id: "d1",
+                fileURL: try PendingUpload.directory().appendingPathComponent("scan.pdf"),
+                documentType: "LAB",
+                originalName: "scan.pdf",
+                totalBytes: 10
+            )
+        )
+
+        let unfinished = try await store.unfinished()
+
+        XCTAssertEqual(unfinished.first?.kind, .document)
+        XCTAssertTrue(unfinished.first?.fields.isEmpty ?? false)
+    }
 }

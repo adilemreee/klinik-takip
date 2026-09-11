@@ -58,6 +58,19 @@ public struct LabPanel: Decodable, Sendable, Equatable, Identifiable {
     public let measuredAt: Date
     public let documentId: String?
     public let documentName: String?
+
+    /**
+     * Whether there are bytes behind the report.
+     *
+     * A row can name one that has none. The reader is not offered a button
+     * that opens an error — and the screen says the table is all there is,
+     * rather than leaving them to wonder where the PDF went.
+     *
+     * Defaults to false when the server does not say, which is the safe
+     * reading: no offer rather than a broken one.
+     */
+    public let documentAvailable: Bool
+
     public let results: [LabResult]
 
     /// Two reports on the same morning are two reports, so the document is
@@ -70,16 +83,37 @@ public struct LabPanel: Decodable, Sendable, Equatable, Identifiable {
         results.filter(\.isOutOfRange).count
     }
 
+    /// Present when there is a report to open, which is the only reason the
+    /// button exists.
+    public var canOpenReport: Bool { documentAvailable && documentId != nil }
+
     public init(
         measuredAt: Date,
         documentId: String? = nil,
         documentName: String? = nil,
+        documentAvailable: Bool = false,
         results: [LabResult]
     ) {
         self.measuredAt = measuredAt
         self.documentId = documentId
         self.documentName = documentName
+        self.documentAvailable = documentAvailable
         self.results = results
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        measuredAt = try container.decode(Date.self, forKey: .measuredAt)
+        documentId = try container.decodeIfPresent(String.self, forKey: .documentId)
+        documentName = try container.decodeIfPresent(String.self, forKey: .documentName)
+        documentAvailable =
+            try container.decodeIfPresent(Bool.self, forKey: .documentAvailable) ?? false
+        results = try container.decode([LabResult].self, forKey: .results)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case measuredAt, documentId, documentName, documentAvailable, results
     }
 }
 

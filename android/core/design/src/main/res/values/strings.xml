@@ -3,15 +3,27 @@
      Regenerate with: node design/scripts/generate-strings.mjs -->
 <resources>
     <string name="account_address">Bağlandığı adres</string>
+    <string name="account_change_password">Parolayı değiştir</string>
+    <string name="account_change_password_hint">Parolayı değiştirmek bu cihaz dahil her yerden çıkış yapar.</string>
+    <string name="account_current_password">Mevcut parola</string>
+    <string name="account_disable_two_factor">İki faktörü kapat</string>
+    <string name="account_disable_two_factor_hint">Kapatmak için doğrulayıcınızdaki altı haneli kodu girin.</string>
     <string name="account_last_seen">Son görülme: %@</string>
+    <string name="account_new_password">Yeni parola</string>
     <string name="account_no_other_devices">Başka bir cihazda açık oturum yok.</string>
     <string name="account_other_devices">Diğer cihazlar</string>
+    <string name="account_password_changed">Parolanız değişti. Güvenlik için bütün cihazlardan çıkış yapıldı; yeni parolayla tekrar girin.</string>
     <string name="account_revoke">Bu cihazın oturumunu kapat</string>
     <string name="account_security">Güvenlik</string>
     <string name="account_sign_out_everywhere">Tüm cihazlardan çık</string>
     <string name="account_sign_out_everywhere_confirm">Bu cihaz dahil tüm oturumlar kapatılacak. Devam edilsin mi?</string>
     <string name="account_this_device">Bu cihaz</string>
     <string name="account_title">Hesabım</string>
+    <string name="account_two_factor">İki faktörlü doğrulama</string>
+    <string name="account_two_factor_code">Doğrulama kodu</string>
+    <string name="account_two_factor_disabled">İki faktörlü doğrulama kapatıldı.</string>
+    <string name="account_two_factor_mandatory">Klinik personeli için iki faktörlü doğrulama zorunludur; kapatılamaz.</string>
+    <string name="account_two_factor_on">Açık</string>
     <string name="account_unknown_device">Adı bilinmeyen cihaz</string>
     <string name="agency_add">Kurum ekle</string>
     <string name="agency_commission">Komisyon yüzdesi</string>
@@ -51,6 +63,11 @@
     <string name="ai_settings_title">Yapay zekâ sağlayıcısı</string>
     <string name="ai_settings_zero_retention">Bu sağlayıcıyla sıfır saklama sözleşmesi var</string>
     <string name="ai_settings_zero_retention_cleared">Sağlayıcı değişti; beyan sıfırlandı, yeniden onaylayın.</string>
+    <string name="ai_usage_budget_used">Bütçenin kullanılan oranı</string>
+    <string name="ai_usage_calls">%1$d çağrı, %2$d tanesi başarısız ya da reddedildi</string>
+    <string name="ai_usage_of_budget">/ %@ üst sınır</string>
+    <string name="ai_usage_title">Bu ayki harcama</string>
+    <string name="ai_usage_tokens">%1$d giriş, %2$d çıkış token</string>
     <string name="analytics_average">Ortalama ücret</string>
     <string name="analytics_average_per_currency">Para birimi başına ortalama</string>
     <string name="analytics_capacity_unconfigured">Çalışma saatleri tanımlı değil; doluluk oranı hesaplanamıyor.</string>
@@ -163,6 +180,8 @@
     <string name="audit_not_permitted">Bu hesabın denetim günlüğüne erişimi yok.</string>
     <string name="audit_title">Denetim günlüğü</string>
     <string name="audit_trail">Kayıtlar</string>
+    <string name="auth_choose_password">Parola seçin</string>
+    <string name="auth_confirm_password">Parolayı tekrar girin</string>
     <string name="auth_error_account_inactive">Hesabınız aktif değil. Kliniğinizle görüşün.</string>
     <string name="auth_error_account_locked">Çok fazla deneme yapıldı. Bir süre sonra tekrar deneyin.</string>
     <string name="auth_error_account_locked_for">Çok fazla deneme yapıldı. %d dakika sonra tekrar deneyin.</string>
@@ -170,8 +189,14 @@
     <string name="auth_error_mfa_invalid">Kod doğru değil. Yeni kodu bekleyip tekrar deneyin.</string>
     <string name="auth_error_password_too_weak">Parola yeterince güçlü değil.</string>
     <string name="auth_forgot_password">Parolamı unuttum</string>
+    <string name="auth_have_invitation">Davet kodum var</string>
     <string name="auth_identifier">E-posta veya telefon</string>
+    <string name="auth_invitation_action">Hesabı aç</string>
+    <string name="auth_invitation_code">Davet kodu</string>
+    <string name="auth_invitation_hint">Kliniğin gönderdiği kodu, kodun ulaştığı e-posta veya telefonla birlikte girin; sonra kendi parolanızı seçin.</string>
+    <string name="auth_invitation_title">Davetle hesap aç</string>
     <string name="auth_password">Parola</string>
+    <string name="auth_passwords_differ">İki parola aynı değil.</string>
     <string name="auth_session_expired">Oturumunuzun süresi doldu, tekrar giriş yapın.</string>
     <string name="auth_sign_in">Giriş yap</string>
     <string name="auth_sign_out">Çıkış yap</string>
@@ -269,6 +294,7 @@
     <string name="common_loading">Yükleniyor…</string>
     <string name="common_minutes_short">dk</string>
     <string name="common_more">Daha fazla</string>
+    <string name="common_off">Kapalı</string>
     <string name="common_retry">Tekrar dene</string>
     <string name="common_save">Kaydet</string>
     <string name="common_send">Gönder</string>
@@ -342,6 +368,11 @@
     <string name="consent_withdraw">İzni geri al</string>
     <string name="consent_withdrawn">Geri alındı</string>
     <string name="consent_withdrawn_at">Geri alındı</string>
+    <string name="data_export_explain">Kliniğin sizinle ilgili tuttuğu kayıtların makine tarafından okunabilir bir kopyasını alabilirsiniz. Dosya hazırlandıktan sonra istediğiniz yere kaydedebilir veya gönderebilirsiniz.</string>
+    <string name="data_export_failed">Dosya hazırlanamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="data_export_prepare">Dosyayı hazırla</string>
+    <string name="data_export_share">Dosyayı kaydet veya gönder</string>
+    <string name="data_export_title">Kayıtlarım</string>
     <string name="document_empty">Henüz belge yok. Tahlil sonucunuzu veya raporunuzu buradan yükleyebilirsiniz.</string>
     <string name="document_failed_no_reason">Sunucu bir neden bildirmedi. Belgeyi yeniden yükleyip deneyin.</string>
     <string name="document_failed_title">Belge işlenemedi</string>
@@ -547,6 +578,8 @@
     <string name="finance_payment_reversed">Düzeltildi</string>
     <string name="finance_payments_title">Ödemeler</string>
     <string name="finance_rate_missing">Bu güne ait kur kaydı yok</string>
+    <string name="finance_rates_none">Bu ay için kur kaydı yok. Farklı para birimindeki tutarlar toplama katılmıyor.</string>
+    <string name="finance_rates_title">Bu ayki kurlar</string>
     <string name="finance_record_count">%d kayıt</string>
     <string name="finance_record_payment">Ödeme gir</string>
     <string name="finance_records">Kayıtlar</string>
@@ -779,6 +812,11 @@
     <string name="message_status_read">Okundu</string>
     <string name="message_status_sent">Gönderildi</string>
     <string name="message_stop_recording">Bitir ve gönder</string>
+    <string name="message_template_add">Yeni</string>
+    <string name="message_template_body">Metin</string>
+    <string name="message_template_new">Yeni hazır yanıt</string>
+    <string name="message_template_shared">Klinik</string>
+    <string name="message_template_title">Başlık</string>
     <string name="message_templates">Hazır yanıtlar</string>
     <string name="message_translate">Çevir</string>
     <string name="message_translated">Çeviri</string>
@@ -825,6 +863,9 @@
     <string name="notification_type_lab_ready">Tahlil sonucu hazır</string>
     <string name="notification_type_medication_due">İlaç saati</string>
     <string name="notification_type_message_new">Yeni mesaj</string>
+    <string name="password_rule_length">En az %d karakter olmalı</string>
+    <string name="password_rule_letters_and_digits">Hem harf hem rakam içermeli</string>
+    <string name="password_rule_not_your_identifier">E-posta veya telefonunuzu içeremez</string>
     <string name="patient_age_years">%d yaşında</string>
     <string name="patient_birth_date">Doğum tarihi</string>
     <string name="patient_city">Şehir</string>
@@ -887,6 +928,7 @@
     <string name="photo_finding_wound_open">Yara kenarları ayrık</string>
     <string name="photo_flagged_title">İncelenecek fotoğraflar</string>
     <string name="photo_gallery_title">Fotoğraflar</string>
+    <string name="photo_held">Fotoğraf telefonunuzda kayıtlı ve bağlantı gelince kliniğe gönderilecek. Tekrar çekmenize gerek yok.</string>
     <string name="photo_image">Klinik fotoğraf</string>
     <string name="photo_need_body_area">Karşılaştırma yapılabilmesi için bölgeyi yazın.</string>
     <string name="photo_no_body_area">Bölge belirtilmemiş</string>

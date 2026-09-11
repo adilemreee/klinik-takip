@@ -1165,3 +1165,53 @@
 "emergency.universalNumberNote" = "112 hemen her ülkede ambulansa ulaşır. Bulunduğunuz ülkenin kendi numarasını biliyorsanız onu arayın.";
 "biometrics.unlockWithPasscode" = "Parola ile aç";
 "consent.readToEndFirst" = "Onaylamadan önce metnin sonuna kadar okuyun.";
+
+/* Parola kurallari ve davetle hesap acma (M1) */
+"password.rule.length" = "En az %d karakter olmalı";
+"password.rule.lettersAndDigits" = "Hem harf hem rakam içermeli";
+"password.rule.notYourIdentifier" = "E-posta veya telefonunuzu içeremez";
+"auth.haveInvitation" = "Davet kodum var";
+"auth.invitationTitle" = "Davetle hesap aç";
+"auth.invitationHint" = "Kliniğin gönderdiği kodu, kodun ulaştığı e-posta veya telefonla birlikte girin; sonra kendi parolanızı seçin.";
+"auth.invitationCode" = "Davet kodu";
+"auth.choosePassword" = "Parola seçin";
+"auth.invitationAction" = "Hesabı aç";
+
+/* Hesap: parola ve iki faktor */
+"account.changePassword" = "Parolayı değiştir";
+"account.currentPassword" = "Mevcut parola";
+"account.newPassword" = "Yeni parola";
+"account.passwordChanged" = "Parolanız değişti. Güvenlik için bütün cihazlardan çıkış yapıldı; yeni parolayla tekrar girin.";
+"account.changePasswordHint" = "Parolayı değiştirmek bu cihaz dahil her yerden çıkış yapar.";
+"account.twoFactor" = "İki faktörlü doğrulama";
+"account.twoFactorOn" = "Açık";
+"account.disableTwoFactor" = "İki faktörü kapat";
+"account.disableTwoFactorHint" = "Kapatmak için doğrulayıcınızdaki altı haneli kodu girin.";
+"account.twoFactorCode" = "Doğrulama kodu";
+"account.twoFactorDisabled" = "İki faktörlü doğrulama kapatıldı.";
+"account.twoFactorMandatory" = "Klinik personeli için iki faktörlü doğrulama zorunludur; kapatılamaz.";
+"auth.confirmPassword" = "Parolayı tekrar girin";
+"auth.passwordsDiffer" = "İki parola aynı değil.";
+"common.off" = "Kapalı";
+
+/* KVKK m.11 — hastanin kendi kayitlarini alma hakki */
+"dataExport.title" = "Kayıtlarım";
+"dataExport.explain" = "Kliniğin sizinle ilgili tuttuğu kayıtların makine tarafından okunabilir bir kopyasını alabilirsiniz. Dosya hazırlandıktan sonra istediğiniz yere kaydedebilir veya gönderebilirsiniz.";
+"dataExport.prepare" = "Dosyayı hazırla";
+"dataExport.share" = "Dosyayı kaydet veya gönder";
+"dataExport.failed" = "Dosya hazırlanamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+"photo.held" = "Fotoğraf telefonunuzda kayıtlı ve bağlantı gelince kliniğe gönderilecek. Tekrar çekmenize gerek yok.";
+
+/* Yapay zeka harcamasi (sartname 3.4) */
+"ai.usage.title" = "Bu ayki harcama";
+"ai.usage.ofBudget" = "/ %@ üst sınır";
+"ai.usage.budgetUsed" = "Bütçenin kullanılan oranı";
+"ai.usage.calls" = "%1$d çağrı, %2$d tanesi başarısız ya da reddedildi";
+"ai.usage.tokens" = "%1$d giriş, %2$d çıkış token";
+"message.templateShared" = "Klinik";
+"message.templateAdd" = "Yeni";
+"message.templateNew" = "Yeni hazır yanıt";
+"message.templateTitle" = "Başlık";
+"message.templateBody" = "Metin";
+"finance.rates.title" = "Bu ayki kurlar";
+"finance.rates.none" = "Bu ay için kur kaydı yok. Farklı para birimindeki tutarlar toplama katılmıyor.";

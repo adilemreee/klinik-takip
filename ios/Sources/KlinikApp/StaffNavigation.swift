@@ -271,6 +271,8 @@ struct StaffPatientsView: View {
                 model: AccountModel(api: environment.auth),
                 signOut: signOut,
                 biometrics: biometrics
+                // `canDisableTwoFactor` left at false: mandatory for staff, and
+                // the server refuses. The screen says so rather than hiding it.
             )
 
         case .calendar:

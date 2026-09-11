@@ -63,6 +63,24 @@ final class PhotoGalleryModelTests: XCTestCase {
         "{\"bodyArea\":\"\(area)\",\"photos\":[\(photos.joined(separator: ","))]}"
     }
 
+    /// A client over one transport, for the tests that build their own model.
+    private func client(_ transport: HTTPTransport) async -> APIClient {
+        let session = SessionManager(store: InMemoryTokenStore(), refresher: UnusedRefresher())
+        try? await session.signIn(
+            with: SessionTokens(
+                accessToken: "access",
+                refreshToken: "refresh",
+                expiresAt: Date().addingTimeInterval(900)
+            )
+        )
+
+        return APIClient(
+            configuration: APIConfiguration(baseURL: URL(string: "https://api.test")!),
+            transport: transport,
+            session: session
+        )
+    }
+
     private func model(_ transport: HTTPTransport) async -> PhotoGalleryModel {
         let session = SessionManager(store: InMemoryTokenStore(), refresher: UnusedRefresher())
         try? await session.signIn(
@@ -263,6 +281,117 @@ final class PhotoGalleryModelTests: XCTestCase {
         let phase = await gallery.currentState().phase
         XCTAssertEqual(phase, .notFound)
     }
+
+    /// A real file on disk. The multipart body is assembled before the request
+    /// is made, so a path that does not exist fails before the transport is
+    /// ever asked — which is a different failure from the one under test.
+    private func temporaryJPEG() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("jpg")
+
+        try Data([0xFF, 0xD8, 0xFF, 0xE0] + Array(repeating: 0x11, count: 64)).write(to: url)
+
+        return url
+    }
+
+    // MARK: - Offline (spec M15)
+
+    /**
+     * A wound photograph taken where there is no signal.
+     *
+     * Documents queued; photographs did not. A post-operative patient in a
+     * hotel photographing a wound is the exact case this product exists for,
+     * and it ended with a red message and nothing kept.
+     */
+    func testAPhotographIsKeptWhenTheConnectionCannotCarryIt() async throws {
+        let file = try temporaryJPEG()
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let queue = RecordingUploadQueue()
+        let model = PhotoGalleryModel(
+            api: PhotosAPI(client: await client(FailingTransport(error: .offline))),
+            subject: .me,
+            queue: queue
+        )
+
+        let sent = await model.upload(
+            fileURL: file,
+            category: .wound,
+            bodyArea: "karın",
+            phaseLabel: nil
+        )
+
+        // True: from the patient's side the photograph *is* taken. What is
+        // outstanding is the delivery, and the screen says so.
+        XCTAssertTrue(sent)
+
+        let state = await model.currentState()
+        XCTAssertTrue(state.queued)
+        XCTAssertNil(state.error)
+
+        let kept = await queue.photographs()
+        XCTAssertEqual(kept.count, 1)
+        XCTAssertEqual(kept.first?.fields["category"], "WOUND")
+        XCTAssertEqual(kept.first?.fields["bodyArea"], "karın")
+    }
+
+    /// With no queue attached the failure is reported exactly as before.
+    func testWithoutAQueueTheFailureIsStillReported() async throws {
+        let file = try temporaryJPEG()
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let model = PhotoGalleryModel(
+            api: PhotosAPI(client: await client(FailingTransport(error: .offline))),
+            subject: .me
+        )
+
+        let sent = await model.upload(
+            fileURL: file,
+            category: .wound,
+            bodyArea: nil,
+            phaseLabel: nil
+        )
+
+        XCTAssertFalse(sent)
+
+        let state = await model.currentState()
+        XCTAssertFalse(state.queued)
+        XCTAssertNotNil(state.error)
+    }
+
+    /**
+     * A refusal is not a connection problem.
+     *
+     * The server turns down a format whose location data it cannot strip, and
+     * queueing that would mean retrying it forever against an answer that will
+     * not change.
+     */
+    func testARefusedPhotographIsNotQueued() async throws {
+        let file = try temporaryJPEG()
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let queue = RecordingUploadQueue()
+        let model = PhotoGalleryModel(
+            api: PhotosAPI(
+                client: await client(RecordingTransport(bodies: [:]))
+            ),
+            subject: .me,
+            queue: queue
+        )
+
+        let sent = await model.upload(
+            fileURL: file,
+            category: .wound,
+            bodyArea: nil,
+            phaseLabel: nil
+        )
+
+        XCTAssertFalse(sent)
+
+        let kept = await queue.photographs()
+        XCTAssertTrue(kept.isEmpty)
+    }
 }
 
 /**
@@ -332,4 +461,37 @@ final class PhotoAssessmentRenderingTests: XCTestCase {
             XCTAssertFalse(text.isEmpty)
         }
     }
+
+}
+
+/// What the model handed the queue.
+private actor RecordingUploadQueue: PendingUploadQueue {
+    struct Kept {
+        let subject: RecordSubject
+        let fields: [String: String]
+    }
+
+    private var kept: [Kept] = []
+
+    func keep(
+        fileURL: URL,
+        subject: RecordSubject,
+        type: DocumentType,
+        contentType: String,
+        originalName: String?,
+        sessionId: String?
+    ) async throws {
+        XCTFail("A photograph must not be queued as a document")
+    }
+
+    func keepPhoto(
+        fileURL: URL,
+        subject: RecordSubject,
+        contentType: String,
+        fields: [String: String]
+    ) async throws {
+        kept.append(Kept(subject: subject, fields: fields))
+    }
+
+    func photographs() -> [Kept] { kept }
 }

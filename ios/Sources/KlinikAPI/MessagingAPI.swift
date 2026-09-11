@@ -185,6 +185,23 @@ public struct QuickReply: Decodable, Sendable, Equatable, Identifiable {
     public let title: String
     public let body: String
     public let sortOrder: Int
+
+    /// A shared reply belongs to the clinic, not to the reader, and the server
+    /// refuses to let one person retire everybody's.
+    public var isShared: Bool { staffId == nil }
+
+    public init(id: String, staffId: String?, title: String, body: String, sortOrder: Int) {
+        self.id = id
+        self.staffId = staffId
+        self.title = title
+        self.body = body
+        self.sortOrder = sortOrder
+    }
+}
+
+private struct QuickReplyBody: Encodable {
+    let title: String
+    let body: String
 }
 
 public struct MessagingAPI: Sendable {
@@ -336,6 +353,31 @@ public struct MessagingAPI: Sendable {
         )
 
         return URL(string: link.url)
+    }
+
+    /**
+     * Saves a reply of your own.
+     *
+     * The clinic's shared ones are seeded; this is the nurse who types the
+     * same three sentences about drain care every week and would like to stop.
+     */
+    public func createQuickReply(title: String, body: String) async throws -> QuickReply {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "quick-replies",
+                body: try JSONEncoder.klinik.encode(
+                    QuickReplyBody(title: title, body: body)
+                )
+            ),
+            as: QuickReply.self
+        )
+    }
+
+    /// Retires one of your own. The server refuses to remove a shared one,
+    /// which is why the list marks them.
+    public func removeQuickReply(id: String) async throws {
+        try await client.send(Endpoint(method: .delete, path: "quick-replies/\(id)"))
     }
 
     public func quickReplies() async throws -> [QuickReply] {

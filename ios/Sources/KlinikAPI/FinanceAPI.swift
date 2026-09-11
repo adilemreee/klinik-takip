@@ -272,6 +272,18 @@ public struct NewAgency: Encodable, Sendable, Equatable {
     }
 }
 
+/// One day's rate between two currencies, as the clinic recorded it.
+public struct ExchangeRate: Decodable, Sendable, Equatable, Identifiable {
+    public let base: Currency
+    public let quote: Currency
+    /// Decimal on the wire: a binary float cannot hold 35.42 exactly, and this
+    /// is a number invoices are built from.
+    public let rate: String
+    public let validOn: Date
+
+    public var id: String { "\(base.rawValue)|\(quote.rawValue)|\(validOn.timeIntervalSince1970)" }
+}
+
 public struct FinanceAPI: Sendable {
     private let client: APIClient
 
@@ -365,6 +377,30 @@ public struct FinanceAPI: Sendable {
                 ]
             ),
             as: CollectionReport.self
+        )
+    }
+
+    /**
+     * The exchange rates the clinic has recorded.
+     *
+     * Read-only here, and worth showing: a total this screen cannot complete —
+     * "bu toplam eksik" — is always a day with no rate on it, and the person
+     * who has to fix that needs to see which days those are rather than
+     * guessing.
+     */
+    public func rates(from: Date, to: Date) async throws -> [ExchangeRate] {
+        try await client.send(
+            Endpoint(
+                method: .get,
+                path: "finance/rates",
+                query: [
+                    // A value type rather than `ISO8601DateFormatter`, which is
+                    // a non-Sendable class this package deliberately avoids.
+                    "from": from.formatted(.iso8601),
+                    "to": to.formatted(.iso8601),
+                ]
+            ),
+            as: [ExchangeRate].self
         )
     }
 

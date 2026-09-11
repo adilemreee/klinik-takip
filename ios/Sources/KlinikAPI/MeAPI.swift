@@ -53,3 +53,19 @@ public extension MeAPI {
         try await send(Endpoint(method: .get, path: "me/identity"), as: Identity.self)
     }
 }
+
+public extension MeAPI {
+    /**
+     * Everything the clinic holds about you, in a form you can take elsewhere
+     * (KVKK m.11).
+     *
+     * Returned as the bytes the server produced rather than decoded and
+     * re-encoded. The point of a portability export is that it is the record,
+     * not this app's reading of it — and a client that parsed it into its own
+     * types would quietly drop every field it does not happen to model.
+     */
+    func dataExport() async throws -> Data {
+        try await rawData(Endpoint(method: .get, path: "me/data-export"))
+    }
+}
+

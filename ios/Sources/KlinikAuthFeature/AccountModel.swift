@@ -14,6 +14,8 @@ public struct AccountState: Sendable, Equatable {
     public var sessions: [DeviceSession] = []
     public var busyId: String?
     public var error: String?
+    /// Set while a password change or a two-factor change is in flight.
+    public var isWorking = false
 
     public init() {}
 
@@ -67,6 +69,59 @@ public final class AccountModel {
         } catch {
             state.error = L10n.string("error.server")
         }
+    }
+
+    /**
+     * Changes the password.
+     *
+     * Returns true when it worked, and the caller then signs out — not as a
+     * courtesy but because the server has already revoked every token family,
+     * this device's included. Staying on screen would mean every subsequent
+     * request failing with no explanation.
+     */
+    public func changePassword(current: String, new: String) async -> Bool {
+        guard !state.isWorking else { return false }
+
+        state.isWorking = true
+        state.error = nil
+        defer { state.isWorking = false }
+
+        do {
+            try await api.changePassword(current: current, new: new)
+            return true
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return false
+    }
+
+    /**
+     * Turns the second factor off.
+     *
+     * Patients only. The server refuses it for staff — mandatory there — and
+     * the screen does not offer the button to them, so a refusal here means
+     * the code was wrong rather than the account being the wrong kind.
+     */
+    public func disableTwoFactor(code: String) async -> Bool {
+        guard !state.isWorking else { return false }
+
+        state.isWorking = true
+        state.error = nil
+        defer { state.isWorking = false }
+
+        do {
+            try await api.disableTotp(code: code)
+            return true
+        } catch let error as APIError {
+            state.error = L10n.message(for: error)
+        } catch {
+            state.error = L10n.string("error.server")
+        }
+
+        return false
     }
 
     /// Ends every session including this one. The caller signs out afterwards;

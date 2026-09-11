@@ -9,6 +9,14 @@ import KlinikCore
 /// cannot happen, and every screen then has to defend against them.
 public enum AuthStep: Sendable, Equatable {
     case credentials
+    /**
+     * Redeeming an invitation.
+     *
+     * The only way somebody gets an account. Reached from the sign-in screen
+     * rather than being the first thing shown: most openings are a returning
+     * patient, and a form asking for a code they do not have is a wall.
+     */
+    case invitation
     /// The account already has a second factor; it just needs this login's code.
     case twoFactorCode
     /// Staff without a second factor yet. Carries what the client must show to
@@ -131,6 +139,65 @@ public actor AuthFlowModel {
         } catch {
             handle(error)
         }
+    }
+
+    /// Shows the invitation form. Clears anything half-typed on the way in, so
+    /// a failed sign-in's error is not left hanging over a different question.
+    public func showInvitation() {
+        state = AuthState()
+        state.step = .invitation
+    }
+
+    /// Back to sign-in.
+    public func cancelInvitation() {
+        state = AuthState()
+    }
+
+    /**
+     * Redeems an invitation, then signs in with the password just chosen.
+     *
+     * Two calls rather than one, and the second is the point: asking somebody
+     * to type a password they set four seconds ago is the kind of thing that
+     * makes people write it on paper. The sign-in is an ordinary one, so a
+     * staff account lands in two-factor enrolment exactly as it would
+     * otherwise — this step does not need to know about that.
+     */
+    public func redeemInvitation(
+        identifier: String,
+        code: String,
+        password: String,
+        deviceName: String? = nil
+    ) async {
+        guard !state.isSubmitting else { return }
+
+        state.isSubmitting = true
+        state.errorMessage = nil
+        state.isLockedOut = false
+
+        do {
+            try await auth.acceptInvitation(
+                identifier: identifier,
+                code: code,
+                password: password
+            )
+        } catch {
+            handle(error)
+            // Left on the form the code was typed into, whatever the caller
+            // had the step set to. A refused code is a reason to try again
+            // here, not a reason to be somewhere else.
+            state.step = .invitation
+            state.isSubmitting = false
+            return
+        }
+
+        // Released before signing in, because `submitCredentials` takes it.
+        state.isSubmitting = false
+
+        await submitCredentials(
+            identifier: identifier,
+            password: password,
+            deviceName: deviceName
+        )
     }
 
     public func reset() {

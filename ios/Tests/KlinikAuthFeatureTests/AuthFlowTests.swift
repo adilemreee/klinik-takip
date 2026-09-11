@@ -250,6 +250,104 @@ final class AuthFlowTests: XCTestCase {
         XCTAssertNil(state.errorMessage)
         XCTAssertFalse(state.isLockedOut)
     }
+
+    // MARK: - Opening an account from an invitation
+
+    /**
+     * The only door into the app for a new patient.
+     *
+     * Until this existed the clinic could issue an invitation and there was
+     * nowhere to use it: the sign-in flow went credentials → two-factor →
+     * signed in, with no step in between, and the one account on staging was
+     * created by hand in the database.
+     */
+    func testRedeemingAnInvitationSignsTheUserIn() async {
+        let (flow, transport, session) = makeFlow([
+            json(#"{"userId":"u1"}"#, status: 201),
+            json(successBody),
+        ])
+
+        await flow.redeemInvitation(
+            identifier: "ayse@test.local",
+            code: "123456",
+            password: "otel4kirmizi9lamba",
+            deviceName: "iPhone"
+        )
+
+        let state = await flow.currentState()
+        XCTAssertEqual(state.step, .signedIn)
+        XCTAssertNil(state.errorMessage)
+
+        let tokens = await session.currentTokens()
+        XCTAssertEqual(tokens?.accessToken, "a")
+
+        // Two calls: redeem, then an ordinary sign-in. Asking somebody to type
+        // a password they set four seconds ago is how people end up writing it
+        // on paper.
+        let paths = await transport.sent().map { $0.url?.path ?? "" }
+        XCTAssertEqual(paths, ["/auth/invitations/accept", "/auth/login"])
+    }
+
+    /// A staff invitation lands in enrolment, because the sign-in that follows
+    /// is an ordinary one and the server asks for a second factor there.
+    func testAStaffInvitationContinuesIntoTwoFactorSetup() async {
+        let (flow, _, _) = makeFlow([
+            json(#"{"userId":"u1"}"#, status: 201),
+            json(#"{"status":"MFA_SETUP_REQUIRED","setupToken":"s"}"#),
+            json(#"{"secret":"SECRET","uri":"otpauth://totp/x"}"#),
+        ])
+
+        await flow.redeemInvitation(
+            identifier: "nurse@test.local",
+            code: "123456",
+            password: "otel4kirmizi9lamba"
+        )
+
+        let state = await flow.currentState()
+        XCTAssertEqual(state.step, .twoFactorSetup(secret: "SECRET", otpauthURI: "otpauth://totp/x"))
+    }
+
+    /// A wrong or expired code stops there. Signing in afterwards with a
+    /// password the server never accepted would only produce a second,
+    /// confusing failure.
+    func testARefusedCodeDoesNotAttemptToSignIn() async {
+        let (flow, transport, _) = makeFlow([
+            json(#"{"statusCode":401,"message":"INVITATION_INVALID"}"#, status: 401),
+        ])
+
+        await flow.redeemInvitation(
+            identifier: "ayse@test.local",
+            code: "000000",
+            password: "otel4kirmizi9lamba"
+        )
+
+        let state = await flow.currentState()
+        XCTAssertEqual(state.step, .invitation)
+        XCTAssertNotNil(state.errorMessage)
+        XCTAssertFalse(state.isSubmitting)
+
+        let paths = await transport.sent().map { $0.url?.path ?? "" }
+        XCTAssertEqual(paths, ["/auth/invitations/accept"])
+    }
+
+    /// The form is reachable and leaves again without carrying an error over.
+    func testTheInvitationFormOpensAndCloses() async {
+        let (flow, _, _) = makeFlow([])
+
+        await flow.showInvitation()
+        var state = await flow.currentState()
+        XCTAssertEqual(state.step, .invitation)
+
+        await flow.cancelInvitation()
+        state = await flow.currentState()
+        XCTAssertEqual(state.step, .credentials)
+        XCTAssertNil(state.errorMessage)
+    }
+
+    /// Six digits, as the server's `@Length(6, 6)` says.
+    func testTheCodeLengthMatchesTheServer() {
+        XCTAssertEqual(InvitationView.codeLength, 6)
+    }
 }
 
 private struct OfflineTransport: HTTPTransport {

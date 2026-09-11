@@ -19,6 +19,9 @@ public struct FinanceState: Sendable, Equatable {
     public var nextCursor: String?
     public var outstanding: OutstandingReport?
     public var collections: CollectionReport?
+    /// The rates recorded for the month the collections cover. Empty is a
+    /// real answer and the screen says so: it is why a total is incomplete.
+    public var rates: [ExchangeRate] = []
 
     public var busyId: String?
     public var error: String?
@@ -58,13 +61,15 @@ public final class FinanceModel {
         }
         async let outstanding = optional { try await api.outstanding(currency: self.state.currency) }
         async let collections = optional { try await self.thisMonthsCollections() }
+        async let rates = optional { try await self.thisMonthsRates() }
 
-        let loaded = await (page, outstanding, collections)
+        let loaded = await (page, outstanding, collections, rates)
 
         state.records = loaded.0?.items ?? []
         state.nextCursor = loaded.0?.nextCursor
         state.outstanding = loaded.1
         state.collections = loaded.2
+        state.rates = loaded.3 ?? []
 
         state.phase = loaded.0 == nil && loaded.1 == nil && loaded.2 == nil
             ? .notPermitted
@@ -184,6 +189,15 @@ public final class FinanceModel {
         let start = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
 
         return try await api.collections(from: start, to: now, currency: state.currency)
+    }
+
+    /// The same window the collections cover, so the two are read together.
+    private func thisMonthsRates() async throws -> [ExchangeRate] {
+        let calendar = Calendar.current
+        let now = Date()
+        let start = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
+
+        return try await api.rates(from: start, to: now)
     }
 
     private func optional<T: Sendable>(_ work: @Sendable () async throws -> T) async -> T? {

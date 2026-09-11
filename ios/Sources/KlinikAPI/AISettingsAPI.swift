@@ -82,6 +82,36 @@ public struct AIConnectionTest: Decodable, Sendable, Equatable {
     public let error: String?
 }
 
+/**
+ * What the AI layer has cost this month (spec section 3.4).
+ *
+ * A number nobody can look at is a number nobody checks until the invoice, and
+ * an unbounded AI spend on a clinic budget is a real failure mode rather than
+ * a hypothetical one.
+ */
+public struct AIUsage: Decodable, Sendable, Equatable {
+    /// False when no provider is configured, in which case the rest is zero.
+    public let enabled: Bool
+    public let provider: String
+    public let model: String
+    public let monthStart: Date
+    public let spentUsd: Double
+    /// Nil when the clinic has set no cap.
+    public let budgetUsd: Double?
+    /// 0–1, nil when there is no cap to be a fraction of.
+    public let budgetUsedFraction: Double?
+    public let calls: Int
+    /// Calls that failed or were refused — by the red lines as well as by the
+    /// provider.
+    public let failed: Int
+    public let tokensIn: Int
+    public let tokensOut: Int
+
+    /// True once the month's spend is close enough to the cap to matter. Three
+    /// quarters, because a cap reached on the 20th is a fortnight with no AI.
+    public var isNearBudget: Bool { (budgetUsedFraction ?? 0) >= 0.75 }
+}
+
 public struct AISettingsAPI: Sendable {
     private let client: APIClient
 
@@ -142,6 +172,17 @@ public struct AISettingsAPI: Sendable {
     }
 
     /// Checks the saved key against the provider. Sends nothing clinical.
+    /**
+     * This month's spend.
+     *
+     * Behind `analytics.read` rather than `permissions.manage`, so a clinician
+     * who can see the clinic's numbers can see this one too without also being
+     * able to change the provider.
+     */
+    public func usage() async throws -> AIUsage {
+        try await client.send(Endpoint(method: .get, path: "ai/usage"), as: AIUsage.self)
+    }
+
     public func test() async throws -> AIConnectionTest {
         try await client.send(
             Endpoint(method: .post, path: "ai/settings/test"),

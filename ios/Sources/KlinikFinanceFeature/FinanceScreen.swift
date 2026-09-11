@@ -61,6 +61,7 @@ public struct FinanceScreen: View {
                 case .loaded:
                     headline
                     ageing
+                    rates
                     ledger
                 }
             }
@@ -193,6 +194,57 @@ public struct FinanceScreen: View {
     }
 
     // MARK: - The ledger
+
+    /**
+     * The rates the clinic has recorded this month.
+     *
+     * The screen already says a total is incomplete when an amount has no rate
+     * for its day. This is the other half of that sentence: which days do have
+     * one. Read-only — rates are entered by whoever reconciles the books, not
+     * from a phone.
+     */
+    @ViewBuilder
+    private var rates: some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+            SectionHeader(title: L10n.string("finance.rates.title"))
+
+            if state.rates.isEmpty {
+                Card(tone: .warning) {
+                    Text(L10n.string("finance.rates.none"))
+                        .font(Tokens.Typography.calloutRelative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                Card {
+                    VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
+                        ForEach(state.rates) { rate in
+                            HStack(spacing: Tokens.Spacing.sm) {
+                                Text("\(rate.base.rawValue) → \(rate.quote.rawValue)")
+                                    .font(Tokens.Typography.calloutRelative)
+                                    .foregroundStyle(
+                                        Tokens.Palette.textPrimary.resolve(for: scheme)
+                                    )
+
+                                Spacer(minLength: Tokens.Spacing.sm)
+
+                                Text(rate.rate)
+                                    .font(Tokens.Typography.calloutRelative)
+                                    .monospacedDigit()
+
+                                Text(rate.validOn.formatted(date: .abbreviated, time: .omitted))
+                                    .font(Tokens.Typography.footnoteRelative)
+                                    .foregroundStyle(
+                                        Tokens.Palette.textSecondary.resolve(for: scheme)
+                                    )
+                            }
+                            .frame(minHeight: Tokens.minimumTouchTarget)
+                            .accessibilityElement(children: .combine)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private var ledger: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.md) {

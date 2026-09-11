@@ -161,7 +161,7 @@ public struct LabPanelsScreen: View {
                     isCollapsed: collapsed.contains(panel.id) || (index > 0 && !collapsed.contains("open:\(panel.id)")),
                     isOpening: state.openingId == panel.documentId,
                     toggle: { toggle(panel, isCollapsed: index > 0) },
-                    openReport: openReport == nil ? nil : {
+                    openReport: openReport == nil || !panel.canOpenReport ? nil : {
                         guard let documentId = panel.documentId else { return }
 
                         state.openingId = documentId
@@ -221,7 +221,7 @@ struct PanelSection: View {
                     ResultRow(result: result)
                 }
 
-                if let openReport, panel.documentId != nil {
+                if let openReport, panel.canOpenReport {
                     Button {
                         Task { await openReport() }
                     } label: {

@@ -282,7 +282,11 @@ struct PatientHomeView: View {
 
         case .photos:
             PhotoGalleryView(
-                model: PhotoGalleryModel(api: environment.photos, subject: .me),
+                model: PhotoGalleryModel(
+                    api: environment.photos,
+                    subject: .me,
+                    queue: environment.fileQueue
+                ),
                 linkFor: { [photos = environment.photos] id in
                     // A signed URL, fetched per photo. Nil rather than a
                     // placeholder image: a before/after comparison showing the
@@ -294,7 +298,11 @@ struct PatientHomeView: View {
 
         case .addPhoto:
             AddPhotoView(
-                model: PhotoGalleryModel(api: environment.photos, subject: .me),
+                model: PhotoGalleryModel(
+                    api: environment.photos,
+                    subject: .me,
+                    queue: environment.fileQueue
+                ),
                 capture: { reference in
                     // The reference is downloaded here rather than inside the
                     // capture screen: it needs a signed URL, and those are
@@ -372,7 +380,11 @@ struct PatientHomeView: View {
             AccountScreen(
                 model: AccountModel(api: environment.auth),
                 signOut: signOut,
-                biometrics: biometrics
+                biometrics: biometrics,
+                // A patient may turn their second factor off; the server allows
+                // it for them and refuses it for staff.
+                canDisableTwoFactor: true,
+                exportMyData: { await portableRecord(from: environment.me) }
             )
 
         case .surveys:
@@ -439,3 +451,30 @@ func referenceImage(for reference: ClinicalPhoto?, photos: PhotosAPI) async -> D
 
     return data
 }
+
+/**
+ * The patient's own record, written somewhere the share sheet can reach.
+ *
+ * The bytes are the server's, unparsed — a portability export is the record
+ * rather than this app's reading of it. Named with the day it was produced,
+ * because the person receiving it is a different clinic or a lawyer and "what
+ * is this file" should not be the first question.
+ */
+@MainActor
+func portableRecord(from me: MeAPI) async -> URL? {
+    guard let data = try? await me.dataExport() else { return nil }
+
+    let day = Date().formatted(.iso8601.year().month().day().dateSeparator(.dash))
+    let url = FileManager.default.temporaryDirectory
+        .appendingPathComponent("klinik-kayitlarim-\(day)")
+        .appendingPathExtension("json")
+
+    do {
+        try data.write(to: url, options: .atomic)
+    } catch {
+        return nil
+    }
+
+    return url
+}
+

@@ -186,9 +186,87 @@ public struct AuthAPI: Sendable {
         )
     }
 
+    /**
+     * Redeems an invitation and sets a password (spec M1).
+     *
+     * How somebody gets an account at all: the clinic opens the file and sends
+     * a code, and this is the only door. Unauthenticated by definition — there
+     * is no session yet, and attaching an expired one would send the request
+     * through a pointless refresh.
+     */
+    public func acceptInvitation(
+        identifier: String,
+        code: String,
+        password: String
+    ) async throws {
+        _ = try await client.send(
+            Endpoint(
+                method: .post,
+                path: "auth/invitations/accept",
+                body: try JSONEncoder.klinik.encode(
+                    AcceptInvitationBody(identifier: identifier, code: code, password: password)
+                ),
+                requiresAuthentication: false
+            ),
+            as: AcceptedInvitation.self
+        )
+    }
+
+    /**
+     * Changes the password, which signs every device out — this one included.
+     *
+     * The server revokes the whole token family, because a password change is
+     * usually a response to somebody else having had it.
+     */
+    public func changePassword(current: String, new: String) async throws {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "auth/password",
+                body: try JSONEncoder.klinik.encode(
+                    ChangePasswordBody(currentPassword: current, newPassword: new)
+                )
+            )
+        )
+    }
+
+    /// Turns the second factor off. Patients only — the server refuses this for
+    /// staff, for whom it is mandatory.
+    public func disableTotp(code: String) async throws {
+        try await client.send(
+            Endpoint(
+                method: .post,
+                path: "auth/2fa/disable",
+                body: try JSONEncoder.klinik.encode(TotpCodeBody(code: code))
+            )
+        )
+    }
+
     public func revokeSession(familyId: String) async throws {
         try await client.send(Endpoint(method: .delete, path: "auth/sessions/\(familyId)"))
     }
+}
+
+/// The server answers with the new user's id. Nothing on the client needs it —
+/// the sign-in that follows is an ordinary one — but a response that decodes is
+/// how the client knows the code was accepted.
+private struct AcceptedInvitation: Decodable, Sendable {
+    let userId: String
+}
+
+private struct AcceptInvitationBody: Encodable {
+    let identifier: String
+    let code: String
+    let password: String
+}
+
+private struct ChangePasswordBody: Encodable {
+    let currentPassword: String
+    let newPassword: String
+}
+
+private struct TotpCodeBody: Encodable {
+    let code: String
 }
 
 /// Refreshes without going through `APIClient`, which would need a valid token

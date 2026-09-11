@@ -29,6 +29,9 @@ public enum UploadOutcome: Sendable, Equatable {
 public actor UploadQueue {
     private let store: UploadStore
     private let uploads: ResumableUpload
+    /// Nil where nothing sends photographs — the tests that only care about
+    /// documents, and any build without the photo module.
+    private let photos: QueuedPhotoUploader?
     private let maxAttempts: Int
 
     /**
@@ -41,9 +44,15 @@ public actor UploadQueue {
      */
     private let files = FileManager.default
 
-    public init(store: UploadStore, uploads: ResumableUpload, maxAttempts: Int = 5) {
+    public init(
+        store: UploadStore,
+        uploads: ResumableUpload,
+        photos: QueuedPhotoUploader? = nil,
+        maxAttempts: Int = 5
+    ) {
         self.store = store
         self.uploads = uploads
+        self.photos = photos
         self.maxAttempts = maxAttempts
     }
 
@@ -61,7 +70,9 @@ public actor UploadQueue {
         type: DocumentType,
         contentType: String,
         originalName: String? = nil,
-        sessionId: String? = nil
+        sessionId: String? = nil,
+        kind: PendingUploadKind = .document,
+        fields: [String: String] = [:]
     ) async throws -> PendingUpload {
         let directory = try PendingUpload.directory(fileManager: files)
         let id = UUID().uuidString
@@ -80,6 +91,8 @@ public actor UploadQueue {
             fileURL: destination,
             patientId: UploadQueue.patientId(of: subject),
             documentType: type.rawValue,
+            kind: kind,
+            fields: fields,
             originalName: originalName ?? fileURL.lastPathComponent,
             contentType: contentType,
             totalBytes: size
@@ -149,6 +162,10 @@ public actor UploadQueue {
             return .fileMissing
         }
 
+        if upload.kind == .photo {
+            return await sendPhoto(upload)
+        }
+
         var current = upload
 
         do {
@@ -176,6 +193,45 @@ public actor UploadQueue {
         } catch {
             let message = L10n.string("error.server")
             await record(current, error: message)
+
+            return .retryable(message)
+        }
+    }
+
+    /**
+     * One photograph, in a single call.
+     *
+     * No session and no resuming: the server takes a photograph as one
+     * multipart POST, and a phone JPEG is small enough that starting again is
+     * cheaper than the bookkeeping resuming would need. What the queue buys
+     * here is not resumability but the guarantee that a wound photograph taken
+     * in a hotel with no signal is still there tomorrow.
+     */
+    private func sendPhoto(_ upload: PendingUpload) async -> UploadOutcome {
+        guard let photos else {
+            // Nothing can send it, so it is not going to succeed by waiting.
+            await record(upload, error: L10n.string("error.server"))
+            return .rejected(L10n.string("error.server"))
+        }
+
+        do {
+            try await photos.upload(
+                fileURL: upload.fileURL,
+                subject: UploadQueue.subject(of: upload),
+                fields: upload.fields
+            )
+
+            await forget(upload)
+
+            return .finished
+        } catch let error as APIError {
+            let message = L10n.message(for: error)
+            await record(upload, error: message)
+
+            return error.isRetryable ? .retryable(message) : .rejected(message)
+        } catch {
+            let message = L10n.string("error.server")
+            await record(upload, error: message)
 
             return .retryable(message)
         }
@@ -274,6 +330,25 @@ extension UploadQueue: PendingUploadQueue {
             contentType: contentType,
             originalName: originalName,
             sessionId: sessionId
+        )
+    }
+
+    public func keepPhoto(
+        fileURL: URL,
+        subject: RecordSubject,
+        contentType: String,
+        fields: [String: String]
+    ) async throws {
+        try await accept(
+            fileURL: fileURL,
+            subject: subject,
+            // A photograph is not a document type; the category travels in the
+            // fields, where the endpoint expects it.
+            type: .other,
+            contentType: contentType,
+            originalName: fileURL.lastPathComponent,
+            kind: .photo,
+            fields: fields
         )
     }
 }

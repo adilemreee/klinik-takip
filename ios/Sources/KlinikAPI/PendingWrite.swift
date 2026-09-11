@@ -224,6 +224,21 @@ public protocol PendingUploadQueue: Sendable {
         originalName: String?,
         sessionId: String?
     ) async throws
+
+    /**
+     * Takes custody of a photograph.
+     *
+     * Separate from `keep` because the protocols differ: a document is a
+     * resumable session, a photograph is one multipart POST with the clinical
+     * fields — the category, the body area, the phase it was taken for —
+     * beside it. `fields` carries exactly what that form would have.
+     */
+    func keepPhoto(
+        fileURL: URL,
+        subject: RecordSubject,
+        contentType: String,
+        fields: [String: String]
+    ) async throws
 }
 
 /// What happened when the queue sent one write again.

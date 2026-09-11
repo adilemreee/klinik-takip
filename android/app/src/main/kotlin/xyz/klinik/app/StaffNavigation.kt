@@ -38,6 +38,9 @@ import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.audit.AuditModel
 import xyz.klinik.feature.audit.ui.AuditScreen
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
+import xyz.klinik.feature.consents.PatientConsentsModel
+import xyz.klinik.feature.consents.ui.PatientConsentsScreen
+import xyz.klinik.feature.documents.ChecklistModel
 import xyz.klinik.feature.documents.DocumentsModel
 import xyz.klinik.feature.complications.ComplicationQueueModel
 import xyz.klinik.feature.complications.ui.ComplicationQueueScreen
@@ -45,6 +48,7 @@ import xyz.klinik.feature.emergency.EmergencyQueueModel
 import xyz.klinik.feature.exports.ExportsModel
 import xyz.klinik.feature.exports.ui.ExportsScreen
 import xyz.klinik.feature.emergency.ui.EmergencyQueueScreen
+import xyz.klinik.feature.documents.ui.ChecklistScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
 import xyz.klinik.feature.finance.FinanceModel
 import xyz.klinik.feature.finance.ui.FinanceScreen
@@ -329,6 +333,46 @@ fun StaffDestinationScreen(
                 },
                 onRetire = { protocol ->
                     scope.launch { model.retire(protocol.document.id) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.Checklist -> {
+            val model = remember(destination.patientId) {
+                ChecklistModel(environment.documents, RecordSubject.Patient(destination.patientId))
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            ChecklistScreen(
+                state = state,
+                strings = context.checklistStrings(),
+                // No upload button on the clinician's side: these are the
+                // patient's documents to send, and a clinic uploading a
+                // passport on somebody's behalf is a different feature with a
+                // different consent question behind it.
+                onUpload = null,
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.Consents -> {
+            val model = remember(destination.patientId) {
+                PatientConsentsModel(environment.consents, destination.patientId)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            PatientConsentsScreen(
+                state = state,
+                strings = context.patientConsentsStrings(),
+                onOpenSignature = { consent ->
+                    scope.launch { model.signatureLink(consent)?.let { context.openLink(it) } }
                 },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,

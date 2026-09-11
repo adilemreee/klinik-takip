@@ -10,6 +10,7 @@ import xyz.klinik.feature.assistant.ui.AssistantStrings
 import xyz.klinik.feature.audit.ui.AuditStrings
 import xyz.klinik.feature.briefing.ui.BriefingStrings
 import xyz.klinik.feature.complications.ui.ComplicationStrings
+import xyz.klinik.feature.documents.ui.ChecklistStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
 import xyz.klinik.feature.emergency.ui.EmergencyQueueStrings
 import xyz.klinik.feature.lab.ui.LabPanelsStrings
@@ -19,6 +20,7 @@ import xyz.klinik.feature.measurements.ui.MeasurementStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
 import xyz.klinik.feature.appointments.ui.AppointmentStrings
 import xyz.klinik.feature.consents.ui.ConsentStrings
+import xyz.klinik.feature.consents.ui.PatientConsentsStrings
 import xyz.klinik.feature.exports.ui.ExportsStrings
 import xyz.klinik.feature.finance.ui.FinanceStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
@@ -288,6 +290,8 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.TRAVEL -> getString(DesignR.string.travel_title)
     FileSection.MEDICATIONS -> getString(DesignR.string.medication_staff_title)
     FileSection.LAB_PANELS -> getString(DesignR.string.lab_title)
+    FileSection.CHECKLIST -> getString(DesignR.string.checklist_title)
+    FileSection.CONSENTS -> getString(DesignR.string.consent_staff_title)
 }
 
 /**
@@ -307,6 +311,7 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Documents -> getString(DesignR.string.menu_documents)
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
+    PatientDestination.Checklist -> getString(DesignR.string.checklist_title)
     PatientDestination.LabPanels -> getString(DesignR.string.lab_title)
     PatientDestination.LabResults -> getString(DesignR.string.menu_lab_results)
     PatientDestination.Complications -> getString(DesignR.string.menu_complications)
@@ -441,6 +446,8 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.Travel -> stringForSection(FileSection.TRAVEL)
     is StaffDestination.Medications -> stringForSection(FileSection.MEDICATIONS)
     is StaffDestination.LabPanels -> stringForSection(FileSection.LAB_PANELS)
+    is StaffDestination.Checklist -> stringForSection(FileSection.CHECKLIST)
+    is StaffDestination.Consents -> stringForSection(FileSection.CONSENTS)
 }
 
 /**
@@ -855,5 +862,42 @@ fun Context.labPanelsStrings(): LabPanelsStrings = LabPanelsStrings(
     toggleHint = getString(DesignR.string.lab_toggle_hint),
     expanded = getString(DesignR.string.lab_expanded),
     collapsed = getString(DesignR.string.lab_collapsed),
+    message = { text -> resolve(text) },
+)
+
+/** What the clinic needs before the operation (spec M17). */
+fun Context.checklistStrings(): ChecklistStrings = ChecklistStrings(
+    title = getString(DesignR.string.checklist_title),
+    explain = getString(DesignR.string.checklist_explain),
+    empty = getString(DesignR.string.checklist_empty),
+    complete = getString(DesignR.string.checklist_complete),
+    retry = getString(DesignR.string.common_retry),
+    missing = getString(DesignR.string.checklist_missing),
+    optional = getString(DesignR.string.checklist_optional),
+    received = getString(DesignR.string.checklist_received),
+    upload = getString(DesignR.string.checklist_upload),
+    missingCount = { count -> getString(DesignR.string.checklist_missing_count, count) },
+    missingOne = getString(DesignR.string.checklist_missing_one),
+    message = { text -> resolve(text) },
+)
+
+/**
+ * What a patient agreed to, read by the clinic (KVKK, spec §8).
+ *
+ * The type name goes through the catalogue so a consent type added on the
+ * server is named rather than showing a key on a legal record.
+ */
+fun Context.patientConsentsStrings(): PatientConsentsStrings = PatientConsentsStrings(
+    title = getString(DesignR.string.consent_staff_title),
+    noneRecorded = getString(DesignR.string.consent_none_recorded),
+    retry = getString(DesignR.string.common_retry),
+    inForce = getString(DesignR.string.consent_given),
+    withdrawn = getString(DesignR.string.consent_not_given),
+    signedAt = getString(DesignR.string.consent_signed_at),
+    version = { version -> getString(DesignR.string.consent_version, version) },
+    signature = getString(DesignR.string.consent_signature),
+    notSigned = getString(DesignR.string.consent_not_signed),
+    forwardOnly = getString(DesignR.string.consent_forward_only),
+    typeName = { consent -> stringForKey(consent.type.stringKey) },
     message = { text -> resolve(text) },
 )

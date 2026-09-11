@@ -109,6 +109,8 @@ sealed interface StaffDestination {
     data class Travel(override val patientId: String) : StaffDestination
     data class Medications(override val patientId: String) : StaffDestination
     data class LabPanels(override val patientId: String) : StaffDestination
+    data class Checklist(override val patientId: String) : StaffDestination
+    data class Consents(override val patientId: String) : StaffDestination
 }
 
 /**
@@ -136,6 +138,12 @@ enum class FileSection {
 
     /** Confirmed results, as the laboratory printed them (spec M16). */
     LAB_PANELS,
+
+    /** What the clinic still needs before the operation (spec M17). */
+    CHECKLIST,
+
+    /** What this patient has agreed to, and what they withdrew. */
+    CONSENTS,
 }
 
 fun destinationFor(section: FileSection, patientId: String): StaffDestination = when (section) {
@@ -150,6 +158,8 @@ fun destinationFor(section: FileSection, patientId: String): StaffDestination = 
     FileSection.TRAVEL -> StaffDestination.Travel(patientId)
     FileSection.MEDICATIONS -> StaffDestination.Medications(patientId)
     FileSection.LAB_PANELS -> StaffDestination.LabPanels(patientId)
+    FileSection.CHECKLIST -> StaffDestination.Checklist(patientId)
+    FileSection.CONSENTS -> StaffDestination.Consents(patientId)
 }
 
 /**

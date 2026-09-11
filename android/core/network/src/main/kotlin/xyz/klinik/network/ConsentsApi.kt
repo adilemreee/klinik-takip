@@ -46,13 +46,37 @@ data class Consent(
     val signedAt: String,
     val revokedAt: String? = null,
     val active: Boolean = false,
+    /**
+     * Whether a drawn signature was recorded with it.
+     *
+     * A consent with one and a consent without are different instruments: the
+     * first can be shown to somebody who disputes it, and a screen that did
+     * not distinguish them would promise proof the clinic does not hold.
+     */
+    val hasSignature: Boolean = false,
 )
+
+/** The wording to agree to, with this patient's procedure filled in. */
+@Serializable
+data class ConsentForm(
+    val id: String,
+    val version: Int,
+    /** Markdown. Stored verbatim with the consent, as proof of what was shown. */
+    val body: String,
+)
+
+/** A short-lived link to the drawn signature. Never stored by the client. */
+@Serializable
+data class SignatureLink(val url: String, val expiresAt: String)
 
 @Serializable
 private data class RecordConsentBody(
     val type: String,
     val version: Int,
+    /** The exact text shown, stored as proof of what was agreed to. */
     val documentText: String? = null,
+    /** Finger signature as base64 PNG, with no `data:` prefix. */
+    val signature: String? = null,
 )
 
 class ConsentsApi(
@@ -63,7 +87,12 @@ class ConsentsApi(
     suspend fun mine(): List<Consent> =
         decode(client.send(Endpoint(HttpMethod.GET, "me/consents")))
 
-    suspend fun give(type: ConsentType, version: Int, documentText: String? = null): Consent =
+    suspend fun give(
+        type: ConsentType,
+        version: Int,
+        documentText: String? = null,
+        signature: String? = null,
+    ): Consent =
         decode(
             client.send(
                 Endpoint(
@@ -71,11 +100,32 @@ class ConsentsApi(
                     "me/consents",
                     body = json.encodeToString(
                         RecordConsentBody.serializer(),
-                        RecordConsentBody(type.name, version, documentText),
+                        RecordConsentBody(type.name, version, documentText, signature),
                     ),
                 ),
             ),
         )
+
+    /**
+     * The wording to agree to.
+     *
+     * Fetched rather than shipped in the app: the clinic's lawyer changes this
+     * text, and a version compiled into a release is a version somebody signed
+     * that nobody can produce afterwards.
+     */
+    suspend fun form(): ConsentForm =
+        decode(client.send(Endpoint(HttpMethod.GET, "me/consents/form")))
+
+    /** A short-lived link to the drawn signature, for either side to look at. */
+    suspend fun signature(consentId: String, patientId: String? = null): SignatureLink {
+        val path = if (patientId == null) {
+            "me/consents/$consentId/signature"
+        } else {
+            "patients/$patientId/consents/$consentId/signature"
+        }
+
+        return decode(client.send(Endpoint(HttpMethod.GET, path)))
+    }
 
     /** Forward-only: the record is kept, stamped with when it was withdrawn. */
     suspend fun withdraw(consentId: String): Consent =

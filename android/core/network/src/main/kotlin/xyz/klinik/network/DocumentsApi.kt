@@ -94,6 +94,38 @@ data class DownloadLink(
     val filename: String,
 )
 
+/** One kind of document the clinic asks for before the operation. */
+@Serializable
+data class ChecklistItem(
+    val documentType: DocumentType,
+    /** The clinic's own name for it. */
+    val label: String,
+    val mandatory: Boolean = false,
+    /** Whether the clinic has a usable document of this kind. */
+    val satisfied: Boolean = false,
+    val documentId: String? = null,
+)
+
+@Serializable
+data class DocumentChecklist(
+    val items: List<ChecklistItem> = emptyList(),
+    val missingMandatory: Int = 0,
+    /** True when nothing mandatory is outstanding. */
+    val complete: Boolean = false,
+) {
+    /**
+     * What is still needed, mandatory first.
+     *
+     * The order is the point: an optional insurance form listed above a
+     * missing passport is a checklist that buries the thing stopping the
+     * operation.
+     */
+    val outstanding: List<ChecklistItem>
+        get() = items.filterNot { it.satisfied }.sortedByDescending { it.mandatory }
+
+    val done: List<ChecklistItem> get() = items.filter { it.satisfied }
+}
+
 class DocumentsApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
@@ -140,6 +172,16 @@ class DocumentsApi(
                 ),
             ),
         )
+
+    /**
+     * What the clinic still needs before the operation (spec M17).
+     *
+     * The whole list comes back, satisfied items included: a checklist that
+     * showed only what is missing would give somebody no way to tell "you have
+     * uploaded everything" from "the list failed to load".
+     */
+    suspend fun checklist(subject: RecordSubject): DocumentChecklist =
+        decode(client.send(Endpoint(HttpMethod.GET, subject.base("documents/checklist"))))
 
     suspend fun jobs(documentId: String): List<JobRecord> =
         decode(client.send(Endpoint(HttpMethod.GET, "documents/$documentId/jobs")))

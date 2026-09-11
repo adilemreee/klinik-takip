@@ -26,7 +26,9 @@ import xyz.klinik.feature.complications.MyComplicationsModel
 import xyz.klinik.feature.complications.ui.MyComplicationsScreen
 import xyz.klinik.feature.consents.ConsentsModel
 import xyz.klinik.feature.consents.ui.ConsentsScreen
+import xyz.klinik.feature.documents.ChecklistModel
 import xyz.klinik.feature.documents.DocumentsModel
+import xyz.klinik.feature.documents.ui.ChecklistScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
 import xyz.klinik.feature.followup.FollowUpModel
 import xyz.klinik.feature.followup.ui.FollowUpScreen
@@ -96,6 +98,9 @@ sealed interface PatientDestination {
      * asking "is it getting better" wants the line.
      */
     data object LabPanels : PatientDestination
+
+    /** What the clinic still needs before the operation (spec M17). */
+    data object Checklist : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -140,6 +145,7 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.MyReports,
     PatientDestination.Travel,
     PatientDestination.Measurements,
+    PatientDestination.Checklist,
     PatientDestination.LabPanels,
     PatientDestination.LabResults,
     PatientDestination.FollowUp,
@@ -325,6 +331,24 @@ fun PatientDestinationScreen(
                 strings = context.labTrendStrings(),
                 onRetry = { scope.launch { model.load() } },
                 onSelect = model::select,
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.Checklist -> {
+            val model = remember { ChecklistModel(environment.documents, RecordSubject.Me) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            ChecklistScreen(
+                state = state,
+                strings = context.checklistStrings(),
+                // Straight to the documents screen: a checklist that names
+                // what is missing and offers no way to send it is a list of
+                // complaints.
+                onUpload = { onOpen(PatientDestination.Documents) },
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
         }

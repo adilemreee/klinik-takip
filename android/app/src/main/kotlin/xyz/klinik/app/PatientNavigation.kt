@@ -48,6 +48,8 @@ import xyz.klinik.feature.reports.MyReportsModel
 import xyz.klinik.feature.reports.ui.MyReportsScreen
 import xyz.klinik.feature.surveys.SurveyModel
 import xyz.klinik.feature.surveys.ui.SurveyScreen
+import xyz.klinik.feature.travel.TravelModel
+import xyz.klinik.feature.travel.ui.TravelScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
 import xyz.klinik.network.DocumentType
@@ -75,6 +77,9 @@ sealed interface PatientDestination {
 
     /** Lab interpretations a clinician chose to share (spec M5). */
     data object MyReports : PatientDestination
+
+    /** The flight, the hotel, and whether a doctor cleared the trip (spec M14). */
+    data object Travel : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -117,6 +122,7 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.Assistant,
     PatientDestination.Surveys,
     PatientDestination.MyReports,
+    PatientDestination.Travel,
     PatientDestination.Measurements,
     PatientDestination.LabResults,
     PatientDestination.FollowUp,
@@ -397,6 +403,29 @@ fun PatientDestinationScreen(
             MyReportsScreen(
                 state = state,
                 strings = context.myReportsStrings(),
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.Travel -> {
+            // No patient id: `me/travel` is the patient's own copy, and the
+            // model refuses to write from this side at all.
+            val model = remember { TravelModel(environment.travel) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            TravelScreen(
+                state = state,
+                strings = context.travelStrings(),
+                canEdit = false,
+                canClearToFly = false,
+                onBeginEditing = {},
+                onCancelEditing = {},
+                onEdit = {},
+                onSave = {},
+                onSetClearedToFly = {},
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

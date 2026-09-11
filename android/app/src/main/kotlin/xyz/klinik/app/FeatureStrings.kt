@@ -6,6 +6,7 @@ import android.net.Uri
 import xyz.klinik.feature.aisettings.ui.AiSettingsStrings
 import xyz.klinik.feature.analytics.ui.AnalyticsStrings
 import xyz.klinik.feature.assistant.ui.AssistantStrings
+import xyz.klinik.feature.audit.ui.AuditStrings
 import xyz.klinik.feature.briefing.ui.BriefingStrings
 import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
@@ -23,9 +24,11 @@ import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
+import xyz.klinik.feature.protocols.ui.ProtocolsStrings
 import xyz.klinik.feature.reports.ui.MyReportsStrings
 import xyz.klinik.feature.reports.ui.ReportReviewStrings
 import xyz.klinik.feature.surveys.ui.SurveyStrings
+import xyz.klinik.feature.travel.ui.TravelStrings
 import xyz.klinik.network.UiText
 import xyz.klinik.shell.FileSection
 import xyz.klinik.shell.StaffDestination
@@ -278,6 +281,7 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.FOLLOW_UP -> getString(DesignR.string.menu_follow_up)
     FileSection.APPOINTMENTS -> getString(DesignR.string.menu_appointments)
     FileSection.CONVERSATION -> getString(DesignR.string.menu_messages)
+    FileSection.TRAVEL -> getString(DesignR.string.travel_title)
 }
 
 /**
@@ -292,6 +296,7 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Assistant -> getString(DesignR.string.assistant_title)
     PatientDestination.Surveys -> getString(DesignR.string.survey_title)
     PatientDestination.MyReports -> getString(DesignR.string.report_my_reports_title)
+    PatientDestination.Travel -> getString(DesignR.string.travel_title)
     PatientDestination.Documents -> getString(DesignR.string.menu_documents)
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
@@ -411,6 +416,8 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Finance -> getString(DesignR.string.finance_title)
     StaffDestination.Exports -> getString(DesignR.string.export_title)
     StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
+    StaffDestination.Audit -> getString(DesignR.string.audit_title)
+    StaffDestination.Protocols -> getString(DesignR.string.protocol_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
@@ -422,6 +429,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.FollowUp -> stringForSection(FileSection.FOLLOW_UP)
     is StaffDestination.Appointments -> stringForSection(FileSection.APPOINTMENTS)
     is StaffDestination.Conversation -> stringForSection(FileSection.CONVERSATION)
+    is StaffDestination.Travel -> stringForSection(FileSection.TRAVEL)
 }
 
 /**
@@ -631,5 +639,87 @@ fun Context.aiSettingsStrings(): AiSettingsStrings = AiSettingsStrings(
     testFailed = getString(DesignR.string.ai_settings_test_failed),
     clear = getString(DesignR.string.ai_settings_clear),
     missingName = { key -> stringForKey(key) },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * Who did what to whose record (spec M13).
+ *
+ * `entityName` falls back to the server's own spelling: a log that hid a row
+ * because the app has no word for its table would have a gap in it, and the
+ * gap would be invisible.
+ */
+fun Context.auditStrings(): AuditStrings = AuditStrings(
+    title = getString(DesignR.string.audit_title),
+    notPermitted = getString(DesignR.string.audit_not_permitted),
+    empty = getString(DesignR.string.audit_empty),
+    retry = getString(DesignR.string.common_retry),
+    trail = getString(DesignR.string.audit_trail),
+    anomalies = getString(DesignR.string.audit_anomalies),
+    anomaliesHint = getString(DesignR.string.audit_anomalies_hint),
+    anonymous = getString(DesignR.string.audit_anonymous),
+    allActions = getString(DesignR.string.audit_all_actions),
+    actionName = { action -> stringForKey(action.stringKey) },
+    anomalyName = { anomaly -> stringForKey(anomaly.stringKey) },
+    roleName = { key -> stringForKey(key) },
+    entityName = { entry -> stringForKey(entry.entityKey, entry.entityType) },
+    loadMore = getString(DesignR.string.finance_load_more),
+    message = { text -> resolve(text) },
+)
+
+/** Getting the patient here and home again (spec M14). */
+fun Context.travelStrings(): TravelStrings = TravelStrings(
+    title = getString(DesignR.string.travel_title),
+    noneForPatient = getString(DesignR.string.travel_none),
+    emptyForStaff = getString(DesignR.string.travel_empty_staff),
+    fillIn = getString(DesignR.string.travel_fill_in),
+    retry = getString(DesignR.string.common_retry),
+    save = getString(DesignR.string.common_save),
+    cancel = getString(DesignR.string.common_cancel),
+    flights = getString(DesignR.string.travel_flights),
+    arrivalFlight = getString(DesignR.string.travel_arrival_flight),
+    arrivalAt = getString(DesignR.string.travel_arrival_at),
+    departureFlight = getString(DesignR.string.travel_departure_flight),
+    departureAt = getString(DesignR.string.travel_departure_at),
+    hotel = getString(DesignR.string.travel_hotel),
+    hotelName = getString(DesignR.string.travel_hotel_name),
+    hotelAddress = getString(DesignR.string.travel_hotel_address),
+    checkIn = getString(DesignR.string.travel_check_in),
+    checkOut = getString(DesignR.string.travel_check_out),
+    welcome = getString(DesignR.string.travel_welcome),
+    greeter = getString(DesignR.string.travel_greeter),
+    greeterPhone = getString(DesignR.string.travel_greeter_phone),
+    transfer = getString(DesignR.string.travel_transfer),
+    interpreter = getString(DesignR.string.travel_interpreter),
+    interpreterName = getString(DesignR.string.travel_interpreter_name),
+    interpreterLanguage = getString(DesignR.string.travel_interpreter_language),
+    interpreterPhone = getString(DesignR.string.travel_interpreter_phone),
+    clearanceToggle = getString(DesignR.string.travel_clearance_toggle),
+    clearedToFly = getString(DesignR.string.travel_cleared_to_fly),
+    notClearedToFly = getString(DesignR.string.travel_not_cleared_to_fly),
+    clearedBy = { who, at -> getString(DesignR.string.travel_cleared_by, who, at) },
+    message = { text -> resolve(text) },
+)
+
+/** What the assistant is allowed to answer from (spec M4). */
+fun Context.protocolsStrings(): ProtocolsStrings = ProtocolsStrings(
+    title = getString(DesignR.string.protocol_title),
+    notPermitted = getString(DesignR.string.protocol_not_permitted),
+    empty = getString(DesignR.string.protocol_empty),
+    explanation = getString(DesignR.string.protocol_explanation),
+    retry = getString(DesignR.string.common_retry),
+    add = getString(DesignR.string.protocol_add),
+    addHint = getString(DesignR.string.protocol_add_hint),
+    documentTitle = getString(DesignR.string.protocol_document_title),
+    content = getString(DesignR.string.protocol_content),
+    procedureType = getString(DesignR.string.protocol_procedure_type),
+    allPatients = getString(DesignR.string.protocol_all_patients),
+    usable = getString(DesignR.string.protocol_usable),
+    unusable = getString(DesignR.string.protocol_unusable),
+    notEmbedded = getString(DesignR.string.protocol_not_embedded),
+    retire = getString(DesignR.string.protocol_retire),
+    retired = getString(DesignR.string.protocol_retired),
+    showRetired = getString(DesignR.string.protocol_show_retired),
+    chunks = { count -> getString(DesignR.string.protocol_chunks, count) },
     message = { text -> resolve(text) },
 )

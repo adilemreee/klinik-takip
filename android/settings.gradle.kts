@@ -110,6 +110,15 @@ include(":feature:exports")
 // Which model service the clinic uses, and on what terms (spec 3.4, 14.5).
 include(":feature:aisettings")
 
+// Getting the patient here and home again (spec M14).
+include(":feature:travel")
+
+// What the assistant is allowed to answer from (spec M4).
+include(":feature:protocols")
+
+// Who did what to whose record (spec M13).
+include(":feature:audit")
+
 // The Compose modules need the Android SDK. Including them unconditionally
 // would make the whole build unusable on a machine without it, so they are
 // added only when one is available. CI always has it, so they are always built
@@ -162,6 +171,15 @@ if (androidSdkAvailable) {
 
     // Which model service the clinic uses (spec 3.4, 14.5).
     include(":feature:aisettings-ui")
+
+    // Getting the patient here and home again (spec M14).
+    include(":feature:travel-ui")
+
+    // What the assistant is allowed to answer from (spec M4).
+    include(":feature:protocols-ui")
+
+    // Who did what to whose record (spec M13).
+    include(":feature:audit-ui")
 
     // The installable app. Last, because it depends on all of them.
     include(":app")

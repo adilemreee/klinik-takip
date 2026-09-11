@@ -33,6 +33,8 @@ import xyz.klinik.feature.aisettings.ui.AiSettingsScreen
 import xyz.klinik.feature.analytics.AnalyticsModel
 import xyz.klinik.feature.analytics.ui.AnalyticsScreen
 import xyz.klinik.feature.appointments.AppointmentsModel
+import xyz.klinik.feature.audit.AuditModel
+import xyz.klinik.feature.audit.ui.AuditScreen
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.documents.DocumentsModel
 import xyz.klinik.feature.complications.ComplicationQueueModel
@@ -60,8 +62,12 @@ import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.notifications.NotificationSettingsModel
 import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
+import xyz.klinik.feature.protocols.ProtocolsModel
+import xyz.klinik.feature.protocols.ui.ProtocolsScreen
 import xyz.klinik.feature.reports.ReportReviewModel
 import xyz.klinik.feature.reports.ui.ReportReviewScreen
+import xyz.klinik.feature.travel.TravelModel
+import xyz.klinik.feature.travel.ui.TravelScreen
 import xyz.klinik.network.FinanceRecord
 import xyz.klinik.network.MeasurementSource
 import xyz.klinik.network.PaymentMethod
@@ -281,6 +287,70 @@ fun StaffDestinationScreen(
                 onTest = { scope.launch { model.test() } },
                 onClear = { scope.launch { model.clear() } },
                 onOpenPricing = { url -> context.openLink(url) },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Audit -> {
+            val model = remember { AuditModel(environment.audit) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AuditScreen(
+                state = state,
+                strings = context.auditStrings(),
+                onChooseAction = { action -> scope.launch { model.choose(action) } },
+                onLoadMore = { scope.launch { model.loadMore() } },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Protocols -> {
+            val model = remember { ProtocolsModel(environment.protocols) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            ProtocolsScreen(
+                state = state,
+                strings = context.protocolsStrings(),
+                onShowRetired = { show -> model.showRetired(show) },
+                onUpload = { title, content, procedure ->
+                    scope.launch { model.upload(title, content, procedure) }
+                },
+                onRetire = { protocol ->
+                    scope.launch { model.retire(protocol.document.id) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.Travel -> {
+            val model = remember(destination.patientId) {
+                TravelModel(environment.travel, destination.patientId)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            TravelScreen(
+                state = state,
+                strings = context.travelStrings(),
+                canEdit = true,
+                // Offered to everybody who can open a file; the server refuses
+                // the ones without the clinical permission and the screen says
+                // so. Hiding the switch would leave a doctor unable to find
+                // the one control on this screen that is theirs.
+                canClearToFly = true,
+                onBeginEditing = { model.beginEditing() },
+                onCancelEditing = { model.cancelEditing() },
+                onEdit = { change -> model.edit(change) },
+                onSave = { scope.launch { model.save() } },
+                onSetClearedToFly = { on -> scope.launch { model.setClearedToFly(on) } },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

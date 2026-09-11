@@ -13,6 +13,7 @@ import xyz.klinik.network.ApiConfiguration
 import xyz.klinik.network.AiSettingsApi
 import xyz.klinik.network.AnalyticsApi
 import xyz.klinik.network.AssistantApi
+import xyz.klinik.network.AuditApi
 import xyz.klinik.network.AuthApi
 import xyz.klinik.network.AppointmentsApi
 import xyz.klinik.network.ComplicationsApi
@@ -27,8 +28,10 @@ import xyz.klinik.network.MedicationsApi
 import xyz.klinik.network.MessagingApi
 import xyz.klinik.network.NotificationsApi
 import xyz.klinik.network.PhotosApi
+import xyz.klinik.network.ProtocolsApi
 import xyz.klinik.network.ReportsApi
 import xyz.klinik.network.SurveysApi
+import xyz.klinik.network.TravelApi
 import xyz.klinik.network.ResumableUpload
 import xyz.klinik.network.BriefingApi
 import xyz.klinik.network.EmergencyApi
@@ -115,6 +118,9 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val finance: FinanceApi by lazy { FinanceApi(client) }
     val exports: ExportsApi by lazy { ExportsApi(client) }
     val aiSettings: AiSettingsApi by lazy { AiSettingsApi(client) }
+    val audit: AuditApi by lazy { AuditApi(client) }
+    val protocols: ProtocolsApi by lazy { ProtocolsApi(client) }
+    val travel: TravelApi by lazy { TravelApi(client) }
 
     fun homeModel(): HomeModel = HomeModel(me)
     fun briefingModel(): BriefingModel = BriefingModel(briefing)

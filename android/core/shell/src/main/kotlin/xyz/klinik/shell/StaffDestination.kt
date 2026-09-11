@@ -77,6 +77,16 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** Who did what to whose record (spec M13). */
+    data object Audit : StaffDestination {
+        override val patientId: String? = null
+    }
+
+    /** What the assistant is allowed to answer from (spec M4). */
+    data object Protocols : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** The staff member's own notification preferences. */
     data object NotificationSettings : StaffDestination {
         override val patientId: String? = null
@@ -91,6 +101,7 @@ sealed interface StaffDestination {
     data class FollowUp(override val patientId: String) : StaffDestination
     data class Appointments(override val patientId: String) : StaffDestination
     data class Conversation(override val patientId: String) : StaffDestination
+    data class Travel(override val patientId: String) : StaffDestination
 }
 
 /**
@@ -109,6 +120,9 @@ enum class FileSection {
     FOLLOW_UP,
     APPOINTMENTS,
     CONVERSATION,
+
+    /** Flights, hotel, transfer — and whether a clinician cleared the trip. */
+    TRAVEL,
 }
 
 fun destinationFor(section: FileSection, patientId: String): StaffDestination = when (section) {
@@ -120,6 +134,7 @@ fun destinationFor(section: FileSection, patientId: String): StaffDestination = 
     FileSection.FOLLOW_UP -> StaffDestination.FollowUp(patientId)
     FileSection.APPOINTMENTS -> StaffDestination.Appointments(patientId)
     FileSection.CONVERSATION -> StaffDestination.Conversation(patientId)
+    FileSection.TRAVEL -> StaffDestination.Travel(patientId)
 }
 
 /**
@@ -154,5 +169,7 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.Finance,
     StaffDestination.Exports,
     StaffDestination.AiSettings,
+    StaffDestination.Protocols,
+    StaffDestination.Audit,
     StaffDestination.NotificationSettings,
 )

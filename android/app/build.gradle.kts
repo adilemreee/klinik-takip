@@ -109,6 +109,9 @@ dependencies {
     implementation(project(":feature:finance-ui"))
     implementation(project(":feature:exports-ui"))
     implementation(project(":feature:aisettings-ui"))
+    implementation(project(":feature:audit-ui"))
+    implementation(project(":feature:protocols-ui"))
+    implementation(project(":feature:travel-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

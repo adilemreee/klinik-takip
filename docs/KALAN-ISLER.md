@@ -1,7 +1,8 @@
 # Kalan İşler
 
-2026-09-11'de koddan çıkarıldı. "Şu an ne eksik" sorusunun cevabı; tahmin değil,
-her madde bir dosya ya da bir uç noktayla eşleşiyor.
+2026-09-11'de koddan çıkarıldı, aynı gün A bloğu (A7 hariç) yapıldı.
+"Şu an ne eksik" sorusunun cevabı; tahmin değil, her madde bir dosya ya da bir
+uç noktayla eşleşiyor.
 
 Üç ayrı liste: **kod yazarak biter**, **klinikten bir şey gelmeden bitmez**, ve
 **bilerek yapılmadı**. Karıştırmamak önemli — birincisi benim işim, ikincisi
@@ -14,72 +15,74 @@ sizin, üçüncüsü ikimizin de dokunmaması gereken.
 
 ---
 
-## A — Kod yazarak biter
+## A — Kod yazarak biter · **A7 dışında yapıldı**
 
-### [ ] A1. Hasta uygulamadan hesap açamıyor
+### [x] A1. Hasta uygulamadan hesap açamıyor — **yapıldı**
 
-**Nerede:** [AuthFlow.swift](ios/Sources/KlinikAuthFeature/AuthFlow.swift:11) ·
-sunucu: `POST /auth/invitations/accept`
+Giriş ekranına **"Davet kodum var"** eklendi. Kimlik + altı haneli kod + kendi
+seçtiği parola; sonra uygulama otomatik giriş yapıyor, çünkü dört saniye önce
+belirlediği parolayı tekrar yazdırmak insanları parolayı kâğıda yazmaya iten
+şeydir. Personel daveti aynı akışla iki faktör kurulumuna düşüyor — davet adımı
+bunu bilmek zorunda değil.
 
-Sunucuda davet kodunu kullanıp parola belirleyen uç **var**. iOS'ta onu çağıran
-hiçbir şey **yok**: giriş akışı `credentials → twoFactorCode → signedIn`, arada
-davet adımı yok. Klinik davet üretebiliyor (personel tarafında `InviteView`),
-hasta o kodu girecek bir ekran bulamıyor.
+Parola kuralları **yazarken** gösteriliyor, sunucu reddettikten sonra değil.
+`PasswordRules` sunucunun `checkPassword`'ünü aynalıyor (uzunluk, harf+rakam,
+kendi adresini içermeme); yaygın parola listesi sunucuda kalıyor, çünkü onu
+istemciye taşımak listeyi dağıtmak demek.
 
-Kanıt: hata sözlüğü bu ekran için **zaten hazır** —
-`INVITATION_INVALID`, `INVITATION_EXPIRED`, `INVITATION_ATTEMPTS_EXCEEDED`,
-`PASSWORD_TOO_WEAK` dördü de `APIError`'da tanımlı ve iki dile çevrilmiş.
-Testi bile var (`testEveryAuthErrorCodeMapsToAMessage`). Boru döşenmiş, musluk
-takılmamış.
+Reddedilen kodda kullanıcı formda kalıyor — bunu testler yakaladı, model
+adımı garanti etmiyordu.
 
-**Neden önemli:** gerçek hastayla kullanımın önündeki maddelerden biri. Staging'deki
-tek hasta hesabı elle, veritabanından açıldı.
+### [x] A2. Parola değiştirilemiyor — **yapıldı**
 
-### [ ] A2. Parola değiştirilemiyor
+Hesap ekranında, iki kez yazdırarak (alan maskeli ve buradaki bir yazım hatası
+insanı kendi klinik kaydından kilitler). Sunucu her cihazı çıkışa zorladığı
+için uygulama da çıkış yapıyor: ekranda kalmak, her isteğin sebepsiz
+başarısız olduğu bir ekran demek olurdu.
 
-**Nerede:** [AccountScreen.swift](ios/Sources/KlinikAuthFeature/AccountScreen.swift) ·
-sunucu: `POST /auth/password`
+### [x] A3. İki faktör kapatılamıyor — **yapıldı**
 
-Hesap ekranında biyometrik kilit, bu cihaz, diğer cihazlar ve "her yerden çık"
-var. Parola değiştirme yok. Sunucuda uç duruyor.
+Hastalar için, doğrulayıcıdaki güncel kodla. Personelde düğme yok ve **sebebi
+yazıyor** — gizlenmiş bir ayarı arayan klinisyen, yokluk değil gerekçe bulmalı.
 
-### [ ] A3. İki faktör kapatılamıyor
+### [x] A4. Hasta kendi verisini indiremiyor — **yapıldı**
 
-**Nerede:** sunucu `POST /auth/2fa/disable`, iOS'ta çağıran yok.
+Hesap ekranında "Kayıtlarım". Sunucunun ürettiği baytlar olduğu gibi, ayrıştırılıp
+yeniden kodlanmadan dosyaya yazılıyor ve paylaşım sayfasına veriliyor — taşınabilirlik
+ihracının anlamı kaydın kendisi olması, bu uygulamanın ondan anladığı değil.
+Nereye gideceği okuyucunun kararı, o yüzden bir yere kaydedilmiyor.
 
-Personel bir kez TOTP kurduktan sonra uygulamadan kapatamıyor. Telefonunu
-değiştiren bir hemşirenin tek çıkışı veritabanı.
+### [x] A5. Fotoğraf yüklemeleri kuyruğa girmiyor — **yapıldı**
 
-### [ ] A4. Hasta kendi verisini indiremiyor (KVKK erişim hakkı)
+Kuyruk artık iki tür taşıyor. Belge, oturum açıp parça parça gidiyor (20 MB'ın
+kopan bağlantıdan sağ çıkması için); fotoğraf tek multipart POST — telefon
+JPEG'i için baştan başlamak, devam etme defterini tutmaktan ucuz. Kuyruğun
+buradaki kazancı devam edebilmek değil, **yarın hâlâ orada olması**.
 
-**Nerede:** sunucu
-[me.controller.ts:32](backend/src/me/me.controller.ts:32) `GET /me/data-export`,
-iOS'ta çağıran yok.
+Kategori ve vücut bölgesi de saklanıyor: bölgesiz bir yara fotoğrafı,
+klinisyenin hiçbir şeyle karşılaştıramayacağı bir fotoğraftır. SQLite'a `v5`
+migration'ı eklendi — bu kez tablo düşürülmedi, çünkü artık yayımlanmış bir
+sürüm oraya satır yazmış olabilir.
 
-Uç noktanın kendi açıklaması "kanunun kastettiği anlamda taşınabilir" diyor —
-yani bilerek PDF değil, yapılandırılmış veri. Ekranı yok. KVKK aydınlatma
-metninde hastaya vaat edilen bir hak, uygulamada karşılığı olmayan.
+Ekran da doğru şeyi söylüyor: tik değil, hata değil — "telefonunuzda kayıtlı,
+bağlantı gelince gidecek, tekrar çekmenize gerek yok".
 
-### [ ] A5. Fotoğraf yüklemeleri çevrimdışı kuyruğa girmiyor
+### [x] A6. Küçükler — **yapıldı**
 
-**Nerede:** [PhotoGalleryModel.swift:113](ios/Sources/KlinikPhotosFeature/PhotoGalleryModel.swift:113)
-
-Belge yüklemeleri kuyruğa giriyor (`DocumentsModel.hold` → `UploadQueue`).
-Fotoğraf yüklemesi girmiyor: bağlantı yoksa `state.error` yazılıp bitiyor.
-
-**Neden önemli:** ameliyat sonrası yara fotoğrafı, otel wifi'sinde çekilen tam
-olarak o şey. Belge için kurulan mekanizmanın aynısı, ikinci bir çağrı yeri.
-
-### [ ] A6. Küçükler
-
-- **Yapay zekâ kullanımı/maliyeti** — `GET /ai/usage` var, ekranı yok. AI
-  ayarları ekranı sağlayıcıyı ve fiyatı alıyor, harcamayı göstermiyor.
-- **Döviz kuru** — `GET /finance/rates` var, çağıran yok.
-- **Hazır yanıt düzenleme** — `PATCH /quick-replies/{id}` var, uygulamada
-  yalnızca listeleniyor.
-- **Demo tahlil PDF'leri boş** — `seed-demo.ts` panel başına Document satırı
-  açıyor ama dosya yüklemiyor (`size: 0`), demo hastalarında "raporu aç" 404
-  veriyor. Gerçek yüklemelerde sorun yok.
+- **Yapay zekâ harcaması** — AI ayarları ekranına bu ayki tutar, üst sınır,
+  kullanılan oran, çağrı ve token sayısı eklendi. Ayrı izinle (`analytics.read`)
+  korunduğu için ayrıca ve en iyi çabayla çekiliyor: maliyet paneli bu kişinin
+  değil diye bütün ekranı düşürmek saçma olurdu.
+- **Döviz kuru** — finans ekranında bu ayın kurları. "Bu toplam eksik"
+  cümlesinin diğer yarısı: hangi günlerde kur var.
+- **Hazır yanıtlar** — kaydetme ve silme eklendi. (Sunucuda **PATCH yok**;
+  ilk envanterde "düzenleme" yazmıştım, doğrusu oluşturma ve silme.) Kliniğin
+  ortak yanıtları rozetle işaretli ve silinemiyor — sunucu da reddediyor.
+- **Demo tahlil PDF'leri** — dosya uydurulmadı. `seed-demo.ts`'deki yorum
+  haklıydı: uydurma sonuçlar içeren sahte bir PDF'i kliniğin kovasına koymak
+  404'ten kötü. Bunun yerine sunucu artık `documentAvailable` diyor ve baytı
+  olmayan rapor için **düğme hiç gösterilmiyor**. Baytları kaybolmuş gerçek
+  bir belge için de doğru davranış.
 
 ### [ ] A7. Android, hastanın yarısı — personelin hiçbiri
 
@@ -87,9 +90,10 @@ olarak o şey. Belge için kurulan mekanizmanın aynısı, ikinci bir çağrı y
 belgeler, tahlil, kontrol takvimi, randevu, onamlar, bildirim ayarları var.
 
 **Yok:** personel tarafının tamamı (hasta listesi, reçete yazma, finans,
-istatistik, denetim, dışa aktarım, brifing, AI ayarları) ve son üç oturumda
+istatistik, denetim, dışa aktarım, brifing, AI ayarları) ve son oturumlarda
 iOS'a eklenen her şey (tahlil tablosu, parmakla imza, belge kontrol listesi,
-çalışma saatleri, bekleyen değişiklikler, anketler, seyahat, asistan).
+çalışma saatleri, bekleyen değişiklikler, anketler, seyahat, asistan, davet
+ekranı, parola/iki faktör, veri indirme).
 
 iOS'ta 46 ekran dosyası var; Android'de 13.
 
@@ -144,6 +148,9 @@ Sizin Apple ve Google hesaplarınız gerekiyor.
 
 ## C — Bilerek yapılmadı
 
+0. **Sunucudaki `quick-replies` PATCH'i.** İlk envanterde "düzenleme eksik"
+   yazmıştım; öyle bir uç yok. Oluşturma ve silme yeterli — bir hazır yanıtı
+   düzenlemek, silip yeniden yazmaktır.
 1. **Sesli mesaj transkripsiyonu.** Hastanın sesini üçüncü bir tarafa göndermek
    yeni bir veri kategorisi ve yeni bir KVKK kararı. `transcript` alanı boş
    duruyor; klinik sağlayıcıya karar verince dolar.

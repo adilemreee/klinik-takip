@@ -66,7 +66,11 @@ import xyz.klinik.feature.medications.ui.PrescribingScreen
 import xyz.klinik.feature.measurements.ui.BodyChartScreen
 import xyz.klinik.feature.messaging.ChatModel
 import xyz.klinik.feature.messaging.ui.ChatScreen
+import xyz.klinik.feature.patients.InviteModel
+import xyz.klinik.feature.patients.NewPatientModel
 import xyz.klinik.feature.patients.PatientDetailModel
+import xyz.klinik.feature.patients.ui.InviteScreen
+import xyz.klinik.feature.patients.ui.NewPatientScreen
 import xyz.klinik.feature.patients.ui.PatientDetailScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.notifications.NotificationSettingsModel
@@ -339,6 +343,45 @@ fun StaffDestinationScreen(
             )
         }
 
+        StaffDestination.NewPatient -> {
+            val model = remember { NewPatientModel(environment.patients) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            NewPatientScreen(
+                state = state,
+                strings = context.newPatientStrings(),
+                onEdit = { change -> model.edit(change) },
+                onCreate = { scope.launch { model.create() } },
+                // Straight into the record: somebody who has just opened a
+                // file is about to put something in it.
+                onOpenFile = { patient ->
+                    onOpen(StaffDestination.File(patient.id, patient.fullName))
+                },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.Invite -> {
+            val model = remember(destination.patientId) {
+                InviteModel(environment.auth, destination.patientId)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            InviteScreen(
+                state = state,
+                strings = context.inviteStrings(),
+                patientName = destination.name,
+                onEdit = { email, phone -> model.edit(email, phone) },
+                onInvite = { scope.launch { model.invite() } },
+                // Handed to whatever the clinic already uses to reach this
+                // person; the server keeps only the hash, so the app is not
+                // the delivery channel.
+                onShare = { code -> context.shareInviteCode(code, destination.name) },
+                onDismiss = { model.dismiss() },
+                modifier = modifier,
+            )
+        }
+
         is StaffDestination.Checklist -> {
             val model = remember(destination.patientId) {
                 ChecklistModel(environment.documents, RecordSubject.Patient(destination.patientId))
@@ -515,6 +558,23 @@ fun StaffDestinationScreen(
                 // clinician opening a record is looking for one of these, and
                 // hiding them behind an overflow is one tap to find out what
                 // the app can even do.
+                TextButton(
+                    onClick = {
+                        onOpen(
+                            StaffDestination.Invite(destination.patientId, destination.name),
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = Tokens.minimumTouchTarget),
+                ) {
+                    Text(
+                        text = context.getString(DesignR.string.invite_title),
+                        color = klinikColor("accent"),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 FileSection.entries.forEach { section ->
                     TextButton(
                         onClick = { onOpen(destinationFor(section, destination.patientId)) },

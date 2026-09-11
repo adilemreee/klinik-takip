@@ -44,6 +44,31 @@ data class PatientSearch(
     }
 }
 
+/**
+ * A new file, with the five things a record cannot be opened without.
+ *
+ * Country is required because it decides the language the patient is written
+ * to in and which discharge advice they get — a file with no country is a file
+ * the clinic has to guess about.
+ */
+@Serializable
+data class NewPatient(
+    val firstName: String,
+    val lastName: String,
+    /** `1984-03-21`. */
+    val birthDate: String,
+    val sex: String,
+    /** ISO 3166-1 alpha-2. */
+    val country: String,
+    val city: String? = null,
+    val nationality: String? = null,
+    val preferredLanguage: String? = null,
+    /** Instagram, Google, an agency, a referral — for the channel report. */
+    val referralSource: String? = null,
+    val assignedDoctorId: String? = null,
+    val agencyId: String? = null,
+)
+
 class PatientsApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
@@ -53,6 +78,18 @@ class PatientsApi(
 
     suspend fun detail(id: String): Patient =
         decode(client.send(Endpoint(HttpMethod.GET, "patients/$id")))
+
+    /** Opens a file. The server assigns the file number. */
+    suspend fun create(patient: NewPatient): Patient =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.POST,
+                    "patients",
+                    body = json.encodeToString(NewPatient.serializer(), patient),
+                ),
+            ),
+        )
 
     private inline fun <reified T> decode(body: String): T =
         runCatching { json.decodeFromString<T>(body) }

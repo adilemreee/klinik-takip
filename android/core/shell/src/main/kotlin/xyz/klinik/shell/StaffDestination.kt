@@ -87,6 +87,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** Opening a file (spec M2). Clinic-wide: it belongs to no patient yet. */
+    data object NewPatient : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** The account somebody signed in with — password, devices (spec T7.3). */
     data object Account : StaffDestination {
         override val patientId: String? = null
@@ -111,6 +116,9 @@ sealed interface StaffDestination {
     data class LabPanels(override val patientId: String) : StaffDestination
     data class Checklist(override val patientId: String) : StaffDestination
     data class Consents(override val patientId: String) : StaffDestination
+
+    /** Inviting this patient into the app (spec T7.3). */
+    data class Invite(override val patientId: String, val name: String) : StaffDestination
 }
 
 /**
@@ -188,6 +196,7 @@ enum class StaffTab {
  * this list, which is the failure that put eight patient screens out of reach.
  */
 val staffMenuDestinations: List<StaffDestination> = listOf(
+    StaffDestination.NewPatient,
     StaffDestination.PendingReports,
     StaffDestination.ComplicationQueue,
     StaffDestination.Analytics,

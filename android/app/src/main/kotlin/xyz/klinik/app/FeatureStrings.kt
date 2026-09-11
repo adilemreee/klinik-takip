@@ -28,6 +28,8 @@ import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.medications.ui.PrescribingStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
+import xyz.klinik.feature.patients.ui.InviteStrings
+import xyz.klinik.feature.patients.ui.NewPatientStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
 import xyz.klinik.feature.protocols.ui.ProtocolsStrings
 import xyz.klinik.feature.reports.ui.MyReportsStrings
@@ -424,6 +426,7 @@ fun Context.reportReviewStrings(): ReportReviewStrings = ReportReviewStrings(
 fun Context.stringForStaffDestination(destination: StaffDestination): String = when (destination) {
     StaffDestination.Patients -> getString(DesignR.string.menu_patients)
     StaffDestination.EmergencyQueue -> getString(DesignR.string.menu_emergency_queue)
+    StaffDestination.NewPatient -> getString(DesignR.string.patient_new)
     StaffDestination.PendingReports -> getString(DesignR.string.report_pending_title)
     StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
     StaffDestination.Finance -> getString(DesignR.string.finance_title)
@@ -448,6 +451,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.LabPanels -> stringForSection(FileSection.LAB_PANELS)
     is StaffDestination.Checklist -> stringForSection(FileSection.CHECKLIST)
     is StaffDestination.Consents -> stringForSection(FileSection.CONSENTS)
+    is StaffDestination.Invite -> getString(DesignR.string.invite_title)
 }
 
 /**
@@ -899,5 +903,68 @@ fun Context.patientConsentsStrings(): PatientConsentsStrings = PatientConsentsSt
     notSigned = getString(DesignR.string.consent_not_signed),
     forwardOnly = getString(DesignR.string.consent_forward_only),
     typeName = { consent -> stringForKey(consent.type.stringKey) },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * Hands an invitation code to whatever the clinic already uses to reach this
+ * person.
+ *
+ * The app is not the delivery channel: the server returns the code once and
+ * keeps only its hash, so it goes out through the coordinator's own SMS or
+ * e-mail rather than through a message this app sends on its own.
+ */
+fun Context.shareInviteCode(code: String, patientName: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, code)
+        putExtra(Intent.EXTRA_TITLE, patientName)
+    }
+
+    runCatching {
+        startActivity(
+            Intent.createChooser(intent, getString(DesignR.string.invite_share))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}
+
+/** Opening a file (spec M2). */
+fun Context.newPatientStrings(): NewPatientStrings = NewPatientStrings(
+    title = getString(DesignR.string.patient_new),
+    firstName = getString(DesignR.string.patient_first_name),
+    lastName = getString(DesignR.string.patient_last_name),
+    birthDate = getString(DesignR.string.patient_birth_date),
+    sex = getString(DesignR.string.patient_sex),
+    sexName = { sex ->
+        when (sex) {
+            "FEMALE" -> getString(DesignR.string.patient_sex_female)
+            "MALE" -> getString(DesignR.string.patient_sex_male)
+            else -> getString(DesignR.string.patient_sex_other)
+        }
+    },
+    country = getString(DesignR.string.patient_country_hint),
+    city = getString(DesignR.string.patient_city_hint),
+    referral = getString(DesignR.string.patient_referral_hint),
+    create = getString(DesignR.string.patient_create),
+    created = getString(DesignR.string.patient_created),
+    fileNumber = getString(DesignR.string.patient_mrn_assigned),
+    problem = { problem -> stringForKey(problem.stringKey) },
+    message = { text -> resolve(text) },
+)
+
+/** Inviting a patient into the app (spec T7.3). */
+fun Context.inviteStrings(): InviteStrings = InviteStrings(
+    title = getString(DesignR.string.invite_title),
+    hint = getString(DesignR.string.invite_hint),
+    email = getString(DesignR.string.file_email),
+    phone = getString(DesignR.string.file_phone),
+    action = getString(DesignR.string.invite_action),
+    issued = getString(DesignR.string.invite_issued),
+    shownOnce = getString(DesignR.string.invite_shown_once),
+    share = getString(DesignR.string.invite_share),
+    expires = getString(DesignR.string.invite_expires),
+    close = getString(DesignR.string.common_close),
+    problem = { problem -> stringForKey(problem.stringKey) },
     message = { text -> resolve(text) },
 )

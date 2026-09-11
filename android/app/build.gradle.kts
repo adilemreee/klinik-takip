@@ -104,6 +104,7 @@ dependencies {
     implementation(project(":feature:briefing-ui"))
     implementation(project(":feature:reports-ui"))
     implementation(project(":feature:assistant-ui"))
+    implementation(project(":feature:surveys-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

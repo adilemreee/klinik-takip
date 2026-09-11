@@ -19,7 +19,9 @@ import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
+import xyz.klinik.feature.reports.ui.MyReportsStrings
 import xyz.klinik.feature.reports.ui.ReportReviewStrings
+import xyz.klinik.feature.surveys.ui.SurveyStrings
 import xyz.klinik.network.UiText
 import xyz.klinik.shell.FileSection
 import xyz.klinik.shell.StaffDestination
@@ -284,6 +286,8 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Home -> getString(DesignR.string.home_title)
     PatientDestination.Messages -> getString(DesignR.string.menu_messages)
     PatientDestination.Assistant -> getString(DesignR.string.assistant_title)
+    PatientDestination.Surveys -> getString(DesignR.string.survey_title)
+    PatientDestination.MyReports -> getString(DesignR.string.report_my_reports_title)
     PatientDestination.Documents -> getString(DesignR.string.menu_documents)
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
@@ -429,5 +433,41 @@ fun Context.assistantStrings(): AssistantStrings = AssistantStrings(
     sent = getString(DesignR.string.assistant_sent),
     sourcePrefix = getString(DesignR.string.assistant_source_prefix),
     openConversation = getString(DesignR.string.assistant_open_conversation),
+    message = { text -> resolve(text) },
+)
+
+/**
+ * The questionnaires after surgery (spec M18).
+ *
+ * `{days}` is the catalogue's own placeholder, shared with iOS, and is filled
+ * in here rather than by `getString`: the token is not an Android format
+ * specifier and the resource has nothing to substitute.
+ */
+fun Context.surveyStrings(): SurveyStrings = SurveyStrings(
+    title = getString(DesignR.string.survey_title),
+    nothingPending = getString(DesignR.string.survey_nothing_pending),
+    thanks = getString(DesignR.string.survey_thanks),
+    closed = getString(DesignR.string.survey_closed),
+    submit = getString(DesignR.string.survey_submit),
+    retry = getString(DesignR.string.common_retry),
+    patientNote = getString(DesignR.string.survey_patient_note),
+    textPlaceholder = getString(DesignR.string.survey_text_placeholder),
+    yes = getString(DesignR.string.file_yes),
+    no = getString(DesignR.string.file_no),
+    none = getString(DesignR.string.survey_none),
+    best = getString(DesignR.string.survey_best),
+    worst = getString(DesignR.string.survey_worst),
+    milestone = { days ->
+        getString(DesignR.string.survey_milestone).replace("{days}", days.toString())
+    },
+    message = { text -> resolve(text) },
+)
+
+/** The lab interpretations a clinician chose to share with this patient. */
+fun Context.myReportsStrings(): MyReportsStrings = MyReportsStrings(
+    title = getString(DesignR.string.report_my_reports_title),
+    empty = getString(DesignR.string.report_my_reports_empty),
+    retry = getString(DesignR.string.common_retry),
+    generatedAt = getString(DesignR.string.report_generated_at),
     message = { text -> resolve(text) },
 )

@@ -44,6 +44,10 @@ import xyz.klinik.feature.notifications.NotificationSettingsModel
 import xyz.klinik.feature.assistant.AssistantModel
 import xyz.klinik.feature.assistant.ui.AssistantScreen
 import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
+import xyz.klinik.feature.reports.MyReportsModel
+import xyz.klinik.feature.reports.ui.MyReportsScreen
+import xyz.klinik.feature.surveys.SurveyModel
+import xyz.klinik.feature.surveys.ui.SurveyScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
 import xyz.klinik.network.DocumentType
@@ -65,6 +69,12 @@ sealed interface PatientDestination {
 
     /** The FAQ assistant that stands in front of the clinic (spec M4). */
     data object Assistant : PatientDestination
+
+    /** The short questionnaires after surgery (spec M18). */
+    data object Surveys : PatientDestination
+
+    /** Lab interpretations a clinician chose to share (spec M5). */
+    data object MyReports : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -105,6 +115,8 @@ fun destinationFor(action: HomeAction): PatientDestination? = when (action) {
  */
 val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.Assistant,
+    PatientDestination.Surveys,
+    PatientDestination.MyReports,
     PatientDestination.Measurements,
     PatientDestination.LabResults,
     PatientDestination.FollowUp,
@@ -356,6 +368,36 @@ fun PatientDestinationScreen(
                 onAsk = { question -> scope.launch { model.ask(question) } },
                 onEscalate = { turnId -> scope.launch { model.escalate(turnId) } },
                 onOpenConversation = { onOpen(PatientDestination.Messages) },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.Surveys -> {
+            val model = remember { SurveyModel(environment.surveys) { nowIso() } }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            SurveyScreen(
+                state = state,
+                strings = context.surveyStrings(),
+                onAnswer = { questionId, answer -> model.answer(questionId, answer) },
+                onSubmit = { scope.launch { model.submit() } },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.MyReports -> {
+            val model = remember { MyReportsModel(environment.reports) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            MyReportsScreen(
+                state = state,
+                strings = context.myReportsStrings(),
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
         }

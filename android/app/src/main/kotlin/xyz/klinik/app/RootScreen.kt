@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -192,6 +195,46 @@ private fun PatientHomeRoute(environment: AppEnvironment, model: RootViewModel) 
 
     LaunchedEffect(Unit) { home.load() }
 
+    val context = LocalContext.current
+    var menuOpen by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // The records the five tiles do not carry. Eight screens were built
+        // and none of them could be opened; the spec keeps the tiles to five
+        // on purpose, so the rest go here rather than onto the grid.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Box {
+                TextButton(onClick = { menuOpen = true }) {
+                    Text(stringResource(DesignR.string.common_more))
+                }
+
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    patientMenuDestinations.forEach { entry ->
+                        DropdownMenuItem(
+                            text = { Text(context.stringForDestination(entry)) },
+                            onClick = {
+                                menuOpen = false
+                                destination = entry
+                            },
+                        )
+                    }
+
+                    DropdownMenuItem(
+                        text = { Text(stringResource(DesignR.string.auth_sign_out)) },
+                        onClick = {
+                            menuOpen = false
+                            model.signOut()
+                        },
+                    )
+                }
+            }
+        }
+
     HomeScreen(
         state = homeState,
         emergency = emergencyPhase,
@@ -210,6 +253,7 @@ private fun PatientHomeRoute(environment: AppEnvironment, model: RootViewModel) 
         onAcknowledgeEmergency = emergency::acknowledge,
         onRetry = { scope.launch { home.load() } },
     )
+    }
 }
 
 @Composable

@@ -34,6 +34,7 @@ import xyz.klinik.feature.home.HomeAction
 import xyz.klinik.feature.lab.LabTrendModel
 import xyz.klinik.feature.lab.ui.LabTrendScreen
 import xyz.klinik.feature.measurements.MeasurementsModel
+import xyz.klinik.feature.measurements.ui.BodyChartScreen
 import xyz.klinik.feature.measurements.ui.RecordMeasurementScreen
 import xyz.klinik.feature.medications.MedicationsModel
 import xyz.klinik.feature.medications.ui.MedicationsScreen
@@ -85,6 +86,27 @@ fun destinationFor(action: HomeAction): PatientDestination? = when (action) {
     HomeAction.MEDICATIONS -> PatientDestination.Medications
     HomeAction.EMERGENCY -> null
 }
+
+/**
+ * The screens the five home tiles do not cover.
+ *
+ * Every one of these was already built and none of them could be reached: the
+ * home screen's tiles map to four destinations, and the other eight existed
+ * with no way in. A menu is not the ideal home for a patient's records — the
+ * spec puts five things where somebody recovering from surgery does not have
+ * to hunt — but a screen nobody can open is worse than one behind a tap.
+ *
+ * `Home` is absent on purpose: it is where the menu is.
+ */
+val patientMenuDestinations: List<PatientDestination> = listOf(
+    PatientDestination.Measurements,
+    PatientDestination.LabResults,
+    PatientDestination.FollowUp,
+    PatientDestination.Appointments,
+    PatientDestination.Complications,
+    PatientDestination.Consents,
+    PatientDestination.NotificationSettings,
+)
 
 /**
  * The patient's screens, reached from the home screen and its overflow menu.
@@ -202,13 +224,39 @@ fun PatientDestinationScreen(
 
             LaunchedEffect(Unit) { model.load() }
 
-            RecordMeasurementScreen(
-                state = state,
-                strings = context.recordStrings(),
-                onSave = { reading -> scope.launch { model.record(reading) } },
-                onCancel = {},
-                modifier = modifier,
-            )
+            /*
+             * The chart first, the form behind a button.
+             *
+             * This screen used to open straight onto the entry form, so a
+             * patient typing a weight every morning never saw the curve it
+             * made — which is filling in somebody else's form. The chart is
+             * the reason to record anything.
+             */
+            var recording by remember { mutableStateOf(false) }
+
+            if (recording) {
+                RecordMeasurementScreen(
+                    state = state,
+                    strings = context.recordStrings(),
+                    onSave = { reading ->
+                        scope.launch {
+                            model.record(reading)
+                            recording = false
+                        }
+                    },
+                    onCancel = { recording = false },
+                    modifier = modifier,
+                )
+            } else {
+                BodyChartScreen(
+                    state = state,
+                    strings = context.measurementStrings(),
+                    canRecord = true,
+                    onRetry = { scope.launch { model.load() } },
+                    onAdd = { recording = true },
+                    modifier = modifier,
+                )
+            }
         }
 
         PatientDestination.LabResults -> {

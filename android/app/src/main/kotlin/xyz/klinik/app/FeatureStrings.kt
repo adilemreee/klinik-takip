@@ -265,3 +265,25 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.CONVERSATION -> getString(DesignR.string.menu_messages)
 }
 
+/**
+ * What each patient destination is called in the menu.
+ *
+ * The same words the clinician's file uses where they name the same records:
+ * "Tahlil sonuçları" should mean one thing in this product.
+ */
+fun Context.stringForDestination(destination: PatientDestination): String = when (destination) {
+    PatientDestination.Home -> getString(DesignR.string.home_title)
+    PatientDestination.Messages -> getString(DesignR.string.menu_messages)
+    PatientDestination.Documents -> getString(DesignR.string.menu_documents)
+    PatientDestination.Photos -> getString(DesignR.string.menu_photos)
+    PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
+    PatientDestination.LabResults -> getString(DesignR.string.menu_lab_results)
+    PatientDestination.Complications -> getString(DesignR.string.menu_complications)
+    PatientDestination.Medications -> getString(DesignR.string.medication_title)
+    PatientDestination.FollowUp -> getString(DesignR.string.menu_follow_up)
+    PatientDestination.Appointments -> getString(DesignR.string.menu_appointments)
+    PatientDestination.NotificationSettings ->
+        getString(DesignR.string.notification_settings_title)
+    PatientDestination.Consents -> getString(DesignR.string.consent_title)
+}
+

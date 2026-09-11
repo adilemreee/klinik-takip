@@ -187,7 +187,11 @@ private fun PatientHomeRoute(environment: AppEnvironment, model: RootViewModel) 
                 Text(stringResource(DesignR.string.common_close))
             }
 
-            PatientDestinationScreen(environment, destination)
+            PatientDestinationScreen(
+                environment = environment,
+                destination = destination,
+                onOpen = { next -> destination = next },
+            )
         }
 
         return

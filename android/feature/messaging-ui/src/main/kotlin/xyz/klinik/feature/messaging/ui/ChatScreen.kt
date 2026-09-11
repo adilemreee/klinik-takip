@@ -45,6 +45,8 @@ data class ChatStrings(
     val attachment: String,
     val clinicClosed: String,
     val queuedUntil: String,
+    val assistantOfferOpen: String,
+    val assistantOfferClosed: String,
     val notFound: String,
     val retry: String,
     val statusName: (MessageStatus) -> String,
@@ -61,6 +63,16 @@ fun ChatScreen(
     onLoadOlder: () -> Unit,
     onTyping: () -> Unit,
     onPickTemplate: (QuickReply) -> Unit,
+    /**
+     * The assistant, offered from here (spec M4).
+     *
+     * Offered rather than imposed: a question the clinic's own documents
+     * answer does not need to wait for a nurse, and the offer is worded
+     * differently when the clinic is closed because that is when the wait is
+     * hours rather than minutes. Null on the clinician's side — a nurse
+     * writing to a patient has no use for the patient's FAQ bot.
+     */
+    onOpenAssistant: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Surface(color = klinikColor("background"), modifier = modifier.fillMaxSize()) {
@@ -90,6 +102,7 @@ fun ChatScreen(
                     onLoadOlder,
                     onTyping,
                     onPickTemplate,
+                    onOpenAssistant,
                 )
         }
     }
@@ -104,6 +117,7 @@ private fun Conversation(
     onLoadOlder: () -> Unit,
     onTyping: () -> Unit,
     onPickTemplate: (QuickReply) -> Unit,
+    onOpenAssistant: (() -> Unit)?,
 ) {
     var draft by remember { mutableStateOf("") }
 
@@ -123,6 +137,26 @@ private fun Conversation(
                         .fillMaxWidth()
                         .padding(Tokens.Spacing.md)
                         .semantics { contentDescription = text },
+                )
+            }
+        }
+
+        // Under the closed notice rather than above it: the first thing to
+        // read is what happens to the message, and the second is that there
+        // may be a faster answer.
+        onOpenAssistant?.let { open ->
+            TextButton(
+                onClick = open,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Tokens.minimumTouchTarget),
+            ) {
+                Text(
+                    if (state.willBeQueued) {
+                        strings.assistantOfferClosed
+                    } else {
+                        strings.assistantOfferOpen
+                    },
                 )
             }
         }

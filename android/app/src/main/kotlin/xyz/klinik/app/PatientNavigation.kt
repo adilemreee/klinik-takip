@@ -41,6 +41,8 @@ import xyz.klinik.feature.medications.ui.MedicationsScreen
 import xyz.klinik.feature.messaging.ChatModel
 import xyz.klinik.feature.messaging.ui.ChatScreen
 import xyz.klinik.feature.notifications.NotificationSettingsModel
+import xyz.klinik.feature.assistant.AssistantModel
+import xyz.klinik.feature.assistant.ui.AssistantScreen
 import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
@@ -60,6 +62,9 @@ import xyz.klinik.design.R as DesignR
 sealed interface PatientDestination {
     data object Home : PatientDestination
     data object Messages : PatientDestination
+
+    /** The FAQ assistant that stands in front of the clinic (spec M4). */
+    data object Assistant : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -99,6 +104,7 @@ fun destinationFor(action: HomeAction): PatientDestination? = when (action) {
  * `Home` is absent on purpose: it is where the menu is.
  */
 val patientMenuDestinations: List<PatientDestination> = listOf(
+    PatientDestination.Assistant,
     PatientDestination.Measurements,
     PatientDestination.LabResults,
     PatientDestination.FollowUp,
@@ -119,6 +125,15 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
 fun PatientDestinationScreen(
     environment: AppEnvironment,
     destination: PatientDestination,
+    /**
+     * Replaces the current screen rather than stacking on it.
+     *
+     * The patient side is one level deep and back returns home, so a screen
+     * that hands over to another — the assistant to the conversation — swaps
+     * itself out. Going back from the clinic thread should reach home, not the
+     * bot the patient chose to leave.
+     */
+    onOpen: (PatientDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -147,6 +162,10 @@ fun PatientDestinationScreen(
                 onLoadOlder = { scope.launch { model.loadOlder() } },
                 onTyping = {},
                 onPickTemplate = {},
+                // Spec M4 puts the assistant in front of the clinic rather
+                // than beside it: a question the clinic's own documents answer
+                // does not need to wait for a nurse.
+                onOpenAssistant = { onOpen(PatientDestination.Assistant) },
                 modifier = modifier,
             )
         }
@@ -323,6 +342,20 @@ fun PatientDestinationScreen(
                 onRetry = { scope.launch { model.refresh() } },
                 onConfirm = {},
                 onCancel = { id -> scope.launch { model.cancel(id) } },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.Assistant -> {
+            val model = remember { AssistantModel(environment.assistant) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            AssistantScreen(
+                state = state,
+                strings = context.assistantStrings(),
+                onAsk = { question -> scope.launch { model.ask(question) } },
+                onEscalate = { turnId -> scope.launch { model.escalate(turnId) } },
+                onOpenConversation = { onOpen(PatientDestination.Messages) },
                 modifier = modifier,
             )
         }

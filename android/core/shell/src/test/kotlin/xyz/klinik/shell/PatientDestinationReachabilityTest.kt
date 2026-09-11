@@ -34,20 +34,26 @@ class PatientDestinationReachabilityTest {
         source("app/src/main/kotlin/xyz/klinik/app/FeatureStrings.kt")
     }
 
-    /** Every destination the `when` renders. `Home` is the screen behind them. */
-    private val destinations = listOf(
-        "Messages",
-        "Documents",
-        "Photos",
-        "Measurements",
-        "LabResults",
-        "Complications",
-        "Medications",
-        "FollowUp",
-        "Appointments",
-        "NotificationSettings",
-        "Consents",
-    )
+    /**
+     * Every destination the sealed interface declares, read from the source.
+     *
+     * Derived rather than listed: a list a person has to remember to extend is
+     * exactly the mechanism that let eight screens go unreachable in the first
+     * place, and a thirteenth added tomorrow would slip past a hand-written
+     * one the same way. `Home` is excluded — it is the screen the others are
+     * reached from.
+     */
+    private val destinations: List<String> by lazy {
+        val declared = Regex("""data object (\w+) : PatientDestination""")
+            .findAll(navigation)
+            .map { it.groupValues[1] }
+            .filterNot { it == "Home" }
+            .toList()
+
+        assertTrue(declared.size > 8, "only ${declared.size} parsed; the declaration changed")
+
+        declared
+    }
 
     @Test
     fun `every destination is rendered`() {

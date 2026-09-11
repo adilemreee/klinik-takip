@@ -103,6 +103,7 @@ dependencies {
     implementation(project(":feature:emergency-ui"))
     implementation(project(":feature:briefing-ui"))
     implementation(project(":feature:reports-ui"))
+    implementation(project(":feature:assistant-ui"))
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)

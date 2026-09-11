@@ -3,6 +3,7 @@ package xyz.klinik.app
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import xyz.klinik.feature.assistant.ui.AssistantStrings
 import xyz.klinik.feature.briefing.ui.BriefingStrings
 import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
@@ -45,6 +46,8 @@ fun Context.chatStrings(): ChatStrings = ChatStrings(
     attachment = getString(DesignR.string.message_attachment),
     clinicClosed = getString(DesignR.string.message_clinic_closed),
     queuedUntil = getString(DesignR.string.message_queued_until),
+    assistantOfferOpen = getString(DesignR.string.assistant_offer_open),
+    assistantOfferClosed = getString(DesignR.string.assistant_offer_closed),
     notFound = getString(DesignR.string.error_not_found),
     retry = getString(DesignR.string.common_retry),
     statusName = { status -> stringForKey("message.status.${status.name}") },
@@ -280,6 +283,7 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
 fun Context.stringForDestination(destination: PatientDestination): String = when (destination) {
     PatientDestination.Home -> getString(DesignR.string.home_title)
     PatientDestination.Messages -> getString(DesignR.string.menu_messages)
+    PatientDestination.Assistant -> getString(DesignR.string.assistant_title)
     PatientDestination.Documents -> getString(DesignR.string.menu_documents)
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
@@ -407,3 +411,23 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.Appointments -> stringForSection(FileSection.APPOINTMENTS)
     is StaffDestination.Conversation -> stringForSection(FileSection.CONVERSATION)
 }
+
+/**
+ * The FAQ assistant (spec M4).
+ *
+ * `send` is the conversation's own send button rather than a second word for
+ * the same action: "Gönder" means one thing in this product.
+ */
+fun Context.assistantStrings(): AssistantStrings = AssistantStrings(
+    title = getString(DesignR.string.assistant_title),
+    intro = getString(DesignR.string.assistant_intro),
+    placeholder = getString(DesignR.string.assistant_placeholder),
+    send = getString(DesignR.string.common_send),
+    disclaimer = getString(DesignR.string.assistant_disclaimer),
+    handover = getString(DesignR.string.assistant_handover),
+    notEnough = getString(DesignR.string.assistant_not_enough),
+    sent = getString(DesignR.string.assistant_sent),
+    sourcePrefix = getString(DesignR.string.assistant_source_prefix),
+    openConversation = getString(DesignR.string.assistant_open_conversation),
+    message = { text -> resolve(text) },
+)

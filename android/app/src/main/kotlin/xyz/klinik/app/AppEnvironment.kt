@@ -10,6 +10,7 @@ import xyz.klinik.feature.home.HomeModel
 import xyz.klinik.feature.patients.PatientListModel
 import xyz.klinik.network.ApiClient
 import xyz.klinik.network.ApiConfiguration
+import xyz.klinik.network.AssistantApi
 import xyz.klinik.network.AuthApi
 import xyz.klinik.network.AppointmentsApi
 import xyz.klinik.network.ComplicationsApi
@@ -103,6 +104,7 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val emergency: EmergencyApi by lazy { EmergencyApi(client) }
     val briefing: BriefingApi by lazy { BriefingApi(client) }
     val reports: ReportsApi by lazy { ReportsApi(client) }
+    val assistant: AssistantApi by lazy { AssistantApi(client) }
 
     fun homeModel(): HomeModel = HomeModel(me)
     fun briefingModel(): BriefingModel = BriefingModel(briefing)

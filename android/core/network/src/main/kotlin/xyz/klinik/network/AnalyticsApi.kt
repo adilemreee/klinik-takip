@@ -95,7 +95,7 @@ data class ChannelReport(
     val conversionDefinition: String = "",
     val minimumForRate: Int = 0,
 ) {
-    val revenueNoticeKey: String? get() = if (revenueWithheld) "analytics_revenue_withheld" else null
+    val revenueNoticeKey: String? get() = if (revenueWithheld) "analytics.revenueWithheld" else null
 }
 
 @Serializable
@@ -169,7 +169,7 @@ data class OccupancyReport(
 ) {
     /** What to put on the screen instead of a chart nobody can read. */
     val noticeKey: String?
-        get() = if (capacityUnconfigured) "analytics_capacity_unconfigured" else null
+        get() = if (capacityUnconfigured) "analytics.capacityUnconfigured" else null
 }
 
 class AnalyticsApi(

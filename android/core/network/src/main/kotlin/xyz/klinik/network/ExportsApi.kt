@@ -98,7 +98,7 @@ data class ExportContents(
      * A spreadsheet that stops short and does not say so is the one nobody
      * catches: it looks exactly like a complete one, and it will be summed.
      */
-    val truncationKey: String? get() = if (truncated) "export_truncated" else null
+    val truncationKey: String? get() = if (truncated) "export.truncated" else null
 }
 
 @Serializable

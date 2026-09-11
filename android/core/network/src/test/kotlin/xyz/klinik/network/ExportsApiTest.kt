@@ -133,7 +133,7 @@ class ExportsApiTest {
 
         val manifest = list.contents!!
         assertFalse(manifest.isComplete)
-        assertEquals("export_truncated", manifest.truncationKey)
+        assertEquals("export.truncated", manifest.truncationKey)
         assertEquals(250000, manifest.matched)
     }
 

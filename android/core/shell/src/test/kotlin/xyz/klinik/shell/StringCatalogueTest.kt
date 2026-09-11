@@ -207,6 +207,49 @@ class StringCatalogueTest {
         assertTrue(missing.isEmpty(), "no string for: ${missing.joinToString()}")
     }
 
+    /**
+     * And the same for every *other* property that names a string.
+     *
+     * `stringKey` is not the only spelling — there is `explanationKey`,
+     * `revenueNoticeKey`, `truncationKey`, and whatever the next one is
+     * called. Two of those three carried the Android resource name, which no
+     * lookup matches, and the test above could not see them because it was
+     * written around one property name. Read from source rather than
+     * reflected, because the interesting ones are string literals inside a
+     * getter that a running test never evaluates unless it happens to hold an
+     * instance in the right state.
+     */
+    @Test
+    fun `every literal key in the models resolves to a string`() {
+        val sources = File(designModule.parentFile.parentFile.parentFile, "network/src/main")
+            .walkTopDown()
+            .filter { it.extension == "kt" }
+            .toList()
+
+        assertTrue(sources.size > 20, "only ${sources.size} model files found")
+
+        // A literal assigned to something named `…Key`, which is this
+        // codebase's one convention for "the catalogue decides these words".
+        val pattern = Regex("""val \w*Key: String\??\s*get\(\) =([^\n]*)""")
+
+        val missing = sources.flatMap { file ->
+            pattern.findAll(file.readText()).flatMap { match ->
+                Regex(""""([a-zA-Z][\w.\-]*)"""").findAll(match.groupValues[1])
+                    .map { it.groupValues[1] }
+            }
+        }
+            // Interpolated keys are covered by the test above, which builds
+            // real values; only the complete literals are checkable here. A
+            // literal ending in a separator is a prefix that a name is
+            // concatenated onto, so it is one of those rather than a key.
+            .filter { (it.contains('.') || it.contains('_')) && !it.endsWith('.') }
+            .distinct()
+            .filterNot { it in lookup }
+            .sorted()
+
+        assertTrue(missing.isEmpty(), "no string for: ${missing.joinToString()}")
+    }
+
     /** The follow-up phases, shared with the photo gallery. */
     private val milestoneLabels = listOf("D1", "D3", "W1", "W2", "M1", "M2", "M3", "M6", "Y1")
 

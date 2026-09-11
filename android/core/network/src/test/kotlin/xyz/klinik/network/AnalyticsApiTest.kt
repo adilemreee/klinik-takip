@@ -78,7 +78,7 @@ class AnalyticsApiTest {
         )
 
         assertNull(withheld.channels[0].revenue)
-        assertEquals("analytics_revenue_withheld", withheld.revenueNoticeKey)
+        assertEquals("analytics.revenueWithheld", withheld.revenueNoticeKey)
         assertEquals(30, withheld.channels[0].conversion.percent)
     }
 
@@ -159,7 +159,7 @@ class AnalyticsApiTest {
 
         // Nought per cent would read as an empty diary; this is a missing setting.
         assertFalse(report.byMonth[0].occupancy.isKnown)
-        assertEquals("analytics_capacity_unconfigured", report.noticeKey)
+        assertEquals("analytics.capacityUnconfigured", report.noticeKey)
         assertEquals(600, report.byMonth[0].bookedMinutes)
     }
 

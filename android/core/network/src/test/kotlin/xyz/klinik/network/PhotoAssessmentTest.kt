@@ -56,7 +56,7 @@ class PhotoAssessmentTest {
         val flagged = photo(reviewSuggested = "true", findings = """["redness","wound-open"]""")
 
         assertEquals(
-            listOf("photo_finding_redness", "photo_finding_wound_open"),
+            listOf("photo.finding.redness", "photo.finding.wound-open"),
             flagged.findingKeys(),
         )
     }

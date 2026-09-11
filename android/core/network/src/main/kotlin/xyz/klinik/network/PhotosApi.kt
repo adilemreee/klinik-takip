@@ -47,7 +47,7 @@ data class ClinicalPhoto(
     val isAssessedClean: Boolean get() = aiReviewSuggested == false
     val needsReview: Boolean get() = aiReviewSuggested == true
 
-    fun findingKeys(): List<String> = aiFindings.map { "photo_finding_${it.replace('-', '_')}" }
+    fun findingKeys(): List<String> = aiFindings.map { "photo.finding.$it" }
 }
 
 /** Why nothing was assessed, when nothing was. */

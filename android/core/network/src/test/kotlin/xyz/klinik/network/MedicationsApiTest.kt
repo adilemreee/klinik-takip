@@ -111,7 +111,7 @@ class MedicationsApiTest {
         )
 
         assertEquals(
-            listOf("medication_badge_first_dose", "medication_badge_three_days", "medication_badge_one_week"),
+            listOf("medication.badge.first-dose", "medication.badge.three-days", "medication.badge.one-week"),
             mine.badgeKeys(),
         )
     }

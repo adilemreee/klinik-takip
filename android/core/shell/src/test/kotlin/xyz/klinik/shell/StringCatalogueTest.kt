@@ -6,6 +6,7 @@ import xyz.klinik.network.AppointmentStatus
 import xyz.klinik.network.AppointmentType
 import xyz.klinik.network.AuthErrorCode
 import xyz.klinik.network.BmiCategory
+import xyz.klinik.network.ClinicalPhoto
 import xyz.klinik.network.ComplicationStatus
 import xyz.klinik.network.ConsentType
 import xyz.klinik.network.Currency
@@ -24,6 +25,7 @@ import xyz.klinik.network.MeasurementType
 import xyz.klinik.network.MessageStatus
 import xyz.klinik.network.Milestone
 import xyz.klinik.network.MilestoneStatus
+import xyz.klinik.network.MyMedications
 import xyz.klinik.network.NotificationChannel
 import xyz.klinik.network.NotificationDeliveryStatus
 import xyz.klinik.network.NotificationKind
@@ -194,13 +196,25 @@ class StringCatalogueTest {
             entry.javaClass.getMethod("getStringKey").invoke(entry) as String
         }
 
-        // The three that key off a server string instead of an enum. The values
+        // The ones that key off a server string instead of an enum. The values
         // are the ones the server sends today; a new one needs a string adding
-        // here and to the catalogue together.
+        // here and to the catalogue together. These cannot be read out of the
+        // source the way the literal check below does it — the key is built by
+        // interpolation, so there is no complete literal to find — which is
+        // why they are constructed here instead.
         val fromServer =
             milestoneLabels.map { Milestone(id = "m", label = it, dueAt = "2026-01-01").stringKey } +
                 ageingBuckets.map { AgeingBucket(bucket = it, totals = totals).stringKey } +
-                omissionReasons.map { ExportOmission(section = "photos", reason = it).stringKey }
+                omissionReasons.map { ExportOmission(section = "photos", reason = it).stringKey } +
+                MyMedications(badges = medicationBadges).badgeKeys() +
+                ClinicalPhoto(
+                    id = "p",
+                    category = PhotoCategory.WOUND,
+                    mime = "image/jpeg",
+                    size = 1,
+                    takenAt = "2026-01-01T00:00:00.000Z",
+                    aiFindings = photoFindings,
+                ).findingKeys()
 
         val missing = (emitted + fromServer).distinct().filterNot { it in lookup }.sorted()
 
@@ -234,8 +248,10 @@ class StringCatalogueTest {
         assertTrue(sources.size > 20, "only ${sources.size} model files found")
 
         /*
-         * A literal inside something named `…Key` or `…Keys`, which is this
+         * A literal inside anything named `…Key` or `…Keys`, which is this
          * codebase's one convention for "the catalogue decides these words".
+         * Functions as well as properties: `badgeKeys()` and `findingKeys()`
+         * are declared as functions and both carried the resource spelling.
          *
          * The body runs to the next declaration rather than the end of the
          * line, because `caveatKeys` builds a list over several lines and a
@@ -243,7 +259,7 @@ class StringCatalogueTest {
          * survived the first pass.
          */
         val pattern = Regex(
-            """val \w*Keys?\s*:.*?=(.*?)(?=\n\s*(?:val |fun |\}\n))""",
+            """(?:val|fun) \w*Keys?\s*[(:].*?=(.*?)(?=\n\s*(?:val |fun |\}\n))""",
             RegexOption.DOT_MATCHES_ALL,
         )
 
@@ -272,6 +288,13 @@ class StringCatalogueTest {
 
     private val omissionReasons =
         listOf("ai-unreviewed", "lab-unverified", "photo-no-consent", "photo-not-requested")
+
+    /** The encouragements a medication course earns, when the tone rule allows. */
+    private val medicationBadges =
+        listOf("first-dose", "three-days", "one-week", "four-weeks")
+
+    /** What the photo assessment can point at. */
+    private val photoFindings = listOf("redness", "swelling", "discharge", "wound-open")
 
     @Test
     fun `the shell's own strings exist`() {

@@ -159,7 +159,7 @@ data class MyMedications(
     /** Withheld while a course is going badly — the tone rule from M9. */
     val badges: List<String> = emptyList(),
 ) {
-    fun badgeKeys(): List<String> = badges.map { "medication_badge_${it.replace('-', '_')}" }
+    fun badgeKeys(): List<String> = badges.map { "medication.badge.$it" }
 
     /** Doses still waiting on the patient right now. */
     val openToday: List<DoseLog> get() = today.filter { it.status.isOpen }

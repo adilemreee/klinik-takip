@@ -3,10 +3,13 @@ package xyz.klinik.feature.patients.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -125,8 +128,22 @@ private fun PatientRow(patient: Patient, strings: PatientStrings, onClick: () ->
 }
 
 /** One patient's file. */
+/**
+ * One patient's record.
+ *
+ * `sections` is where the app puts the rest of the file — measurements,
+ * documents, the conversation. A slot rather than a parameter list, because
+ * which sections exist is a navigation decision and this module has no
+ * business holding one; and a slot rather than a second screen, because the
+ * record would then be rendered twice and the two would drift.
+ */
 @Composable
-fun PatientDetailScreen(phase: DetailPhase, strings: PatientStrings, onRetry: () -> Unit) {
+fun PatientDetailScreen(
+    phase: DetailPhase,
+    strings: PatientStrings,
+    onRetry: () -> Unit,
+    sections: @Composable ColumnScope.() -> Unit = {},
+) {
     Surface(color = klinikColor("background"), modifier = Modifier.fillMaxSize()) {
         when (phase) {
             DetailPhase.Loading -> Centered { CircularProgressIndicator() }
@@ -143,7 +160,12 @@ fun PatientDetailScreen(phase: DetailPhase, strings: PatientStrings, onRetry: ()
 
             is DetailPhase.Loaded -> Column(
                 verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.lg),
-                modifier = Modifier.padding(Tokens.Spacing.xl),
+                modifier = Modifier
+                    .padding(Tokens.Spacing.xl)
+                    // A file with every section listed is longer than a phone,
+                    // and a record that cannot be scrolled is a record with a
+                    // hidden half.
+                    .verticalScroll(rememberScrollState()),
             ) {
                 Text(
                     phase.patient.fullName,
@@ -156,6 +178,8 @@ fun PatientDetailScreen(phase: DetailPhase, strings: PatientStrings, onRetry: ()
                 DetailRow(strings.fileNumber, phase.patient.mrn)
                 DetailRow(strings.country, phase.patient.country)
                 phase.patient.city?.let { DetailRow(strings.city, it) }
+
+                sections()
             }
         }
     }

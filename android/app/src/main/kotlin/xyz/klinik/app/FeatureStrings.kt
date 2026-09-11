@@ -3,7 +3,9 @@ package xyz.klinik.app
 import android.content.Context
 import xyz.klinik.feature.complications.ui.ComplicationStrings
 import xyz.klinik.feature.documents.ui.DocumentStrings
+import xyz.klinik.feature.lab.ui.LabReviewStrings
 import xyz.klinik.feature.lab.ui.LabTrendStrings
+import xyz.klinik.feature.measurements.ui.MeasurementStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
 import xyz.klinik.feature.appointments.ui.AppointmentStrings
 import xyz.klinik.feature.consents.ui.ConsentStrings
@@ -13,6 +15,7 @@ import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
 import xyz.klinik.network.UiText
+import xyz.klinik.shell.FileSection
 import xyz.klinik.design.R as DesignR
 
 /**
@@ -101,6 +104,43 @@ fun Context.labTrendStrings(): LabTrendStrings = LabTrendStrings(
     reference = getString(DesignR.string.lab_trend_reference),
     rangesDiffer = getString(DesignR.string.lab_trend_ranges_differ),
     criticalTitle = getString(DesignR.string.lab_trend_critical_title),
+    flagName = { flag -> stringForKey("lab.flag.${flag.name}") },
+    message = { key -> stringForKey(key) },
+)
+
+/**
+ * The body chart, which the staff file and the patient's own screen share.
+ *
+ * A patient typing a weight every morning and never seeing the curve it makes
+ * is a patient filling in somebody else's form, so both sides get the chart
+ * rather than only the entry sheet.
+ */
+fun Context.measurementStrings(): MeasurementStrings = MeasurementStrings(
+    weight = getString(DesignR.string.measurement_weight),
+    bmi = getString(DesignR.string.measurement_bmi),
+    target = getString(DesignR.string.measurement_target),
+    latest = getString(DesignR.string.measurement_latest),
+    add = getString(DesignR.string.measurement_add),
+    empty = getString(DesignR.string.measurement_empty),
+    notFound = getString(DesignR.string.error_not_found),
+    retry = getString(DesignR.string.common_retry),
+    loading = getString(DesignR.string.common_loading),
+    categoryName = { category -> stringForKey("bmi.category.${category.name}") },
+    message = { key -> stringForKey(key) },
+)
+
+/// What OCR read and nobody has confirmed. Staff only — nothing here is
+/// clinical until a person says so (spec M16).
+fun Context.labReviewStrings(): LabReviewStrings = LabReviewStrings(
+    notice = getString(DesignR.string.lab_review_notice),
+    empty = getString(DesignR.string.lab_review_empty),
+    notFound = getString(DesignR.string.error_not_found),
+    retry = getString(DesignR.string.common_retry),
+    confirm = getString(DesignR.string.lab_review_confirm),
+    correct = getString(DesignR.string.lab_review_correct),
+    discard = getString(DesignR.string.lab_review_discard),
+    lowConfidence = getString(DesignR.string.lab_review_low_confidence),
+    needsMapping = getString(DesignR.string.lab_review_needs_mapping),
     flagName = { flag -> stringForKey("lab.flag.${flag.name}") },
     message = { key -> stringForKey(key) },
 )
@@ -206,3 +246,22 @@ fun Context.consentStrings(): ConsentStrings = ConsentStrings(
     explanation = { type -> stringForKey(type.explanationKey) },
     message = { key -> stringForKey(key) },
 )
+
+/**
+ * What each section of a patient's file is called.
+ *
+ * The same words the patient's own menu uses, because they name the same
+ * records — a clinician and a patient looking at "Tahlil sonuçları" should be
+ * looking at the same thing.
+ */
+fun Context.stringForSection(section: FileSection): String = when (section) {
+    FileSection.MEASUREMENTS -> getString(DesignR.string.menu_measurements)
+    FileSection.DOCUMENTS -> getString(DesignR.string.menu_documents)
+    FileSection.LAB_REVIEW -> getString(DesignR.string.lab_review_title)
+    FileSection.LAB_TREND -> getString(DesignR.string.lab_trend_title)
+    FileSection.PHOTOS -> getString(DesignR.string.menu_photos)
+    FileSection.FOLLOW_UP -> getString(DesignR.string.menu_follow_up)
+    FileSection.APPOINTMENTS -> getString(DesignR.string.menu_appointments)
+    FileSection.CONVERSATION -> getString(DesignR.string.menu_messages)
+}
+

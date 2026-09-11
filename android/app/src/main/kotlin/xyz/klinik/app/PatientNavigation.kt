@@ -383,4 +383,10 @@ fun PatientOverflowMenu(onGo: (PatientDestination) -> Unit, onSignOut: () -> Uni
  * Read here rather than inside a screen: a screen that reads the clock cannot
  * be tested at the boundary that matters — which visit counts as next.
  */
-private fun nowIso(): String = java.time.Instant.now().toString()
+/**
+ * Now, for the screens that take it rather than reading the clock themselves.
+ *
+ * `internal` rather than private: the staff file needs the same value, and a
+ * second copy is a second definition of "now".
+ */
+internal fun nowIso(): String = java.time.Instant.now().toString()

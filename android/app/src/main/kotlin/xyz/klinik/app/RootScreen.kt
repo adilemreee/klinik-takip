@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +52,7 @@ import xyz.klinik.network.MeasurementSubject
 import xyz.klinik.network.RecordSubject
 import xyz.klinik.network.messageKey
 import xyz.klinik.shell.RootRoute
+import xyz.klinik.shell.StaffDestination
 // Design-system resources live in their own R class, not the app's: since AGP
 // 8 the R class is non-transitive, so a library's resources are namespaced to
 // that library rather than merged into every module that depends on it. Only
@@ -216,8 +218,38 @@ private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
     val listState by patients.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
+    /*
+     * A stack, not one level.
+     *
+     * The patient side is one level deep and back goes home, which is right
+     * there. A clinician goes list → file → section and back has to mean the
+     * step before, not the beginning: landing on the search box after reading
+     * a lab result is how somebody loses the patient they were looking at.
+     */
+    val stack = remember { mutableStateListOf<StaffDestination>() }
+
+    BackHandler(enabled = stack.isNotEmpty()) { stack.removeAt(stack.lastIndex) }
+
     // An empty query is the whole list; the screen opens on it.
     LaunchedEffect(Unit) { patients.search("") }
+
+    val current = stack.lastOrNull()
+
+    if (current != null) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            TextButton(onClick = { stack.removeAt(stack.lastIndex) }) {
+                Text(stringResource(DesignR.string.common_close))
+            }
+
+            StaffDestinationScreen(
+                environment = environment,
+                destination = current,
+                onOpen = { destination -> stack.add(destination) },
+            )
+        }
+
+        return
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -236,7 +268,9 @@ private fun StaffHomeRoute(environment: AppEnvironment, model: RootViewModel) {
             strings = patientStrings(),
             query = listState.query,
             onQueryChange = { text -> scope.launch { patients.search(text) } },
-            onSelect = { /* The patient file arrives with T2.6. */ },
+            onSelect = { patient ->
+                stack.add(StaffDestination.File(patient.id, patient.fullName))
+            },
             onLoadMore = { scope.launch { patients.loadMore() } },
             onRetry = { scope.launch { patients.retry() } },
         )

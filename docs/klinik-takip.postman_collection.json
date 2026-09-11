@@ -4783,7 +4783,7 @@
             "description": "Mark a dose taken, skipped, or snoozed",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"action\": \"taken\",\n  \"snoozeMinutes\": 0\n}",
+              "raw": "{\n  \"action\": \"taken\",\n  \"snoozeMinutes\": 0,\n  \"at\": \"2026-01-01T00:00:00.000Z\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

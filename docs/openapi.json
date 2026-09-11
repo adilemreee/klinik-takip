@@ -20426,6 +20426,11 @@
             "minimum": 5,
             "maximum": 720,
             "default": 60
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the patient acted, for a check-in that waited offline"
           }
         },
         "required": [

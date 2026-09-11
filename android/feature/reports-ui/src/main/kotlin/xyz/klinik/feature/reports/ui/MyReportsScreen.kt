@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -61,7 +62,12 @@ fun MyReportsScreen(
             is MyReportsPhase.Failed -> Centered {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(strings.message(phase.message), color = klinikColor("critical"))
-                    TextButton(onClick = onRetry) { Text(strings.retry) }
+                    TextButton(
+                        onClick = onRetry,
+                        modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+                    ) {
+                        Text(strings.retry)
+                    }
                 }
             }
 

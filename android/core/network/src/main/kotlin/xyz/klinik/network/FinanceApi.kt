@@ -215,6 +215,22 @@ private data class RecordPaymentBody(
     val reference: String? = null,
 )
 
+/** A rate the clinic recorded for one day. */
+@Serializable
+data class ExchangeRate(
+    val base: Currency,
+    val quote: Currency,
+    /**
+     * Decimal on the wire: a binary float cannot hold 35.42 exactly, and this
+     * is a number invoices are built from.
+     */
+    val rate: String,
+    /** `2026-09-12`. */
+    val validOn: String,
+) {
+    val value: BigDecimal get() = BigDecimal(rate)
+}
+
 @Serializable
 private data class FinanceReasonBody(val reason: String)
 
@@ -222,9 +238,22 @@ class FinanceApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
 ) {
-    suspend fun records(status: PaymentStatus? = null, cursor: String? = null): FinanceRecordPage {
+    suspend fun records(
+        status: PaymentStatus? = null,
+        /**
+         * What to convert the totals into.
+         *
+         * The ledger holds amounts in the currency each was billed in, and the
+         * server converts for the reader. Without it the screen's picker moved
+         * the reports and left the list in whatever it was billed in, so two
+         * halves of one screen quoted two currencies.
+         */
+        currency: Currency? = null,
+        cursor: String? = null,
+    ): FinanceRecordPage {
         val query = buildList {
             status?.let { add("status=${it.name}") }
+            currency?.let { add("currency=${it.name}") }
             cursor?.let { add("cursor=$it") }
         }.joinToString("&")
 
@@ -284,6 +313,16 @@ class FinanceApi(
                 ),
             ),
         )
+
+    /**
+     * The rates the server used, for the window a report covers.
+     *
+     * Read alongside the totals rather than on its own: a total marked
+     * incomplete is incomplete because a day in the window had no rate, and
+     * this is the list that says which.
+     */
+    suspend fun rates(from: String, to: String): List<ExchangeRate> =
+        decode(client.send(Endpoint(HttpMethod.GET, "finance/rates?from=$from&to=$to")))
 
     suspend fun outstanding(currency: Currency = Currency.TRY): OutstandingReport =
         decode(client.send(Endpoint(HttpMethod.GET, "finance/outstanding?currency=${currency.name}")))

@@ -35,6 +35,8 @@ import xyz.klinik.feature.aisettings.ui.AiSettingsScreen
 import xyz.klinik.feature.analytics.AnalyticsModel
 import xyz.klinik.feature.analytics.ui.AnalyticsScreen
 import xyz.klinik.feature.appointments.AppointmentsModel
+import xyz.klinik.feature.appointments.AvailabilityModel
+import xyz.klinik.feature.appointments.ui.AvailabilityScreen
 import xyz.klinik.feature.audit.AuditModel
 import xyz.klinik.feature.audit.ui.AuditScreen
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
@@ -50,7 +52,9 @@ import xyz.klinik.feature.exports.ui.ExportsScreen
 import xyz.klinik.feature.emergency.ui.EmergencyQueueScreen
 import xyz.klinik.feature.documents.ui.ChecklistScreen
 import xyz.klinik.feature.documents.ui.DocumentListScreen
+import xyz.klinik.feature.finance.AgencyModel
 import xyz.klinik.feature.finance.FinanceModel
+import xyz.klinik.feature.finance.ui.AgencyScreen
 import xyz.klinik.feature.finance.ui.FinanceScreen
 import xyz.klinik.feature.followup.FollowUpModel
 import xyz.klinik.feature.followup.ui.FollowUpScreen
@@ -337,6 +341,45 @@ fun StaffDestinationScreen(
                 },
                 onRetire = { protocol ->
                     scope.launch { model.retire(protocol.document.id) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Availability -> {
+            val model = remember {
+                AvailabilityModel(environment.appointments, java.time.ZoneId.systemDefault().id)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AvailabilityScreen(
+                state = state,
+                strings = context.availabilityStrings(),
+                onAdd = { day, from, to -> scope.launch { model.add(day, from, to) } },
+                onSetOpen = { window, open -> scope.launch { model.setOpen(window, open) } },
+                onRemove = { window -> scope.launch { model.remove(window) } },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Agencies -> {
+            val model = remember { AgencyModel(environment.finance) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            AgencyScreen(
+                state = state,
+                strings = context.agencyStrings(),
+                onAdd = { name, country, contact, email, phone, percent ->
+                    scope.launch { model.add(name, country, contact, email, phone, percent) }
+                },
+                onSetActive = { agency, active ->
+                    scope.launch { model.setActive(agency, active) }
                 },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,

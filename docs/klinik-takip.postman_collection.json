@@ -5218,7 +5218,12 @@
           "name": "Edit an agency",
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/finance/agencies/:id",
               "host": [
@@ -5236,7 +5241,16 @@
                 }
               ]
             },
-            "description": "Edit an agency"
+            "description": "Edit an agency",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"country\": \"\",\n  \"contactName\": \"\",\n  \"contactEmail\": \"\",\n  \"contactPhone\": \"\",\n  \"commissionRate\": \"0.1000\",\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {

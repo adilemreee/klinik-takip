@@ -22,6 +22,8 @@ import xyz.klinik.feature.appointments.ui.AppointmentStrings
 import xyz.klinik.feature.consents.ui.ConsentStrings
 import xyz.klinik.feature.consents.ui.PatientConsentsStrings
 import xyz.klinik.feature.exports.ui.ExportsStrings
+import xyz.klinik.feature.appointments.ui.AvailabilityStrings
+import xyz.klinik.feature.finance.ui.AgencyStrings
 import xyz.klinik.feature.finance.ui.FinanceStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
 import xyz.klinik.feature.medications.ui.MedicationStrings
@@ -430,6 +432,8 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.PendingReports -> getString(DesignR.string.report_pending_title)
     StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
     StaffDestination.Finance -> getString(DesignR.string.finance_title)
+    StaffDestination.Agencies -> getString(DesignR.string.agency_title)
+    StaffDestination.Availability -> getString(DesignR.string.availability_title)
     StaffDestination.Exports -> getString(DesignR.string.export_title)
     StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
     StaffDestination.Audit -> getString(DesignR.string.audit_title)
@@ -966,5 +970,64 @@ fun Context.inviteStrings(): InviteStrings = InviteStrings(
     expires = getString(DesignR.string.invite_expires),
     close = getString(DesignR.string.common_close),
     problem = { problem -> stringForKey(problem.stringKey) },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * When a clinician can be booked (spec M3).
+ *
+ * The day names come from the platform rather than the catalogue: a weekday is
+ * a thing every locale already knows, and shipping seven of them per language
+ * is seven more strings to keep in step for no gain.
+ */
+fun Context.availabilityStrings(): AvailabilityStrings = AvailabilityStrings(
+    title = getString(DesignR.string.availability_title),
+    explain = getString(DesignR.string.availability_explain),
+    retry = getString(DesignR.string.common_retry),
+    noneTitle = getString(DesignR.string.availability_none_title),
+    noneDetail = getString(DesignR.string.availability_none_detail),
+    noProfile = getString(DesignR.string.availability_no_profile),
+    day = getString(DesignR.string.availability_day),
+    dayName = { day -> weekdayName(day) },
+    from = getString(DesignR.string.availability_from),
+    to = getString(DesignR.string.availability_to),
+    add = getString(DesignR.string.availability_add),
+    open = getString(DesignR.string.availability_open),
+    paused = getString(DesignR.string.availability_paused),
+    withdraw = getString(DesignR.string.availability_withdraw),
+    withdrawTitle = getString(DesignR.string.availability_withdraw_title),
+    withdrawDetail = getString(DesignR.string.availability_withdraw_detail),
+    cancel = getString(DesignR.string.common_cancel),
+    message = { text -> resolve(text) },
+)
+
+/**
+ * A weekday, in the reader's language.
+ *
+ * The server numbers days from Sunday and `java.time` numbers them from
+ * Monday, so the conversion is here rather than in seven call sites.
+ */
+private fun Context.weekdayName(dayOfWeek: Int): String {
+    val locale = resources.configuration.locales[0]
+    val day = java.time.DayOfWeek.of(if (dayOfWeek == 0) 7 else dayOfWeek)
+
+    return day.getDisplayName(java.time.format.TextStyle.FULL, locale)
+}
+
+/** Who sends the clinic patients, and on what commission (spec M11). */
+fun Context.agencyStrings(): AgencyStrings = AgencyStrings(
+    title = getString(DesignR.string.agency_title),
+    empty = getString(DesignR.string.agency_empty),
+    retry = getString(DesignR.string.common_retry),
+    add = getString(DesignR.string.agency_add),
+    name = getString(DesignR.string.agency_name),
+    contact = getString(DesignR.string.agency_contact),
+    email = getString(DesignR.string.file_email),
+    phone = getString(DesignR.string.file_phone),
+    country = getString(DesignR.string.patient_country_hint),
+    commission = getString(DesignR.string.agency_commission),
+    commissionHint = getString(DesignR.string.agency_commission_hint),
+    inactive = getString(DesignR.string.agency_inactive),
+    save = getString(DesignR.string.common_save),
     message = { text -> resolve(text) },
 )

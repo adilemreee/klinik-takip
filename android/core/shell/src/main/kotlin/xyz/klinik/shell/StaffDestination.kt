@@ -87,6 +87,16 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** When this clinician can be booked (spec M3). */
+    data object Availability : StaffDestination {
+        override val patientId: String? = null
+    }
+
+    /** Who sends the clinic patients, and on what commission (spec M11). */
+    data object Agencies : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** Opening a file (spec M2). Clinic-wide: it belongs to no patient yet. */
     data object NewPatient : StaffDestination {
         override val patientId: String? = null
@@ -201,6 +211,8 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.ComplicationQueue,
     StaffDestination.Analytics,
     StaffDestination.Finance,
+    StaffDestination.Agencies,
+    StaffDestination.Availability,
     StaffDestination.Exports,
     StaffDestination.AiSettings,
     StaffDestination.Protocols,

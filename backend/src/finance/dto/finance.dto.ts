@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   Currency,
   PaymentKind,
@@ -9,6 +9,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
+  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
@@ -362,6 +363,26 @@ export class CreateAgencyDto {
     message: 'commissionRate must be between 0 and 1, e.g. "0.1000"',
   })
   commissionRate?: string;
+}
+
+/**
+ * Editing an agency.
+ *
+ * A class rather than `Partial<CreateAgencyDto>` on the handler: an inline
+ * intersection type is invisible to the OpenAPI generator, so the contract
+ * documented no body at all — and `isActive`, the field this endpoint mostly
+ * exists for, was not in it. A client written against that contract cannot
+ * switch an agency off.
+ *
+ * Switching off rather than deleting is the point: an agency that stopped
+ * sending patients still has invoices carrying its commission, and removing it
+ * would leave those naming nothing.
+ */
+export class UpdateAgencyDto extends PartialType(CreateAgencyDto) {
+  @ApiPropertyOptional({ description: 'Off without deleting; its invoices keep their commission' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 // ------------------------------------------------------------------ responses

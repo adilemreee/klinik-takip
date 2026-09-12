@@ -13760,6 +13760,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgencyDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -21207,6 +21217,40 @@
         "required": [
           "name"
         ]
+      },
+      "UpdateAgencyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactEmail": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "contactPhone": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "commissionRate": {
+            "type": "string",
+            "example": "0.1000",
+            "description": "Fraction of the net, 0–1. Applied when a record names this agency"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Off without deleting; its invoices keep their commission"
+          }
+        }
       },
       "CreateFinanceRecordDto": {
         "type": "object",

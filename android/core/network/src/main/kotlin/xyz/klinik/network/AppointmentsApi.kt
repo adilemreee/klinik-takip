@@ -70,6 +70,42 @@ private data class RescheduleBody(val scheduledAt: String)
 @Serializable
 private data class CancelBody(val reason: String? = null)
 
+/**
+ * When a member of staff is available to be booked (spec M3).
+ *
+ * A weekly pattern rather than a calendar of slots: a clinic's working hours
+ * are "Monday to Friday, nine to five", and storing ten thousand slots to say
+ * that is a database nobody can correct. The timezone belongs to the window
+ * because a working day is a wall-clock thing.
+ */
+@Serializable
+data class AvailabilityWindow(
+    val id: String,
+    val staffId: String,
+    /** 0 = Sunday … 6 = Saturday. */
+    val dayOfWeek: Int,
+    /** `09:00`. */
+    val startTime: String,
+    val endTime: String,
+    val timezone: String,
+    /**
+     * Off without deleting, for a week away.
+     *
+     * Deleting a window loses the pattern; somebody back from leave would have
+     * to write their whole week out again.
+     */
+    val isActive: Boolean = true,
+)
+
+@Serializable
+data class SetAvailabilityWindow(
+    val dayOfWeek: Int,
+    val startTime: String,
+    val endTime: String,
+    val timezone: String? = null,
+    val isActive: Boolean? = null,
+)
+
 class AppointmentsApi(
     private val client: ApiClient,
     private val json: Json = ApiClient.defaultJson,
@@ -180,6 +216,40 @@ class AppointmentsApi(
                 else -> BookingRefusal.Other(error.body.message)
             }
         }
+    }
+
+    /** Every window this account may see. */
+    suspend fun availability(): List<AvailabilityWindow> =
+        decode(client.send(Endpoint(HttpMethod.GET, "appointments/availability")))
+
+    suspend fun setAvailability(window: SetAvailabilityWindow): AvailabilityWindow =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.POST,
+                    "appointments/availability",
+                    body = json.encodeToString(SetAvailabilityWindow.serializer(), window),
+                ),
+            ),
+        )
+
+    suspend fun updateAvailability(
+        windowId: String,
+        window: SetAvailabilityWindow,
+    ): AvailabilityWindow =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.PATCH,
+                    "appointments/availability/$windowId",
+                    body = json.encodeToString(SetAvailabilityWindow.serializer(), window),
+                ),
+            ),
+        )
+
+    /** Removes a window entirely. Switching it off is usually what is wanted. */
+    suspend fun removeAvailability(windowId: String) {
+        client.send(Endpoint(HttpMethod.DELETE, "appointments/availability/$windowId"))
     }
 
     private inline fun <reified T> decode(body: String): T =

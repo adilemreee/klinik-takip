@@ -231,6 +231,58 @@ data class ExchangeRate(
     val value: BigDecimal get() = BigDecimal(rate)
 }
 
+/**
+ * An agency that sends the clinic patients, and what it is owed.
+ *
+ * `commissionRate` is a decimal string for the reason every other money field
+ * is: a binary float cannot hold 0.1 exactly, and this one multiplies an
+ * invoice.
+ */
+@Serializable
+data class Agency(
+    val id: String,
+    val name: String,
+    val country: String? = null,
+    val contactName: String? = null,
+    val contactEmail: String? = null,
+    val contactPhone: String? = null,
+    /** Fraction of the net, 0–1. Null when none was agreed. */
+    val commissionRate: String? = null,
+    val isActive: Boolean = true,
+) {
+    /** The rate as a whole-number percentage, or null when there is none. */
+    val commissionPercent: Int?
+        get() = commissionRate?.let { BigDecimal(it).multiply(BigDecimal(100)).toInt() }
+}
+
+@Serializable
+data class NewAgency(
+    val name: String,
+    val country: String? = null,
+    val contactName: String? = null,
+    val contactEmail: String? = null,
+    val contactPhone: String? = null,
+    val commissionRate: String? = null,
+)
+
+/**
+ * Changing an agency. Every field is optional; omitting one leaves it.
+ *
+ * `isActive` is why this is not the same shape as [NewAgency]: switching an
+ * agency off is the ordinary edit, and deleting one would leave the invoices
+ * carrying its commission naming nothing.
+ */
+@Serializable
+data class AgencyEdit(
+    val name: String? = null,
+    val country: String? = null,
+    val contactName: String? = null,
+    val contactEmail: String? = null,
+    val contactPhone: String? = null,
+    val commissionRate: String? = null,
+    val isActive: Boolean? = null,
+)
+
 @Serializable
 private data class FinanceReasonBody(val reason: String)
 
@@ -310,6 +362,40 @@ class FinanceApi(
                 Endpoint(
                     HttpMethod.GET,
                     "finance/collections?from=$from&to=$to&currency=${currency.name}",
+                ),
+            ),
+        )
+
+    /** Who sends the clinic patients, and on what commission. */
+    suspend fun agencies(): List<Agency> =
+        decode(client.send(Endpoint(HttpMethod.GET, "finance/agencies")))
+
+    suspend fun addAgency(agency: NewAgency): Agency =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.POST,
+                    "finance/agencies",
+                    body = json.encodeToString(NewAgency.serializer(), agency),
+                ),
+            ),
+        )
+
+    /**
+     * Changes an agency. Every field is optional; omitting one leaves it.
+     *
+     * Which is what makes "switch this one off" a different action from
+     * "rewrite this one": an agency that stopped sending patients still has
+     * invoices with its commission on them, and deleting it would leave those
+     * naming nothing.
+     */
+    suspend fun updateAgency(id: String, change: AgencyEdit): Agency =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.PATCH,
+                    "finance/agencies/$id",
+                    body = json.encodeToString(AgencyEdit.serializer(), change),
                 ),
             ),
         )

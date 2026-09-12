@@ -26,6 +26,7 @@ import {
   CollectionReportDto,
   CollectionsQueryDto,
   CreateAgencyDto,
+  UpdateAgencyDto,
   CreateFinanceRecordDto,
   ExchangeRateDto,
   FinanceRecordPageDto,
@@ -232,7 +233,7 @@ export class FinanceController {
   async updateAgency(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: Partial<CreateAgencyDto> & { isActive?: boolean },
+    @Body() dto: UpdateAgencyDto,
   ): Promise<AgencyView> {
     return this.finance.updateAgency(user, id, dto);
   }

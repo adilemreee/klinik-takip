@@ -464,6 +464,7 @@
     <string name="export_country">Ülke (isteğe bağlı, örn. DE)</string>
     <string name="export_download">İndir</string>
     <string name="export_expired">Bu dosyanın süresi doldu ve silindi.</string>
+    <string name="export_for_patient">Bu hastanın dışa aktarımları</string>
     <string name="export_format">Biçim</string>
     <string name="export_format_csv">CSV</string>
     <string name="export_format_xlsx">Excel (XLSX)</string>
@@ -476,6 +477,7 @@
     <string name="export_link_short_lived">İndirme bağlantısı kısa ömürlüdür.</string>
     <string name="export_new_title">Yeni dışa aktarım</string>
     <string name="export_no_history">Henüz dışa aktarım yapılmadı.</string>
+    <string name="export_none_for_patient">Bu hasta için dışa aktarım yapılmadı.</string>
     <string name="export_not_allowed">Yetki yok</string>
     <string name="export_not_permitted">Bu hesabın dışa aktarma yetkisi yok.</string>
     <string name="export_omission_ai_unreviewed">{count} onaylanmamış yapay zekâ metni alınmadı</string>
@@ -483,6 +485,7 @@
     <string name="export_omission_photo_no_consent">{count} fotoğraf, onam olmadığı için alınmadı</string>
     <string name="export_omission_photo_not_requested">{count} fotoğraf istenmedi</string>
     <string name="export_omitted">Rapora girmeyenler</string>
+    <string name="export_patient_lists">Hasta listeleri</string>
     <string name="export_photo_warning">Fotoğraflar yalnız geçerli fotoğraf onamı olanlar için eklenir.</string>
     <string name="export_request">Dosyayı hazırla</string>
     <string name="export_rows">Satır</string>

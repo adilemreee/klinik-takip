@@ -29,9 +29,21 @@ data class Complication(
     val resolution: String? = null,
 )
 
+/** Who reported it. An id names nobody a clinician would recognise. */
+@Serializable
+data class ComplicationPatient(val id: String, val mrn: String, val fullName: String)
+
 @Serializable
 data class ComplicationView(
     val complication: Complication,
+    /**
+     * Whose report it is.
+     *
+     * The queue is clinic-wide, so a row naming only a body area and a
+     * sentence is one nobody can act on: "karın, ağrı var" does not say whose
+     * abdomen it is.
+     */
+    val patient: ComplicationPatient,
     val photos: List<ClinicalPhoto> = emptyList(),
     /** Minutes from report to first answer, or to now while still waiting. */
     val waitingMinutes: Int,

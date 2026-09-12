@@ -464,6 +464,7 @@
     <string name="export_country">Country (optional, e.g. DE)</string>
     <string name="export_download">Download</string>
     <string name="export_expired">This file has expired and been deleted.</string>
+    <string name="export_for_patient">Exports for this patient</string>
     <string name="export_format">Format</string>
     <string name="export_format_csv">CSV</string>
     <string name="export_format_xlsx">Excel (XLSX)</string>
@@ -476,6 +477,7 @@
     <string name="export_link_short_lived">The download link is short-lived.</string>
     <string name="export_new_title">New export</string>
     <string name="export_no_history">Nothing has been exported yet.</string>
+    <string name="export_none_for_patient">Nothing has been exported for this patient.</string>
     <string name="export_not_allowed">Not permitted</string>
     <string name="export_not_permitted">This account cannot export data.</string>
     <string name="export_omission_ai_unreviewed">{count} unapproved AI texts were left out</string>
@@ -483,6 +485,7 @@
     <string name="export_omission_photo_no_consent">{count} photographs were left out for lack of consent</string>
     <string name="export_omission_photo_not_requested">{count} photographs were not requested</string>
     <string name="export_omitted">Left out of this report</string>
+    <string name="export_patient_lists">Patient lists</string>
     <string name="export_photo_warning">Photographs are included only where a live photo consent exists.</string>
     <string name="export_request">Prepare the file</string>
     <string name="export_rows">Rows</string>

@@ -91,6 +91,14 @@ export class ExportResponseDto {
   @ApiProperty({ enum: ExportKind }) kind!: ExportKind;
   @ApiProperty({ enum: ProcessingStatus }) status!: ProcessingStatus;
   @ApiProperty({ nullable: true, format: 'uuid' }) patientId!: string | null;
+  @ApiProperty({
+    nullable: true,
+    example: 'Ayşe Yılmaz',
+    description: 'Whose summary this is. Null for a patient list, which is nobody\'s',
+  })
+  patientName!: string | null;
+  @ApiProperty({ nullable: true, example: '2026-K7RMPX' })
+  mrn!: string | null;
   @ApiProperty({ nullable: true }) size!: number | null;
   @ApiProperty({
     nullable: true,

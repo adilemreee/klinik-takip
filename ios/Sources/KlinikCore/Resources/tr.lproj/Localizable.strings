@@ -545,6 +545,9 @@
 "export.status.DONE" = "Hazır";
 "export.status.FAILED" = "Başarısız";
 "export.summary.title" = "Hasta özet raporu";
+"export.patientLists" = "Hasta listeleri";
+"export.forPatient" = "Bu hastanın dışa aktarımları";
+"export.noneForPatient" = "Bu hasta için dışa aktarım yapılmadı.";
 "export.includePhotos" = "Fotoğrafları ekle";
 "export.photoWarning" = "Fotoğraflar yalnız geçerli fotoğraf onamı olanlar için eklenir.";
 "export.linkShortLived" = "İndirme bağlantısı kısa ömürlüdür.";

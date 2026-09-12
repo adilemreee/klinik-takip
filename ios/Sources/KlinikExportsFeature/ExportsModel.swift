@@ -33,6 +33,45 @@ public struct ExportsState: Sendable, Equatable {
     public var hasUnfinished: Bool {
         requests.contains { $0.status == .queued || $0.status == .processing }
     }
+
+    /// One patient's exports, or the clinic-wide lists that belong to nobody.
+    public struct Group: Sendable, Equatable, Identifiable {
+        /// Nil for patient lists: those are about the clinic, not a person.
+        public let patientName: String?
+        public let mrn: String?
+        public let requests: [ExportRequest]
+
+        public var id: String { mrn ?? patientName ?? "" }
+    }
+
+    /**
+     * The history, grouped by whose it is.
+     *
+     * A flat list of twenty exports is twenty status badges and twenty
+     * timestamps, and finding the summary made for one patient means reading
+     * all of them. Grouped, the name is read once and the rows under it are
+     * short.
+     *
+     * Patient lists come last: they are a different kind of thing, and a
+     * coordinator scanning for a person's file should not have to pass them.
+     */
+    public var grouped: [Group] {
+        let byPatient = Dictionary(grouping: requests.filter { $0.patientName != nil }) {
+            $0.patientName ?? ""
+        }
+
+        let people = byPatient
+            .map { name, rows in
+                Group(patientName: name, mrn: rows.first?.mrn, requests: rows)
+            }
+            // By the newest export in each group, so the file somebody just
+            // worked on is at the top.
+            .sorted { ($0.requests.first?.createdAt ?? .distantPast) > ($1.requests.first?.createdAt ?? .distantPast) }
+
+        let lists = requests.filter { $0.patientName == nil }
+
+        return people + (lists.isEmpty ? [] : [Group(patientName: nil, mrn: nil, requests: lists)])
+    }
 }
 
 /**
@@ -51,17 +90,37 @@ public struct ExportsState: Sendable, Equatable {
 @MainActor
 public final class ExportsModel {
     private let api: ExportsAPI
+
+    /**
+     * Set when the screen belongs to one patient's file.
+     *
+     * The summary a coordinator asks for from a record used to land in a
+     * clinic-wide pile at the bottom of another screen. Scoped, the same list
+     * answers "what have I taken out of *this* file", which is the question
+     * somebody standing in the record is asking.
+     */
+    private let patientId: String?
+
     private var state = ExportsState()
 
-    public init(api: ExportsAPI) {
+    public init(api: ExportsAPI, patientId: String? = nil) {
         self.api = api
+        self.patientId = patientId
     }
+
+    /// Whether this is one patient's history rather than the clinic's.
+    public var isScopedToPatient: Bool { patientId != nil }
 
     public func currentState() -> ExportsState { state }
 
     public func load() async {
-        async let requests = optional { try await api.mine() }
-        async let columns = optional { try await api.columns() }
+        async let requests = optional { try await api.mine(patientId: self.patientId) }
+        // The column catalogue drives the patient-list picker, which a
+        // patient's own page does not show. Asking for it there would be a
+        // request for something nothing on screen uses.
+        async let columns = optional {
+            self.patientId == nil ? try await api.columns() : []
+        }
 
         let loaded = await (requests, columns)
 

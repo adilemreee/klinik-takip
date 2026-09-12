@@ -107,6 +107,9 @@ data class ExportRequest(
     val kind: ExportKind,
     val status: ExportStatus,
     val patientId: String? = null,
+    /** Whose summary this is. Null for a patient list, which is nobody's. */
+    val patientName: String? = null,
+    val mrn: String? = null,
     val size: Int? = null,
     /** What went in, and what was left out. Null until the file is finished. */
     val contents: ExportContents? = null,
@@ -198,8 +201,23 @@ class ExportsApi(
     suspend fun columns(): List<ExportColumn> =
         decode(client.send(Endpoint(HttpMethod.GET, "exports/columns")))
 
-    suspend fun mine(): List<ExportRequest> =
-        decode(client.send(Endpoint(HttpMethod.GET, "exports")))
+    /**
+     * The exports this account asked for, newest first.
+     *
+     * `patientId` narrows it to one file, which is how a patient's own page
+     * asks: somebody standing in a record should not read the whole clinic's
+     * history to find the summary they made an hour ago.
+     */
+    suspend fun mine(patientId: String? = null): List<ExportRequest> =
+        decode(
+            client.send(
+                Endpoint(
+                    HttpMethod.GET,
+                    "exports",
+                    query = patientId?.let { mapOf("patientId" to it) } ?: emptyMap(),
+                ),
+            ),
+        )
 
     suspend fun status(id: String): ExportRequest =
         decode(client.send(Endpoint(HttpMethod.GET, "exports/$id")))

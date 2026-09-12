@@ -20,6 +20,15 @@ public enum FileSection: String, Sendable, Equatable, CaseIterable {
     case checklist
     /// What the patient has consented to, and the signature they drew (M17).
     case consents
+    /**
+     * What has been taken out of this file (spec M12).
+     *
+     * A section rather than a corner of the clinic-wide export screen: the
+     * summary somebody asks for from a record used to land in a pile at the
+     * bottom of another page, and finding it again meant reading the whole
+     * clinic's history.
+     */
+    case exports
 }
 
 public enum PatientFilePhase: Sendable, Equatable {
@@ -193,7 +202,7 @@ public extension PatientFile {
             guard nextFollowUp != nil else { return nil }
             return (L10n.string("file.nextFollowUp"), false)
 
-        case .surveys, .travel, .checklist, .consents:
+        case .surveys, .travel, .checklist, .consents, .exports:
             // The count would need a second read; the row is worth having
             // without one, and an empty badge is better than a wrong number.
             return nil

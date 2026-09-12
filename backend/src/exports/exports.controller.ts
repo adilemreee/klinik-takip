@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import type { Export } from '@prisma/client';
@@ -19,7 +20,7 @@ import {
   RequestPatientListDto,
   RequestSummaryDto,
 } from './dto/exports.dto';
-import { ExportsService } from './exports.service';
+import { ExportsService, type ExportView } from './exports.service';
 
 /**
  * Files that leave the building (spec M12, T6.5).
@@ -104,11 +105,19 @@ export class ExportsController {
 
   @Get('exports')
   @RequirePermissions('export.create')
-  @ApiOperation({ summary: 'Exports you asked for' })
+  @ApiOperation({ summary: 'Exports you asked for, newest first' })
+  @ApiQuery({
+    name: 'patientId',
+    required: false,
+    description: "Narrows it to one file, for that patient's own page",
+  })
   @ApiOkResponse({ type: [ExportResponseDto] })
   @ApiStandardErrors()
-  async list(@CurrentUser() user: AuthenticatedUser): Promise<Export[]> {
-    return this.exports.list(user);
+  async list(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('patientId', new ParseUUIDPipe({ optional: true })) patientId?: string,
+  ): Promise<ExportView[]> {
+    return this.exports.list(user, undefined, patientId);
   }
 
   @Get('exports/:id')
@@ -119,7 +128,7 @@ export class ExportsController {
   async get(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<Export> {
+  ): Promise<ExportView> {
     return this.exports.get(user, id);
   }
 

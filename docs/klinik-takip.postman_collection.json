@@ -5580,7 +5580,7 @@
           }
         },
         {
-          "name": "Exports you asked for",
+          "name": "Exports you asked for, newest first",
           "request": {
             "method": "GET",
             "header": [],
@@ -5591,9 +5591,17 @@
               ],
               "path": [
                 "exports"
+              ],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "",
+                  "description": "Narrows it to one file, for that patient's own page",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Exports you asked for"
+            "description": "Exports you asked for, newest first"
           }
         },
         {

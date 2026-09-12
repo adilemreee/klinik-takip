@@ -545,6 +545,9 @@
 "export.status.DONE" = "Ready";
 "export.status.FAILED" = "Failed";
 "export.summary.title" = "Patient summary";
+"export.patientLists" = "Patient lists";
+"export.forPatient" = "Exports for this patient";
+"export.noneForPatient" = "Nothing has been exported for this patient.";
 "export.includePhotos" = "Include photographs";
 "export.photoWarning" = "Photographs are included only where a live photo consent exists.";
 "export.linkShortLived" = "The download link is short-lived.";

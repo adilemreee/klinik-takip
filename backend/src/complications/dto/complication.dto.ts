@@ -78,9 +78,27 @@ export class ComplicationDto {
   resolution!: string | null;
 }
 
+/** Who reported it. An id names nobody a clinician would recognise. */
+export class ComplicationPatientDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: '2026-K7RMPX' })
+  mrn!: string;
+
+  @ApiProperty({ example: 'Ayşe Yılmaz' })
+  fullName!: string;
+}
+
 export class ComplicationViewDto {
   @ApiProperty({ type: ComplicationDto })
   complication!: ComplicationDto;
+
+  @ApiProperty({
+    type: ComplicationPatientDto,
+    description: 'Whose report it is; the queue is clinic-wide',
+  })
+  patient!: ComplicationPatientDto;
 
   @ApiProperty({ type: [Object], description: 'Photos attached to the report' })
   photos!: unknown[];

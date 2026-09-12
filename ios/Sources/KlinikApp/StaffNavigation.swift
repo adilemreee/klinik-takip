@@ -66,6 +66,8 @@ public enum StaffDestination: Hashable, Sendable {
     case travel(patientId: String)
     /// The pre-operative document checklist (spec M17).
     case checklist(patientId: String)
+    /// One patient's exports, read from their own file.
+    case patientExports(patientId: String)
     /// What the patient consented to, and the signature they drew (M17).
     case consents(patientId: String)
     /// The hours the caller is bookable in (spec M10).
@@ -287,6 +289,11 @@ struct StaffPatientsView: View {
         case .exports:
             ExportsScreen(model: ExportsModel(api: environment.exports))
 
+        case .patientExports(let patientId):
+            ExportsScreen(
+                model: ExportsModel(api: environment.exports, patientId: patientId)
+            )
+
         case .audit:
             AuditScreen(model: AuditModel(api: environment.audit))
 
@@ -504,6 +511,7 @@ private extension StaffDestination {
         case .travel: self = .travel(patientId: patientId)
         case .checklist: self = .checklist(patientId: patientId)
         case .consents: self = .consents(patientId: patientId)
+        case .exports: self = .patientExports(patientId: patientId)
         }
     }
 }

@@ -62,6 +62,7 @@ private fun view(
       "note":"Yara kızardı","bodyArea":"abdomen",
       "reportedAt":"2026-03-01T08:00:00.000Z","acknowledgedAt":$acknowledgedAt,
       "firstResponse":$response,"resolvedAt":null,"resolution":null},
+     "patient":{"id":"p1","mrn":"2026-K7RMPX","fullName":"Ayşe Yılmaz"},
      "photos":[],"waitingMinutes":$waiting,
      "responseMinutes":${if (acknowledgedAt == "null") "null" else waiting.toString()},
      "overdue":$overdue}

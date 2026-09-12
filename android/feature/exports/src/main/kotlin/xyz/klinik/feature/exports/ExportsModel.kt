@@ -42,6 +42,37 @@ data class ExportsState(
         get() = requests.any {
             it.status == ExportStatus.QUEUED || it.status == ExportStatus.PROCESSING
         }
+
+    /** One patient's exports, or the clinic-wide lists that belong to nobody. */
+    data class Group(
+        val patientName: String?,
+        val mrn: String?,
+        val requests: List<ExportRequest>,
+    )
+
+    /**
+     * The history, grouped by whose it is.
+     *
+     * A flat list of twenty exports is twenty status badges and twenty
+     * timestamps, and finding the summary made for one patient means reading
+     * all of them. Grouped, the name is read once and the rows under it are
+     * short. Patient lists come last: they are a different kind of thing, and
+     * somebody scanning for a person should not have to pass them.
+     */
+    val grouped: List<Group>
+        get() {
+            val people = requests
+                .filter { it.patientName != null }
+                .groupBy { it.patientName.orEmpty() }
+                .map { (name, rows) -> Group(name, rows.firstOrNull()?.mrn, rows) }
+                // By the newest export in each group, so the file somebody
+                // just worked on is at the top.
+                .sortedByDescending { it.requests.firstOrNull()?.createdAt.orEmpty() }
+
+            val lists = requests.filter { it.patientName == null }
+
+            return people + if (lists.isEmpty()) emptyList() else listOf(Group(null, null, lists))
+        }
 }
 
 /**
@@ -57,13 +88,29 @@ data class ExportsState(
  * A column somebody cannot export is shown and disabled rather than hidden —
  * hiding it would make an incomplete spreadsheet look like a complete one.
  */
-class ExportsModel(private val api: ExportsApi) {
+class ExportsModel(
+    private val api: ExportsApi,
+    /**
+     * Set when the screen belongs to one patient's file.
+     *
+     * The summary a coordinator asks for from a record used to land in a
+     * clinic-wide pile at the bottom of another screen. Scoped, the same list
+     * answers "what have I taken out of *this* file".
+     */
+    private val patientId: String? = null,
+) {
+    /** Whether this is one patient's history rather than the clinic's. */
+    val isScopedToPatient: Boolean get() = patientId != null
+
     private val _state = MutableStateFlow(ExportsState())
     val state: StateFlow<ExportsState> = _state.asStateFlow()
 
     suspend fun load() {
-        val requests = optional { api.mine() }
-        val columns = optional { api.columns() }
+        val requests = optional { api.mine(patientId) }
+        // The column catalogue drives the patient-list picker, which a
+        // patient's own page does not show; asking for it there would fetch
+        // something nothing on screen uses.
+        val columns = if (patientId == null) optional { api.columns() } else emptyList()
 
         val current = _state.value
 

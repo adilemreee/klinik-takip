@@ -14694,7 +14694,17 @@
     "/exports": {
       "get": {
         "operationId": "ExportsController_list",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": false,
+            "in": "query",
+            "description": "Narrows it to one file, for that patient's own page",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -14755,7 +14765,7 @@
             "bearer": []
           }
         ],
-        "summary": "Exports you asked for",
+        "summary": "Exports you asked for, newest first",
         "tags": [
           "exports"
         ]
@@ -18001,11 +18011,41 @@
           "resolution"
         ]
       },
+      "ComplicationPatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string",
+            "example": "2026-K7RMPX"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Ayşe Yılmaz"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "fullName"
+        ]
+      },
       "ComplicationViewDto": {
         "type": "object",
         "properties": {
           "complication": {
             "$ref": "#/components/schemas/ComplicationDto"
+          },
+          "patient": {
+            "description": "Whose report it is; the queue is clinic-wide",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ComplicationPatientDto"
+              }
+            ]
           },
           "photos": {
             "description": "Photos attached to the report",
@@ -18030,6 +18070,7 @@
         },
         "required": [
           "complication",
+          "patient",
           "photos",
           "waitingMinutes",
           "responseMinutes",
@@ -21830,6 +21871,17 @@
             "nullable": true,
             "format": "uuid"
           },
+          "patientName": {
+            "type": "object",
+            "nullable": true,
+            "example": "Ayşe Yılmaz",
+            "description": "Whose summary this is. Null for a patient list, which is nobody's"
+          },
+          "mrn": {
+            "type": "object",
+            "nullable": true,
+            "example": "2026-K7RMPX"
+          },
           "size": {
             "type": "object",
             "nullable": true
@@ -21858,6 +21910,8 @@
           "kind",
           "status",
           "patientId",
+          "patientName",
+          "mrn",
           "size",
           "contents",
           "error",

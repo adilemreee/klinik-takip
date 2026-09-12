@@ -59,7 +59,11 @@ public struct ExportsScreen: View {
                     }
 
                 case .loaded:
-                    request
+                    // A patient's own page asks a narrower question — what has
+                    // been taken out of this file — so it does not carry the
+                    // clinic-wide list builder.
+                    if !model.isScopedToPatient { request }
+
                     history
                 }
             }
@@ -224,18 +228,56 @@ public struct ExportsScreen: View {
     // MARK: - What has been taken
 
     private var history: some View {
-        VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
-            SectionHeader(title: L10n.string("export.history"))
+        VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
+            SectionHeader(
+                title: model.isScopedToPatient
+                    ? L10n.string("export.forPatient")
+                    : L10n.string("export.history")
+            )
 
             if state.requests.isEmpty {
                 Card {
-                    Text(L10n.string("export.noHistory"))
-                        .font(Tokens.Typography.bodyRelative)
-                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    Text(
+                        model.isScopedToPatient
+                            ? L10n.string("export.noneForPatient")
+                            : L10n.string("export.noHistory")
+                    )
+                    .font(Tokens.Typography.bodyRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
                 }
-            } else {
+            } else if model.isScopedToPatient {
+                // One patient's page: the name is in the title bar, so
+                // repeating it on every row would be noise.
                 ForEach(state.requests) { request in
                     card(request)
+                }
+            } else {
+                // Grouped by whose it is. A flat list is twenty status badges
+                // and twenty timestamps, and finding one patient's summary
+                // means reading all of them.
+                ForEach(state.grouped) { group in
+                    VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                        HStack(alignment: .firstTextBaseline, spacing: Tokens.Spacing.sm) {
+                            Text(group.patientName ?? L10n.string("export.patientLists"))
+                                .font(Tokens.Typography.subheadingRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textPrimary.resolve(for: scheme)
+                                )
+
+                            if let mrn = group.mrn {
+                                Text(mrn)
+                                    .font(Tokens.Typography.captionRelative)
+                                    .foregroundStyle(
+                                        Tokens.Palette.textSecondary.resolve(for: scheme)
+                                    )
+                            }
+                        }
+                        .accessibilityAddTraits(.isHeader)
+
+                        ForEach(group.requests) { request in
+                            card(request)
+                        }
+                    }
                 }
             }
         }
@@ -259,20 +301,19 @@ public struct ExportsScreen: View {
                 }
 
                 if let contents = request.contents {
-                    LazyVGrid(
-                        columns: [
-                            GridItem(.flexible(), alignment: .topLeading),
-                            GridItem(.flexible(), alignment: .topLeading),
-                        ],
-                        spacing: Tokens.Spacing.md
-                    ) {
-                        if let rows = contents.rows {
-                            FieldRow(label: L10n.string("export.rows"), value: "\(rows)")
-                        }
+                    // One line rather than a two-column grid of two values: a
+                    // card that lays out a table to say "120 rows, CSV" is the
+                    // reason the history reads as clutter.
+                    let facts = [
+                        contents.rows.map { "\($0) \(L10n.string("export.rows"))" },
+                        contents.format?.rawValue,
+                    ]
+                    .compactMap { $0 }
 
-                        if let format = contents.format {
-                            FieldRow(label: L10n.string("export.format"), value: format.rawValue)
-                        }
+                    if !facts.isEmpty {
+                        Text(facts.joined(separator: " · "))
+                            .font(Tokens.Typography.captionRelative)
+                            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
                     }
 
                     // The server says what it left out and why. Hiding it would

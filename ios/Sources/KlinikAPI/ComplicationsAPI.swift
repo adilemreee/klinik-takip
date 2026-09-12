@@ -24,8 +24,23 @@ public struct Complication: Decodable, Sendable, Equatable, Identifiable {
     public let resolution: String?
 }
 
+/// Who reported it. An id names nobody a clinician would recognise.
+public struct ComplicationPatient: Decodable, Sendable, Equatable {
+    public let id: String
+    public let mrn: String
+    public let fullName: String
+}
+
 public struct ComplicationView: Decodable, Sendable, Equatable, Identifiable {
     public let complication: Complication
+    /**
+     * Whose report it is.
+     *
+     * The queue is clinic-wide, and a row naming only a body area and a
+     * sentence is one nobody can act on: "karın, ağrı var" does not say whose
+     * abdomen it is.
+     */
+    public let patient: ComplicationPatient
     public let photos: [ClinicalPhoto]
     /// Minutes from report to first answer, or to now while still waiting.
     public let waitingMinutes: Int

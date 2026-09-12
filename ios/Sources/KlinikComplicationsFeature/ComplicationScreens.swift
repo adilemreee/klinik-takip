@@ -118,12 +118,25 @@ struct ComplicationRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
-            HStack {
-                Text(item.complication.bodyArea ?? L10n.string("complication.noBodyArea"))
-                    .font(Tokens.Typography.subheadingRelative)
-                    .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+            HStack(alignment: .firstTextBaseline) {
+                // Whose report it is, first and largest. This queue is
+                // clinic-wide: a row that opened with a body area left a
+                // clinician reading "karın" with no idea whose abdomen.
+                VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+                    Text(item.patient.fullName)
+                        .font(Tokens.Typography.subheadingRelative)
+                        .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
 
-                Spacer()
+                    Text(
+                        "\(item.patient.mrn) · "
+                            + (item.complication.bodyArea
+                                ?? L10n.string("complication.noBodyArea"))
+                    )
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                }
+
+                Spacer(minLength: Tokens.Spacing.sm)
 
                 // How long the patient has been waiting, in words as well as
                 // colour: a wait a reader cannot distinguish by hue is no
@@ -139,6 +152,7 @@ struct ComplicationRow: View {
             Text(item.complication.note)
                 .font(Tokens.Typography.bodyRelative)
                 .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                .fixedSize(horizontal: false, vertical: true)
 
             if !item.photos.isEmpty {
                 Label(

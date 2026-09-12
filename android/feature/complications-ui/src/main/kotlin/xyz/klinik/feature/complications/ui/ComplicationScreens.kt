@@ -157,7 +157,8 @@ private fun QueueRow(
         ?.let { "${strings.respondedIn} $it ${strings.minutesShort}" }
         ?: "${strings.waiting} ${item.waitingMinutes} ${strings.minutesShort}"
 
-    val spoken = "${item.complication.bodyArea ?: strings.noBodyArea}, " +
+    val spoken = "${item.patient.fullName}, " +
+        "${item.complication.bodyArea ?: strings.noBodyArea}, " +
         "${item.complication.note}, $waiting"
 
     Column(
@@ -171,11 +172,18 @@ private fun QueueRow(
             verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xxs),
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    item.complication.bodyArea ?: strings.noBodyArea,
-                    color = klinikColor("textPrimary"),
-                    modifier = Modifier.weight(1f).clearAndSetSemantics {},
-                )
+                // Whose report it is, first. This queue is clinic-wide: a row
+                // that opened with a body area left a clinician reading
+                // "karın" with no idea whose abdomen.
+                Column(modifier = Modifier.weight(1f).clearAndSetSemantics {}) {
+                    Text(item.patient.fullName, color = klinikColor("textPrimary"))
+                    Text(
+                        "${item.patient.mrn} · " +
+                            (item.complication.bodyArea ?: strings.noBodyArea),
+                        fontSize = Tokens.Typography.caption.size,
+                        color = klinikColor("textSecondary"),
+                    )
+                }
 
                 Text(
                     waiting,

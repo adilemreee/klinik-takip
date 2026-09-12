@@ -16,6 +16,29 @@ import type { RequestContext } from '../patients/patients.service';
 import { JOBS, QUEUES } from '../queue/queue.constants';
 import { QueueService } from '../queue/queue.service';
 import { ColumnError, resolveColumns } from './columns';
+
+/**
+ * An export with the patient it is about.
+ *
+ * A patient list belongs to nobody, so both fields are nullable: the row says
+ * "this is a list" by having no name rather than by having a blank one.
+ */
+export type ExportView = Export & {
+  patientName: string | null;
+  mrn: string | null;
+};
+
+type ExportRow = Export & {
+  patient: { mrn: string; firstName: string; lastName: string } | null;
+};
+
+function named({ patient, ...row }: ExportRow): ExportView {
+  return {
+    ...row,
+    patientName: patient ? `${patient.firstName} ${patient.lastName}` : null,
+    mrn: patient?.mrn ?? null,
+  };
+}
 import type { PatientListFilter } from './patient-list.builder';
 import type { ExportFormat } from './writers';
 
@@ -154,8 +177,11 @@ export class ExportsService {
     return result;
   }
 
-  async get(user: AuthenticatedUser, id: string): Promise<Export> {
-    const row = await this.prisma.export.findUnique({ where: { id } });
+  async get(user: AuthenticatedUser, id: string): Promise<ExportView> {
+    const row = await this.prisma.export.findUnique({
+      where: { id },
+      include: { patient: { select: { mrn: true, firstName: true, lastName: true } } },
+    });
 
     // Somebody else's export is not visible, and "not yours" and "no such
     // export" are the same answer for the same reason they are everywhere else.
@@ -163,15 +189,27 @@ export class ExportsService {
       throw new NotFoundException('Export not found');
     }
 
-    return row;
+    return named(row);
   }
 
-  async list(user: AuthenticatedUser, limit = 20): Promise<Export[]> {
-    return this.prisma.export.findMany({
-      where: { requestedById: user.id },
+  /**
+   * The exports this person asked for, newest first.
+   *
+   * `patientId` narrows it to one file, which is how the patient's own page
+   * asks the question: a coordinator looking at one record should not have to
+   * read the whole clinic's history to find the summary they made an hour ago.
+   */
+  async list(user: AuthenticatedUser, limit = 20, patientId?: string): Promise<ExportView[]> {
+    const rows = await this.prisma.export.findMany({
+      where: { requestedById: user.id, ...(patientId ? { patientId } : {}) },
       orderBy: { id: 'desc' },
       take: Math.min(limit, 100),
+      // Whose summary it is. A history of identifiers and timestamps is a
+      // history nobody can read.
+      include: { patient: { select: { mrn: true, firstName: true, lastName: true } } },
     });
+
+    return rows.map(named);
   }
 
   /**

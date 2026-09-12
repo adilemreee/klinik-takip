@@ -20,8 +20,23 @@ import { PrismaService } from '../infra/prisma.service';
  */
 export const OVERDUE_AFTER_MINUTES = 120;
 
+/**
+ * Who reported it.
+ *
+ * The queue is clinic-wide, and a row naming only a body area and a sentence
+ * is a row nobody can act on: a clinician reading "karın, ağrı var" has no way
+ * to tell whose abdomen it is. The file number is here for the same reason the
+ * emergency queue carries one — two patients share a first name often enough.
+ */
+export interface ComplicationPatient {
+  id: string;
+  mrn: string;
+  fullName: string;
+}
+
 export interface ComplicationView {
   complication: Complication;
+  patient: ComplicationPatient;
   photos: Photo[];
   /** Minutes from report to first answer, or to now while still waiting. */
   waitingMinutes: number;
@@ -110,7 +125,11 @@ export class ComplicationsService {
       return created;
     });
 
-    return this.view(complication, await this.photosOf(complication.id));
+    return this.view(
+      complication,
+      await this.photosOf(complication.id),
+      await this.patientOf(patientId),
+    );
   }
 
   /**
@@ -135,10 +154,20 @@ export class ComplicationsService {
           : { in: [ComplicationStatus.REPORTED, ComplicationStatus.ACKNOWLEDGED] },
       },
       orderBy: { reportedAt: 'asc' },
-      include: { photos: { where: { deletedAt: null } } },
+      include: {
+        photos: { where: { deletedAt: null } },
+        // Whose report it is. Without it the queue is a list of body areas.
+        patient: { select: { id: true, mrn: true, firstName: true, lastName: true } },
+      },
     });
 
-    return complications.map((row) => this.view(row, row.photos));
+    return complications.map((row) =>
+      this.view(row, row.photos, {
+        id: row.patient.id,
+        mrn: row.patient.mrn,
+        fullName: `${row.patient.firstName} ${row.patient.lastName}`,
+      }),
+    );
   }
 
   /** One patient's reports, newest first — the history on their file. */
@@ -148,10 +177,19 @@ export class ComplicationsService {
     const complications = await this.prisma.complication.findMany({
       where: { patientId },
       orderBy: { reportedAt: 'desc' },
-      include: { photos: { where: { deletedAt: null } } },
+      include: {
+        photos: { where: { deletedAt: null } },
+        patient: { select: { id: true, mrn: true, firstName: true, lastName: true } },
+      },
     });
 
-    return complications.map((row) => this.view(row, row.photos));
+    return complications.map((row) =>
+      this.view(row, row.photos, {
+        id: row.patient.id,
+        mrn: row.patient.mrn,
+        fullName: `${row.patient.firstName} ${row.patient.lastName}`,
+      }),
+    );
   }
 
   /**
@@ -201,7 +239,11 @@ export class ComplicationsService {
       return row;
     });
 
-    return this.view(updated, await this.photosOf(complicationId));
+    return this.view(
+      updated,
+      await this.photosOf(complicationId),
+      await this.patientOf(existing.patientId),
+    );
   }
 
   /**
@@ -253,7 +295,31 @@ export class ComplicationsService {
       return row;
     });
 
-    return this.view(updated, await this.photosOf(complicationId));
+    return this.view(
+      updated,
+      await this.photosOf(complicationId),
+      await this.patientOf(existing.patientId),
+    );
+  }
+
+  /**
+   * Who a report belongs to.
+   *
+   * Read separately for the single-row paths — reporting, answering, closing —
+   * because those already have the complication and a second small query costs
+   * less than threading the relation through every write.
+   */
+  private async patientOf(patientId: string): Promise<ComplicationPatient> {
+    const patient = await this.prisma.patient.findUniqueOrThrow({
+      where: { id: patientId },
+      select: { id: true, mrn: true, firstName: true, lastName: true },
+    });
+
+    return {
+      id: patient.id,
+      mrn: patient.mrn,
+      fullName: `${patient.firstName} ${patient.lastName}`,
+    };
   }
 
   private async photosOf(complicationId: string): Promise<Photo[]> {
@@ -281,13 +347,18 @@ export class ComplicationsService {
     return complication;
   }
 
-  private view(complication: Complication, photos: Photo[]): ComplicationView {
+  private view(
+    complication: Complication,
+    photos: Photo[],
+    patient: ComplicationPatient,
+  ): ComplicationView {
     const answeredAt = complication.acknowledgedAt;
     const reference = answeredAt ?? new Date();
     const waitingMs = reference.getTime() - complication.reportedAt.getTime();
 
     return {
       complication,
+      patient,
       photos,
       waitingMinutes: Math.max(0, Math.round(waitingMs / 60_000)),
       responseMinutes: answeredAt

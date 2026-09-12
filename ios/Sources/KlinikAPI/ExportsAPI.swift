@@ -109,6 +109,9 @@ public struct ExportRequest: Decodable, Sendable, Equatable, Identifiable {
     public let kind: ExportKind
     public let status: ExportStatus
     public let patientId: String?
+    /// Whose summary this is. Nil for a patient list, which is nobody's.
+    public let patientName: String?
+    public let mrn: String?
     public let size: Int?
     /// What went in, and what was left out. Null until the file is finished.
     public let contents: ExportContents?
@@ -203,8 +206,22 @@ public struct ExportsAPI: Sendable {
         )
     }
 
-    public func mine() async throws -> [ExportRequest] {
-        try await client.send(Endpoint(method: .get, path: "exports"), as: [ExportRequest].self)
+    /**
+     * The exports this account asked for, newest first.
+     *
+     * `patientId` narrows it to one file, which is how a patient's own page
+     * asks: a coordinator looking at one record should not have to read the
+     * whole clinic's history to find the summary they made an hour ago.
+     */
+    public func mine(patientId: String? = nil) async throws -> [ExportRequest] {
+        try await client.send(
+            Endpoint(
+                method: .get,
+                path: "exports",
+                query: patientId.map { ["patientId": $0] } ?? [:]
+            ),
+            as: [ExportRequest].self
+        )
     }
 
     public func status(_ id: String) async throws -> ExportRequest {

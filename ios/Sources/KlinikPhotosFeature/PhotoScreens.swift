@@ -12,6 +12,7 @@ public struct PhotoGalleryView: View {
 
     @State private var state = GalleryState()
     @State private var comparing = false
+    @State private var viewing: ClinicalPhoto?
 
     /// - Parameter linkFor: mints a short-lived signed URL for a photo. Supplied
     ///   by the caller so the screen never holds a URL longer than it draws it.
@@ -35,6 +36,9 @@ public struct PhotoGalleryView: View {
             if let pair = state.comparison {
                 PhotoComparisonView(pair: pair, linkFor: linkFor)
             }
+        }
+        .sheet(item: $viewing) { photo in
+            PhotoViewer(photo: photo.viewable, linkFor: linkFor)
         }
     }
 
@@ -83,7 +87,13 @@ public struct PhotoGalleryView: View {
 
                 if let group = state.selectedGroup {
                     ForEach(group.photos) { photo in
-                        PhotoRow(photo: photo, linkFor: linkFor)
+                        // The whole row, not a corner of it: somebody looking
+                        // at a wound photograph taps the photograph.
+                        Button { viewing = photo } label: {
+                            PhotoRow(photo: photo, linkFor: linkFor)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint(L10n.string("photo.openFull"))
                     }
                 }
 
@@ -243,6 +253,14 @@ struct SignedImage: View {
     @Environment(\.colorScheme) private var scheme
 
     let url: URL?
+    /**
+     * Whether the image fills its frame or fits inside it.
+     *
+     * A thumbnail fills, because a row of ragged edges is harder to scan. The
+     * viewer fits: cropping a wound photograph to a rectangle is cropping the
+     * thing somebody opened it to see.
+     */
+    var fill: Bool = true
 
     var body: some View {
         Group {
@@ -250,7 +268,11 @@ struct SignedImage: View {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .success(let image):
-                        image.resizable().scaledToFill()
+                        if fill {
+                            image.resizable().scaledToFill()
+                        } else {
+                            image.resizable().scaledToFit()
+                        }
                     case .failure:
                         placeholder(icon: "exclamationmark.triangle")
                     default:

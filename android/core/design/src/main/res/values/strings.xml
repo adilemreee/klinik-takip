@@ -927,6 +927,7 @@
     <string name="photo_compare_slider">Karşılaştırma kaydırıcısı</string>
     <string name="photo_comparison_title">Karşılaştırma</string>
     <string name="photo_consent_given">Kullanım onamı var</string>
+    <string name="photo_download_failed">Fotoğraf indirilemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="photo_empty">Henüz fotoğraf yok.</string>
     <string name="photo_finding_discharge">Akıntı</string>
     <string name="photo_finding_redness">Kızarıklık</string>
@@ -940,10 +941,13 @@
     <string name="photo_no_body_area">Bölge belirtilmemiş</string>
     <string name="photo_none_flagged">İnceleme önerilen fotoğraf yok.</string>
     <string name="photo_not_permitted">Bu hesabın fotoğraflara erişimi yok.</string>
+    <string name="photo_open_full">Tam ekran aç</string>
     <string name="photo_overlay_hint">Önceki fotoğrafın izini kullanarak aynı açı ve mesafeden çekin.</string>
     <string name="photo_patient_note">Hastanın notu</string>
+    <string name="photo_save_or_share">Fotoğrafı kaydet veya paylaş</string>
     <string name="photo_uploaded">Gönderildi</string>
     <string name="photo_uploading">Gönderiliyor…</string>
+    <string name="photo_zoom_hint">Yakınlaştırmak için iki parmakla açın, sıfırlamak için çift dokunun.</string>
     <string name="prescribe_action">Reçeteyi yaz</string>
     <string name="prescribe_days">Kaç gün</string>
     <string name="prescribe_dose">Doz (örn. 500 mg)</string>

@@ -12,7 +12,7 @@ public enum FlaggedPhase: Sendable, Equatable {
 
 public struct FlaggedState: Sendable, Equatable {
     public var phase: FlaggedPhase = .loading
-    public var photos: [ClinicalPhoto] = []
+    public var photos: [FlaggedPhoto] = []
     public var busyId: String?
     public var error: String?
 
@@ -68,7 +68,7 @@ public final class FlaggedPhotosModel {
             let assessment = try await api.assess(photoId)
 
             if let index = state.photos.firstIndex(where: { $0.id == photoId }) {
-                state.photos[index] = assessment.photo
+                state.photos[index] = state.photos[index].reassessed(as: assessment.photo)
             }
 
             return assessment.skippedReason
@@ -82,7 +82,7 @@ public final class FlaggedPhotosModel {
     }
 
     /// Oldest first — the point of a worklist.
-    public func ordered() -> [ClinicalPhoto] {
+    public func ordered() -> [FlaggedPhoto] {
         state.photos.sorted { $0.takenAt < $1.takenAt }
     }
 }

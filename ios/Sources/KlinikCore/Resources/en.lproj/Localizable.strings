@@ -1003,6 +1003,10 @@
 "photo.assessAgain" = "Assess again";
 "photo.patientNote" = "The patient's note";
 "photo.image" = "Clinical photograph";
+"photo.openFull" = "Open full screen";
+"photo.saveOrShare" = "Save or share the photo";
+"photo.zoomHint" = "Pinch to zoom, double-tap to reset.";
+"photo.downloadFailed" = "The photo could not be downloaded. Check your connection and try again.";
 "finance.reverse" = "Reverse the payment";
 "finance.reverseReason" = "Why is it being reversed?";
 "finance.reverseNeedsReason" = "Write why it is being reversed.";

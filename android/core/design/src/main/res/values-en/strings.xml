@@ -927,6 +927,7 @@
     <string name="photo_compare_slider">Comparison slider</string>
     <string name="photo_comparison_title">Comparison</string>
     <string name="photo_consent_given">Usage consent given</string>
+    <string name="photo_download_failed">The photo could not be downloaded. Check your connection and try again.</string>
     <string name="photo_empty">No photos yet.</string>
     <string name="photo_finding_discharge">Discharge</string>
     <string name="photo_finding_redness">Redness</string>
@@ -940,10 +941,13 @@
     <string name="photo_no_body_area">No body area given</string>
     <string name="photo_none_flagged">No photographs are suggested for review.</string>
     <string name="photo_not_permitted">This account cannot see photographs.</string>
+    <string name="photo_open_full">Open full screen</string>
     <string name="photo_overlay_hint">Line the previous photo up and shoot from the same angle and distance.</string>
     <string name="photo_patient_note">The patient\'s note</string>
+    <string name="photo_save_or_share">Save or share the photo</string>
     <string name="photo_uploaded">Sent</string>
     <string name="photo_uploading">Sending…</string>
+    <string name="photo_zoom_hint">Pinch to zoom, double-tap to reset.</string>
     <string name="prescribe_action">Write the prescription</string>
     <string name="prescribe_days">For how many days</string>
     <string name="prescribe_dose">Dose (e.g. 500 mg)</string>

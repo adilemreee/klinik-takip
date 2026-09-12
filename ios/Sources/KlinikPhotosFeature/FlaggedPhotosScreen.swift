@@ -17,14 +17,15 @@ public struct FlaggedPhotosScreen: View {
 
     private let model: FlaggedPhotosModel
     private let linkFor: (String) async -> URL?
-    private let openPatient: ((String) -> Void)?
+    private let openPatient: ((String, String) -> Void)?
 
     @State private var state = FlaggedState()
+    @State private var viewing: FlaggedPhoto?
 
     public init(
         model: FlaggedPhotosModel,
         linkFor: @escaping (String) async -> URL?,
-        openPatient: ((String) -> Void)? = nil
+        openPatient: ((String, String) -> Void)? = nil
     ) {
         self.model = model
         self.linkFor = linkFor
@@ -71,15 +72,59 @@ public struct FlaggedPhotosScreen: View {
         .navigationTitle(L10n.string("photo.flaggedTitle"))
         .refreshable { await reload() }
         .task { await reload() }
+        .sheet(item: $viewing) { photo in
+            PhotoViewer(photo: photo.viewable, linkFor: linkFor)
+        }
     }
 
-    private func card(_ photo: ClinicalPhoto) -> some View {
+    private func card(_ photo: FlaggedPhoto) -> some View {
         Card(tone: photo.needsReview ? .warning : .neutral) {
             VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
-                RemotePhoto(photoId: photo.id, linkFor: linkFor)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+                // Whose wound it is, above the photograph. The worklist is
+                // clinic-wide: a card showing a flagged wound and no name is
+                // something to read rather than something to act on.
+                Button {
+                    openPatient?(photo.patientId, photo.patientName)
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: Tokens.Spacing.sm) {
+                        Text(photo.patientName)
+                            .font(Tokens.Typography.subheadingRelative)
+                            .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+                        Text(photo.mrn)
+                            .font(Tokens.Typography.captionRelative)
+                            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                        Spacer(minLength: 0)
+
+                        if openPatient != nil {
+                            // The row already announces the name; the chevron
+                            // is the shape of "this opens", not a second thing
+                            // to read.
+                            Image(systemName: "chevron.right")
+                                .accessibilityHidden(true)
+                                .font(Tokens.Typography.captionRelative)
+                                .foregroundStyle(
+                                    Tokens.Palette.textSecondary.resolve(for: scheme)
+                                )
+                        }
+                    }
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+                }
+                .buttonStyle(.plain)
+                .disabled(openPatient == nil)
+
+                // The card draws it 220 points high, which is enough to tell a
+                // wound from a passport and not enough to look at a suture
+                // line. Tapping opens the one that is.
+                Button { viewing = photo } label: {
+                    RemotePhoto(photoId: photo.id, linkFor: linkFor)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L10n.string("photo.openFull"))
 
                 HStack(spacing: Tokens.Spacing.sm) {
                     Badge(

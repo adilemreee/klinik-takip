@@ -324,7 +324,10 @@ struct StaffPatientsView: View {
                     guard let link = try? await photos.link(photoId: id) else { return nil }
 
                     return URL(string: link.url)
-                }
+                },
+                // Straight into the file: a worklist that names the patient
+                // and cannot open their record is one somebody searches from.
+                openPatient: { id, name in push(.patient(id: id, name: name)) }
             )
 
         case .surveys(let patientId):

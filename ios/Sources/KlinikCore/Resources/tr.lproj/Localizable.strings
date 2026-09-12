@@ -1003,6 +1003,10 @@
 "photo.assessAgain" = "Yeniden değerlendir";
 "photo.patientNote" = "Hastanın notu";
 "photo.image" = "Klinik fotoğraf";
+"photo.openFull" = "Tam ekran aç";
+"photo.saveOrShare" = "Fotoğrafı kaydet veya paylaş";
+"photo.zoomHint" = "Yakınlaştırmak için iki parmakla açın, sıfırlamak için çift dokunun.";
+"photo.downloadFailed" = "Fotoğraf indirilemedi. Bağlantınızı kontrol edip tekrar deneyin.";
 "finance.reverse" = "Ödemeyi geri al";
 "finance.reverseReason" = "Neden geri alınıyor?";
 "finance.reverseNeedsReason" = "Geri alma nedenini yazın.";

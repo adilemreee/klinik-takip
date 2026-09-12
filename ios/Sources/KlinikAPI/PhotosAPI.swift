@@ -83,6 +83,65 @@ public struct PhotoLink: Decodable, Sendable, Equatable {
     public let expiresAt: Date
 }
 
+/**
+ * A flagged photograph, and whose it is.
+ *
+ * The worklist is clinic-wide, so a row naming only the wound left a clinician
+ * able to see that something needed looking at and unable to find the file.
+ */
+public struct FlaggedPhoto: Decodable, Sendable, Equatable, Identifiable {
+    public let id: String
+    public let patientId: String
+    public let patientName: String
+    public let mrn: String
+    public let category: PhotoCategory
+    public let bodyArea: String?
+    public let phaseLabel: String?
+    public let mime: String
+    public let takenAt: Date
+    public let consentId: String?
+    public let note: String?
+    public let aiReviewSuggested: Bool?
+    public let aiFindings: [String]
+
+    public var hasUsageConsent: Bool { consentId != nil }
+
+    /// Somebody looked and found nothing, as opposed to nobody having looked.
+    public var isAssessedClean: Bool { aiReviewSuggested == false }
+    public var needsReview: Bool { aiReviewSuggested == true }
+
+    public var findingKeys: [String] { aiFindings.map { "photo.finding.\($0)" } }
+
+    public var localizedFindings: [String] {
+        aiFindings.map { L10n.string("photo.finding.\($0)") }
+    }
+
+    /**
+     * The same row after a fresh assessment.
+     *
+     * The assessment answers about the photograph and says nothing about whose
+     * it is, so the patient is carried across rather than being read back from
+     * a response that does not contain it.
+     */
+    public func reassessed(as photo: ClinicalPhoto) -> FlaggedPhoto {
+        FlaggedPhoto(
+            id: id,
+            patientId: patientId,
+            patientName: patientName,
+            mrn: mrn,
+            category: category,
+            bodyArea: bodyArea,
+            phaseLabel: phaseLabel,
+            mime: mime,
+            takenAt: takenAt,
+            consentId: consentId,
+            note: note,
+            aiReviewSuggested: photo.aiReviewSuggested,
+            aiFindings: photo.aiFindings
+        )
+    }
+}
+
 public struct PhotosAPI: Sendable {
     private let client: APIClient
 
@@ -96,10 +155,10 @@ public struct PhotosAPI: Sendable {
      * A worklist: ordered newest-first it would be one where the oldest thing
      * waits forever.
      */
-    public func flagged() async throws -> [ClinicalPhoto] {
+    public func flagged() async throws -> [FlaggedPhoto] {
         try await client.send(
             Endpoint(method: .get, path: "photos/flagged"),
-            as: [ClinicalPhoto].self
+            as: [FlaggedPhoto].self
         )
     }
 

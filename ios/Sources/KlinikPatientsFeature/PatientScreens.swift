@@ -84,22 +84,103 @@ public struct PatientListView: View {
     }
 }
 
+/**
+ * One patient in the list.
+ *
+ * The row carried a name and a file number, which is the least a list can say.
+ * Two things were missing and both are what somebody scans for: where the
+ * patient is in their treatment, and something to fix the eye on while moving
+ * down a page of names. The status is a word as well as a colour — a stage a
+ * reader cannot tell by hue is no signal at all (spec section 7) — and the
+ * initials are a shape, not information, so a screen reader skips them.
+ */
 struct PatientRow: View {
     @Environment(\.colorScheme) private var scheme
     let patient: Patient
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
-            Text(patient.fullName)
-                .font(Tokens.Typography.subheadingRelative)
-                .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+        HStack(spacing: Tokens.Spacing.md) {
+            Initials(name: patient.fullName)
 
-            Text("\(L10n.string("patient.fileNumber")) \(patient.mrn) · \(patient.country)")
-                .font(Tokens.Typography.captionRelative)
-                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+            VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+                Text(patient.fullName)
+                    .font(Tokens.Typography.subheadingRelative)
+                    .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+
+                Text(subtitle)
+                    .font(Tokens.Typography.captionRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+            }
+
+            Spacer(minLength: Tokens.Spacing.sm)
+
+            Badge(localizedStatus, tone: PatientRow.tone(for: patient.status))
         }
         .padding(.vertical, Tokens.Spacing.xs)
-        // One announcement per row rather than three fragments.
+        // One announcement per row rather than five fragments.
         .accessibilityElement(children: .combine)
+    }
+
+    /// File number, then where they are from. The city when the clinic has it:
+    /// two patients from the same country are told apart by the next line down.
+    private var subtitle: String {
+        let place = [patient.city, patient.country].compactMap { $0 }.joined(separator: ", ")
+
+        return "\(patient.mrn) · \(place)"
+    }
+
+    private var localizedStatus: String {
+        let key = "patient.status.\(patient.status)"
+        let text = L10n.string(key)
+
+        // A status the catalogue has no word for is shown as the server spells
+        // it: a blank badge would read as a patient with no stage at all.
+        return text == key ? patient.status : text
+    }
+
+    /**
+     * Colour by where the treatment stands, not by severity.
+     *
+     * The two that matter are the ones somebody is looking for: a patient
+     * about to be operated on, and one who has been and is being followed.
+     */
+    static func tone(for status: String) -> Tone {
+        switch status {
+        case "PRE_OP", "SCHEDULED": return .warning
+        case "POST_OP", "FOLLOW_UP": return .info
+        case "DISCHARGED": return .success
+        default: return .neutral
+        }
+    }
+}
+
+/**
+ * The first letters of a name, as a shape to scan by.
+ *
+ * Decorative on purpose: it repeats the name beside it, and a screen reader
+ * announcing "A Y, Ayşe Yılmaz" is a list read twice.
+ */
+struct Initials: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let name: String
+
+    var body: some View {
+        Text(letters)
+            .font(Tokens.Typography.captionRelative)
+            .foregroundStyle(Tokens.Palette.accent.resolve(for: scheme))
+            .frame(width: 40, height: 40)
+            .background(Tokens.Palette.infoSurface.resolve(for: scheme))
+            .clipShape(Circle())
+            .accessibilityHidden(true)
+    }
+
+    private var letters: String {
+        name
+            .split(separator: " ")
+            .prefix(2)
+            .compactMap { $0.first.map(String.init) }
+            .joined()
+            .uppercased()
     }
 }

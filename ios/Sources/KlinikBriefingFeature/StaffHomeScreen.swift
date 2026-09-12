@@ -82,26 +82,18 @@ public struct StaffHomeScreen: View {
 
     @ViewBuilder
     private var loaded: some View {
+        let risks = model.risks()
+        let quiet = state.briefing?.quiet == true && !state.hasEmergencies && risks.isEmpty
+
         if state.hasEmergencies {
             emergencyBanner
         }
 
-        queues
-
-        today
-
-        let risks = model.risks()
-        if !risks.isEmpty {
-            waiting(risks)
-        }
-
-        if let narrative = state.briefing?.narrative, !narrative.isEmpty {
-            summary(narrative)
-        }
-
-        yesterday
-
-        if state.briefing?.quiet == true, !state.hasEmergencies, risks.isEmpty {
+        // At the top, not the bottom. "Nothing is waiting" is the answer to
+        // the question this screen exists to answer, and it used to sit under
+        // three sections of zeros — so a clinician scrolled past an empty
+        // morning to be told the morning was empty.
+        if quiet {
             Card(tone: .success) {
                 HStack(spacing: Tokens.Spacing.md) {
                     Image(systemName: "checkmark.circle.fill")
@@ -116,6 +108,20 @@ public struct StaffHomeScreen: View {
                 }
             }
         }
+
+        queues
+
+        today
+
+        if !risks.isEmpty {
+            waiting(risks)
+        }
+
+        if let narrative = state.briefing?.narrative, !narrative.isEmpty {
+            summary(narrative)
+        }
+
+        yesterday
     }
 
     /// The one thing on this screen that is allowed to shout.
@@ -217,20 +223,37 @@ public struct StaffHomeScreen: View {
             VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
                 SectionHeader(title: L10n.string("briefing.today"))
 
-                HStack(spacing: Tokens.Spacing.md) {
-                    StatTile(
-                        value: "\(facts.today.appointments)",
-                        label: L10n.string("briefing.appointments"),
-                        tone: facts.today.appointments > 0 ? .info : .neutral,
-                        symbol: "calendar"
-                    )
+                // Two zeros side by side say "nothing today" in the most
+                // roundabout way available. One sentence says it.
+                if facts.today.appointments == 0 && facts.today.followUps == 0 {
+                    Card {
+                        Text(L10n.string("briefing.nothingToday"))
+                            .font(Tokens.Typography.bodyRelative)
+                            .foregroundStyle(
+                                Tokens.Palette.textSecondary.resolve(for: scheme)
+                            )
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    HStack(spacing: Tokens.Spacing.md) {
+                        if facts.today.appointments > 0 {
+                            StatTile(
+                                value: "\(facts.today.appointments)",
+                                label: L10n.string("briefing.appointments"),
+                                tone: .info,
+                                symbol: "calendar"
+                            )
+                        }
 
-                    StatTile(
-                        value: "\(facts.today.followUps)",
-                        label: L10n.string("briefing.followUps"),
-                        tone: facts.today.followUps > 0 ? .info : .neutral,
-                        symbol: "checkmark.circle"
-                    )
+                        if facts.today.followUps > 0 {
+                            StatTile(
+                                value: "\(facts.today.followUps)",
+                                label: L10n.string("briefing.followUps"),
+                                tone: .info,
+                                symbol: "checkmark.circle"
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -324,43 +347,37 @@ public struct StaffHomeScreen: View {
             VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
                 SectionHeader(title: L10n.string("briefing.yesterday"))
 
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: Tokens.Spacing.md),
-                        GridItem(.flexible(), spacing: Tokens.Spacing.md),
-                        GridItem(.flexible(), spacing: Tokens.Spacing.md),
-                    ],
-                    spacing: Tokens.Spacing.md
-                ) {
-                    StatTile(
-                        value: "\(facts.yesterday.newMessages)",
-                        label: L10n.string("briefing.newMessages"),
-                        symbol: "bubble.left.and.bubble.right"
-                    )
-                    StatTile(
-                        value: "\(facts.yesterday.urgentMessages)",
-                        label: L10n.string("briefing.urgentMessages"),
-                        tone: facts.yesterday.urgentMessages > 0 ? .warning : .neutral,
-                        symbol: "exclamationmark.bubble"
-                    )
-                    StatTile(
-                        value: "\(facts.yesterday.emergencies)",
-                        label: L10n.string("briefing.emergencies"),
-                        tone: facts.yesterday.emergencies > 0 ? .critical : .neutral,
-                        symbol: "phone.badge.waveform"
-                    )
-                    StatTile(
-                        value: "\(facts.yesterday.complications)",
-                        label: L10n.string("briefing.complications"),
-                        tone: facts.yesterday.complications > 0 ? .warning : .neutral,
-                        symbol: "bandage"
-                    )
-                    StatTile(
-                        value: "\(facts.yesterday.criticalLabs)",
-                        label: L10n.string("briefing.criticalLabs"),
-                        tone: facts.yesterday.criticalLabs > 0 ? .critical : .neutral,
-                        symbol: "testtube.2"
-                    )
+                // Only what happened. Five tiles reading zero is a wall a
+                // clinician has to check one by one to learn that nothing did,
+                // and an odd number of them leaves a hole in a two-column
+                // grid.
+                let tiles = StaffHomeScreen.yesterdayTiles(facts.yesterday)
+
+                if tiles.isEmpty {
+                    Card {
+                        Text(L10n.string("briefing.yesterdayQuiet"))
+                            .font(Tokens.Typography.bodyRelative)
+                            .foregroundStyle(
+                                Tokens.Palette.textSecondary.resolve(for: scheme)
+                            )
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.adaptive(minimum: 150), spacing: Tokens.Spacing.md),
+                        ],
+                        spacing: Tokens.Spacing.md
+                    ) {
+                        ForEach(tiles) { tile in
+                            StatTile(
+                                value: "\(tile.value)",
+                                label: L10n.string(tile.labelKey),
+                                tone: tile.tone,
+                                symbol: tile.symbol
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -379,6 +396,61 @@ public struct StaffHomeScreen: View {
     }
 
     // MARK: - Helpers
+
+    /// One of yesterday's counts, when there is something to count.
+    struct YesterdayTile: Identifiable, Equatable {
+        let labelKey: String
+        let value: Int
+        let tone: Tone
+        let symbol: String
+
+        var id: String { labelKey }
+    }
+
+    /**
+     * Yesterday's counts, with the zeros left out.
+     *
+     * A count of nothing is not news. Five tiles reading zero is a wall
+     * somebody has to read in full to learn that nothing happened, and it
+     * crowds out the two that did.
+     */
+    /// `nonisolated` because a static on a `View` otherwise inherits the
+    /// view's main-actor isolation, and the tests call it directly.
+    nonisolated static func yesterdayTiles(_ facts: BriefingYesterday) -> [YesterdayTile] {
+        [
+            YesterdayTile(
+                labelKey: "briefing.newMessages",
+                value: facts.newMessages,
+                tone: .neutral,
+                symbol: "bubble.left.and.bubble.right"
+            ),
+            YesterdayTile(
+                labelKey: "briefing.urgentMessages",
+                value: facts.urgentMessages,
+                tone: .warning,
+                symbol: "exclamationmark.bubble"
+            ),
+            YesterdayTile(
+                labelKey: "briefing.emergencies",
+                value: facts.emergencies,
+                tone: .critical,
+                symbol: "phone.badge.waveform"
+            ),
+            YesterdayTile(
+                labelKey: "briefing.complications",
+                value: facts.complications,
+                tone: .warning,
+                symbol: "bandage"
+            ),
+            YesterdayTile(
+                labelKey: "briefing.criticalLabs",
+                value: facts.criticalLabs,
+                tone: .critical,
+                symbol: "testtube.2"
+            ),
+        ]
+        .filter { $0.value > 0 }
+    }
 
     static func waiting(minutes: Int) -> String {
         minutes < 60

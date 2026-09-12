@@ -440,6 +440,8 @@
 "briefing.today" = "Bugün";
 "briefing.atRisk" = "Bekleyenler";
 "briefing.quiet" = "Sakin bir sabah: bekleyen bir şey yok.";
+"briefing.nothingToday" = "Bugün için randevu ya da kontrol yok.";
+"briefing.yesterdayQuiet" = "Dün kayda değer bir şey olmadı.";
 "briefing.newMessages" = "Yeni mesaj";
 "briefing.urgentMessages" = "Acil sınıflandırılan";
 "briefing.emergencies" = "Acil çağrı";

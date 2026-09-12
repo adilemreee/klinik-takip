@@ -253,6 +253,7 @@
     <string name="briefing_greeting_evening">Good evening</string>
     <string name="briefing_greeting_morning">Good morning</string>
     <string name="briefing_new_messages">New messages</string>
+    <string name="briefing_nothing_today">No appointments or follow-ups today.</string>
     <string name="briefing_open_queue">Open the calls</string>
     <string name="briefing_pending_reports">AI notes awaiting review</string>
     <string name="briefing_pending_reports_hint">Nothing reaches the patient until you sign it off.</string>
@@ -269,6 +270,7 @@
     <string name="briefing_waiting_hours">waiting %d hours</string>
     <string name="briefing_waiting_minutes">waiting %d minutes</string>
     <string name="briefing_yesterday">Yesterday</string>
+    <string name="briefing_yesterday_quiet">Nothing of note yesterday.</string>
     <string name="calendar_appointment_count">%d appointments</string>
     <string name="calendar_has_request">waiting for confirmation</string>
     <string name="calendar_minutes">%d min</string>

@@ -168,6 +168,51 @@ final class StaffHomeModelTests: XCTestCase {
         XCTAssertEqual(state.worstEmergencyWait, 22)
         XCTAssertEqual(state.emergencies.first?.summary.fullName, "Bekleyen")
     }
+
+    /// Decoded rather than constructed: the API types have no public
+    /// memberwise init, and the wire shape is what the screen actually sees.
+    private func yesterday(
+        messages: Int = 0,
+        urgent: Int = 0,
+        emergencies: Int = 0,
+        complications: Int = 0,
+        criticalLabs: Int = 0
+    ) throws -> BriefingYesterday {
+        let json = """
+        {"newMessages":\(messages),"urgentMessages":\(urgent),
+         "emergencies":\(emergencies),"complications":\(complications),
+         "criticalLabs":\(criticalLabs)}
+        """
+
+        return try JSONDecoder().decode(
+            BriefingYesterday.self,
+            from: Data(json.utf8)
+        )
+    }
+
+    /**
+     * Yesterday's zeros are left out.
+     *
+     * A count of nothing is not news: five tiles reading zero is a wall
+     * somebody reads in full to learn that nothing happened, and it crowds out
+     * the two that did.
+     */
+    func testDropsYesterdaysZeroCounts() throws {
+        let tiles = StaffHomeScreen.yesterdayTiles(
+            try yesterday(messages: 7, complications: 2)
+        )
+
+        XCTAssertEqual(
+            tiles.map(\.labelKey),
+            ["briefing.newMessages", "briefing.complications"]
+        )
+    }
+
+    /// Nothing at all is an empty list, which the screen says in one sentence.
+    func testAQuietYesterdayHasNoTiles() throws {
+        XCTAssertTrue(StaffHomeScreen.yesterdayTiles(try yesterday()).isEmpty)
+    }
+
 }
 
 private func summary(name: String) -> String {

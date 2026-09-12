@@ -440,6 +440,8 @@
 "briefing.today" = "Today";
 "briefing.atRisk" = "Waiting";
 "briefing.quiet" = "A quiet morning: nothing is waiting.";
+"briefing.nothingToday" = "No appointments or follow-ups today.";
+"briefing.yesterdayQuiet" = "Nothing of note yesterday.";
 "briefing.newMessages" = "New messages";
 "briefing.urgentMessages" = "Triaged urgent";
 "briefing.emergencies" = "Emergency calls";

@@ -69,7 +69,9 @@ import xyz.klinik.feature.medications.PrescribingModel
 import xyz.klinik.feature.medications.ui.PrescribingScreen
 import xyz.klinik.feature.measurements.ui.BodyChartScreen
 import xyz.klinik.feature.messaging.ChatModel
+import xyz.klinik.feature.messaging.InboxModel
 import xyz.klinik.feature.messaging.ui.ChatScreen
+import xyz.klinik.feature.messaging.ui.InboxScreen
 import xyz.klinik.feature.patients.InviteModel
 import xyz.klinik.feature.patients.NewPatientModel
 import xyz.klinik.feature.patients.PatientDetailModel
@@ -382,6 +384,28 @@ fun StaffDestinationScreen(
                 },
                 onSetActive = { agency, active ->
                     scope.launch { model.setActive(agency, active) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Inbox -> {
+            val model = remember { InboxModel(environment.messaging) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            InboxScreen(
+                state = state,
+                strings = context.inboxStrings(),
+                // Into the patient's own thread, not a free-standing
+                // conversation: everything a clinician needs while replying is
+                // in the file the thread belongs to.
+                onOpen = { entry ->
+                    onOpen(
+                        StaffDestination.Conversation(entry.conversation.patientId),
+                    )
                 },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,

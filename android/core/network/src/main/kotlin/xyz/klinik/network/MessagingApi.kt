@@ -87,6 +87,38 @@ data class Conversation(
     val lastMessageAt: String? = null,
 )
 
+/** Who the conversation is with. An id names nobody. */
+@Serializable
+data class InboxPatient(val id: String, val mrn: String, val fullName: String)
+
+/** Enough of the last message to decide whether to open the row. */
+@Serializable
+data class InboxLastMessage(
+    /** Null for an attachment with no text. */
+    val body: String? = null,
+    val sentAt: String,
+    val type: MessageType,
+)
+
+/**
+ * One row of the clinic's inbox.
+ *
+ * The client asked for this endpoint and decoded it into a bare
+ * [Conversation], which threw away the patient, the last message and the
+ * unread count — everything a row is read for. What was left was a list of
+ * identifiers and timestamps.
+ */
+@Serializable
+data class InboxEntry(
+    val conversation: Conversation,
+    val patient: InboxPatient,
+    val lastMessage: InboxLastMessage? = null,
+    /** Approximate: enough to decide whether to open the row. */
+    val unread: Int = 0,
+) {
+    val hasUnread: Boolean get() = unread > 0
+}
+
 @Serializable
 data class Attachment(val mediaKey: String, val mime: String, val size: Int)
 
@@ -130,7 +162,8 @@ class MessagingApi(
     suspend fun conversation(patientId: String): Conversation =
         decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/conversation")))
 
-    suspend fun inbox(): List<Conversation> =
+    /** The clinic's conversations, most recent first. */
+    suspend fun inbox(): List<InboxEntry> =
         decode(client.send(Endpoint(HttpMethod.GET, "conversations")))
 
     suspend fun messages(

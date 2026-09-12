@@ -30,6 +30,7 @@ import xyz.klinik.feature.medications.ui.MedicationStrings
 import xyz.klinik.feature.medications.ui.PrescribingStrings
 import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
+import xyz.klinik.feature.messaging.ui.InboxStrings
 import xyz.klinik.feature.patients.ui.InviteStrings
 import xyz.klinik.feature.patients.ui.NewPatientStrings
 import xyz.klinik.feature.photos.ui.FlaggedPhotosStrings
@@ -441,6 +442,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Account -> getString(DesignR.string.account_title)
     StaffDestination.Protocols -> getString(DesignR.string.protocol_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
+    StaffDestination.Inbox -> getString(DesignR.string.inbox_title)
     StaffDestination.FlaggedPhotos -> getString(DesignR.string.photo_flagged_title)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
@@ -1049,5 +1051,18 @@ fun Context.flaggedPhotosStrings(): FlaggedPhotosStrings = FlaggedPhotosStrings(
     noBodyArea = getString(DesignR.string.photo_no_body_area),
     findingName = { key -> stringForKey(key) },
     imageLabel = getString(DesignR.string.photo_image),
+    message = { text -> resolve(text) },
+)
+
+/** The clinic's conversations (spec M6). */
+fun Context.inboxStrings(): InboxStrings = InboxStrings(
+    title = getString(DesignR.string.inbox_title),
+    empty = getString(DesignR.string.inbox_empty),
+    notPermitted = getString(DesignR.string.error_forbidden),
+    retry = getString(DesignR.string.common_retry),
+    waiting = getString(DesignR.string.complication_waiting),
+    open = getString(DesignR.string.menu_messages),
+    attachment = getString(DesignR.string.message_attachment),
+    unreadCount = { count -> getString(DesignR.string.file_unread, count) },
     message = { text -> resolve(text) },
 )

@@ -87,6 +87,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** The clinic's conversations (spec M6). */
+    data object Inbox : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** Wound photographs an assessment thought somebody should see (M5). */
     data object FlaggedPhotos : StaffDestination {
         override val patientId: String? = null
@@ -213,6 +218,7 @@ enum class StaffTab {
 val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.NewPatient,
     StaffDestination.PendingReports,
+    StaffDestination.Inbox,
     StaffDestination.ComplicationQueue,
     StaffDestination.FlaggedPhotos,
     StaffDestination.Analytics,

@@ -9,6 +9,7 @@ import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
+import { photoView, type PhotoView } from '../photos/photo-view';
 
 /**
  * How long a report may wait before the queue calls it overdue.
@@ -37,7 +38,7 @@ export interface ComplicationPatient {
 export interface ComplicationView {
   complication: Complication;
   patient: ComplicationPatient;
-  photos: Photo[];
+  photos: PhotoView[];
   /** Minutes from report to first answer, or to now while still waiting. */
   waitingMinutes: number;
   /** Null until someone answered. */
@@ -359,7 +360,9 @@ export class ComplicationsService {
     return {
       complication,
       patient,
-      photos,
+      // Projected, not passed through: the row carries the object-storage key
+      // of a clinical photograph and the client has no use for it.
+      photos: photos.map(photoView),
       waitingMinutes: Math.max(0, Math.round(waitingMs / 60_000)),
       responseMinutes: answeredAt
         ? Math.max(0, Math.round((answeredAt.getTime() - complication.reportedAt.getTime()) / 60_000))

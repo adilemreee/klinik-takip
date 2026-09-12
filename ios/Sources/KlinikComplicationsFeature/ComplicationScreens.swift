@@ -8,13 +8,25 @@ public struct ComplicationQueueView: View {
     @Environment(\.colorScheme) private var scheme
 
     private let model: ComplicationQueueModel
+    /// A short-lived link to one photograph. Supplied by the shell, which owns
+    /// the photos API; nil leaves the thumbnails as counts.
+    private let linkFor: ((String) async -> URL?)?
+    /// Opening one. The viewer lives in the photos module, which this one does
+    /// not import — the shell presents it.
+    private let openPhoto: ((ClinicalPhoto) -> Void)?
 
     @State private var state = ComplicationsState()
     @State private var responding: ComplicationView?
     @State private var closing = false
 
-    public init(model: ComplicationQueueModel) {
+    public init(
+        model: ComplicationQueueModel,
+        linkFor: ((String) async -> URL?)? = nil,
+        openPhoto: ((ClinicalPhoto) -> Void)? = nil
+    ) {
         self.model = model
+        self.linkFor = linkFor
+        self.openPhoto = openPhoto
     }
 
     public var body: some View {
@@ -71,25 +83,34 @@ public struct ComplicationQueueView: View {
     }
 
     private var queue: some View {
-        VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
-            if state.overdueCount > 0 {
-                Label(
-                    L10n.string("complication.overdueCount") + ": \(state.overdueCount)",
-                    systemImage: Tokens.State.triageUrgent.iconName
-                )
-                .font(Tokens.Typography.subheadingRelative)
-                .foregroundStyle(Tokens.Palette.warning.resolve(for: scheme))
-                .padding(.horizontal, Tokens.Spacing.lg)
-                .padding(.top, Tokens.Spacing.lg)
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+                if state.overdueCount > 0 {
+                    Label(
+                        String(
+                            format: L10n.string("complication.overdueCount"),
+                            state.overdueCount
+                        ),
+                        systemImage: Tokens.State.triageUrgent.iconName
+                    )
+                    .font(Tokens.Typography.subheadingRelative)
+                    .foregroundStyle(Tokens.Palette.warning.resolve(for: scheme))
+                }
 
-            if let error = state.error {
-                ErrorBanner(message: error).padding(.horizontal, Tokens.Spacing.lg)
-            }
+                if let error = state.error {
+                    ErrorBanner(message: error)
+                }
 
-            List {
+                // Cards, like every other clinical list in the app. A plain
+                // list put an unanswered six-hour-old report and a forty-minute
+                // one at exactly the same weight.
                 ForEach(state.items) { item in
-                    ComplicationRow(item: item, isWorking: state.working == item.id) {
+                    ComplicationRow(
+                        item: item,
+                        isWorking: state.working == item.id,
+                        linkFor: linkFor,
+                        openPhoto: openPhoto
+                    ) {
                         closing = false
                         responding = item
                     } onResolve: {
@@ -98,7 +119,7 @@ public struct ComplicationQueueView: View {
                     }
                 }
             }
-            .listStyle(.plain)
+            .padding(Tokens.Spacing.lg)
         }
     }
 
@@ -108,24 +129,65 @@ public struct ComplicationQueueView: View {
     }
 }
 
+/**
+ * One report, as a card.
+ *
+ * The row used to be a plain list entry: a name, a sentence, the wait in raw
+ * minutes, and — where the patient had attached photographs of the wound —
+ * the words "2 fotoğraf", which could not be opened. The photographs are the
+ * evidence; a queue that counts them and will not show them sends a clinician
+ * to look for the patient's gallery instead.
+ */
 struct ComplicationRow: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     let item: ComplicationView
     let isWorking: Bool
+    let linkFor: ((String) async -> URL?)?
+    let openPhoto: ((ClinicalPhoto) -> Void)?
     let onAnswer: () -> Void
     let onResolve: () -> Void
 
     var body: some View {
+        Card(tone: tone) {
+            VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
+                header
+
+                Text(item.complication.note)
+                    .font(Tokens.Typography.bodyRelative)
+                    .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !item.photos.isEmpty {
+                    photographs
+                }
+
+                if let response = item.complication.firstResponse {
+                    Text("\(L10n.string("complication.answered")): \(response)")
+                        .font(Tokens.Typography.captionRelative)
+                        .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                actions
+            }
+        }
+    }
+
+    /// Whose report, how long, and what state it is in — the three things a
+    /// clinician triages on.
+    private var header: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
-            HStack(alignment: .firstTextBaseline) {
-                // Whose report it is, first and largest. This queue is
-                // clinic-wide: a row that opened with a body area left a
-                // clinician reading "karın" with no idea whose abdomen.
+            AdaptiveStack(stacked: typeSize.isAccessibilitySize, spacing: Tokens.Spacing.sm) {
                 VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+                    // Whose report it is, first and largest. This queue is
+                    // clinic-wide: a row that opened with a body area left a
+                    // clinician reading "karın" with no idea whose abdomen.
                     Text(item.patient.fullName)
                         .font(Tokens.Typography.subheadingRelative)
                         .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
 
                     Text(
                         "\(item.patient.mrn) · "
@@ -134,65 +196,138 @@ struct ComplicationRow: View {
                     )
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: Tokens.Spacing.sm)
 
-                // How long the patient has been waiting, in words as well as
-                // colour: a wait a reader cannot distinguish by hue is no
-                // signal at all (spec section 7).
-                Text(waitingText)
+                // How long, in words as well as colour: a wait a reader cannot
+                // distinguish by hue is no signal at all (spec section 7).
+                Text(item.localizedWait)
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(
                         (item.overdue ? Tokens.Palette.warning : Tokens.Palette.textSecondary)
                             .resolve(for: scheme)
                     )
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text(item.complication.note)
-                .font(Tokens.Typography.bodyRelative)
-                .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
-                .fixedSize(horizontal: false, vertical: true)
+            FlowRow(spacing: Tokens.Spacing.xs) {
+                Badge(item.complication.status.localizedName, tone: tone)
 
-            if !item.photos.isEmpty {
-                Label(
-                    "\(item.photos.count) \(L10n.string("complication.photoCount"))",
-                    systemImage: "photo"
-                )
-                .font(Tokens.Typography.captionRelative)
-                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
-            }
-
-            if let response = item.complication.firstResponse {
-                Text("\(L10n.string("complication.answered")): \(response)")
-                    .font(Tokens.Typography.captionRelative)
-                    .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
-            }
-
-            HStack(spacing: Tokens.Spacing.md) {
-                if item.complication.acknowledgedAt == nil {
-                    Button(L10n.string("complication.answer"), action: onAnswer)
-                        .disabled(isWorking)
-                        .frame(minHeight: Tokens.minimumTouchTarget)
-                }
-
-                if item.complication.status != .resolved {
-                    Button(L10n.string("complication.resolve"), action: onResolve)
-                        .disabled(isWorking)
-                        .frame(minHeight: Tokens.minimumTouchTarget)
+                if item.overdue {
+                    Badge(
+                        L10n.string("complication.overdue"),
+                        tone: .warning,
+                        symbol: Tokens.State.triageUrgent.iconName
+                    )
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, Tokens.Spacing.xs)
-        .accessibilityElement(children: .combine)
     }
 
-    private var waitingText: String {
-        if let answered = item.responseMinutes {
-            return "\(L10n.string("complication.respondedIn")) \(answered) \(L10n.string("common.minutesShort"))"
+    /// The photographs, small and openable. Without a link loader the shell
+    /// has not offered one, and the count stands as it did.
+    @ViewBuilder
+    private var photographs: some View {
+        if let linkFor {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Tokens.Spacing.sm) {
+                    ForEach(item.photos) { photo in
+                        Button {
+                            openPhoto?(photo)
+                        } label: {
+                            ComplicationThumbnail(photoId: photo.id, linkFor: linkFor)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(openPhoto == nil)
+                        .accessibilityLabel(L10n.string("complication.openPhoto"))
+                    }
+                }
+            }
+        } else {
+            Label(
+                String(format: L10n.string("complication.photoCount"), item.photos.count),
+                systemImage: "photo"
+            )
+            .font(Tokens.Typography.captionRelative)
+            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
         }
+    }
 
-        return "\(L10n.string("complication.waiting")) \(item.waitingMinutes) \(L10n.string("common.minutesShort"))"
+    @ViewBuilder
+    private var actions: some View {
+        AdaptiveStack(stacked: typeSize.isAccessibilitySize, spacing: Tokens.Spacing.md) {
+            if item.complication.acknowledgedAt == nil {
+                Button(L10n.string("complication.answer"), action: onAnswer)
+                    .disabled(isWorking)
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+            }
+
+            if item.complication.status != .resolved {
+                Button(L10n.string("complication.resolve"), action: onResolve)
+                    .disabled(isWorking)
+                    .frame(minHeight: Tokens.minimumTouchTarget)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// Unanswered past the threshold shouts; answered recedes; the rest is
+    /// ordinary.
+    private var tone: Tone {
+        if item.overdue { return .warning }
+        if item.complication.status == .resolved { return .success }
+
+        return .neutral
+    }
+}
+
+/// One attached photograph, behind a link that expires.
+struct ComplicationThumbnail: View {
+    @Environment(\.colorScheme) private var scheme
+
+    let photoId: String
+    let linkFor: (String) async -> URL?
+
+    @State private var url: URL?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    case .failure:
+                        placeholder
+                    default:
+                        ProgressView().accessibilityLabel(L10n.string("common.loading"))
+                    }
+                }
+            } else if failed {
+                placeholder
+            } else {
+                ProgressView().accessibilityLabel(L10n.string("common.loading"))
+            }
+        }
+        .frame(width: 88, height: 88)
+        .background(Tokens.Palette.surface.resolve(for: scheme))
+        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.md))
+        .task {
+            url = await linkFor(photoId)
+            failed = url == nil
+        }
+    }
+
+    private var placeholder: some View {
+        Image(systemName: "photo.badge.exclamationmark")
+            .font(Tokens.Typography.calloutRelative)
+            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+            .accessibilityHidden(true)
     }
 }
 

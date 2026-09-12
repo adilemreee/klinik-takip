@@ -18316,7 +18316,7 @@
             "description": "Photos attached to the report",
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/PhotoDto"
             }
           },
           "waitingMinutes": {
@@ -18324,7 +18324,7 @@
             "description": "Minutes from report to first answer, or to now while waiting"
           },
           "responseMinutes": {
-            "type": "object",
+            "type": "number",
             "nullable": true,
             "description": "Null until someone answered"
           },

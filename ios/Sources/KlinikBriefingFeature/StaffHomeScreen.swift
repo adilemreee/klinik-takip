@@ -790,8 +790,8 @@ public struct StaffHomeScreen: View {
 
     nonisolated static func waiting(minutes: Int) -> String {
         minutes < 60
-            ? String(format: L10n.string("briefing.waitingMinutes"), minutes)
-            : String(format: L10n.string("briefing.waitingHours"), minutes / 60)
+            ? String(format: L10n.string("common.waitingMinutes"), minutes)
+            : String(format: L10n.string("common.waitingHours"), minutes / 60)
     }
 
     private func reload() async {

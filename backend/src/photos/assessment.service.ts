@@ -17,12 +17,13 @@ import { isAssessable, parseAssessment, type Finding } from './assessment';
  * The worklist is clinic-wide, so a row that named only the photo left a
  * clinician with nothing to act on.
  */
-export type FlaggedPhoto = Photo & {
+export type FlaggedPhoto = PhotoView & {
   patientId: string;
   patientName: string;
   mrn: string;
 };
 import { SYSTEM_PROMPT, buildUserPrompt } from './assessment.prompt';
+import { photoView, type PhotoView } from './photo-view';
 
 /** Matches the provider limit; a larger photo is refused rather than truncated. */
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -230,7 +231,7 @@ export class PhotoAssessmentService {
     });
 
     return photos.map(({ patient, ...photo }) => ({
-      ...photo,
+      ...photoView(photo),
       patientId: patient.id,
       patientName: `${patient.firstName} ${patient.lastName}`,
       mrn: patient.mrn,

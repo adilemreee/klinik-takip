@@ -25,8 +25,8 @@ public struct RiskItem: Decodable, Sendable, Equatable, Identifiable {
     /// Minutes for the first hour, then hours — a doctor does not read "4,320".
     public var localizedWaiting: String {
         waitingMinutes < 60
-            ? String(format: L10n.string("briefing.waitingMinutes"), waitingMinutes)
-            : String(format: L10n.string("briefing.waitingHours"), waitingMinutes / 60)
+            ? String(format: L10n.string("common.waitingMinutes"), waitingMinutes)
+            : String(format: L10n.string("common.waitingHours"), waitingMinutes / 60)
     }
 }
 

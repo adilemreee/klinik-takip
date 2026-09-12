@@ -20,7 +20,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuditAction, Photo, PhotoCategory } from '@prisma/client';
+import { AuditAction, PhotoCategory } from '@prisma/client';
 import type { Request } from 'express';
 import { Audit } from '../audit/decorators/audit.decorator';
 import { CurrentUser, type AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -35,6 +35,7 @@ import {
   type FlaggedPhoto,
 } from './assessment.service';
 import { GalleryGroup, PhotosService } from './photos.service';
+import { type PhotoView } from './photo-view';
 import {
   AssessmentResultDto,
   GalleryGroupDto,
@@ -76,7 +77,7 @@ export class PatientPhotosController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) patientId: string,
     @Req() request: Request,
-  ): Promise<Photo> {
+  ): Promise<PhotoView> {
     const part = await firstFilePart(request, 64 * 1024 * 1024);
 
     return this.photos.upload(user, patientId, part, {
@@ -116,7 +117,7 @@ export class PatientPhotosController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) patientId: string,
     @Query() query: OverlayQueryDto,
-  ): Promise<Photo | null> {
+  ): Promise<PhotoView | null> {
     return this.photos.overlayReference(user, patientId, query.bodyArea);
   }
 
@@ -236,7 +237,7 @@ export class MyPhotosController {
   async overlay(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: OverlayQueryDto,
-  ): Promise<Photo | null> {
+  ): Promise<PhotoView | null> {
     const patientId = await this.measurements.ownPatientId(user);
 
     return this.photos.overlayReference(user, patientId, query.bodyArea);
@@ -284,7 +285,7 @@ export class MyPhotosController {
   async upload(
     @CurrentUser() user: AuthenticatedUser,
     @Req() request: Request,
-  ): Promise<Photo> {
+  ): Promise<PhotoView> {
     const patientId = await this.measurements.ownPatientId(user);
     const part = await firstFilePart(request, 64 * 1024 * 1024);
 

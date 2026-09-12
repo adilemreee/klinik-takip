@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ComplicationStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsBoolean, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { PhotoDto } from '../../photos/dto/photo.dto';
 
 export class ReportComplicationDto {
   @ApiProperty({ description: 'What is wrong, in the patient\'s own words', maxLength: 2000 })
@@ -100,13 +101,17 @@ export class ComplicationViewDto {
   })
   patient!: ComplicationPatientDto;
 
-  @ApiProperty({ type: [Object], description: 'Photos attached to the report' })
-  photos!: unknown[];
+  @ApiProperty({ type: [PhotoDto], description: 'Photos attached to the report' })
+  photos!: PhotoDto[];
 
   @ApiProperty({ description: 'Minutes from report to first answer, or to now while waiting' })
   waitingMinutes!: number;
 
-  @ApiProperty({ nullable: true, description: 'Null until someone answered' })
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    description: 'Null until someone answered',
+  })
   responseMinutes!: number | null;
 
   @ApiProperty({ description: 'Still unanswered past the clinic threshold' })

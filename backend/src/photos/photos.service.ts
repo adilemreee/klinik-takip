@@ -14,6 +14,7 @@ import { Env } from '../config/env.schema';
 import { detectType, SNIFF_LENGTH } from '../files/file-type';
 import { FileService } from '../files/file.service';
 import { PrismaService } from '../infra/prisma.service';
+import { photoView, type PhotoView } from './photo-view';
 import { readBounded } from './read-bounded';
 import { stripMetadata } from './strip-metadata';
 
@@ -45,7 +46,7 @@ export interface PhotoDetails {
 
 export interface GalleryGroup {
   bodyArea: string | null;
-  photos: Photo[];
+  photos: PhotoView[];
 }
 
 @Injectable()
@@ -65,7 +66,7 @@ export class PhotosService {
     patientId: string,
     upload: PhotoUpload,
     details: PhotoDetails,
-  ): Promise<Photo> {
+  ): Promise<PhotoView> {
     await this.access.assertCanAccess(user, patientId);
 
     const maxBytes = this.config.get('PHOTO_MAX_BYTES', { infer: true });
@@ -194,13 +195,15 @@ export class PhotosService {
     user: AuthenticatedUser,
     patientId: string,
     bodyArea: string,
-  ): Promise<Photo | null> {
+  ): Promise<PhotoView | null> {
     await this.access.assertCanAccess(user, patientId);
 
-    return this.prisma.photo.findFirst({
+    const photo = await this.prisma.photo.findFirst({
       where: { patientId, bodyArea, deletedAt: null },
       orderBy: { takenAt: 'desc' },
     });
+
+    return photo ? photoView(photo) : null;
   }
 
   /**

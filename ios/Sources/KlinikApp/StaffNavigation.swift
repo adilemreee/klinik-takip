@@ -121,6 +121,8 @@ struct StaffPatientsView: View {
     /// Bumped when a stack lands back on the checklist, most likely from the
     /// upload screen it sent the reader to. What it is showing is out of date.
     @State private var checklistRefresh = 0
+    /// A photograph attached to a complication report, open full screen.
+    @State private var viewingPhoto: ClinicalPhoto?
 
     var body: some View {
         TabView(selection: $tab) {
@@ -478,7 +480,27 @@ struct StaffPatientsView: View {
             )
 
         case .complicationQueue:
-            ComplicationQueueView(model: ComplicationQueueModel(api: environment.complications))
+            ComplicationQueueView(
+                model: ComplicationQueueModel(api: environment.complications),
+                linkFor: { [photos = environment.photos] id in
+                    guard let link = try? await photos.link(photoId: id) else { return nil }
+
+                    return URL(string: link.url)
+                },
+                // The wound the report is about, full screen. The queue used
+                // to say "2 fotoğraf" and stop there.
+                openPhoto: { photo in viewingPhoto = photo }
+            )
+            .sheet(item: $viewingPhoto) { photo in
+                PhotoViewer(
+                    photo: photo.viewable,
+                    linkFor: { [photos = environment.photos] id in
+                        guard let link = try? await photos.link(photoId: id) else { return nil }
+
+                        return URL(string: link.url)
+                    }
+                )
+            }
 
         case .newPatient:
             NewPatientView(

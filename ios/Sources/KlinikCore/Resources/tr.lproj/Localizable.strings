@@ -250,10 +250,10 @@
 "complication.resolve" = "Kapat";
 "complication.yourAnswer" = "Yanıtınız";
 "complication.answered" = "Yanıt";
-"complication.waiting" = "Bekliyor";
-"complication.respondedIn" = "Yanıtlandı";
-"complication.overdueCount" = "Uzun süredir bekleyen";
-"complication.photoCount" = "fotoğraf";
+"complication.overdueCount" = "%d bildirim uzun süredir bekliyor";
+"complication.overdue" = "Gecikti";
+"complication.photoCount" = "%d fotoğraf";
+"complication.openPhoto" = "Fotoğrafı aç";
 
 "complication.status.REPORTED" = "Bildirildi";
 "complication.status.ACKNOWLEDGED" = "Yanıtlandı";
@@ -448,8 +448,11 @@
 "briefing.criticalLabs" = "Kritik tahlil";
 "briefing.appointments" = "Randevu";
 "briefing.followUps" = "Kontrol";
-"briefing.waitingHours" = "%d saattir bekliyor";
-"briefing.waitingMinutes" = "%d dakikadır bekliyor";
+"common.waitingHours" = "%d saattir bekliyor";
+"common.respondedInMinutes" = "%d dakikada yanıtlandı";
+"common.respondedInHours" = "%d saatte yanıtlandı";
+"common.waiting" = "Bekliyor";
+"common.waitingMinutes" = "%d dakikadır bekliyor";
 "briefing.risk.emergency-unanswered" = "Acil çağrı yanıtlanmadı";
 "briefing.risk.message-urgent" = "Acil mesaj okunmadı";
 "briefing.risk.complication-overdue" = "Komplikasyon yanıtlanmadı";

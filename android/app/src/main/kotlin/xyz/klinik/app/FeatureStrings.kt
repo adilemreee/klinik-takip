@@ -114,12 +114,26 @@ fun Context.complicationStrings(): ComplicationStrings = ComplicationStrings(
     retry = getString(DesignR.string.common_retry),
     answer = getString(DesignR.string.complication_answer),
     resolve = getString(DesignR.string.complication_resolve),
-    waiting = getString(DesignR.string.complication_waiting),
-    respondedIn = getString(DesignR.string.complication_responded_in),
+    // Minutes for the first hour, then hours — the same sentences the agenda
+    // uses. A six-hour wait shown as "372 dk" is arithmetic homework.
+    waitingFor = { minutes ->
+        if (minutes < 60) {
+            getString(DesignR.string.common_waiting_minutes, minutes)
+        } else {
+            getString(DesignR.string.common_waiting_hours, minutes / 60)
+        }
+    },
+    respondedIn = { minutes ->
+        if (minutes < 60) {
+            getString(DesignR.string.common_responded_in_minutes, minutes)
+        } else {
+            getString(DesignR.string.common_responded_in_hours, minutes / 60)
+        }
+    },
     minutesShort = getString(DesignR.string.common_minutes_short),
-    overdueCount = getString(DesignR.string.complication_overdue_count),
+    overdueCount = { count -> getString(DesignR.string.complication_overdue_count, count) },
     noBodyArea = getString(DesignR.string.complication_no_body_area),
-    photoCount = getString(DesignR.string.complication_photo_count),
+    photoCount = { count -> getString(DesignR.string.complication_photo_count, count) },
     answered = getString(DesignR.string.complication_answered),
     awaitingReply = getString(DesignR.string.complication_awaiting_reply),
     reportTitle = getString(DesignR.string.complication_report_title),
@@ -403,8 +417,8 @@ fun Context.briefingStrings(): BriefingStrings = BriefingStrings(
     aiSummary = getString(DesignR.string.briefing_ai_summary),
     aiDisclaimer = getString(DesignR.string.briefing_ai_disclaimer),
     riskName = { kind -> stringForKey(kind.stringKey) },
-    waitingMinutes = { minutes -> getString(DesignR.string.briefing_waiting_minutes, minutes) },
-    waitingHours = { hours -> getString(DesignR.string.briefing_waiting_hours, hours) },
+    waitingMinutes = { minutes -> getString(DesignR.string.common_waiting_minutes, minutes) },
+    waitingHours = { hours -> getString(DesignR.string.common_waiting_hours, hours) },
     message = { text -> resolve(text) },
 )
 
@@ -1072,7 +1086,7 @@ fun Context.inboxStrings(): InboxStrings = InboxStrings(
     empty = getString(DesignR.string.inbox_empty),
     notPermitted = getString(DesignR.string.error_forbidden),
     retry = getString(DesignR.string.common_retry),
-    waiting = getString(DesignR.string.complication_waiting),
+    waiting = getString(DesignR.string.common_waiting),
     open = getString(DesignR.string.menu_messages),
     attachment = getString(DesignR.string.message_attachment),
     unreadCount = { count -> getString(DesignR.string.file_unread, count) },

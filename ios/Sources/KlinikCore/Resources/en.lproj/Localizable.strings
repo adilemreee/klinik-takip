@@ -250,10 +250,10 @@
 "complication.resolve" = "Close";
 "complication.yourAnswer" = "Your reply";
 "complication.answered" = "Reply";
-"complication.waiting" = "Waiting";
-"complication.respondedIn" = "Answered in";
-"complication.overdueCount" = "Waiting a long time";
-"complication.photoCount" = "photo(s)";
+"complication.overdueCount" = "%d reports have been waiting a long time";
+"complication.overdue" = "Overdue";
+"complication.photoCount" = "%d photographs";
+"complication.openPhoto" = "Open the photograph";
 
 "complication.status.REPORTED" = "Reported";
 "complication.status.ACKNOWLEDGED" = "Answered";
@@ -448,8 +448,11 @@
 "briefing.criticalLabs" = "Critical labs";
 "briefing.appointments" = "Appointments";
 "briefing.followUps" = "Check-ups";
-"briefing.waitingHours" = "waiting %d hours";
-"briefing.waitingMinutes" = "waiting %d minutes";
+"common.waitingHours" = "waiting %d hours";
+"common.respondedInMinutes" = "answered in %d minutes";
+"common.respondedInHours" = "answered in %d hours";
+"common.waiting" = "Waiting";
+"common.waitingMinutes" = "waiting %d minutes";
 "briefing.risk.emergency-unanswered" = "Emergency call unanswered";
 "briefing.risk.message-urgent" = "Urgent message unread";
 "briefing.risk.complication-overdue" = "Complication unanswered";

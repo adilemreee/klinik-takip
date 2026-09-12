@@ -43,12 +43,13 @@ data class ComplicationStrings(
     val retry: String,
     val answer: String,
     val resolve: String,
-    val waiting: String,
-    val respondedIn: String,
+    /// How long, in words: "372 dk" is a number a clinician has to divide.
+    val waitingFor: (Int) -> String,
+    val respondedIn: (Int) -> String,
     val minutesShort: String,
-    val overdueCount: String,
+    val overdueCount: (Int) -> String,
     val noBodyArea: String,
-    val photoCount: String,
+    val photoCount: (Int) -> String,
     val answered: String,
     val awaitingReply: String,
     val reportTitle: String,
@@ -107,7 +108,7 @@ private fun Queue(
     Column(modifier = Modifier.fillMaxSize()) {
         if (state.overdueCount > 0) {
             Text(
-                "${strings.overdueCount}: ${state.overdueCount}",
+                strings.overdueCount(state.overdueCount),
                 color = klinikColor("warning"),
                 modifier = Modifier.padding(Tokens.Spacing.lg),
             )
@@ -154,8 +155,8 @@ private fun QueueRow(
     // How long the patient has been waiting, in words as well as colour: a wait
     // a reader cannot distinguish by hue is no signal at all (spec section 7).
     val waiting = item.responseMinutes
-        ?.let { "${strings.respondedIn} $it ${strings.minutesShort}" }
-        ?: "${strings.waiting} ${item.waitingMinutes} ${strings.minutesShort}"
+        ?.let { strings.respondedIn(it) }
+        ?: strings.waitingFor(item.waitingMinutes)
 
     val spoken = "${item.patient.fullName}, " +
         "${item.complication.bodyArea ?: strings.noBodyArea}, " +
@@ -201,7 +202,7 @@ private fun QueueRow(
 
         if (item.photos.isNotEmpty()) {
             Text(
-                "${item.photos.size} ${strings.photoCount}",
+                strings.photoCount(item.photos.size),
                 color = klinikColor("textSecondary"),
             )
         }

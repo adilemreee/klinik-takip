@@ -50,6 +50,26 @@ public struct ComplicationView: Decodable, Sendable, Equatable, Identifiable {
     public let overdue: Bool
 
     public var id: String { complication.id }
+
+    /**
+     * How long, in words a clinician does not have to divide.
+     *
+     * The queue was showing the raw count: a six-hour-old report read "372 dk"
+     * and a day-old one "1400 dk", on the one screen where how long somebody
+     * has been waiting is the whole point. Minutes for the first hour, then
+     * hours — the same sentences the agenda uses.
+     */
+    public var localizedWait: String {
+        if let answered = responseMinutes {
+            return answered < 60
+                ? String(format: L10n.string("common.respondedInMinutes"), answered)
+                : String(format: L10n.string("common.respondedInHours"), answered / 60)
+        }
+
+        return waitingMinutes < 60
+            ? String(format: L10n.string("common.waitingMinutes"), waitingMinutes)
+            : String(format: L10n.string("common.waitingHours"), waitingMinutes / 60)
+    }
 }
 
 public struct ComplicationsAPI: Sendable {

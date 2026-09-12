@@ -154,7 +154,8 @@ public struct RootView: View {
         StaffPatientsView(
             environment: environment,
             signOut: { await signOut() },
-            biometrics: biometricSetting
+            biometrics: biometricSetting,
+            clinicianName: identity?.displayName
         )
     }
 

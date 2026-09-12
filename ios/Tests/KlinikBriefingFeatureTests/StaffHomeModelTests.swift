@@ -1,6 +1,7 @@
 import XCTest
 import KlinikAPI
 import KlinikCore
+import KlinikDesign
 @testable import KlinikBriefingFeature
 
 private struct StubTransport: HTTPTransport {
@@ -63,7 +64,37 @@ private func model(_ bodies: [String: (Int, String)]) async -> StaffHomeModel {
         briefing: BriefingAPI(client: client),
         emergency: EmergencyAPI(client: client),
         reports: ReportsAPI(client: client),
-        photos: PhotosAPI(client: client)
+        photos: PhotosAPI(client: client),
+        appointments: AppointmentsAPI(client: client)
+    )
+}
+
+/// One row of a day's calendar, on the wire.
+private func slot(
+    id: String,
+    at when: String,
+    name: String,
+    minutes: Int = 30,
+    status: String = "CONFIRMED"
+) -> String {
+    """
+    {"appointment":{"id":"\(id)","patientId":"p-\(id)","staffId":"s1",
+      "type":"CONTROL","status":"\(status)","scheduledAt":"\(when)",
+      "durationMinutes":\(minutes),"location":null,"note":null,
+      "cancelledAt":null,"cancelledReason":null,"remindersSent":[]},
+     "patient":{"id":"p-\(id)","mrn":"2026-\(id)","fullName":"\(name)"}}
+    """
+}
+
+/// The format the API speaks, so a test's clock and the wire agree.
+private func instant(_ text: String) throws -> Date {
+    try Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(text)
+}
+
+private func day(_ slots: [String]) throws -> [CalendarEntry] {
+    try JSONDecoder.klinik.decode(
+        [CalendarEntry].self,
+        from: Data("[\(slots.joined(separator: ","))]".utf8)
     )
 }
 
@@ -191,28 +222,126 @@ final class StaffHomeModelTests: XCTestCase {
     }
 
     /**
-     * Yesterday's zeros are left out.
+     * Every one of yesterday's counts is shown, including the zeros.
      *
-     * A count of nothing is not news: five tiles reading zero is a wall
-     * somebody reads in full to learn that nothing happened, and it crowds out
-     * the two that did.
+     * They were briefly filtered down to the counts above zero, and the doctor
+     * who uses this app read that as four things the app had lost. A zero is an
+     * answer: "no emergencies yesterday" is exactly what a clinician wants to
+     * know, and it cannot be read off a row that is not there.
      */
-    func testDropsYesterdaysZeroCounts() throws {
-        let tiles = StaffHomeScreen.yesterdayTiles(
+    func testYesterdayKeepsEveryCountIncludingTheZeros() throws {
+        let metrics = StaffHomeScreen.yesterdayMetrics(
             try yesterday(messages: 7, complications: 2)
         )
 
         XCTAssertEqual(
-            tiles.map(\.labelKey),
-            ["briefing.newMessages", "briefing.complications"]
+            metrics.map(\.labelKey),
+            [
+                "briefing.newMessages",
+                "briefing.urgentMessages",
+                "briefing.emergencies",
+                "briefing.complications",
+                "briefing.criticalLabs",
+            ]
         )
     }
 
-    /// Nothing at all is an empty list, which the screen says in one sentence.
-    func testAQuietYesterdayHasNoTiles() throws {
-        XCTAssertTrue(StaffHomeScreen.yesterdayTiles(try yesterday()).isEmpty)
+    /// A zero is drawn, but it does not get to wear the colour that means
+    /// something happened.
+    func testAZeroCountIsDrawnInTheNeutralTone() throws {
+        let metrics = StaffHomeScreen.yesterdayMetrics(try yesterday(criticalLabs: 3))
+
+        let labs = try XCTUnwrap(metrics.first { $0.labelKey == "briefing.criticalLabs" })
+        let emergencies = try XCTUnwrap(metrics.first { $0.labelKey == "briefing.emergencies" })
+
+        XCTAssertFalse(labs.isQuiet)
+        XCTAssertEqual(labs.shownTone, .critical)
+
+        XCTAssertTrue(emergencies.isQuiet)
+        XCTAssertEqual(emergencies.shownTone, .neutral)
     }
 
+    // MARK: - Today's schedule
+
+    /// The day, in the order the clock will run it — whatever order it arrives
+    /// in. The calendar endpoint sorts for a month grid, not for one day.
+    func testTheDayIsPutInClockOrder() async throws {
+        let sut = await model([
+            "GET /me/briefing": (200, briefing(risks: [])),
+            "GET /appointments/calendar": (200, """
+            [\(slot(id: "b", at: "2026-09-09T13:00:00.000Z", name: "Sonraki")),
+             \(slot(id: "a", at: "2026-09-09T09:00:00.000Z", name: "Once"))]
+            """),
+        ])
+
+        await sut.load()
+
+        let state = await sut.currentState()
+        let schedule = try XCTUnwrap(state.schedule)
+        XCTAssertEqual(schedule.map(\.patient.fullName), ["Once", "Sonraki"])
+    }
+
+    /**
+     * A calendar this account may not read leaves the section absent.
+     *
+     * Absent, not empty. An empty list on screen says "nothing booked today",
+     * which is a claim about the clinic's day — and a 403 is not evidence for
+     * it.
+     */
+    func testAForbiddenCalendarLeavesTheScheduleAbsentRatherThanEmpty() async {
+        let sut = await model([
+            "GET /me/briefing": (200, briefing(risks: [])),
+            "GET /appointments/calendar": (403, #"{"statusCode":403,"message":"forbidden"}"#),
+        ])
+
+        await sut.load()
+        let state = await sut.currentState()
+
+        XCTAssertEqual(state.phase, .loaded)
+        XCTAssertNil(state.schedule)
+    }
+
+    /**
+     * "Sıradaki" is the next one somebody is still expected at.
+     *
+     * Not the next row on the list: the appointment that finished an hour ago
+     * is not next, and neither is the slot that was cancelled — marking either
+     * would send a doctor to a room with nobody in it.
+     */
+    func testNextUpSkipsWhatIsFinishedAndWhatWasCancelled() throws {
+        let schedule = try day([
+            slot(id: "a", at: "2026-09-09T09:00:00.000Z", name: "Biten"),
+            slot(id: "b", at: "2026-09-09T13:00:00.000Z", name: "Iptal", status: "CANCELLED"),
+            slot(id: "c", at: "2026-09-09T15:00:00.000Z", name: "Sirada"),
+        ])
+
+        let noon = try instant("2026-09-09T12:00:00.000Z")
+
+        XCTAssertEqual(StaffHomeScreen.nextUp(in: schedule, at: noon), "c")
+    }
+
+    /// Once the day is over nothing is next, and nothing is marked.
+    func testNothingIsNextAfterTheLastAppointment() throws {
+        let schedule = try day([
+            slot(id: "a", at: "2026-09-09T09:00:00.000Z", name: "Biten"),
+        ])
+
+        let evening = try instant("2026-09-09T18:00:00.000Z")
+
+        XCTAssertNil(StaffHomeScreen.nextUp(in: schedule, at: evening))
+    }
+
+    /// An appointment that has started but not ended is still the one to be at.
+    func testAnAppointmentUnderWayIsStillNext() throws {
+        let schedule = try day([
+            slot(id: "a", at: "2026-09-09T09:00:00.000Z", name: "Suren", minutes: 60),
+            slot(id: "b", at: "2026-09-09T15:00:00.000Z", name: "Sonraki"),
+        ])
+
+        let during = try instant("2026-09-09T09:30:00.000Z")
+
+        XCTAssertEqual(StaffHomeScreen.nextUp(in: schedule, at: during), "a")
+    }
 }
 
 private func summary(name: String) -> String {

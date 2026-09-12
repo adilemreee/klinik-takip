@@ -107,6 +107,9 @@ struct StaffPatientsView: View {
     /// The device-lock setting, owned by the shell and edited on the account
     /// screen.
     let biometrics: BiometricSetting
+    /// Who is signed in, for the agenda's greeting. Nil for the moment before
+    /// `/me/identity` answers.
+    let clinicianName: String?
 
     @State private var tab: StaffTab = .agenda
     @State private var agendaPath: [StaffDestination] = []
@@ -152,28 +155,32 @@ struct StaffPatientsView: View {
 
     private var agendaHome: some View {
         StaffHomeScreen(
-                model: StaffHomeModel(
-                    briefing: environment.briefing,
-                    emergency: environment.emergency,
-                    reports: environment.reports,
-                    photos: environment.photos
-                ),
-                onSelect: { target in
-                    switch target {
-                    case .patient(let id, let name):
-                        agendaPath.append(.patient(id: id, name: name))
-                    case .pendingReports:
-                        agendaPath.append(.pendingReports)
-                    case .flaggedPhotos:
-                        agendaPath.append(.flaggedPhotos)
-                    case .emergencyQueue:
-                        // A tab, not a push: the queue has its own place, and
-                        // burying a second copy inside the agenda's stack would
-                        // leave two back buttons to the same list.
-                        tab = .emergency
-                    }
+            model: StaffHomeModel(
+                briefing: environment.briefing,
+                emergency: environment.emergency,
+                reports: environment.reports,
+                photos: environment.photos,
+                appointments: environment.appointments
+            ),
+            clinicianName: clinicianName,
+            onSelect: { target in
+                switch target {
+                case .patient(let id, let name):
+                    agendaPath.append(.patient(id: id, name: name))
+                case .pendingReports:
+                    agendaPath.append(.pendingReports)
+                case .flaggedPhotos:
+                    agendaPath.append(.flaggedPhotos)
+                case .emergencyQueue:
+                    // A tab, not a push: the queue has its own place, and
+                    // burying a second copy inside the agenda's stack would
+                    // leave two back buttons to the same list.
+                    tab = .emergency
+                case .tool(let tool):
+                    agendaPath.append(destination(for: tool))
                 }
-            )
+            }
+        )
     }
 
     private var patients: some View {
@@ -516,5 +523,29 @@ private extension StaffDestination {
         case .consents: self = .consents(patientId: patientId)
         case .exports: self = .patientExports(patientId: patientId)
         }
+    }
+}
+
+/**
+ * Where a shortcut on the agenda goes.
+ *
+ * Exhaustive on purpose. A tool added to the agenda's grid with nowhere to go
+ * would compile, draw a tile, and do nothing when a clinician pressed it; the
+ * switch means the compiler asks for a destination the moment one is added.
+ */
+private func destination(for tool: StaffTool) -> StaffDestination {
+    switch tool {
+    case .calendar: return .calendar
+    case .inbox: return .inbox
+    case .complicationQueue: return .complicationQueue
+    case .newPatient: return .newPatient
+    case .analytics: return .analytics
+    case .finance: return .finance
+    case .exports: return .exports
+    case .availability: return .availability
+    case .protocols: return .protocols
+    case .aiSettings: return .aiSettings
+    case .agencies: return .agencies
+    case .audit: return .audit
     }
 }

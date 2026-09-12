@@ -89,7 +89,8 @@ final class StaffSmokeTests: XCTestCase {
             briefing: environment.briefing,
             emergency: environment.emergency,
             reports: environment.reports,
-            photos: environment.photos
+            photos: environment.photos,
+            appointments: environment.appointments
         )
         await agenda.load()
         assertNotFailed(agenda.currentState().phase, "agenda")

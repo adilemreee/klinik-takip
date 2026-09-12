@@ -439,9 +439,8 @@
 "briefing.yesterday" = "Dün";
 "briefing.today" = "Bugün";
 "briefing.atRisk" = "Bekleyenler";
-"briefing.quiet" = "Sakin bir sabah: bekleyen bir şey yok.";
+"briefing.quiet" = "Bekleyen bir şey yok.";
 "briefing.nothingToday" = "Bugün için randevu ya da kontrol yok.";
-"briefing.yesterdayQuiet" = "Dün kayda değer bir şey olmadı.";
 "briefing.newMessages" = "Yeni mesaj";
 "briefing.urgentMessages" = "Acil sınıflandırılan";
 "briefing.emergencies" = "Acil çağrı";
@@ -1227,3 +1226,9 @@
 "finance.rates.title" = "Bu ayki kurlar";
 "finance.rates.none" = "Bu ay için kur kaydı yok. Farklı para birimindeki tutarlar toplama katılmıyor.";
 "emergency.callAction" = "Ara";
+
+/* Gündem — günün programı ve klinik kısayolları (M5) */
+"briefing.todayCount" = "%d randevu · %d kontrol";
+"briefing.noAppointmentsToday" = "Bugün için randevu yok.";
+"briefing.next" = "Sıradaki";
+"briefing.shortcuts" = "Kısayollar";

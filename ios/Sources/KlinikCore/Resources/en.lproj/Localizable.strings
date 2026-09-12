@@ -439,9 +439,8 @@
 "briefing.yesterday" = "Yesterday";
 "briefing.today" = "Today";
 "briefing.atRisk" = "Waiting";
-"briefing.quiet" = "A quiet morning: nothing is waiting.";
+"briefing.quiet" = "Nothing is waiting.";
 "briefing.nothingToday" = "No appointments or follow-ups today.";
-"briefing.yesterdayQuiet" = "Nothing of note yesterday.";
 "briefing.newMessages" = "New messages";
 "briefing.urgentMessages" = "Triaged urgent";
 "briefing.emergencies" = "Emergency calls";
@@ -1227,3 +1226,9 @@
 "finance.rates.title" = "Rates this month";
 "finance.rates.none" = "No exchange rate has been recorded this month. Amounts in other currencies stay out of the totals.";
 "emergency.callAction" = "Call";
+
+/* Agenda — the day's schedule and the clinic's other screens (M5) */
+"briefing.todayCount" = "%d appointments · %d follow-ups";
+"briefing.noAppointmentsToday" = "No appointments today.";
+"briefing.next" = "Next";
+"briefing.shortcuts" = "Shortcuts";

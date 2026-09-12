@@ -211,6 +211,7 @@ public struct LabPanelsScreen: View {
 /// One report: a date header that folds, and the rows under it.
 struct PanelSection: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     let panel: LabPanel
     let isCollapsed: Bool
@@ -284,14 +285,26 @@ struct PanelSection: View {
                     )
                     .font(Tokens.Typography.footnoteRelative)
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    // The number somebody opens a report for. Absent rather
+                    // than zero: "0 abnormal" is a badge that teaches people
+                    // to read badges instead of rows.
+                    //
+                    // Under the date at the accessibility sizes: beside it,
+                    // the pill was left a sliver of the row and broke its own
+                    // words — "3 değ / er aralı / k dışı".
+                    if panel.abnormal > 0, typeSize.isAccessibilitySize {
+                        Badge(
+                            String(format: L10n.string("lab.abnormalCount"), panel.abnormal),
+                            tone: .critical,
+                            symbol: "exclamationmark.circle.fill"
+                        )
+                    }
                 }
 
                 Spacer(minLength: 0)
 
-                // The number somebody opens a report for. Absent rather than
-                // zero: "0 abnormal" is a badge that teaches people to read
-                // badges instead of rows.
-                if panel.abnormal > 0 {
+                if panel.abnormal > 0, !typeSize.isAccessibilitySize {
                     Badge(
                         String(format: L10n.string("lab.abnormalCount"), panel.abnormal),
                         tone: .critical,
@@ -330,11 +343,19 @@ struct PanelSection: View {
 /// One analyte: what it was, against what it should have been.
 struct ResultRow: View {
     @Environment(\.colorScheme) private var scheme
+    /**
+     * Three columns — the analyte, the value, the reference range — is the
+     * shape of a printed report and the right one on a phone held normally.
+     * At the accessibility sizes a third of the width is not a column: it
+     * produced "analyte / Name", "val / ue", "Refera / ns aralığı yok", which
+     * is a table nobody can read. Stacked, each one keeps its words.
+     */
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     let result: LabResult
 
     var body: some View {
-        HStack(alignment: .top, spacing: Tokens.Spacing.md) {
+        AdaptiveStack(stacked: typeSize.isAccessibilitySize) {
             Image(systemName: ResultRow.symbol(for: result))
                 .font(Tokens.Typography.calloutRelative)
                 .foregroundStyle(ResultRow.tone(for: result).foreground.resolve(for: scheme))
@@ -347,7 +368,10 @@ struct ResultRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
 
-            VStack(alignment: .trailing, spacing: Tokens.Spacing.xxs) {
+            VStack(
+                alignment: typeSize.isAccessibilitySize ? .leading : .trailing,
+                spacing: Tokens.Spacing.xxs
+            ) {
                 HStack(spacing: Tokens.Spacing.xxs) {
                     Text(result.value)
                         .font(Tokens.Typography.calloutRelative)

@@ -101,6 +101,9 @@ public struct LabReviewScreen: View {
 
 struct LabReviewRow: View {
     @Environment(\.colorScheme) private var scheme
+    /// Three buttons on one line become "Ona / yla", "Düz / elt", "Sonu / ç
+    /// değil, sil" at the accessibility sizes. Stacked, they stay words.
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     let item: LabReviewItem
     let isWorking: Bool
@@ -140,25 +143,37 @@ struct LabReviewRow: View {
                     .foregroundStyle(Tokens.Palette.info.resolve(for: scheme))
             }
 
-            HStack(spacing: Tokens.Spacing.md) {
-                Button(L10n.string("lab.review.confirm")) { Task { await onConfirm() } }
-                    .disabled(isWorking)
-                    .frame(minHeight: Tokens.minimumTouchTarget)
-
-                Button(L10n.string("lab.review.correct"), action: onEdit)
-                    .disabled(isWorking)
-                    .frame(minHeight: Tokens.minimumTouchTarget)
-
-                Spacer()
-
-                Button(L10n.string("lab.review.discard"), role: .destructive) {
-                    Task { await onDiscard() }
+            if typeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
+                    actions
                 }
-                .disabled(isWorking)
-                .frame(minHeight: Tokens.minimumTouchTarget)
+            } else {
+                HStack(spacing: Tokens.Spacing.md) {
+                    actions
+                }
             }
         }
         .padding(.vertical, Tokens.Spacing.xs)
+    }
+
+    /// The same three, in whichever direction they fit.
+    @ViewBuilder
+    private var actions: some View {
+        Button(L10n.string("lab.review.confirm")) { Task { await onConfirm() } }
+            .disabled(isWorking)
+            .frame(minHeight: Tokens.minimumTouchTarget)
+
+        Button(L10n.string("lab.review.correct"), action: onEdit)
+            .disabled(isWorking)
+            .frame(minHeight: Tokens.minimumTouchTarget)
+
+        Spacer(minLength: 0)
+
+        Button(L10n.string("lab.review.discard"), role: .destructive) {
+            Task { await onDiscard() }
+        }
+        .disabled(isWorking)
+        .frame(minHeight: Tokens.minimumTouchTarget)
     }
 
     private var valueLine: String {

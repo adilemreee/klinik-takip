@@ -348,3 +348,127 @@ public struct MessageState: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/**
+ * A row that becomes a column when the words stop fitting.
+ *
+ * Two things side by side is the right shape until each of them needs the
+ * whole width; past that SwiftUI keeps the row and breaks the words instead,
+ * which is how "Randevu" became "Randev / u" and "Onayla" became "Ona / yla"
+ * at the largest accessibility text sizes.
+ *
+ * The caller decides — usually from `\.dynamicTypeSize` — because whether a
+ * pair fits depends on how long its words are, and only the caller knows.
+ */
+public struct AdaptiveStack<Content: View>: View {
+    private let stacked: Bool
+    private let spacing: CGFloat
+    private let content: Content
+
+    public init(
+        stacked: Bool,
+        spacing: CGFloat = Tokens.Spacing.md,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.stacked = stacked
+        self.spacing = spacing
+        self.content = content()
+    }
+
+    public var body: some View {
+        if stacked {
+            VStack(alignment: .leading, spacing: spacing) { content }
+        } else {
+            HStack(alignment: .top, spacing: spacing) { content }
+        }
+    }
+}
+
+/**
+ * A row of small things that moves onto the next line rather than squeezing.
+ *
+ * Badges are pills, and a pill has a natural width. Put three in an `HStack`
+ * and each is offered a third of the screen; at the largest accessibility text
+ * sizes a third of a screen is narrower than the word inside, so SwiftUI wraps
+ * the word — and "Ameliyat sonrası" came out one letter per line.
+ *
+ * Here each subview is asked what it wants and given exactly that, and the row
+ * breaks when the next one will not fit. No caller has to know the text size.
+ */
+public struct FlowRow: Layout {
+    private let spacing: CGFloat
+
+    public init(spacing: CGFloat = Tokens.Spacing.sm) {
+        self.spacing = spacing
+    }
+
+    public func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        let width = proposal.replacingUnspecifiedDimensions().width
+        let rows = rows(of: subviews, within: width)
+        let height = rows.map(\.height).reduce(0, +)
+            + CGFloat(max(0, rows.count - 1)) * spacing
+
+        return CGSize(width: width, height: height)
+    }
+
+    public func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        var y = bounds.minY
+
+        for row in rows(of: subviews, within: bounds.width) {
+            var x = bounds.minX
+
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(
+                    at: CGPoint(x: x, y: y),
+                    proposal: ProposedViewSize(size)
+                )
+                x += size.width + spacing
+            }
+
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    /// Greedy: each subview goes on the current line if it fits, and starts a
+    /// new one if it does not. A single subview wider than the whole row gets
+    /// its own line and overflows, which is the honest outcome — there is
+    /// nowhere else for it to go.
+    private func rows(of subviews: Subviews, within width: CGFloat) -> [Row] {
+        var rows: [Row] = []
+        var current = Row()
+
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            let needed = current.indices.isEmpty ? size.width : current.width + spacing + size.width
+
+            if !current.indices.isEmpty && needed > width {
+                rows.append(current)
+                current = Row(indices: [index], width: size.width, height: size.height)
+            } else {
+                current.indices.append(index)
+                current.width = needed
+                current.height = max(current.height, size.height)
+            }
+        }
+
+        if !current.indices.isEmpty { rows.append(current) }
+
+        return rows
+    }
+}

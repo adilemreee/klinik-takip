@@ -18,6 +18,7 @@ import KlinikDesign
  */
 public struct StaffHomeScreen: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private let model: StaffHomeModel
     /// Who is reading. Nil until `/me/identity` answers, and on the rare
@@ -335,7 +336,11 @@ public struct StaffHomeScreen: View {
                 // Both counts, always — a zero is an answer, and a tile that
                 // disappears when nothing is booked reads as a tile somebody
                 // removed. Colour is what a count earns by not being zero.
-                HStack(spacing: Tokens.Spacing.md) {
+                //
+                // Side by side until half a screen stops being enough for the
+                // word "Randevu", which at the accessibility sizes SwiftUI
+                // breaks in two rather than wrapping.
+                AdaptiveStack(stacked: typeSize.isAccessibilitySize) {
                     StatTile(
                         value: "\(facts.today.appointments)",
                         label: L10n.string("briefing.appointments"),
@@ -454,7 +459,7 @@ public struct StaffHomeScreen: View {
                         )
                         .multilineTextAlignment(.leading)
 
-                    HStack(spacing: Tokens.Spacing.xs) {
+                    FlowRow(spacing: Tokens.Spacing.xs) {
                         Badge(appointment.type.localizedName, tone: .neutral)
 
                         if isNext {

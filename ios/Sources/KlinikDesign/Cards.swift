@@ -185,6 +185,10 @@ public struct StatTile: View {
                 .font(Tokens.Typography.captionRelative)
                 .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
                 .fixedSize(horizontal: false, vertical: true)
+                // Half a screen wide is not enough for "Randevu" at the
+                // largest sizes, and SwiftUI's answer is to break the word:
+                // "Randev / u". A little shrinking first.
+                .minimumScaleFactor(0.7)
         }
         .padding(Tokens.Spacing.md)
         .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
@@ -225,7 +229,12 @@ public struct Badge: View {
 
             Text(text)
                 .font(Tokens.Typography.footnoteRelative)
-                .lineLimit(1)
+                // Wraps rather than truncates. At the largest text sizes a
+                // one-line pill showed "Komplikasyo…" and "Amel…", which is
+                // the word gone — and the word is what carries the state to
+                // somebody who cannot tell the colours apart.
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.leading)
         }
         .padding(.horizontal, Tokens.Spacing.sm)
         .padding(.vertical, Tokens.Spacing.xxs)

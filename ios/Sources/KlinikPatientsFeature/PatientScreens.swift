@@ -96,25 +96,43 @@ public struct PatientListView: View {
  */
 struct PatientRow: View {
     @Environment(\.colorScheme) private var scheme
+    /// At the accessibility sizes the row stops being a row: a name, a file
+    /// number and a badge cannot share a line when each of them is three lines
+    /// tall, and SwiftUI's answer is to break the name in half — "Ayşe Yılma /
+    /// z". So the badge goes underneath and the circle steps out of the way.
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     let patient: Patient
 
-    var body: some View {
-        HStack(spacing: Tokens.Spacing.md) {
-            Initials(name: patient.fullName)
+    private var isLarge: Bool { typeSize.isAccessibilitySize }
 
-            VStack(alignment: .leading, spacing: Tokens.Spacing.xxs) {
+    var body: some View {
+        HStack(alignment: .top, spacing: Tokens.Spacing.md) {
+            if !isLarge {
+                Initials(name: patient.fullName)
+            }
+
+            VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
                 Text(patient.fullName)
                     .font(Tokens.Typography.subheadingRelative)
                     .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(subtitle)
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if isLarge {
+                    Badge(localizedStatus, tone: PatientRow.tone(for: patient.status))
+                }
             }
 
             Spacer(minLength: Tokens.Spacing.sm)
 
-            Badge(localizedStatus, tone: PatientRow.tone(for: patient.status))
+            if !isLarge {
+                Badge(localizedStatus, tone: PatientRow.tone(for: patient.status))
+            }
         }
         .padding(.vertical, Tokens.Spacing.xs)
         // One announcement per row rather than five fragments.

@@ -200,7 +200,7 @@ struct ChecklistRow: View {
                         .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
                         .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: Tokens.Spacing.sm) {
+                    FlowRow(spacing: Tokens.Spacing.sm) {
                         // In words as well as colour: a colour a reader cannot
                         // distinguish says nothing (spec section 7).
                         Badge(

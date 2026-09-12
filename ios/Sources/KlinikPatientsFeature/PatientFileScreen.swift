@@ -19,6 +19,7 @@ import KlinikDesign
  */
 public struct PatientFileScreen: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     private let model: PatientFileModel
     private let onSection: (FileSection) -> Void
@@ -133,7 +134,10 @@ public struct PatientFileScreen: View {
                 }
                 .accessibilityElement(children: .combine)
 
-                HStack(spacing: Tokens.Spacing.sm) {
+                // Wrapping, not squeezing: three pills sharing a row each
+                // got a third of the width, and a third of an
+                // accessibility-sized screen is narrower than the word inside.
+                FlowRow(spacing: Tokens.Spacing.sm) {
                     Badge(
                         file.patient.localizedStatus,
                         tone: PatientFileScreen.tone(for: file.patient.status),
@@ -144,15 +148,19 @@ public struct PatientFileScreen: View {
                         String(format: L10n.string("patient.ageYears"), file.patient.age),
                         symbol: "calendar"
                     )
-
-                    Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
+                // Two columns, until half a screen is not enough for a
+                // telephone number — at the accessibility sizes it wrapped
+                // into "+90 / 555 / 000 00 / 00", four lines of one number.
                 LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), alignment: .topLeading),
-                        GridItem(.flexible(), alignment: .topLeading),
-                    ],
+                    columns: typeSize.isAccessibilitySize
+                        ? [GridItem(.flexible(), alignment: .topLeading)]
+                        : [
+                            GridItem(.flexible(), alignment: .topLeading),
+                            GridItem(.flexible(), alignment: .topLeading),
+                        ],
                     spacing: Tokens.Spacing.md
                 ) {
                     FieldRow(
@@ -402,16 +410,15 @@ public struct PatientFileScreen: View {
                             .font(Tokens.Typography.subheadingRelative)
                             .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
 
-                        HStack(spacing: Tokens.Spacing.sm) {
+                        FlowRow(spacing: Tokens.Spacing.sm) {
                             Badge(
                                 surgery.performedAt.formatted(date: .abbreviated, time: .omitted),
                                 tone: .info,
                                 symbol: "calendar"
                             )
                             Badge(String(format: L10n.string("file.daysAgo"), surgery.daysAgo))
-
-                            Spacer(minLength: 0)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                         if surgery.surgeonName != nil || surgery.location != nil {
                             LazyVGrid(

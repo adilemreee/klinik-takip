@@ -97,6 +97,9 @@ import xyz.klinik.network.MeasurementSource
 import xyz.klinik.network.PaymentMethod
 import xyz.klinik.network.MeasurementSubject
 import xyz.klinik.network.RecordSubject
+import xyz.klinik.sync.PendingChangesModel
+import xyz.klinik.feature.sync.ui.PendingChangesScreen
+import xyz.klinik.feature.sync.ui.PendingChangesState
 import xyz.klinik.shell.FileSection
 import xyz.klinik.shell.StaffDestination
 import xyz.klinik.shell.destinationFor
@@ -388,6 +391,28 @@ fun StaffDestinationScreen(
                     scope.launch { model.setActive(agency, active) }
                 },
                 onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.PendingChanges -> {
+            val model = remember { PendingChangesModel(environment.outbox) }
+            val pending by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            PendingChangesScreen(
+                state = PendingChangesState(
+                    entries = pending.entries,
+                    conflicts = pending.conflicts,
+                    sending = pending.sending,
+                    lastSyncedAt = pending.lastSyncedAtMillis?.let { context.shortDate(it) },
+                ),
+                strings = context.pendingChangesStrings(),
+                onSendNow = { scope.launch { model.sendNow() } },
+                onDiscard = { entry -> scope.launch { model.discard(entry) } },
+                onKeepMine = { conflict -> scope.launch { model.keepMine(conflict) } },
+                onKeepServer = { conflict -> scope.launch { model.keepServer(conflict) } },
                 modifier = modifier,
             )
         }

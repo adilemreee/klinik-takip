@@ -87,6 +87,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** What has not reached the clinic yet (spec M15). */
+    data object PendingChanges : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** The clinic's conversations (spec M6). */
     data object Inbox : StaffDestination {
         override val patientId: String? = null
@@ -235,5 +240,6 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.Protocols,
     StaffDestination.Audit,
     StaffDestination.Account,
+    StaffDestination.PendingChanges,
     StaffDestination.NotificationSettings,
 )

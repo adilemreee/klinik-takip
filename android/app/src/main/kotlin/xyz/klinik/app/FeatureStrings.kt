@@ -40,10 +40,12 @@ import xyz.klinik.feature.reports.ui.MyReportsStrings
 import xyz.klinik.feature.reports.ui.ReportReviewStrings
 import xyz.klinik.feature.surveys.ui.SurveyStrings
 import xyz.klinik.feature.surveys.ui.SurveyTrendStrings
+import xyz.klinik.feature.sync.ui.PendingChangesStrings
 import xyz.klinik.feature.travel.ui.TravelStrings
 import xyz.klinik.network.UiText
 import xyz.klinik.shell.FileSection
 import xyz.klinik.shell.PasswordRules
+import xyz.klinik.sync.descriptionKey
 import xyz.klinik.shell.StaffDestination
 import xyz.klinik.design.R as DesignR
 
@@ -320,6 +322,7 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Photos -> getString(DesignR.string.menu_photos)
     PatientDestination.Measurements -> getString(DesignR.string.menu_measurements)
     PatientDestination.Checklist -> getString(DesignR.string.checklist_title)
+    PatientDestination.PendingChanges -> getString(DesignR.string.sync_title)
     PatientDestination.LabPanels -> getString(DesignR.string.lab_title)
     PatientDestination.LabResults -> getString(DesignR.string.menu_lab_results)
     PatientDestination.Complications -> getString(DesignR.string.menu_complications)
@@ -442,6 +445,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
     StaffDestination.Audit -> getString(DesignR.string.audit_title)
     StaffDestination.Account -> getString(DesignR.string.account_title)
+    StaffDestination.PendingChanges -> getString(DesignR.string.sync_title)
     StaffDestination.Protocols -> getString(DesignR.string.protocol_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
     StaffDestination.Inbox -> getString(DesignR.string.inbox_title)
@@ -1092,4 +1096,48 @@ fun Context.surveyTrendStrings(): SurveyTrendStrings = SurveyTrendStrings(
             .replace("{total}", total.toString())
     },
     message = { text -> resolve(text) },
+)
+
+/** A date a reader can place, in their own locale. */
+fun Context.shortDate(millis: Long): String =
+    java.text.DateFormat
+        .getDateTimeInstance(
+            java.text.DateFormat.SHORT,
+            java.text.DateFormat.SHORT,
+            resources.configuration.locales[0],
+        )
+        .format(java.util.Date(millis))
+
+/**
+ * What has not reached the clinic yet (spec M15).
+ *
+ * `describe` falls back to the entity type as the server spells it: a change
+ * somebody is waiting on must not be a blank row because the app has no word
+ * for its table.
+ */
+fun Context.pendingChangesStrings(): PendingChangesStrings = PendingChangesStrings(
+    title = getString(DesignR.string.sync_title),
+    empty = getString(DesignR.string.sync_empty),
+    emptyDetail = getString(DesignR.string.sync_empty_detail),
+    upToDate = getString(DesignR.string.sync_up_to_date),
+    sendNow = getString(DesignR.string.sync_send_now),
+    sending = getString(DesignR.string.sync_sending),
+    waiting = getString(DesignR.string.sync_waiting),
+    stuck = getString(DesignR.string.sync_stuck),
+    stuckDetail = getString(DesignR.string.sync_stuck_detail),
+    discard = getString(DesignR.string.sync_discard),
+    discardTitle = getString(DesignR.string.sync_discard_title),
+    discardDetail = getString(DesignR.string.sync_discard_detail),
+    cancel = getString(DesignR.string.common_cancel),
+    conflictTitle = getString(DesignR.string.sync_conflict_title),
+    conflictDetail = getString(DesignR.string.sync_conflict_detail),
+    keepMine = getString(DesignR.string.sync_keep_mine),
+    keepServer = getString(DesignR.string.sync_keep_server),
+    urgentWarning = getString(DesignR.string.sync_urgent_warning),
+    attempts = { count -> getString(DesignR.string.sync_attempts, count) },
+    lastError = { detail -> getString(DesignR.string.sync_last_error, detail) },
+    lastSynced = { at -> getString(DesignR.string.sync_last_synced, at) },
+    pendingCount = { count -> getString(DesignR.string.sync_pending_count, count) },
+    pendingOne = getString(DesignR.string.sync_pending_one),
+    describe = { entry -> stringForKey(entry.descriptionKey(), entry.entityType) },
 )

@@ -54,6 +54,8 @@ import xyz.klinik.feature.reports.MyReportsModel
 import xyz.klinik.feature.reports.ui.MyReportsScreen
 import xyz.klinik.feature.surveys.SurveyModel
 import xyz.klinik.feature.surveys.ui.SurveyScreen
+import xyz.klinik.feature.sync.ui.PendingChangesScreen
+import xyz.klinik.feature.sync.ui.PendingChangesState
 import xyz.klinik.feature.travel.TravelModel
 import xyz.klinik.feature.travel.ui.TravelScreen
 import xyz.klinik.feature.photos.PhotoGalleryModel
@@ -62,6 +64,7 @@ import xyz.klinik.network.DocumentType
 import xyz.klinik.network.MeasurementSource
 import xyz.klinik.network.MeasurementSubject
 import xyz.klinik.network.RecordSubject
+import xyz.klinik.sync.PendingChangesModel
 import xyz.klinik.design.R as DesignR
 
 /**
@@ -101,6 +104,9 @@ sealed interface PatientDestination {
 
     /** What the clinic still needs before the operation (spec M17). */
     data object Checklist : PatientDestination
+
+    /** What has not reached the clinic yet (spec M15). */
+    data object PendingChanges : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -154,6 +160,7 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.Consents,
     PatientDestination.NotificationSettings,
     PatientDestination.Account,
+    PatientDestination.PendingChanges,
 )
 
 /**
@@ -337,6 +344,28 @@ fun PatientDestinationScreen(
                 strings = context.labTrendStrings(),
                 onRetry = { scope.launch { model.load() } },
                 onSelect = model::select,
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.PendingChanges -> {
+            val model = remember { PendingChangesModel(environment.outbox) }
+            val pending by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            PendingChangesScreen(
+                state = PendingChangesState(
+                    entries = pending.entries,
+                    conflicts = pending.conflicts,
+                    sending = pending.sending,
+                    lastSyncedAt = pending.lastSyncedAtMillis?.let { context.shortDate(it) },
+                ),
+                strings = context.pendingChangesStrings(),
+                onSendNow = { scope.launch { model.sendNow() } },
+                onDiscard = { entry -> scope.launch { model.discard(entry) } },
+                onKeepMine = { conflict -> scope.launch { model.keepMine(conflict) } },
+                onKeepServer = { conflict -> scope.launch { model.keepServer(conflict) } },
                 modifier = modifier,
             )
         }

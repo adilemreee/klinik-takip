@@ -187,6 +187,9 @@ if (androidSdkAvailable) {
     // The account somebody signed in with (spec T7.3).
     include(":feature:account-ui")
 
+    // What has not reached the clinic yet (spec M15).
+    include(":feature:sync-ui")
+
     // The installable app. Last, because it depends on all of them.
     include(":app")
 } else {

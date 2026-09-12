@@ -88,6 +88,8 @@ import xyz.klinik.feature.protocols.ProtocolsModel
 import xyz.klinik.feature.protocols.ui.ProtocolsScreen
 import xyz.klinik.feature.reports.ReportReviewModel
 import xyz.klinik.feature.reports.ui.ReportReviewScreen
+import xyz.klinik.feature.surveys.SurveyTrendModel
+import xyz.klinik.feature.surveys.ui.SurveyTrendScreen
 import xyz.klinik.feature.travel.TravelModel
 import xyz.klinik.feature.travel.ui.TravelScreen
 import xyz.klinik.network.FinanceRecord
@@ -492,6 +494,23 @@ fun StaffDestinationScreen(
                 // passport on somebody's behalf is a different feature with a
                 // different consent question behind it.
                 onUpload = null,
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        is StaffDestination.Surveys -> {
+            val model = remember(destination.patientId) {
+                SurveyTrendModel(environment.surveys, destination.patientId)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            SurveyTrendScreen(
+                state = state,
+                strings = context.surveyTrendStrings(),
+                onChooseQuestion = { questionId -> model.choose(questionId) },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

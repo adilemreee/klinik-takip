@@ -136,6 +136,7 @@ sealed interface StaffDestination {
     data class LabPanels(override val patientId: String) : StaffDestination
     data class Checklist(override val patientId: String) : StaffDestination
     data class Consents(override val patientId: String) : StaffDestination
+    data class Surveys(override val patientId: String) : StaffDestination
 
     /** Inviting this patient into the app (spec T7.3). */
     data class Invite(override val patientId: String, val name: String) : StaffDestination
@@ -172,6 +173,9 @@ enum class FileSection {
 
     /** What this patient has agreed to, and what they withdrew. */
     CONSENTS,
+
+    /** How their own answers have moved (spec M18). */
+    SURVEYS,
 }
 
 fun destinationFor(section: FileSection, patientId: String): StaffDestination = when (section) {
@@ -188,6 +192,7 @@ fun destinationFor(section: FileSection, patientId: String): StaffDestination = 
     FileSection.LAB_PANELS -> StaffDestination.LabPanels(patientId)
     FileSection.CHECKLIST -> StaffDestination.Checklist(patientId)
     FileSection.CONSENTS -> StaffDestination.Consents(patientId)
+    FileSection.SURVEYS -> StaffDestination.Surveys(patientId)
 }
 
 /**

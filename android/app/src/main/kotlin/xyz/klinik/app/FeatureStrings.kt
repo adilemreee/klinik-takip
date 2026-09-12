@@ -39,6 +39,7 @@ import xyz.klinik.feature.protocols.ui.ProtocolsStrings
 import xyz.klinik.feature.reports.ui.MyReportsStrings
 import xyz.klinik.feature.reports.ui.ReportReviewStrings
 import xyz.klinik.feature.surveys.ui.SurveyStrings
+import xyz.klinik.feature.surveys.ui.SurveyTrendStrings
 import xyz.klinik.feature.travel.ui.TravelStrings
 import xyz.klinik.network.UiText
 import xyz.klinik.shell.FileSection
@@ -298,6 +299,7 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.LAB_PANELS -> getString(DesignR.string.lab_title)
     FileSection.CHECKLIST -> getString(DesignR.string.checklist_title)
     FileSection.CONSENTS -> getString(DesignR.string.consent_staff_title)
+    FileSection.SURVEYS -> getString(DesignR.string.survey_trend_title)
 }
 
 /**
@@ -459,6 +461,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     is StaffDestination.LabPanels -> stringForSection(FileSection.LAB_PANELS)
     is StaffDestination.Checklist -> stringForSection(FileSection.CHECKLIST)
     is StaffDestination.Consents -> stringForSection(FileSection.CONSENTS)
+    is StaffDestination.Surveys -> stringForSection(FileSection.SURVEYS)
     is StaffDestination.Invite -> getString(DesignR.string.invite_title)
 }
 
@@ -1064,5 +1067,29 @@ fun Context.inboxStrings(): InboxStrings = InboxStrings(
     open = getString(DesignR.string.menu_messages),
     attachment = getString(DesignR.string.message_attachment),
     unreadCount = { count -> getString(DesignR.string.file_unread, count) },
+    message = { text -> resolve(text) },
+)
+
+/**
+ * How a patient's own answers have moved (spec M18).
+ *
+ * The catalogue's `{days}`, `{answered}` and `{total}` placeholders are filled
+ * in here: they are shared with iOS and are not Android format specifiers.
+ */
+fun Context.surveyTrendStrings(): SurveyTrendStrings = SurveyTrendStrings(
+    title = getString(DesignR.string.survey_trend_title),
+    noAnswers = getString(DesignR.string.survey_no_answers),
+    noTrend = getString(DesignR.string.survey_no_trend),
+    retry = getString(DesignR.string.common_retry),
+    partial = getString(DesignR.string.survey_partial_short),
+    findingName = { finding -> stringForKey(finding.kind.stringKey) },
+    milestone = { days ->
+        getString(DesignR.string.survey_milestone).replace("{days}", days.toString())
+    },
+    partialDetail = { answered, total ->
+        getString(DesignR.string.survey_partial)
+            .replace("{answered}", answered.toString())
+            .replace("{total}", total.toString())
+    },
     message = { text -> resolve(text) },
 )

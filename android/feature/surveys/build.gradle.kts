@@ -11,6 +11,8 @@ kotlin {
 
 dependencies {
     api(project(":core:network"))
+    // The trend chart's geometry, shared with labs and measurements.
+    api(project(":core:charts"))
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(kotlin("test"))

@@ -14,6 +14,11 @@
 > Her düzeltmenin arkasında ya yeni bir test ya da mekanik bir kontrol var.
 > Kritik olanların dördü (A1, A2, E1, E2, E3, E4) eski davranış geri konularak
 > **iki yönlü** kanıtlandı: test önce kırmızı, düzeltmeyle yeşil.
+>
+> **Güncelleme — 2026-09-12:** F bloğu simülatörde çalıştırıldı; altı maddesi
+> kapandı, üçü cihaz ya da insan gerektirdiği için açık. Aynı gezinti sırasında
+> koddan görülmemiş sekiz sorun daha bulundu ve düzeltildi — hepsi F bloğunun
+> altında.
 
 Baştan sona kaynak kodu okunarak çıkarıldı (2026-09-11). Simülatör çalıştırılmadı;
 her madde koddaki satıra dayanıyor. `ios/Sources` altındaki ~28.000 satırın tamamı
@@ -617,18 +622,53 @@ konabilir.
 
 ## F — Koddan doğrulanamayanlar
 
-Bunlar için simülatör/cihaz gerekiyor. `simctl` bu makinede takılı olduğu için
-hiçbiri çalıştırılamadı.
+> **Durum — 2026-09-12:** Simülatör çalıştırıldı. Uygulamanın tamamı, `docs/openapi.json`
+> yüzeyinin tamamını cevaplayan yerel bir *stub klinik*'e (kendi imzalı sertifikasıyla
+> HTTPS; `KlinikAPIBaseURL` DEBUG geçersiz kılması ile bağlandı) karşı XCUITest ile
+> baştan sona gezildi: personel kabuğu, hasta kabuğu, açık/koyu tema ve
+> `UICTContentSizeCategoryAccessibilityXXXL`. Altı madde kapandı, üçü cihaz/insan
+> gerektirdiği için açık kaldı.
 
-- [ ] Dynamic Type XXXL'de `ResultRow` (analit adı + değer + referans aralığı üç
-      sütun, hiçbirinde minimum genişlik yok) ve `ChecklistRow` ("Yükle" düğmesi
-      uzun etiketin yanında) taşıyor mu?
-- [ ] `SignaturePad` içinde imza gerçekten çiziliyor mu, yoksa sayfa mı kayıyor (B3)?
-- [ ] Onam metni ekranda gerçekten tek blok mu akıyor (B2)?
-- [ ] VoiceOver ile kritik akışlar (acil, onam imzası, laboratuvar tablosu).
-- [ ] Karanlık modda `Tokens.Palette` kontrast oranları.
+- [x] Dynamic Type XXXL'de `ResultRow` ve `ChecklistRow` taşıyor mu? **Taşıyordu, ve
+      yalnız onlar değil.** O boyutta SwiftUI sığmayan kelimeyi ikiye bölüyor:
+      hasta listesi "Ayşe Yılma / z", dosya başlığındaki üç rozet harf harf alt alta,
+      tahlil tablosu "analyte / Name" · "val / ue", inceleme düğmeleri "Ona / yla"
+      ve "Düz / elt". Düzeltildi (`97adb17`): `Badge` kırpmak yerine sarıyor,
+      yeni `FlowRow` düzeni rozetleri kendi genişliklerinde alt satıra indiriyor,
+      `AdaptiveStack` çiftleri erişilebilirlik boyutlarında alt alta diziyor.
+- [x] `SignaturePad` içinde imza gerçekten çiziliyor mu (B3)? **Çiziliyor.** Pad'in
+      üstünde sürükleme çizgi bıraktı, sayfa kaymadı, "İzin ver" düğmesi imza
+      alınınca etkinleşti.
+- [x] Onam metni ekranda tek blok mu akıyor (B2)? **Akmıyor.** Başlıklar, madde
+      işaretleri ve tablo ayrı ayrı çiziliyor; tablo etiket/değer kartı olarak.
+- [x] Karanlık modda `Tokens.Palette`: gündem, hasta listesi, hasta dosyası, onaylar,
+      tahlil onayı ve ilaç ekranları koyu temada okunur; renkli kart yüzeyleri ve
+      rozetler doğru tonlarda.
+- [ ] VoiceOver ile kritik akışlar (acil, onam imzası, laboratuvar tablosu). **Bir
+      insan gerekiyor**; mekanik kontrol bunu göremez (bkz. ERISILEBILIRLIK.md).
 - [ ] Uygulama güncellemesinden sonra bekleyen yüklemelerin hayatta kalması (D3).
-- [ ] Face ID istemi sırasında gizlilik örtüsünün yanıp sönmesi (D6).
+      İki ayrı sürümün üst üste kurulmasını gerektiriyor.
+- [ ] Face ID istemi sırasında gizlilik örtüsünün yanıp sönmesi (D6). Simülatörde
+      biyometri kurulu değil; gerçek cihaz gerekiyor.
+
+### F bloğu çalışırken bulunan ve düzeltilenler
+
+Gezinti sırasında koddan görülmemiş olanlar — hepsi `d94a567`'de:
+
+- Finans, istatistik, denetim ve dışa aktarım ekranları, **her türlü** hata için
+  "bu hesabın erişimi yok" diyordu; sunucuya ulaşılamaması da, 500 de, çözümlenemeyen
+  yanıt da. Artık yalnız 403 reddi; gerisi hatayı söylüyor ve tekrar denetiyor.
+- Sunucudan gelen tanınmayan değerler ekrana ham anahtar olarak çıkıyordu
+  (`photo.finding.…`, `ai.missing.…`). `L10n.name(_:_:)` değerin kendisine düşüyor.
+- Personel tarafındaki hasta dosyası hastanın kendi menü etiketlerini kullanıyordu:
+  "Ölçümlerim", "Belgelerim", "Tahlil sonuçlarım". Seyahat ekranı doktora
+  "Doktorunuz uçabileceğinizi onayladı" diyordu.
+- "Onay bekleyen yorumlar" ve "Ameliyat öncesi belgeler" başlıkları çubuğa sığmıyordu.
+- Yüklenemeyen fotoğraf 220 puntoluk boşluk bırakıyordu; imzalı bağlantı hiç
+  gelmezse spinner sonsuza dönüyordu.
+- Hesap ekranında art arda iki "Güvenlik" başlığı vardı.
+- Ameliyat öncesi kontrol listesi klinik tarafından işlenemiyordu (yükleme yok).
+- Hasta ana ekranında beş kutu iki sütuna sığmayıp acil düğmesini yalnız bırakıyordu.
 
 ---
 

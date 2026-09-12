@@ -19,6 +19,7 @@ import xyz.klinik.feature.lab.ui.LabTrendStrings
 import xyz.klinik.feature.measurements.ui.MeasurementStrings
 import xyz.klinik.feature.measurements.ui.RecordStrings
 import xyz.klinik.feature.appointments.ui.AppointmentStrings
+import xyz.klinik.feature.consents.ui.ConsentFormStrings
 import xyz.klinik.feature.consents.ui.ConsentStrings
 import xyz.klinik.feature.consents.ui.PatientConsentsStrings
 import xyz.klinik.feature.exports.ui.ExportsStrings
@@ -332,6 +333,7 @@ fun Context.stringForDestination(destination: PatientDestination): String = when
     PatientDestination.Appointments -> getString(DesignR.string.menu_appointments)
     PatientDestination.NotificationSettings ->
         getString(DesignR.string.notification_settings_title)
+    PatientDestination.ConsentForm -> getString(DesignR.string.consent_type_treatment)
     PatientDestination.Consents -> getString(DesignR.string.consent_title)
 }
 
@@ -1177,5 +1179,23 @@ fun Context.calendarStrings(): CalendarStrings = CalendarStrings(
     },
     typeName = { appointment -> stringForKey(appointment.type.stringKey) },
     statusName = { appointment -> stringForKey(appointment.status.stringKey) },
+    message = { text -> resolve(text) },
+)
+
+/** Reading and signing the treatment consent (spec §8). */
+fun Context.consentFormStrings(): ConsentFormStrings = ConsentFormStrings(
+    title = getString(DesignR.string.consent_type_treatment),
+    unpublished = getString(DesignR.string.consent_procedure_unknown),
+    unpublishedWhy = getString(DesignR.string.consent_procedure_unknown_why),
+    retry = getString(DesignR.string.common_retry),
+    readToEndFirst = getString(DesignR.string.consent_read_to_end_first),
+    signHint = getString(DesignR.string.consent_sign_hint),
+    clearSignature = getString(DesignR.string.consent_clear_signature),
+    signed = getString(DesignR.string.consent_signed),
+    notSigned = getString(DesignR.string.consent_not_signed),
+    signatureRequired = getString(DesignR.string.consent_signature_required),
+    action = getString(DesignR.string.consent_read_and_sign),
+    thanks = getString(DesignR.string.consent_signed_thanks),
+    version = { version -> getString(DesignR.string.consent_version, version) },
     message = { text -> resolve(text) },
 )

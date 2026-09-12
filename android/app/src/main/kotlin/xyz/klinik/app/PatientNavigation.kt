@@ -24,7 +24,9 @@ import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.appointments.ui.AppointmentsScreen
 import xyz.klinik.feature.complications.MyComplicationsModel
 import xyz.klinik.feature.complications.ui.MyComplicationsScreen
+import xyz.klinik.feature.consents.ConsentFormModel
 import xyz.klinik.feature.consents.ConsentsModel
+import xyz.klinik.feature.consents.ui.ConsentFormScreen
 import xyz.klinik.feature.consents.ui.ConsentsScreen
 import xyz.klinik.feature.documents.ChecklistModel
 import xyz.klinik.feature.documents.DocumentsModel
@@ -107,6 +109,9 @@ sealed interface PatientDestination {
 
     /** What has not reached the clinic yet (spec M15). */
     data object PendingChanges : PatientDestination
+
+    /** Reading and signing the treatment consent (spec §8). */
+    data object ConsentForm : PatientDestination
     data object Documents : PatientDestination
     data object Photos : PatientDestination
     data object Measurements : PatientDestination
@@ -157,6 +162,7 @@ val patientMenuDestinations: List<PatientDestination> = listOf(
     PatientDestination.FollowUp,
     PatientDestination.Appointments,
     PatientDestination.Complications,
+    PatientDestination.ConsentForm,
     PatientDestination.Consents,
     PatientDestination.NotificationSettings,
     PatientDestination.Account,
@@ -549,6 +555,23 @@ fun PatientDestinationScreen(
                 onSignOutEverywhere = { scope.launch { model.signOutEverywhere() } },
                 onExport = { scope.launch { model.export() } },
                 onSaveExport = { json -> context.shareDataExport(json) },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        PatientDestination.ConsentForm -> {
+            val model = remember { ConsentFormModel(environment.consents) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            ConsentFormScreen(
+                state = state,
+                strings = context.consentFormStrings(),
+                onReadToEnd = { model.markReadToEnd() },
+                onSignedChange = { signed -> model.setSigned(signed) },
+                onSubmit = { png -> scope.launch { model.sign(png) } },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

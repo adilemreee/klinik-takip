@@ -32,6 +32,7 @@ import xyz.klinik.feature.notifications.ui.NotificationStrings
 import xyz.klinik.feature.messaging.ui.ChatStrings
 import xyz.klinik.feature.patients.ui.InviteStrings
 import xyz.klinik.feature.patients.ui.NewPatientStrings
+import xyz.klinik.feature.photos.ui.FlaggedPhotosStrings
 import xyz.klinik.feature.photos.ui.PhotoStrings
 import xyz.klinik.feature.protocols.ui.ProtocolsStrings
 import xyz.klinik.feature.reports.ui.MyReportsStrings
@@ -440,6 +441,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Account -> getString(DesignR.string.account_title)
     StaffDestination.Protocols -> getString(DesignR.string.protocol_title)
     StaffDestination.ComplicationQueue -> getString(DesignR.string.menu_complication_queue)
+    StaffDestination.FlaggedPhotos -> getString(DesignR.string.photo_flagged_title)
     StaffDestination.NotificationSettings -> getString(DesignR.string.notification_settings_title)
     is StaffDestination.File -> destination.name
     is StaffDestination.Measurements -> stringForSection(FileSection.MEASUREMENTS)
@@ -1029,5 +1031,23 @@ fun Context.agencyStrings(): AgencyStrings = AgencyStrings(
     commissionHint = getString(DesignR.string.agency_commission_hint),
     inactive = getString(DesignR.string.agency_inactive),
     save = getString(DesignR.string.common_save),
+    message = { text -> resolve(text) },
+)
+
+/** Wound photographs an assessment thought somebody should see (spec M5). */
+fun Context.flaggedPhotosStrings(): FlaggedPhotosStrings = FlaggedPhotosStrings(
+    title = getString(DesignR.string.photo_flagged_title),
+    empty = getString(DesignR.string.photo_none_flagged),
+    notPermitted = getString(DesignR.string.photo_not_permitted),
+    retry = getString(DesignR.string.common_retry),
+    reviewSuggested = getString(DesignR.string.photo_assessment_review_suggested),
+    clean = getString(DesignR.string.photo_assessment_clean),
+    notAssessed = getString(DesignR.string.photo_assessment_not_assessed),
+    disclaimer = getString(DesignR.string.photo_assessment_disclaimer),
+    assessAgain = getString(DesignR.string.photo_assess_again),
+    openFile = getString(DesignR.string.patient_file_number),
+    noBodyArea = getString(DesignR.string.photo_no_body_area),
+    findingName = { key -> stringForKey(key) },
+    imageLabel = getString(DesignR.string.photo_image),
     message = { text -> resolve(text) },
 )

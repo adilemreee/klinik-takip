@@ -50,6 +50,41 @@ data class ClinicalPhoto(
     fun findingKeys(): List<String> = aiFindings.map { "photo.finding.$it" }
 }
 
+/**
+ * A flagged photo, and whose it is.
+ *
+ * The worklist is clinic-wide, so a row naming only the photograph would leave
+ * a clinician able to see that a wound needs looking at and unable to find the
+ * file. The name and the file number are here for the same reason the
+ * emergency queue carries them: an id names nobody.
+ */
+@Serializable
+data class FlaggedPhoto(
+    val id: String,
+    val patientId: String,
+    val patientName: String,
+    val mrn: String,
+    val category: PhotoCategory,
+    val bodyArea: String? = null,
+    val phaseLabel: String? = null,
+    val mime: String,
+    val size: Int,
+    val takenAt: String,
+    val exifStripped: Boolean = false,
+    val isFaceBlurred: Boolean = false,
+    val consentId: String? = null,
+    val note: String? = null,
+    val aiReviewSuggested: Boolean? = null,
+    val aiFindings: List<String> = emptyList(),
+    val aiAssessedAt: String? = null,
+) {
+    /** Somebody looked and found nothing, as opposed to nobody having looked. */
+    val isAssessedClean: Boolean get() = aiReviewSuggested == false
+    val needsReview: Boolean get() = aiReviewSuggested == true
+
+    fun findingKeys(): List<String> = aiFindings.map { "photo.finding.$it" }
+}
+
 /** Why nothing was assessed, when nothing was. */
 @Serializable
 enum class AssessmentSkip {
@@ -103,7 +138,7 @@ class PhotosApi(
      * A worklist: ordered newest-first it would be one where the oldest thing
      * waits forever.
      */
-    suspend fun flagged(): List<ClinicalPhoto> =
+    suspend fun flagged(): List<FlaggedPhoto> =
         decode(client.send(Endpoint(HttpMethod.GET, "photos/flagged")))
 
     /** Asks for a pre-assessment. Sends a clinical photograph to a third party. */

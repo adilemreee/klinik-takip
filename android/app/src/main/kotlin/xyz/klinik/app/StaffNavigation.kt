@@ -76,9 +76,11 @@ import xyz.klinik.feature.patients.PatientDetailModel
 import xyz.klinik.feature.patients.ui.InviteScreen
 import xyz.klinik.feature.patients.ui.NewPatientScreen
 import xyz.klinik.feature.patients.ui.PatientDetailScreen
+import xyz.klinik.feature.photos.FlaggedPhotosModel
 import xyz.klinik.feature.photos.PhotoGalleryModel
 import xyz.klinik.feature.notifications.NotificationSettingsModel
 import xyz.klinik.feature.notifications.ui.NotificationSettingsScreen
+import xyz.klinik.feature.photos.ui.FlaggedPhotosScreen
 import xyz.klinik.feature.photos.ui.PhotoGalleryScreen
 import xyz.klinik.feature.protocols.ProtocolsModel
 import xyz.klinik.feature.protocols.ui.ProtocolsScreen
@@ -380,6 +382,31 @@ fun StaffDestinationScreen(
                 },
                 onSetActive = { agency, active ->
                     scope.launch { model.setActive(agency, active) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.FlaggedPhotos -> {
+            val model = remember { FlaggedPhotosModel(environment.photos) }
+            val state by model.state.collectAsStateWithLifecycle()
+            val imageFor = rememberPhotoImages(
+                environment.photos,
+                state.photos.map { it.id },
+            )
+
+            LaunchedEffect(Unit) { model.load() }
+
+            FlaggedPhotosScreen(
+                state = state,
+                strings = context.flaggedPhotosStrings(),
+                imageFor = imageFor,
+                onReassess = { photo -> scope.launch { model.reassess(photo) } },
+                // Straight into the file: a worklist that names the patient and
+                // cannot open their record is one somebody has to search from.
+                onOpenFile = { photo ->
+                    onOpen(StaffDestination.File(photo.patientId, photo.patientName))
                 },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
@@ -731,12 +758,18 @@ fun StaffDestinationScreen(
 
             LaunchedEffect(destination.patientId) { model.load() }
 
+            // A failed load stays absent rather than becoming a placeholder:
+            // a before/after comparison showing the wrong picture, or a grey
+            // square read as "nothing here", is worse than a visible gap.
+            val imageFor = rememberPhotoImages(
+                environment.photos,
+                state.groups.flatMap { group -> group.photos.map { it.id } },
+            )
+
             PhotoGalleryScreen(
                 state = state,
                 strings = context.photoStrings(),
-                // Nil rather than a placeholder: a before/after comparison
-                // showing the wrong picture is worse than showing none.
-                imageFor = { null },
+                imageFor = imageFor,
                 onRetry = { scope.launch { model.load() } },
                 onSelectArea = model::select,
                 onCompare = {},

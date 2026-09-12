@@ -29,13 +29,18 @@ import { RequireAnyPermission } from '../authz/decorators/require-permissions.de
 import { MeasurementsService } from '../measurements/measurements.service';
 import { ApiStandardErrors } from '../common/decorators/api-errors.decorator';
 import { firstFilePart } from '../documents/multipart';
-import { PhotoAssessmentService, type AssessmentResult } from './assessment.service';
+import {
+  PhotoAssessmentService,
+  type AssessmentResult,
+  type FlaggedPhoto,
+} from './assessment.service';
 import { GalleryGroup, PhotosService } from './photos.service';
 import {
   AssessmentResultDto,
   GalleryGroupDto,
   ListPhotosDto,
   OverlayQueryDto,
+  FlaggedPhotoDto,
   PhotoDto,
   PhotoUrlDto,
 } from './dto/photo.dto';
@@ -143,9 +148,9 @@ export class PhotosController {
   @Get('flagged')
   @RequirePermissions('photos.read')
   @ApiOperation({ summary: 'Photos the pre-assessment flagged for review' })
-  @ApiOkResponse({ type: [PhotoDto] })
+  @ApiOkResponse({ type: [FlaggedPhotoDto] })
   @ApiStandardErrors()
-  async flagged(@CurrentUser() user: AuthenticatedUser): Promise<Photo[]> {
+  async flagged(@CurrentUser() user: AuthenticatedUser): Promise<FlaggedPhoto[]> {
     return this.assessment.flagged(user);
   }
 

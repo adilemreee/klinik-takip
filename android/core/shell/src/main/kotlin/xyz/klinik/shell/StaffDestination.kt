@@ -87,6 +87,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** Wound photographs an assessment thought somebody should see (M5). */
+    data object FlaggedPhotos : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** When this clinician can be booked (spec M3). */
     data object Availability : StaffDestination {
         override val patientId: String? = null
@@ -209,6 +214,7 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.NewPatient,
     StaffDestination.PendingReports,
     StaffDestination.ComplicationQueue,
+    StaffDestination.FlaggedPhotos,
     StaffDestination.Analytics,
     StaffDestination.Finance,
     StaffDestination.Agencies,

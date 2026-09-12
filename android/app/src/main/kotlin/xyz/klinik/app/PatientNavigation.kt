@@ -256,12 +256,18 @@ fun PatientDestinationScreen(
 
             LaunchedEffect(Unit) { model.load() }
 
+            // A failed load stays absent rather than becoming a placeholder:
+            // a before/after comparison showing the wrong picture, or a grey
+            // square read as "nothing here", is worse than a visible gap.
+            val imageFor = rememberPhotoImages(
+                environment.photos,
+                state.groups.flatMap { group -> group.photos.map { it.id } },
+            )
+
             PhotoGalleryScreen(
                 state = state,
                 strings = context.photoStrings(),
-                // Nil rather than a placeholder: a before/after comparison
-                // showing the wrong picture is worse than showing none.
-                imageFor = { null },
+                imageFor = imageFor,
                 onRetry = { scope.launch { model.load() } },
                 onSelectArea = model::select,
                 // Comparison is its own screen; reaching it is the next slice.

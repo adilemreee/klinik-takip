@@ -391,6 +391,32 @@ describe('photo pre-assessment', () => {
     });
 
     /**
+     * A worklist that does not say whose photo it is, is something to read
+     * rather than something to act on: a clinician can see that a wound needs
+     * looking at and has no way to open the file.
+     */
+    it('says whose photo each one is', async () => {
+      const doctor = await actorFor(Role.DOCTOR);
+      const { photoId, patientId } = await makePhoto();
+
+      await prisma.photo.update({
+        where: { id: photoId },
+        data: { aiReviewSuggested: true },
+      });
+
+      const rows = await assessmentWith(AI_ON, modelSaying('{}').fetchImpl).flagged(
+        doctorActor(doctor.userId),
+      );
+
+      const flagged = rows.find((row) => row.id === photoId);
+      const patient = await prisma.patient.findUniqueOrThrow({ where: { id: patientId } });
+
+      expect(flagged?.patientId).toBe(patientId);
+      expect(flagged?.patientName).toBe(`${patient.firstName} ${patient.lastName}`);
+      expect(flagged?.mrn).toBe(patient.mrn);
+    });
+
+    /**
      * Staff-only by construction: the photo endpoints all require photos.read,
      * which no patient holds. There is no path that shows a patient a machine's
      * opinion of their own wound.

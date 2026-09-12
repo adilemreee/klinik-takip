@@ -10,6 +10,18 @@ import { PrismaService } from '../infra/prisma.service';
 import { StorageService } from '../infra/storage.service';
 import { readBounded } from './read-bounded';
 import { isAssessable, parseAssessment, type Finding } from './assessment';
+
+/**
+ * A flagged photo with the patient it belongs to.
+ *
+ * The worklist is clinic-wide, so a row that named only the photo left a
+ * clinician with nothing to act on.
+ */
+export type FlaggedPhoto = Photo & {
+  patientId: string;
+  patientName: string;
+  mrn: string;
+};
 import { SYSTEM_PROMPT, buildUserPrompt } from './assessment.prompt';
 
 /** Matches the provider limit; a larger photo is refused rather than truncated. */
@@ -197,19 +209,32 @@ export class PhotoAssessmentService {
   }
 
   /**
-   * Photos a clinician should look at first.
+   * Photos a clinician should look at first, and whose they are.
    *
    * Only the flagged ones, oldest first: this is a worklist, and a worklist
    * ordered newest-first is one where the oldest thing waits forever.
    */
-  async flagged(user: AuthenticatedUser): Promise<Photo[]> {
+  async flagged(user: AuthenticatedUser): Promise<FlaggedPhoto[]> {
     const scope = await this.access.scopeFilter(user);
 
-    return this.prisma.photo.findMany({
+    const photos = await this.prisma.photo.findMany({
       where: { patient: scope, deletedAt: null, aiReviewSuggested: true },
       orderBy: { takenAt: 'asc' },
       take: 100,
+      // Whose wound it is. Without it the worklist is something to read
+      // rather than something to act on: a clinician can see that a photo
+      // needs looking at and has no way to find the file.
+      include: {
+        patient: { select: { id: true, firstName: true, lastName: true, mrn: true } },
+      },
     });
+
+    return photos.map(({ patient, ...photo }) => ({
+      ...photo,
+      patientId: patient.id,
+      patientName: `${patient.firstName} ${patient.lastName}`,
+      mrn: patient.mrn,
+    }));
   }
 
   /**

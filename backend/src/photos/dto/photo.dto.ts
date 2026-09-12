@@ -80,6 +80,26 @@ export class PhotoDto {
   note!: string | null;
 }
 
+/**
+ * A flagged photo, and whose it is.
+ *
+ * The clinic-wide worklist returned bare photos, so a clinician could see that
+ * a wound needed looking at and had no way to find out whose wound it was —
+ * which makes a worklist something to read rather than something to act on.
+ * The name is here for the same reason the emergency queue carries one: an id
+ * is not something anybody recognises.
+ */
+export class FlaggedPhotoDto extends PhotoDto {
+  @ApiProperty({ format: 'uuid' })
+  patientId!: string;
+
+  @ApiProperty({ description: 'For the row; an id names nobody' })
+  patientName!: string;
+
+  @ApiProperty({ description: 'File number, for a clinician checking they have the right person' })
+  mrn!: string;
+}
+
 export class GalleryGroupDto {
   @ApiProperty({ nullable: true })
   bodyArea!: string | null;

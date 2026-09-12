@@ -19,6 +19,26 @@ public enum L10n {
         NSLocalizedString(key, bundle: bundle, value: key, comment: "")
     }
 
+    /**
+     * A word for a value the server chose, falling back to the value itself.
+     *
+     * The catalogue is written against the values the server sends today. An
+     * AI finding, a milestone label or an anomaly kind it has never heard of
+     * would otherwise reach a clinician as `photo.finding.seroma` — a key, on
+     * screen, in the middle of a clinical note. The raw value is not a
+     * translation, but it is a word rather than an identifier with a dot in it.
+     *
+     * Only for free text the server picks. A value that is a Swift enum cannot
+     * arrive unknown — it would have failed to decode — and those keep
+     * `string(_:)`, where a missing key really is a missing translation.
+     */
+    public static func name(_ prefix: String, _ value: String) -> String {
+        let key = "\(prefix).\(value)"
+        let text = string(key)
+
+        return text == key ? value : text
+    }
+
     /// The bundle carrying the string catalogues, exposed for tests.
     static var resourceBundle: Bundle { .module }
 

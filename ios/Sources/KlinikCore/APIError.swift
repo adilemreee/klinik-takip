@@ -141,3 +141,63 @@ public extension APIError {
         }
     }
 }
+
+public extension APIError {
+    /// Whether the server refused, as opposed to failing to answer at all.
+    var isRefusal: Bool {
+        if case .forbidden = self { return true }
+
+        return false
+    }
+}
+
+/// A best-effort read: what came back, or why nothing did.
+///
+/// `try?` throws the reason away, and several screens then read "nothing came
+/// back from any of these" as "this account may not see the panel". That is
+/// true of a 403 and of nothing else — an unreachable clinic, a 500, or a
+/// response the app cannot parse would all be reported to a finance officer as
+/// a permission problem, on a screen with no way to try again.
+public enum Attempted<Value: Sendable>: Sendable {
+    case arrived(Value)
+    case failed(APIError)
+
+    public var value: Value? {
+        if case .arrived(let value) = self { return value }
+
+        return nil
+    }
+
+    public var error: APIError? {
+        if case .failed(let error) = self { return error }
+
+        return nil
+    }
+}
+
+/// Runs a read that is allowed to fail, keeping the reason.
+public func attempt<Value: Sendable>(
+    _ work: @Sendable () async throws -> Value
+) async -> Attempted<Value> {
+    do {
+        return .arrived(try await work())
+    } catch let error as APIError {
+        return .failed(error)
+    } catch {
+        return .failed(.unknown(status: 0))
+    }
+}
+
+/// What a screen should show when every one of its reads came back empty.
+public enum ReadOutcome: Sendable, Equatable {
+    /// Every failure was a refusal: this account may not see the screen.
+    case refused
+    /// Something else went wrong. Worth saying what, and worth a retry.
+    case failed(String)
+
+    public static func of(_ errors: [APIError]) -> ReadOutcome {
+        guard let reason = errors.first(where: { !$0.isRefusal }) else { return .refused }
+
+        return .failed(L10n.message(for: reason))
+    }
+}

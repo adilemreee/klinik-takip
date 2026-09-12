@@ -202,14 +202,179 @@ export class FileAlertsDto {
   unreviewedReports!: number;
 }
 
-export class PatientFileSummaryDto {
-  @ApiProperty({ type: PatientDto })
-  patient!: unknown;
+/**
+ * The patient as the file header needs them.
+ *
+ * `PatientDto` plus the age, which the server computes so that two clients
+ * cannot disagree about it — and which the published contract did not mention
+ * at all until this existed.
+ */
+export class FilePatientDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty()
+  mrn!: string;
+
+  @ApiProperty()
+  firstName!: string;
+
+  @ApiProperty()
+  lastName!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  birthDate!: Date;
+
+  @ApiProperty({ description: 'Whole years, computed on the server' })
+  age!: number;
+
+  @ApiProperty()
+  sex!: string;
+
+  @ApiProperty({ description: 'ISO 3166-1 alpha-2' })
+  country!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  city!: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  nationality!: string | null;
+
+  @ApiProperty()
+  preferredLanguage!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  referralSource!: string | null;
+
+  @ApiProperty()
+  status!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt!: Date;
+
+  @ApiProperty({ description: 'For optimistic concurrency on writes' })
+  version!: number;
+}
+
+export class PatientContactDto {
+  @ApiProperty({ nullable: true, type: String })
+  email!: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  phone!: string | null;
 
   @ApiProperty({
+    description:
+      'Whether a login exists. A file is opened when somebody books and the account comes later, so false is an ordinary state',
+  })
+  hasAccount!: boolean;
+}
+
+/// One person responsible for a file, as the file header lists them: a name
+/// already joined, because the header shows a name and not two columns.
+export class FileAssignmentDto {
+  @ApiProperty({ format: 'uuid' })
+  staffId!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  title!: string | null;
+
+  @ApiProperty({ enum: Role })
+  role!: Role;
+}
+
+export class FileLastMessageDto {
+  @ApiProperty({ nullable: true, type: String, description: 'Null for an attachment with no text' })
+  body!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  sentAt!: Date;
+
+  @ApiProperty()
+  fromPatient!: boolean;
+}
+
+export class NextAppointmentDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  scheduledAt!: Date;
+
+  @ApiProperty()
+  type!: string;
+
+  @ApiProperty()
+  status!: string;
+}
+
+export class NextFollowUpDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty()
+  label!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  dueAt!: Date;
+
+  @ApiProperty()
+  status!: string;
+}
+
+export class FileAdherenceDto {
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    description: '0–1 over the doses that have come due, or null when none have',
+  })
+  score!: number | null;
+
+  @ApiProperty()
+  taken!: number;
+
+  @ApiProperty()
+  missed!: number;
+
+  @ApiProperty({ description: 'Doses that have come due and been answered' })
+  due!: number;
+
+  @ApiProperty({ description: 'Still ahead: not counted, not missed' })
+  upcoming!: number;
+
+  @ApiProperty({ description: 'Consecutive days, ending today, with every due dose taken' })
+  streak!: number;
+
+  @ApiProperty()
+  activeMedications!: number;
+}
+
+export class FileCountsDto {
+  @ApiProperty()
+  documents!: number;
+
+  @ApiProperty()
+  photos!: number;
+
+  @ApiProperty()
+  labResults!: number;
+
+  @ApiProperty()
+  appointments!: number;
+}
+
+export class PatientFileSummaryDto {
+  @ApiProperty({ type: FilePatientDto })
+  patient!: FilePatientDto;
+
+  @ApiProperty({
+    type: PatientContactDto,
     description: "The account's e-mail and phone, and whether a login exists at all",
   })
-  contact!: { email: string | null; phone: string | null; hasAccount: boolean };
+  contact!: PatientContactDto;
 
   @ApiPropertyOptional({ type: MedicalProfileViewDto, nullable: true })
   medicalProfile!: MedicalProfileViewDto | null;
@@ -217,8 +382,11 @@ export class PatientFileSummaryDto {
   @ApiPropertyOptional({ type: SurgeryViewDto, nullable: true })
   lastSurgery!: SurgeryViewDto | null;
 
-  @ApiProperty({ description: 'Staff currently responsible for this file' })
-  assignments!: { staffId: string; name: string; title: string | null; role: Role }[];
+  @ApiProperty({
+    type: [FileAssignmentDto],
+    description: 'Staff currently responsible for this file',
+  })
+  assignments!: FileAssignmentDto[];
 
   @ApiProperty({ type: [MeasurementViewDto], description: 'Newest reading of each kind' })
   latestMeasurements!: MeasurementViewDto[];
@@ -226,24 +394,25 @@ export class PatientFileSummaryDto {
   @ApiProperty({ type: FileAlertsDto })
   alerts!: FileAlertsDto;
 
-  @ApiPropertyOptional({ nullable: true })
-  lastMessage!: { body: string | null; sentAt: Date; fromPatient: boolean } | null;
+  @ApiPropertyOptional({ type: FileLastMessageDto, nullable: true })
+  lastMessage!: FileLastMessageDto | null;
 
   @ApiProperty()
   unreadMessages!: number;
 
-  @ApiPropertyOptional({ nullable: true })
-  nextAppointment!: { id: string; scheduledAt: Date; type: string; status: string } | null;
+  @ApiPropertyOptional({ type: NextAppointmentDto, nullable: true })
+  nextAppointment!: NextAppointmentDto | null;
 
-  @ApiPropertyOptional({ nullable: true })
-  nextFollowUp!: { id: string; label: string; dueAt: Date; status: string } | null;
+  @ApiPropertyOptional({ type: NextFollowUpDto, nullable: true })
+  nextFollowUp!: NextFollowUpDto | null;
 
   @ApiPropertyOptional({
+    type: FileAdherenceDto,
     nullable: true,
     description: 'Null when nothing has been prescribed — not the same as zero',
   })
-  adherence!: unknown;
+  adherence!: FileAdherenceDto | null;
 
-  @ApiProperty()
-  counts!: { documents: number; photos: number; labResults: number; appointments: number };
+  @ApiProperty({ type: FileCountsDto })
+  counts!: FileCountsDto;
 }

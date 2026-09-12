@@ -27,12 +27,18 @@ public actor LabPanelsModel {
     private let documents: DocumentsAPI
     private let subject: RecordSubject
 
+    /// Whose reports these are, for the title. "Tahlil sonuçlarım" over
+    /// somebody else's bloods tells a doctor the wrong thing about whose
+    /// results they are reading.
+    public nonisolated let isMine: Bool
+
     private(set) public var state = LabPanelsState()
 
     public init(api: LabAPI, documents: DocumentsAPI, subject: RecordSubject) {
         self.api = api
         self.documents = documents
         self.subject = subject
+        self.isMine = subject == .me
     }
 
     public func currentState() -> LabPanelsState { state }
@@ -116,7 +122,7 @@ public struct LabPanelsScreen: View {
             .padding(Tokens.Spacing.lg)
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
-        .navigationTitle(L10n.string("lab.title"))
+        .navigationTitle(L10n.string(model.isMine ? "lab.title" : "lab.staffTitle"))
         .toolbar {
             if let openTrends {
                 ToolbarItem(placement: .primaryAction) {

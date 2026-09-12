@@ -37,7 +37,7 @@ public struct AuditEntry: Decodable, Sendable, Equatable, Identifiable {
     public let createdAt: Date
 
     public var localizedRole: String? {
-        actorRole.map { L10n.string("role.\($0)") }
+        actorRole.map { L10n.name("role", $0) }
     }
 
     /// The table's own name, in the reader's language when it is one the app
@@ -70,7 +70,7 @@ public struct AuditAnomaly: Decodable, Sendable, Equatable, Identifiable {
 
     public var id: String { "\(kind)-\(actorId ?? "anon")-\(windowStart.timeIntervalSince1970)" }
 
-    public var localizedKind: String { L10n.string("audit.anomaly.\(kind)") }
+    public var localizedKind: String { L10n.name("audit.anomaly", kind) }
 }
 
 public struct AuditFilter: Sendable, Equatable {

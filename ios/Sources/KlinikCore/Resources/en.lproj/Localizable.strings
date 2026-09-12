@@ -413,7 +413,7 @@
 "report.risk.MEDIUM" = "Medium";
 "report.risk.HIGH" = "High";
 "report.risk.CRITICAL" = "Critical";
-"report.pendingTitle" = "Interpretations awaiting review";
+"report.pendingTitle" = "Awaiting review";
 "report.pendingEmpty" = "Nothing waiting for review";
 "report.doctorView" = "Clinical interpretation";
 "report.patientView" = "Text that will go to the patient";
@@ -946,6 +946,7 @@
 "biometrics.enableHint" = "You will be asked to confirm it is you each time the app opens. Notifications and emergency calls are unaffected.";
 "biometrics.unavailable" = "This device has no biometric check set up.";
 "account.security" = "Security";
+"account.deviceLock" = "Device lock";
 
 /* Health data (M20) */
 "health.sync" = "Import from Apple Health";
@@ -980,6 +981,8 @@
 "travel.interpreterPhone" = "Their phone";
 "travel.clearedToFly" = "Your doctor has confirmed you may fly.";
 "travel.notClearedToFly" = "A doctor has not yet confirmed you may fly.";
+"travel.clearedToFlyStaff" = "The patient is cleared to fly.";
+"travel.notClearedToFlyStaff" = "No flight clearance yet.";
 "travel.clearedBy" = "Confirmed by %1$@ · %2$@";
 "travel.clearanceToggle" = "This patient may fly";
 "travel.clearanceForbidden" = "Only somebody with clinical decision rights can confirm a flight.";
@@ -1004,6 +1007,7 @@
 "photo.assessAgain" = "Assess again";
 "photo.patientNote" = "The patient's note";
 "photo.image" = "Clinical photograph";
+"photo.loadFailed" = "The photograph could not be loaded.";
 "photo.openFull" = "Open full screen";
 "photo.saveOrShare" = "Save or share the photo";
 "photo.zoomHint" = "Pinch to zoom, double-tap to reset.";
@@ -1094,7 +1098,7 @@
 "consent.clearSignature" = "Clear";
 "consent.signatureRequired" = "You need to sign before confirming.";
 "consent.viewSignature" = "View signature";
-"checklist.title" = "Documents before your operation";
+"checklist.title" = "Before surgery";
 "checklist.complete" = "Everything required has reached the clinic.";
 "checklist.missingOne" = "1 required document missing";
 "checklist.missingCount" = "%d required documents missing";
@@ -1149,6 +1153,7 @@
 
 /* The lab table (spec M16) */
 "lab.title" = "My lab results";
+"lab.staffTitle" = "Lab results";
 "lab.trends" = "Trend";
 "lab.noResults" = "No confirmed results yet. A report you upload does not appear here until the clinic signs it off.";
 "lab.resultCount" = "%d results";

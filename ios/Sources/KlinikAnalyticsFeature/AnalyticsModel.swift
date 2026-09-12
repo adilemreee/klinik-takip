@@ -100,33 +100,46 @@ public final class AnalyticsModel {
     public func load(now: Date = Date()) async {
         let bounds = state.range.bounds(now: now)
 
-        async let procedures = optional { try await api.procedures(from: bounds.from, to: bounds.to) }
-        async let geography = optional { try await api.geography(from: bounds.from, to: bounds.to) }
-        async let revenue = optional {
-            try await api.revenue(from: bounds.from, to: bounds.to, currency: self.state.currency)
+        async let procedures = attempt {
+            try await self.api.procedures(from: bounds.from, to: bounds.to)
         }
-        async let channels = optional {
-            try await api.channels(from: bounds.from, to: bounds.to, currency: self.state.currency)
+        async let geography = attempt {
+            try await self.api.geography(from: bounds.from, to: bounds.to)
         }
-        async let occupancy = optional { try await api.occupancy(from: bounds.from, to: bounds.to) }
+        async let revenue = attempt {
+            try await self.api.revenue(from: bounds.from, to: bounds.to, currency: self.state.currency)
+        }
+        async let channels = attempt {
+            try await self.api.channels(from: bounds.from, to: bounds.to, currency: self.state.currency)
+        }
+        async let occupancy = attempt {
+            try await self.api.occupancy(from: bounds.from, to: bounds.to)
+        }
 
         let loaded = await (procedures, geography, revenue, channels, occupancy)
 
-        state.procedures = loaded.0
-        state.geography = loaded.1
-        state.revenue = loaded.2
-        state.channels = loaded.3
-        state.occupancy = loaded.4
+        state.procedures = loaded.0.value
+        state.geography = loaded.1.value
+        state.revenue = loaded.2.value
+        state.channels = loaded.3.value
+        state.occupancy = loaded.4.value
 
-        // Nothing at all came back: this account cannot see the panel, which is
-        // a different thing from an empty clinic and reads differently.
-        state.phase = loaded.0 == nil && loaded.1 == nil && loaded.2 == nil
-            && loaded.3 == nil && loaded.4 == nil
-            ? .notPermitted
-            : .loaded
-    }
+        let errors = [
+            loaded.0.error, loaded.1.error, loaded.2.error, loaded.3.error, loaded.4.error,
+        ].compactMap { $0 }
 
-    private func optional<T: Sendable>(_ work: @Sendable () async throws -> T) async -> T? {
-        try? await work()
+        // Nothing at all came back. That means this account cannot see the
+        // panel only when the server said so: a clinic nobody can reach is not
+        // a permission problem, and telling somebody it is sends them to ask
+        // for access they already have.
+        guard errors.count == 5 else {
+            state.phase = .loaded
+            return
+        }
+
+        switch ReadOutcome.of(errors) {
+        case .refused: state.phase = .notPermitted
+        case .failed(let message): state.phase = .failed(message)
+        }
     }
 }

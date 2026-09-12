@@ -70,7 +70,7 @@ public struct AISettings: Decodable, Sendable, Equatable {
     public var readyForClinicalUse: Bool { ready && zeroRetentionConfirmed }
 
     public var localizedMissing: [String] {
-        missing.map { L10n.string("ai.missing.\($0)") }
+        missing.map { L10n.name("ai.missing", $0) }
     }
 }
 

@@ -6,6 +6,7 @@
     <string name="account_change_password">Change password</string>
     <string name="account_change_password_hint">Changing the password signs you out everywhere, including this device.</string>
     <string name="account_current_password">Current password</string>
+    <string name="account_device_lock">Device lock</string>
     <string name="account_disable_two_factor">Turn off two-factor</string>
     <string name="account_disable_two_factor_hint">Enter the six-digit code from your authenticator to turn it off.</string>
     <string name="account_last_seen">Last seen: %s</string>
@@ -289,7 +290,7 @@
     <string name="checklist_missing_one">1 required document missing</string>
     <string name="checklist_optional">Optional</string>
     <string name="checklist_received">Received</string>
-    <string name="checklist_title">Documents before your operation</string>
+    <string name="checklist_title">Before surgery</string>
     <string name="checklist_upload">Upload</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_close">Close</string>
@@ -699,6 +700,7 @@
     <string name="lab_review_needs_mapping">Analyte not mapped</string>
     <string name="lab_review_notice">These values were read from the document automatically and are NOT IN THE PATIENT RECORD YET. Rows you confirm are added to it.</string>
     <string name="lab_review_title">Lab review</string>
+    <string name="lab_staff_title">Lab results</string>
     <string name="lab_title">My lab results</string>
     <string name="lab_toggle_hint">Tap to open or close</string>
     <string name="lab_trend_analyte">Analyte</string>
@@ -942,6 +944,7 @@
     <string name="photo_gallery_title">Photos</string>
     <string name="photo_held">The photograph is saved on your phone and will be sent when there is a connection. You do not need to take it again.</string>
     <string name="photo_image">Clinical photograph</string>
+    <string name="photo_load_failed">The photograph could not be loaded.</string>
     <string name="photo_need_body_area">Name the area so the photos can be compared.</string>
     <string name="photo_no_body_area">No body area given</string>
     <string name="photo_none_flagged">No photographs are suggested for review.</string>
@@ -993,7 +996,7 @@
     <string name="report_not_released">Not sent to the patient</string>
     <string name="report_patient_view">Text that will go to the patient</string>
     <string name="report_pending_empty">Nothing waiting for review</string>
-    <string name="report_pending_title">Interpretations awaiting review</string>
+    <string name="report_pending_title">Awaiting review</string>
     <string name="report_release_action">Approve and send to the patient</string>
     <string name="report_reviewed_by">Reviewed by</string>
     <string name="report_risk_critical">Critical</string>
@@ -1075,6 +1078,7 @@
     <string name="travel_clearance_toggle">This patient may fly</string>
     <string name="travel_cleared_by">Confirmed by %1$s · %2$s</string>
     <string name="travel_cleared_to_fly">Your doctor has confirmed you may fly.</string>
+    <string name="travel_cleared_to_fly_staff">The patient is cleared to fly.</string>
     <string name="travel_departure_at">Departs</string>
     <string name="travel_departure_flight">Departing flight</string>
     <string name="travel_empty_staff">No travel details have been entered for this patient.</string>
@@ -1091,6 +1095,7 @@
     <string name="travel_interpreter_phone">Their phone</string>
     <string name="travel_none">Your clinic has not entered travel details yet.</string>
     <string name="travel_not_cleared_to_fly">A doctor has not yet confirmed you may fly.</string>
+    <string name="travel_not_cleared_to_fly_staff">No flight clearance yet.</string>
     <string name="travel_title">Travel plan</string>
     <string name="travel_transfer">Transfer note</string>
     <string name="travel_welcome">Welcome and transfer</string>

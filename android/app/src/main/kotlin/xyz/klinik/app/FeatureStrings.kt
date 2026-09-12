@@ -285,13 +285,14 @@ fun Context.consentStrings(): ConsentStrings = ConsentStrings(
 /**
  * What each section of a patient's file is called.
  *
- * The same words the patient's own menu uses, because they name the same
- * records — a clinician and a patient looking at "Tahlil sonuçları" should be
- * looking at the same thing.
+ * The neutral names, not the patient's own. The patient's menu says
+ * "Ölçümlerim" and "Belgelerim"; a clinician reading somebody else's file is
+ * not looking at their own measurements, and the screens these rows open are
+ * titled neutrally already.
  */
 fun Context.stringForSection(section: FileSection): String = when (section) {
-    FileSection.MEASUREMENTS -> getString(DesignR.string.menu_measurements)
-    FileSection.DOCUMENTS -> getString(DesignR.string.menu_documents)
+    FileSection.MEASUREMENTS -> getString(DesignR.string.measurement_chart_title)
+    FileSection.DOCUMENTS -> getString(DesignR.string.document_title)
     FileSection.LAB_REVIEW -> getString(DesignR.string.lab_review_title)
     FileSection.LAB_TREND -> getString(DesignR.string.lab_trend_title)
     FileSection.PHOTOS -> getString(DesignR.string.menu_photos)
@@ -300,7 +301,7 @@ fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.CONVERSATION -> getString(DesignR.string.menu_messages)
     FileSection.TRAVEL -> getString(DesignR.string.travel_title)
     FileSection.MEDICATIONS -> getString(DesignR.string.medication_staff_title)
-    FileSection.LAB_PANELS -> getString(DesignR.string.lab_title)
+    FileSection.LAB_PANELS -> getString(DesignR.string.lab_staff_title)
     FileSection.CHECKLIST -> getString(DesignR.string.checklist_title)
     FileSection.CONSENTS -> getString(DesignR.string.consent_staff_title)
     FileSection.SURVEYS -> getString(DesignR.string.survey_trend_title)

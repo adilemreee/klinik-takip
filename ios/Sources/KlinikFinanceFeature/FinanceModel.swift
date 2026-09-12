@@ -56,24 +56,39 @@ public final class FinanceModel {
     public func currentState() -> FinanceState { state }
 
     public func load() async {
-        async let page = optional {
-            try await api.records(status: self.state.status, currency: self.state.currency)
+        async let page = attempt {
+            try await self.api.records(status: self.state.status, currency: self.state.currency)
         }
-        async let outstanding = optional { try await api.outstanding(currency: self.state.currency) }
-        async let collections = optional { try await self.thisMonthsCollections() }
-        async let rates = optional { try await self.thisMonthsRates() }
+        async let outstanding = attempt {
+            try await self.api.outstanding(currency: self.state.currency)
+        }
+        async let collections = attempt { try await self.thisMonthsCollections() }
+        async let rates = attempt { try await self.thisMonthsRates() }
 
         let loaded = await (page, outstanding, collections, rates)
 
-        state.records = loaded.0?.items ?? []
-        state.nextCursor = loaded.0?.nextCursor
-        state.outstanding = loaded.1
-        state.collections = loaded.2
-        state.rates = loaded.3 ?? []
+        state.records = loaded.0.value?.items ?? []
+        state.nextCursor = loaded.0.value?.nextCursor
+        state.outstanding = loaded.1.value
+        state.collections = loaded.2.value
+        state.rates = loaded.3.value ?? []
 
-        state.phase = loaded.0 == nil && loaded.1 == nil && loaded.2 == nil
-            ? .notPermitted
-            : .loaded
+        // Nothing at all came back. Which is a refusal only when the server
+        // actually refused: an unreachable clinic reported as "you have no
+        // access" sends a finance officer to ask for a permission they have.
+        guard
+            loaded.0.value == nil,
+            loaded.1.value == nil,
+            loaded.2.value == nil
+        else {
+            state.phase = .loaded
+            return
+        }
+
+        switch ReadOutcome.of([loaded.0.error, loaded.1.error, loaded.2.error].compactMap { $0 }) {
+        case .refused: state.phase = .notPermitted
+        case .failed(let message): state.phase = .failed(message)
+        }
     }
 
     public func loadMore() async {
@@ -200,9 +215,6 @@ public final class FinanceModel {
         return try await api.rates(from: start, to: now)
     }
 
-    private func optional<T: Sendable>(_ work: @Sendable () async throws -> T) async -> T? {
-        try? await work()
-    }
 }
 
 public extension Amount {

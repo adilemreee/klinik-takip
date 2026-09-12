@@ -129,13 +129,10 @@ struct PatientRow: View {
         return "\(patient.mrn) · \(place)"
     }
 
+    /// A status the catalogue has no word for is shown as the server spells
+    /// it, rather than as a key with a dot in it.
     private var localizedStatus: String {
-        let key = "patient.status.\(patient.status)"
-        let text = L10n.string(key)
-
-        // A status the catalogue has no word for is shown as the server spells
-        // it: a blank badge would read as a patient with no stage at all.
-        return text == key ? patient.status : text
+        L10n.name("patient.status", patient.status)
     }
 
     /**

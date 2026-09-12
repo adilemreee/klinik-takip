@@ -257,11 +257,13 @@ public struct AccountScreen: View {
         }
     }
 
+    /// The lock on this phone, which is a different thing from the password on
+    /// the account. Both were headed "Güvenlik", one under the other.
     @ViewBuilder
     private var security: some View {
         if let biometrics {
             VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
-                SectionHeader(title: L10n.string("account.security"))
+                SectionHeader(title: L10n.string("account.deviceLock"))
 
                 Card {
                     VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {

@@ -128,7 +128,9 @@ public final class PatientFileModel {
     }
 
     public func save(_ edit: PatientEdit) async -> Bool {
-        await write { try await self.api.update(id: self.patientId, edit) }
+        // The updated record is discarded on purpose: `write` reloads, and a
+        // PUT's answer is not the whole file.
+        await write { _ = try await self.api.update(id: self.patientId, edit) }
     }
 
     public func save(_ edit: MedicalProfileEdit) async -> Bool {

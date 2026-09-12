@@ -37,7 +37,10 @@ import KlinikTravelFeature
 public enum StaffDestination: Hashable, Sendable {
     case patient(id: String, name: String)
     case measurements(patientId: String)
-    case documents(patientId: String)
+    /// `startWith` is the type the pre-op checklist was asking for: a
+    /// checklist that names what is missing and then makes somebody pick it
+    /// again from a list of eight has asked the same question twice.
+    case documents(patientId: String, startWith: DocumentType = .lab)
     case labReview(patientId: String)
     case labTrend(patientId: String)
     /// The reports as they were printed (spec M16).
@@ -115,6 +118,9 @@ struct StaffPatientsView: View {
     @State private var agendaPath: [StaffDestination] = []
     @State private var patientsPath: [StaffDestination] = []
     @State private var emergencyPath: [StaffDestination] = []
+    /// Bumped when a stack lands back on the checklist, most likely from the
+    /// upload screen it sent the reader to. What it is showing is out of date.
+    @State private var checklistRefresh = 0
 
     var body: some View {
         TabView(selection: $tab) {
@@ -148,6 +154,9 @@ struct StaffPatientsView: View {
             .navigationTitle(L10n.string("menu.agenda"))
             .navigationDestination(for: StaffDestination.self) { destination in
                 screen(for: destination) { agendaPath.append($0) }
+            }
+            .onChange(of: agendaPath) { _, now in
+                if case .checklist = now.last { checklistRefresh += 1 }
             }
             .toolbar { ToolbarItem(placement: .primaryAction) { menu($agendaPath) } }
         }
@@ -195,6 +204,9 @@ struct StaffPatientsView: View {
             .navigationDestination(for: StaffDestination.self) { destination in
                 screen(for: destination) { patientsPath.append($0) }
             }
+            .onChange(of: patientsPath) { _, now in
+                if case .checklist = now.last { checklistRefresh += 1 }
+            }
             .toolbar { ToolbarItem(placement: .primaryAction) { menu($patientsPath) } }
         }
     }
@@ -207,6 +219,9 @@ struct StaffPatientsView: View {
             )
             .navigationDestination(for: StaffDestination.self) { destination in
                 screen(for: destination) { emergencyPath.append($0) }
+            }
+            .onChange(of: emergencyPath) { _, now in
+                if case .checklist = now.last { checklistRefresh += 1 }
             }
         }
     }
@@ -377,7 +392,7 @@ struct StaffPatientsView: View {
                 )
             )
 
-        case .documents(let patientId):
+        case .documents(let patientId, let startWith):
             DocumentListView(
                 model: DocumentsModel(
                     api: environment.documents,
@@ -397,7 +412,8 @@ struct StaffPatientsView: View {
                     }
                     : nil,
                 jobs: environment.live,
-                watching: patientId
+                watching: patientId,
+                startWith: startWith
             )
 
         case .labReview(let patientId):
@@ -483,13 +499,19 @@ struct StaffPatientsView: View {
             PendingChangesScreen(sync: environment.sync)
 
         case .checklist(let patientId):
-            // No upload button: a clinician looking at a patient's file is not
-            // the person who sends their passport.
+            // With the upload button. It used to be left off, on the grounds
+            // that a clinician is not the person who sends their own passport
+            // — but a coordinator is exactly the person who receives it by
+            // message and files it, and the documents screen one case above
+            // has let them do that all along. A checklist that names what is
+            // missing and cannot be acted on is a list of complaints.
             ChecklistScreen(
                 model: ChecklistModel(
                     api: environment.documents,
                     subject: .patient(id: patientId)
-                )
+                ),
+                upload: { type in push(.documents(patientId: patientId, startWith: type)) },
+                refreshToken: checklistRefresh
             )
 
         case .consents(let patientId):

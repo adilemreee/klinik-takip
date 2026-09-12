@@ -154,7 +154,7 @@ struct AdherenceCard: View {
             // tone rule from M9. Whatever arrives is shown; nothing is invented
             // here to fill the space.
             ForEach(badges, id: \.self) { badge in
-                Text(L10n.string("medication.badge.\(badge)"))
+                Text(L10n.name("medication.badge", badge))
                     .font(Tokens.Typography.captionRelative)
                     .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
             }

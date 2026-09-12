@@ -23,7 +23,7 @@ public struct Milestone: Decodable, Sendable, Equatable, Identifiable {
     public let notifiedAt: Date?
     public let completedAt: Date?
 
-    public var localizedLabel: String { L10n.string("followUp.milestone.\(label)") }
+    public var localizedLabel: String { L10n.name("followUp.milestone", label) }
 }
 
 public struct FollowUpSchedule: Decodable, Sendable, Equatable {

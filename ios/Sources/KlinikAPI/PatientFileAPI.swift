@@ -26,8 +26,8 @@ public struct PatientIdentity: Decodable, Sendable, Equatable, Identifiable {
 
     public var fullName: String { "\(firstName) \(lastName)" }
 
-    public var localizedSex: String { L10n.string("patient.sex.\(sex)") }
-    public var localizedStatus: String { L10n.string("patient.status.\(status)") }
+    public var localizedSex: String { L10n.name("patient.sex", sex) }
+    public var localizedStatus: String { L10n.name("patient.status", status) }
 }
 
 public struct PatientContact: Decodable, Sendable, Equatable {
@@ -77,7 +77,7 @@ public struct AssignedStaff: Decodable, Sendable, Equatable, Identifiable {
     public let role: String
 
     public var id: String { staffId }
-    public var localizedRole: String { L10n.string("role.\(role)") }
+    public var localizedRole: String { L10n.name("role", role) }
 }
 
 public struct LatestMeasurement: Decodable, Sendable, Equatable, Identifiable {

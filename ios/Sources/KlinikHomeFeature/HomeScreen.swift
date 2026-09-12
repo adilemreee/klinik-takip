@@ -121,26 +121,41 @@ public struct HomeScreen: View {
         }
     }
 
+    /**
+     * Four tiles and the alarm.
+     *
+     * The emergency tile is drawn below the grid rather than inside it, at the
+     * full width of the screen. Five tiles in two columns left it alone in the
+     * last row with a hole beside it, and the one control on this screen that
+     * somebody may press in a hurry is not the one to make half-width and
+     * ragged.
+     */
     private var actions: some View {
-        LazyVGrid(
-            columns: [GridItem(.flexible(), spacing: Tokens.Spacing.md),
-                      GridItem(.flexible(), spacing: Tokens.Spacing.md)],
-            spacing: Tokens.Spacing.md
-        ) {
-            ForEach(HomeAction.allCases) { action in
-                ActionTile(
-                    action: action,
-                    badge: state.badges[action.rawValue],
-                    scheme: scheme
-                ) {
-                    if action == .emergency {
-                        // First tap only arms it (spec M8). The stream above
-                        // carries the new state back.
-                        await emergency.arm()
-                    } else {
+        VStack(spacing: Tokens.Spacing.md) {
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: Tokens.Spacing.md),
+                          GridItem(.flexible(), spacing: Tokens.Spacing.md)],
+                spacing: Tokens.Spacing.md
+            ) {
+                ForEach(HomeAction.allCases.filter { $0 != .emergency }) { action in
+                    ActionTile(
+                        action: action,
+                        badge: state.badges[action.rawValue],
+                        scheme: scheme
+                    ) {
                         onSelect(action)
                     }
                 }
+            }
+
+            ActionTile(
+                action: .emergency,
+                badge: state.badges[HomeAction.emergency.rawValue],
+                scheme: scheme
+            ) {
+                // First tap only arms it (spec M8). The stream above carries
+                // the new state back.
+                await emergency.arm()
             }
         }
     }

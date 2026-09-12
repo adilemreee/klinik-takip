@@ -244,4 +244,24 @@ final class LocalizationTests: XCTestCase {
             XCTAssertFalse(L10n.message(for: error).isEmpty)
         }
     }
+
+    /**
+     * A value the server chose that the catalogue has never heard of.
+     *
+     * An AI finding, a milestone label or an anomaly kind arrives as free text.
+     * `string(_:)` answers with the key, and a clinician was shown
+     * `photo.finding.aiFindings` in the middle of a clinical card. The value
+     * itself is not a translation, but it is a word rather than an identifier.
+     */
+    func testAnUnknownValueFallsBackToTheValue() {
+        XCTAssertEqual(L10n.name("photo.finding", "bir-daha-görülmemiş"), "bir-daha-görülmemiş")
+    }
+
+    /// A value the catalogue does know is still translated.
+    func testAKnownValueIsStillTranslated() {
+        let text = L10n.name("patient.status", "POST_OP")
+
+        XCTAssertNotEqual(text, "POST_OP")
+        XCTAssertFalse(text.contains("patient.status"))
+    }
 }

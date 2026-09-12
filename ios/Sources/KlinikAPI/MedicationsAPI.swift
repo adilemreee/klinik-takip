@@ -147,7 +147,7 @@ public struct MyMedications: Decodable, Sendable, Equatable {
     public let badges: [String]
 
     public var localizedBadges: [String] {
-        badges.map { L10n.string("medication.badge.\($0)") }
+        badges.map { L10n.name("medication.badge", $0) }
     }
 
     /// Doses still waiting on the patient right now.

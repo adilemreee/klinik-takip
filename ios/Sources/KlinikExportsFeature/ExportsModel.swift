@@ -114,18 +114,18 @@ public final class ExportsModel {
     public func currentState() -> ExportsState { state }
 
     public func load() async {
-        async let requests = optional { try await api.mine(patientId: self.patientId) }
+        async let requests = attempt { try await self.api.mine(patientId: self.patientId) }
         // The column catalogue drives the patient-list picker, which a
         // patient's own page does not show. Asking for it there would be a
         // request for something nothing on screen uses.
-        async let columns = optional {
-            self.patientId == nil ? try await api.columns() : []
+        async let columns = attempt {
+            self.patientId == nil ? try await self.api.columns() : []
         }
 
         let loaded = await (requests, columns)
 
-        state.requests = (loaded.0 ?? []).sorted { $0.createdAt > $1.createdAt }
-        state.columns = loaded.1 ?? []
+        state.requests = (loaded.0.value ?? []).sorted { $0.createdAt > $1.createdAt }
+        state.columns = loaded.1.value ?? []
 
         if state.chosen.isEmpty {
             // A first visit starts with everything the viewer may take, which
@@ -133,7 +133,16 @@ public final class ExportsModel {
             state.chosen = Set(state.columns.filter(\.available).map(\.key))
         }
 
-        state.phase = loaded.0 == nil && loaded.1 == nil ? .notPermitted : .loaded
+        // A refusal is a refusal; anything else is a failure worth retrying,
+        // and worth naming rather than blaming the reader's permissions.
+        if let requestError = loaded.0.error, loaded.1.error != nil {
+            switch ReadOutcome.of([requestError, loaded.1.error].compactMap { $0 }) {
+            case .refused: state.phase = .notPermitted
+            case .failed(let message): state.phase = .failed(message)
+            }
+        } else {
+            state.phase = .loaded
+        }
     }
 
     public func toggle(_ key: String) {
@@ -201,7 +210,4 @@ public final class ExportsModel {
         return nil
     }
 
-    private func optional<T: Sendable>(_ work: @Sendable () async throws -> T) async -> T? {
-        try? await work()
-    }
 }

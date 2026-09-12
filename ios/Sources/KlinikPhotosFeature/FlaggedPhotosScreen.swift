@@ -187,11 +187,27 @@ public struct FlaggedPhotosScreen: View {
 }
 
 /// A photograph fetched through a short-lived signed link.
+/**
+ * A photograph fetched behind a link that expires.
+ *
+ * Three states, and each one says which it is. It used to have two: a spinner
+ * while the link was being fetched — which is also what it showed forever when
+ * the link never came — and `Color.clear` when the image itself failed, which
+ * left a clinician looking at 220 points of nothing with no way to tell a
+ * wound that would not load from a card that had none.
+ *
+ * The failure still shows no stand-in picture. A wrong photograph on a
+ * clinical card is worse than no photograph; a sentence saying it did not
+ * arrive is neither.
+ */
 struct RemotePhoto: View {
+    @Environment(\.colorScheme) private var scheme
+
     let photoId: String
     let linkFor: (String) async -> URL?
 
     @State private var url: URL?
+    @State private var linkFailed = false
 
     var body: some View {
         Group {
@@ -201,18 +217,39 @@ struct RemotePhoto: View {
                     case .success(let image):
                         image.resizable().scaledToFit()
                     case .failure:
-                        // Nothing rather than a placeholder: a wrong picture on
-                        // a clinical card is worse than no picture.
-                        Color.clear
+                        unavailable
                     default:
                         ProgressView().accessibilityLabel(L10n.string("common.loading"))
                     }
                 }
+            } else if linkFailed {
+                unavailable
             } else {
                 ProgressView().accessibilityLabel(L10n.string("common.loading"))
             }
         }
-        .task { url = await linkFor(photoId) }
-        .accessibilityLabel(L10n.string("photo.image"))
+        .task {
+            url = await linkFor(photoId)
+            // A link that never arrived is an answer, not a reason to keep
+            // spinning at somebody for the rest of the session.
+            linkFailed = url == nil
+        }
+    }
+
+    private var unavailable: some View {
+        VStack(spacing: Tokens.Spacing.sm) {
+            Image(systemName: "photo.badge.exclamationmark")
+                .font(Tokens.Typography.headingRelative)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                .accessibilityHidden(true)
+
+            Text(L10n.string("photo.loadFailed"))
+                .font(Tokens.Typography.captionRelative)
+                .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Tokens.Palette.surface.resolve(for: scheme))
+        .accessibilityElement(children: .combine)
     }
 }

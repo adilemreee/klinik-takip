@@ -30,6 +30,14 @@ public struct TravelScreen: View {
     ///   - canEdit: `patients.write`. False on the patient's own copy.
     ///   - canClear: `medical.decide`. False for a coordinator, who sees the
     ///     clearance and cannot change it.
+    /// Which sentence the clearance card shows: the patient's copy is written
+    /// to the patient, and the clinic's to the clinic.
+    private func clearanceKey(cleared: Bool) -> String {
+        if cleared { return canEdit ? "travel.clearedToFlyStaff" : "travel.clearedToFly" }
+
+        return canEdit ? "travel.notClearedToFlyStaff" : "travel.notClearedToFly"
+    }
+
     public init(model: TravelModel, canEdit: Bool = false, canClear: Bool = false) {
         self.model = model
         self.canEdit = canEdit
@@ -122,11 +130,11 @@ public struct TravelScreen: View {
                         )
                         .accessibilityHidden(true)
 
-                    Text(
-                        L10n.string(
-                            plan.isClearedToFly ? "travel.clearedToFly" : "travel.notClearedToFly"
-                        )
-                    )
+                    // The same fact, said to whoever is reading. A doctor
+                    // opening a patient's file was being told "your doctor has
+                    // confirmed you may fly", which is a sentence written for
+                    // somebody else.
+                    Text(L10n.string(clearanceKey(cleared: plan.isClearedToFly)))
                     .font(Tokens.Typography.subheadingRelative)
                     .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
                     .fixedSize(horizontal: false, vertical: true)

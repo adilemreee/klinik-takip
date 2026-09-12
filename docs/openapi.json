@@ -15638,6 +15638,104 @@
           "nextCursor"
         ]
       },
+      "FilePatientDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mrn": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "age": {
+            "type": "number",
+            "description": "Whole years, computed on the server"
+          },
+          "sex": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "nationality": {
+            "type": "string",
+            "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string"
+          },
+          "referralSource": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "number",
+            "description": "For optimistic concurrency on writes"
+          }
+        },
+        "required": [
+          "id",
+          "mrn",
+          "firstName",
+          "lastName",
+          "birthDate",
+          "age",
+          "sex",
+          "country",
+          "city",
+          "nationality",
+          "preferredLanguage",
+          "referralSource",
+          "status",
+          "createdAt",
+          "version"
+        ]
+      },
+      "PatientContactDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasAccount": {
+            "type": "boolean",
+            "description": "Whether a login exists. A file is opened when somebody books and the account comes later, so false is an ordinary state"
+          }
+        },
+        "required": [
+          "email",
+          "phone",
+          "hasAccount"
+        ]
+      },
       "MedicalProfileViewDto": {
         "type": "object",
         "properties": {
@@ -15733,6 +15831,40 @@
           "daysAgo"
         ]
       },
+      "FileAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "SUPER_ADMIN",
+              "DOCTOR",
+              "NURSE",
+              "COORDINATOR",
+              "FINANCE",
+              "PATIENT",
+              "CAREGIVER"
+            ]
+          }
+        },
+        "required": [
+          "staffId",
+          "name",
+          "title",
+          "role"
+        ]
+      },
       "MeasurementViewDto": {
         "type": "object",
         "properties": {
@@ -15805,15 +15937,154 @@
           "unreviewedReports"
         ]
       },
+      "FileLastMessageDto": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null for an attachment with no text"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fromPatient": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "body",
+          "sentAt",
+          "fromPatient"
+        ]
+      },
+      "NextAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scheduledAt",
+          "type",
+          "status"
+        ]
+      },
+      "NextFollowUpDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string"
+          },
+          "dueAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "dueAt",
+          "status"
+        ]
+      },
+      "FileAdherenceDto": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "nullable": true,
+            "description": "0–1 over the doses that have come due, or null when none have"
+          },
+          "taken": {
+            "type": "number"
+          },
+          "missed": {
+            "type": "number"
+          },
+          "due": {
+            "type": "number",
+            "description": "Doses that have come due and been answered"
+          },
+          "upcoming": {
+            "type": "number",
+            "description": "Still ahead: not counted, not missed"
+          },
+          "streak": {
+            "type": "number",
+            "description": "Consecutive days, ending today, with every due dose taken"
+          },
+          "activeMedications": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "score",
+          "taken",
+          "missed",
+          "due",
+          "upcoming",
+          "streak",
+          "activeMedications"
+        ]
+      },
+      "FileCountsDto": {
+        "type": "object",
+        "properties": {
+          "documents": {
+            "type": "number"
+          },
+          "photos": {
+            "type": "number"
+          },
+          "labResults": {
+            "type": "number"
+          },
+          "appointments": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "documents",
+          "photos",
+          "labResults",
+          "appointments"
+        ]
+      },
       "PatientFileSummaryDto": {
         "type": "object",
         "properties": {
           "patient": {
-            "$ref": "#/components/schemas/PatientDto"
+            "$ref": "#/components/schemas/FilePatientDto"
           },
           "contact": {
-            "type": "object",
-            "description": "The account's e-mail and phone, and whether a login exists at all"
+            "description": "The account's e-mail and phone, and whether a login exists at all",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PatientContactDto"
+              }
+            ]
           },
           "medicalProfile": {
             "nullable": true,
@@ -15837,7 +16108,7 @@
             "description": "Staff currently responsible for this file",
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FileAssignmentDto"
             }
           },
           "latestMeasurements": {
@@ -15851,27 +16122,47 @@
             "$ref": "#/components/schemas/FileAlertsDto"
           },
           "lastMessage": {
+            "nullable": true,
             "type": "object",
-            "nullable": true
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileLastMessageDto"
+              }
+            ]
           },
           "unreadMessages": {
             "type": "number"
           },
           "nextAppointment": {
+            "nullable": true,
             "type": "object",
-            "nullable": true
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextAppointmentDto"
+              }
+            ]
           },
           "nextFollowUp": {
+            "nullable": true,
             "type": "object",
-            "nullable": true
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextFollowUpDto"
+              }
+            ]
           },
           "adherence": {
-            "type": "object",
             "nullable": true,
-            "description": "Null when nothing has been prescribed — not the same as zero"
+            "description": "Null when nothing has been prescribed — not the same as zero",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileAdherenceDto"
+              }
+            ]
           },
           "counts": {
-            "type": "object"
+            "$ref": "#/components/schemas/FileCountsDto"
           }
         },
         "required": [
@@ -16483,32 +16774,6 @@
           "lastName",
           "preferredLanguage",
           "status"
-        ]
-      },
-      "NextAppointmentDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "scheduledAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "type": {
-            "type": "string"
-          },
-          "location": {
-            "type": "object",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "scheduledAt",
-          "type",
-          "location"
         ]
       },
       "PatientHomeSummaryDto": {

@@ -44,7 +44,7 @@ public struct ClinicalPhoto: Decodable, Sendable, Equatable, Identifiable {
     public var needsReview: Bool { aiReviewSuggested == true }
 
     public var localizedFindings: [String] {
-        aiFindings.map { L10n.string("photo.finding.\($0)") }
+        aiFindings.map { L10n.name("photo.finding", $0) }
     }
 }
 
@@ -113,7 +113,7 @@ public struct FlaggedPhoto: Decodable, Sendable, Equatable, Identifiable {
     public var findingKeys: [String] { aiFindings.map { "photo.finding.\($0)" } }
 
     public var localizedFindings: [String] {
-        aiFindings.map { L10n.string("photo.finding.\($0)") }
+        aiFindings.map { L10n.name("photo.finding", $0) }
     }
 
     /**

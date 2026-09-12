@@ -707,16 +707,23 @@ public struct PatientFileScreen: View {
 }
 
 extension FileSection {
-    /// The menu labels the app already has, reused so one section is not called
-    /// two different things in two places.
+    /**
+     * What each section is called on somebody else's file.
+     *
+     * The patient's own menu says "Ölçümlerim" and "Belgelerim", and those
+     * labels were reused here so that one section would not be called two
+     * different things. They were the wrong ones: a doctor reading a file is
+     * not looking at their own measurements, and the screens these rows open
+     * are already titled neutrally. These are those titles.
+     */
     var titleKey: String {
         switch self {
         case .messages: return "menu.messages"
-        case .measurements: return "menu.measurements"
+        case .measurements: return "measurement.chartTitle"
         case .medications: return "menu.medications"
-        case .documents: return "menu.documents"
+        case .documents: return "document.title"
         case .labReview: return "menu.labReview"
-        case .labTrend: return "menu.labResults"
+        case .labTrend: return "lab.staffTitle"
         case .photos: return "menu.photos"
         case .followUp: return "menu.followUp"
         case .appointments: return "menu.appointments"

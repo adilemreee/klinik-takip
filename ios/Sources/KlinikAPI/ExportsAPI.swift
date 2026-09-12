@@ -61,7 +61,7 @@ public struct ExportOmission: Decodable, Sendable, Equatable, Identifiable {
 
     /// The sentence the reader needs, in their own words rather than a code.
     public var localizedNote: String {
-        let template = L10n.string("export.omission.\(reason)")
+        let template = L10n.name("export.omission", reason)
 
         return template.replacingOccurrences(of: "{count}", with: String(count))
     }

@@ -215,7 +215,7 @@ public struct OutstandingReport: Decodable, Sendable, Equatable {
         public let recordCount: Int
 
         public var id: String { bucket }
-        public var localizedName: String { L10n.string("finance.ageing.\(bucket)") }
+        public var localizedName: String { L10n.name("finance.ageing", bucket) }
     }
 }
 

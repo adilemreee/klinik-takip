@@ -118,11 +118,11 @@
 
 /* Ana ekran (Şartname §7: en fazla 5 birincil eylem) */
 "home.title" = "Merhaba";
-"home.action.messages" = "Mesaj";
-"home.action.uploadDocument" = "Belge Yükle";
+"home.action.messages" = "Mesajlar";
+"home.action.uploadDocument" = "Belge yükle";
 "home.action.medications" = "İlaçlarım";
-"home.action.addPhoto" = "Fotoğraf Ekle";
-"home.action.emergency" = "Acil Durum";
+"home.action.addPhoto" = "Fotoğraf ekle";
+"home.action.emergency" = "Acil durum";
 "home.nextAppointment" = "Yaklaşan kontrol";
 "home.noPatientFile" = "Hesabınız henüz bir dosyaya bağlanmamış. Kliniğinizle görüşün.";
 
@@ -363,7 +363,7 @@
 "notification.action.openEmergency" = "Çağrıyı aç";
 "notification.action.acknowledgeEmergency" = "Ben ilgileniyorum";
 
-"emergency.button" = "Acil Durum";
+"emergency.button" = "Acil durum";
 "emergency.confirmPrompt" = "Emin misiniz? Onaylamak için tekrar basın";
 "emergency.confirmAction" = "Evet, acil durum";
 "emergency.dismiss" = "Vazgeç";
@@ -413,7 +413,7 @@
 "report.risk.MEDIUM" = "Orta";
 "report.risk.HIGH" = "Yüksek";
 "report.risk.CRITICAL" = "Kritik";
-"report.pendingTitle" = "Onay bekleyen yorumlar";
+"report.pendingTitle" = "Bekleyen yorumlar";
 "report.pendingEmpty" = "Onay bekleyen yorum yok";
 "report.doctorView" = "Klinik yorum";
 "report.patientView" = "Hastaya gidecek metin";
@@ -946,6 +946,7 @@
 "biometrics.enableHint" = "Uygulama her açıldığında kimliğiniz sorulur. Bildirimler ve acil çağrılar bundan etkilenmez.";
 "biometrics.unavailable" = "Bu cihazda biyometrik doğrulama kurulu değil.";
 "account.security" = "Güvenlik";
+"account.deviceLock" = "Cihaz kilidi";
 
 /* Sağlık verisi (M20) */
 "health.sync" = "Apple Health'ten al";
@@ -980,6 +981,8 @@
 "travel.interpreterPhone" = "Tercüman telefonu";
 "travel.clearedToFly" = "Doktorunuz uçabileceğinizi onayladı.";
 "travel.notClearedToFly" = "Uçuş için doktor onayı henüz verilmedi.";
+"travel.clearedToFlyStaff" = "Hasta uçuş için onaylandı.";
+"travel.notClearedToFlyStaff" = "Uçuş onayı henüz verilmedi.";
 "travel.clearedBy" = "Onaylayan: %1$@ · %2$@";
 "travel.clearanceToggle" = "Bu hasta uçabilir";
 "travel.clearanceForbidden" = "Uçuş onayını yalnız klinik karar yetkisi olan biri verebilir.";
@@ -1004,6 +1007,7 @@
 "photo.assessAgain" = "Yeniden değerlendir";
 "photo.patientNote" = "Hastanın notu";
 "photo.image" = "Klinik fotoğraf";
+"photo.loadFailed" = "Fotoğraf yüklenemedi.";
 "photo.openFull" = "Tam ekran aç";
 "photo.saveOrShare" = "Fotoğrafı kaydet veya paylaş";
 "photo.zoomHint" = "Yakınlaştırmak için iki parmakla açın, sıfırlamak için çift dokunun.";
@@ -1094,7 +1098,7 @@
 "consent.clearSignature" = "Temizle";
 "consent.signatureRequired" = "Onaylamadan önce imzalamanız gerekiyor.";
 "consent.viewSignature" = "İmzayı gör";
-"checklist.title" = "Ameliyat öncesi belgeler";
+"checklist.title" = "Ameliyat öncesi";
 "checklist.complete" = "Zorunlu belgelerin hepsi kliniğe ulaştı.";
 "checklist.missingOne" = "1 zorunlu belge eksik";
 "checklist.missingCount" = "%d zorunlu belge eksik";
@@ -1149,6 +1153,7 @@
 
 /* Tahlil tablosu (Şartname M16) */
 "lab.title" = "Tahlil sonuçlarım";
+"lab.staffTitle" = "Tahlil sonuçları";
 "lab.trends" = "Eğri";
 "lab.noResults" = "Onaylanmış tahlil sonucu yok. Yüklediğiniz belge klinik onaylayana kadar burada görünmez.";
 "lab.resultCount" = "%d sonuç";

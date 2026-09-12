@@ -47,19 +47,25 @@ public final class AuditModel {
     public func currentState() -> AuditState { state }
 
     public func load() async {
-        async let entries = optional { try await api.entries(self.state.filter) }
-        async let anomalies = optional { try await api.anomalies() }
+        async let entries = attempt { try await self.api.entries(self.state.filter) }
+        async let anomalies = attempt { try await self.api.anomalies() }
 
         let loaded = await (entries, anomalies)
 
-        guard let page = loaded.0 else {
-            state.phase = .notPermitted
+        guard let page = loaded.0.value else {
+            // A refusal only when the server refused. An audit log that cannot
+            // be reached is not an audit log somebody is barred from.
+            switch ReadOutcome.of([loaded.0.error].compactMap { $0 }) {
+            case .refused: state.phase = .notPermitted
+            case .failed(let message): state.phase = .failed(message)
+            }
+
             return
         }
 
         state.entries = page.items
         state.nextCursor = page.nextCursor
-        state.anomalies = loaded.1 ?? []
+        state.anomalies = loaded.1.value ?? []
         state.phase = page.items.isEmpty && state.anomalies.isEmpty ? .empty : .loaded
     }
 
@@ -90,8 +96,3 @@ public final class AuditModel {
     }
 }
 
-private extension AuditModel {
-    func optional<T: Sendable>(_ work: @Sendable () async throws -> T) async -> T? {
-        try? await work()
-    }
-}

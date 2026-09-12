@@ -6,6 +6,7 @@
     <string name="account_change_password">Parolayı değiştir</string>
     <string name="account_change_password_hint">Parolayı değiştirmek bu cihaz dahil her yerden çıkış yapar.</string>
     <string name="account_current_password">Mevcut parola</string>
+    <string name="account_device_lock">Cihaz kilidi</string>
     <string name="account_disable_two_factor">İki faktörü kapat</string>
     <string name="account_disable_two_factor_hint">Kapatmak için doğrulayıcınızdaki altı haneli kodu girin.</string>
     <string name="account_last_seen">Son görülme: %s</string>
@@ -289,7 +290,7 @@
     <string name="checklist_missing_one">1 zorunlu belge eksik</string>
     <string name="checklist_optional">İsteğe bağlı</string>
     <string name="checklist_received">Ulaştı</string>
-    <string name="checklist_title">Ameliyat öncesi belgeler</string>
+    <string name="checklist_title">Ameliyat öncesi</string>
     <string name="checklist_upload">Yükle</string>
     <string name="common_cancel">Vazgeç</string>
     <string name="common_close">Kapat</string>
@@ -407,7 +408,7 @@
     <string name="emergency_allergies">Alerjiler</string>
     <string name="emergency_already_open">Zaten açık bir acil çağrınız var</string>
     <string name="emergency_blood_type">Kan grubu</string>
-    <string name="emergency_button">Acil Durum</string>
+    <string name="emergency_button">Acil durum</string>
     <string name="emergency_call_action">Ara</string>
     <string name="emergency_call_local_number">Acil numarayı ara</string>
     <string name="emergency_call_number">%s ara</string>
@@ -637,11 +638,11 @@
     <string name="health_synced">%d ölçüm alındı. Bunlar kayıtta \'cihazdan\' olarak işaretlenir.</string>
     <string name="health_syncing">Alınıyor…</string>
     <string name="health_unavailable">Bu cihazda sağlık verisi yok.</string>
-    <string name="home_action_add_photo">Fotoğraf Ekle</string>
-    <string name="home_action_emergency">Acil Durum</string>
+    <string name="home_action_add_photo">Fotoğraf ekle</string>
+    <string name="home_action_emergency">Acil durum</string>
     <string name="home_action_medications">İlaçlarım</string>
-    <string name="home_action_messages">Mesaj</string>
-    <string name="home_action_upload_document">Belge Yükle</string>
+    <string name="home_action_messages">Mesajlar</string>
+    <string name="home_action_upload_document">Belge yükle</string>
     <string name="home_next_appointment">Yaklaşan kontrol</string>
     <string name="home_no_patient_file">Hesabınız henüz bir dosyaya bağlanmamış. Kliniğinizle görüşün.</string>
     <string name="home_title">Merhaba</string>
@@ -699,6 +700,7 @@
     <string name="lab_review_needs_mapping">Analit eşleştirilmedi</string>
     <string name="lab_review_notice">Bu değerler belgeden otomatik okundu ve HENÜZ HASTA DOSYASINDA DEĞİL. Onayladığınız satırlar dosyaya işlenir.</string>
     <string name="lab_review_title">Tahlil doğrulama</string>
+    <string name="lab_staff_title">Tahlil sonuçları</string>
     <string name="lab_title">Tahlil sonuçlarım</string>
     <string name="lab_toggle_hint">Açmak ya da kapatmak için dokunun</string>
     <string name="lab_trend_analyte">Analit</string>
@@ -942,6 +944,7 @@
     <string name="photo_gallery_title">Fotoğraflar</string>
     <string name="photo_held">Fotoğraf telefonunuzda kayıtlı ve bağlantı gelince kliniğe gönderilecek. Tekrar çekmenize gerek yok.</string>
     <string name="photo_image">Klinik fotoğraf</string>
+    <string name="photo_load_failed">Fotoğraf yüklenemedi.</string>
     <string name="photo_need_body_area">Karşılaştırma yapılabilmesi için bölgeyi yazın.</string>
     <string name="photo_no_body_area">Bölge belirtilmemiş</string>
     <string name="photo_none_flagged">İnceleme önerilen fotoğraf yok.</string>
@@ -993,7 +996,7 @@
     <string name="report_not_released">Hastaya gönderilmedi</string>
     <string name="report_patient_view">Hastaya gidecek metin</string>
     <string name="report_pending_empty">Onay bekleyen yorum yok</string>
-    <string name="report_pending_title">Onay bekleyen yorumlar</string>
+    <string name="report_pending_title">Bekleyen yorumlar</string>
     <string name="report_release_action">Onayla ve hastaya gönder</string>
     <string name="report_reviewed_by">Onaylayan</string>
     <string name="report_risk_critical">Kritik</string>
@@ -1075,6 +1078,7 @@
     <string name="travel_clearance_toggle">Bu hasta uçabilir</string>
     <string name="travel_cleared_by">Onaylayan: %1$s · %2$s</string>
     <string name="travel_cleared_to_fly">Doktorunuz uçabileceğinizi onayladı.</string>
+    <string name="travel_cleared_to_fly_staff">Hasta uçuş için onaylandı.</string>
     <string name="travel_departure_at">Dönüş zamanı</string>
     <string name="travel_departure_flight">Dönüş uçuşu</string>
     <string name="travel_empty_staff">Bu hasta için seyahat bilgisi girilmemiş.</string>
@@ -1091,6 +1095,7 @@
     <string name="travel_interpreter_phone">Tercüman telefonu</string>
     <string name="travel_none">Kliniğiniz henüz seyahat bilgisi girmedi.</string>
     <string name="travel_not_cleared_to_fly">Uçuş için doktor onayı henüz verilmedi.</string>
+    <string name="travel_not_cleared_to_fly_staff">Uçuş onayı henüz verilmedi.</string>
     <string name="travel_title">Seyahat planı</string>
     <string name="travel_transfer">Transfer notu</string>
     <string name="travel_welcome">Karşılama ve transfer</string>

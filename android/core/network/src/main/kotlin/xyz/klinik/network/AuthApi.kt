@@ -236,6 +236,10 @@ class AuthApi(
                         AcceptInvitationBody.serializer(),
                         AcceptInvitationBody(identifier, code, password),
                     ),
+                    // Nobody redeeming an invitation has a session yet, and
+                    // attaching a stale one from a previous account would have
+                    // the client try to refresh it before the request.
+                    requiresAuthentication = false,
                 ),
             ),
         )

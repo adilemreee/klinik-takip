@@ -165,6 +165,10 @@ private fun SignInRoute(environment: AppEnvironment, model: RootViewModel, expir
             onCode = { code -> scope.launch { auth.submitTwoFactorCode(code) } },
             onConfirmSetup = { code -> scope.launch { auth.confirmTwoFactorSetup(code) } },
             onSignedIn = { /* handled by the effect above */ },
+            onBeginInvitation = auth::beginInvitation,
+            onRedeemInvitation = { identifier, code, password ->
+                scope.launch { auth.redeemInvitation(identifier, code, password) }
+            },
         )
     }
 }

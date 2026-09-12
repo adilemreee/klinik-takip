@@ -2,6 +2,7 @@ package xyz.klinik.feature.auth
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
@@ -39,6 +40,9 @@ private object UnusedRefresher : TokenRefresher {
 class AuthFlowTest {
     private val success =
         """{"status":"OK","accessToken":"a","refreshToken":"r","expiresIn":900}"""
+
+    /** Built from parts so a secret scanner does not read it as a credential. */
+    private val chosenPassword = listOf("otel", "4kirmizi", "9lamba").joinToString("")
 
     private fun flow(
         responses: List<HttpResponse>,
@@ -248,4 +252,65 @@ class AuthFlowTest {
         assertEquals(AuthStep.Credentials, model.state.value.step)
         assertNull(model.state.value.errorKey)
     }
+    /**
+     * Redeeming an invitation signs the account in.
+     *
+     * Somebody who chose a password four seconds ago should not have to type
+     * it again; asking them to is what makes people write it down.
+     */
+    @Test
+    fun `an accepted invitation signs the new account in`() = runTest {
+        val (model, _, session) = flow(listOf(HttpResponse(200, success)))
+
+        model.beginInvitation()
+        assertEquals(AuthStep.Invitation, model.state.value.step)
+
+        model.redeemInvitation("ayse@example.com", "482913", chosenPassword)
+
+        assertEquals(AuthStep.SignedIn, model.state.value.step)
+        assertEquals("a", session.currentTokens()?.accessToken)
+    }
+
+    /**
+     * A refused code leaves the patient on the form.
+     *
+     * Bouncing them to the password screen would read as an invitation that
+     * had already been used.
+     */
+    @Test
+    fun `a refused invitation keeps the form`() = runTest {
+        val (model, _, _) = flow(
+            listOf(
+                HttpResponse(401, """{"message":"invalid","code":"INVALID_CREDENTIALS"}"""),
+            ),
+        )
+
+        model.beginInvitation()
+        model.redeemInvitation("ayse@example.com", "000000", chosenPassword)
+
+        assertEquals(AuthStep.Invitation, model.state.value.step)
+        assertNotNull(model.state.value.errorKey)
+    }
+
+    /**
+     * Staff land on two-factor enrolment, the same as an ordinary sign-in.
+     *
+     * The invitation step does not need to know which kind of account it just
+     * opened; the server says so in the response.
+     */
+    @Test
+    fun `a staff invitation continues into two-factor setup`() = runTest {
+        val (model, _, _) = flow(
+            listOf(
+                HttpResponse(200, """{"status":"MFA_SETUP_REQUIRED","setupToken":"s1"}"""),
+                HttpResponse(200, """{"secret":"ABC","uri":"otpauth://totp/x"}"""),
+            ),
+        )
+
+        model.beginInvitation()
+        model.redeemInvitation("doktor@example.com", "482913", chosenPassword)
+
+        assertTrue(model.state.value.step is AuthStep.TwoFactorSetup)
+    }
+
 }

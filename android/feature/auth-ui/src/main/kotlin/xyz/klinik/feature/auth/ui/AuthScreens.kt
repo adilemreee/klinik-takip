@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import xyz.klinik.shell.PasswordRules
 import xyz.klinik.design.Tokens
 import xyz.klinik.design.klinikColor
 import xyz.klinik.feature.auth.AuthState
@@ -46,12 +48,17 @@ fun AuthFlowScreen(
     onCode: (String) -> Unit,
     onConfirmSetup: (String) -> Unit,
     onSignedIn: () -> Unit,
+    onBeginInvitation: () -> Unit = {},
+    onRedeemInvitation: (identifier: String, code: String, password: String) -> Unit = { _, _, _ -> },
 ) {
     Surface(color = klinikColor("background")) {
         when (val step = state.step) {
-            AuthStep.Credentials -> CredentialsScreen(state, strings, onCredentials)
+            AuthStep.Credentials ->
+                CredentialsScreen(state, strings, onCredentials, onBeginInvitation)
+
             AuthStep.TwoFactorCode -> TwoFactorCodeScreen(state, strings, onCode)
             is AuthStep.TwoFactorSetup -> TwoFactorSetupScreen(state, strings, step.secret, onConfirmSetup)
+            AuthStep.Invitation -> InvitationScreen(state, strings, onRedeemInvitation)
             AuthStep.SignedIn -> onSignedIn()
         }
     }
@@ -67,6 +74,16 @@ data class AuthStrings(
     val twoFactorSetupTitle: String,
     val twoFactorSetupHint: String,
     val done: String,
+    val haveInvitation: String,
+    val invitationTitle: String,
+    val invitationHint: String,
+    val invitationCode: String,
+    val invitationAction: String,
+    val choosePassword: String,
+    val confirmPassword: String,
+    val passwordsDiffer: String,
+    /** A password rule, with its number already in the sentence. */
+    val rule: (PasswordRules.Problem) -> String,
     val error: String?,
 )
 
@@ -75,6 +92,7 @@ private fun CredentialsScreen(
     state: AuthState,
     strings: AuthStrings,
     onSubmit: (String, String) -> Unit,
+    onBeginInvitation: () -> Unit = {},
 ) {
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -92,6 +110,96 @@ private fun CredentialsScreen(
             // the user gets the explanation rather than a dead button.
             isEnabled = identifier.isNotBlank() && password.isNotBlank(),
         ) { onSubmit(identifier, password) }
+
+        // The way in for somebody who has never signed in. On the first
+        // screen rather than behind a menu: a patient holding a code from
+        // the clinic has nowhere else to look.
+        TextButton(
+            onClick = onBeginInvitation,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Tokens.minimumTouchTarget),
+        ) {
+            Text(strings.haveInvitation)
+        }
+    }
+}
+
+/**
+ * Redeeming an invitation (spec T7.3).
+ *
+ * The password rules are shown while somebody types, because this is the one
+ * screen where a rejection costs the most: a patient who has just been given a
+ * code, and is told after filling the form in that their password is not good
+ * enough, reads it as the code having failed.
+ *
+ * Typed twice, because a typo here locks somebody out of their own clinical
+ * record before they have ever been in.
+ */
+@Composable
+private fun InvitationScreen(
+    state: AuthState,
+    strings: AuthStrings,
+    onSubmit: (identifier: String, code: String, password: String) -> Unit,
+) {
+    var identifier by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmation by remember { mutableStateOf("") }
+
+    val problems = if (password.isEmpty()) {
+        emptyList()
+    } else {
+        PasswordRules.problems(password, identifier)
+    }
+
+    val mismatched = confirmation.isNotEmpty() && confirmation != password
+
+    FormScaffold(title = strings.invitationTitle, subtitle = strings.invitationHint) {
+        LabelledField(strings.identifier, identifier, { identifier = it }, KeyboardType.Email)
+        LabelledField(strings.invitationCode, code, { code = it }, KeyboardType.NumberPassword)
+        LabelledField(
+            strings.choosePassword,
+            password,
+            { password = it },
+            KeyboardType.Password,
+            secure = true,
+        )
+        LabelledField(
+            strings.confirmPassword,
+            confirmation,
+            { confirmation = it },
+            KeyboardType.Password,
+            secure = true,
+        )
+
+        problems.forEach { problem ->
+            Text(
+                strings.rule(problem),
+                fontSize = Tokens.Typography.caption.size,
+                color = klinikColor("warning"),
+            )
+        }
+
+        if (mismatched) {
+            Text(
+                strings.passwordsDiffer,
+                fontSize = Tokens.Typography.caption.size,
+                color = klinikColor("warning"),
+            )
+        }
+
+        ErrorBanner(strings.error, state.isLockedOut)
+
+        PrimaryButton(
+            title = strings.invitationAction,
+            isBusy = state.isSubmitting,
+            isEnabled = identifier.isNotBlank() &&
+                code.isNotBlank() &&
+                problems.isEmpty() &&
+                password.isNotEmpty() &&
+                confirmation == password,
+        ) { onSubmit(identifier, code, password) }
     }
 }
 

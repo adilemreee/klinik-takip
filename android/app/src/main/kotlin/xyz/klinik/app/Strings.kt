@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import xyz.klinik.shell.PasswordRules
 import xyz.klinik.design.klinikStringIds
 import xyz.klinik.feature.auth.ui.AuthStrings
 import xyz.klinik.feature.home.ui.HomeStrings
@@ -60,6 +61,22 @@ fun authStrings(errorKey: String?): AuthStrings {
         twoFactorSetupTitle = str(DesignR.string.auth_two_factor_setup_title),
         twoFactorSetupHint = str(DesignR.string.auth_two_factor_setup_hint),
         done = str(DesignR.string.common_done),
+        haveInvitation = str(DesignR.string.auth_have_invitation),
+        invitationTitle = str(DesignR.string.auth_invitation_title),
+        invitationHint = str(DesignR.string.auth_invitation_hint),
+        invitationCode = str(DesignR.string.auth_invitation_code),
+        invitationAction = str(DesignR.string.auth_invitation_action),
+        choosePassword = str(DesignR.string.auth_choose_password),
+        confirmPassword = str(DesignR.string.auth_confirm_password),
+        passwordsDiffer = str(DesignR.string.auth_passwords_differ),
+        rule = { problem ->
+            when (problem) {
+                is PasswordRules.Problem.TooShort ->
+                    context.getString(DesignR.string.password_rule_length, problem.minimum)
+
+                else -> context.stringForKey(problem.stringKey)
+            }
+        },
         error = errorKey?.let { context.stringForKey(it) },
     )
 }

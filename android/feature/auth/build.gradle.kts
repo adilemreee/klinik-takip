@@ -11,6 +11,8 @@ kotlin {
 
 dependencies {
     api(project(":core:network"))
+    // The password rules the invitation form checks while somebody types.
+    api(project(":core:shell"))
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(kotlin("test"))

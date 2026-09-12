@@ -33,6 +33,15 @@ sealed interface AuthStep {
      */
     data class TwoFactorSetup(val secret: String, val otpauthUri: String) : AuthStep
 
+    /**
+     * Redeeming an invitation (spec T7.3).
+     *
+     * Its own step rather than a second screen, because what follows is the
+     * same flow: staff land on two-factor enrolment and patients land signed
+     * in, and the invitation step does not need to know which.
+     */
+    data object Invitation : AuthStep
+
     data object SignedIn : AuthStep
 }
 
@@ -115,6 +124,34 @@ class AuthFlowModel(
             auth.confirmTotpEnrolment(code, token)
             setupToken = null
             _state.update { it.copy(step = AuthStep.TwoFactorCode) }
+        }
+    }
+
+    /** Opens the invitation form. */
+    fun beginInvitation() {
+        _state.update { it.copy(step = AuthStep.Invitation, errorKey = null, isLockedOut = false) }
+    }
+
+    /**
+     * Redeems an invitation and signs the new account in.
+     *
+     * Signed in rather than sent back to the login screen: somebody who chose
+     * a password four seconds ago should not have to type it again, and asking
+     * them to is what makes people write it down.
+     *
+     * A refused code leaves the form as it was. The step is set in the catch
+     * because a failure inside [apply] can move it, and a patient bounced to
+     * the password screen by a mistyped code would think the invitation had
+     * been used.
+     */
+    suspend fun redeemInvitation(identifier: String, code: String, password: String) {
+        submit {
+            try {
+                apply(auth.acceptInvitation(identifier, code, password))
+            } catch (error: Throwable) {
+                _state.update { it.copy(step = AuthStep.Invitation) }
+                throw error
+            }
         }
     }
 

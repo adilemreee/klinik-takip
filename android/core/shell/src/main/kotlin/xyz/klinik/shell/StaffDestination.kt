@@ -102,6 +102,11 @@ sealed interface StaffDestination {
         override val patientId: String? = null
     }
 
+    /** The clinic's month (spec M3). */
+    data object Calendar : StaffDestination {
+        override val patientId: String? = null
+    }
+
     /** When this clinician can be booked (spec M3). */
     data object Availability : StaffDestination {
         override val patientId: String? = null
@@ -234,6 +239,7 @@ val staffMenuDestinations: List<StaffDestination> = listOf(
     StaffDestination.Analytics,
     StaffDestination.Finance,
     StaffDestination.Agencies,
+    StaffDestination.Calendar,
     StaffDestination.Availability,
     StaffDestination.Exports,
     StaffDestination.AiSettings,

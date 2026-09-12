@@ -23,6 +23,7 @@ import xyz.klinik.feature.consents.ui.ConsentStrings
 import xyz.klinik.feature.consents.ui.PatientConsentsStrings
 import xyz.klinik.feature.exports.ui.ExportsStrings
 import xyz.klinik.feature.appointments.ui.AvailabilityStrings
+import xyz.klinik.feature.appointments.ui.CalendarStrings
 import xyz.klinik.feature.finance.ui.AgencyStrings
 import xyz.klinik.feature.finance.ui.FinanceStrings
 import xyz.klinik.feature.followup.ui.FollowUpStrings
@@ -440,6 +441,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Analytics -> getString(DesignR.string.analytics_title)
     StaffDestination.Finance -> getString(DesignR.string.finance_title)
     StaffDestination.Agencies -> getString(DesignR.string.agency_title)
+    StaffDestination.Calendar -> getString(DesignR.string.calendar_title)
     StaffDestination.Availability -> getString(DesignR.string.availability_title)
     StaffDestination.Exports -> getString(DesignR.string.export_title)
     StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
@@ -1140,4 +1142,40 @@ fun Context.pendingChangesStrings(): PendingChangesStrings = PendingChangesStrin
     pendingCount = { count -> getString(DesignR.string.sync_pending_count, count) },
     pendingOne = getString(DesignR.string.sync_pending_one),
     describe = { entry -> stringForKey(entry.descriptionKey(), entry.entityType) },
+)
+
+/**
+ * The clinic's month (spec M3).
+ *
+ * Month and weekday names come from the platform: every locale already knows
+ * them, and shipping nineteen of them per language is nineteen more strings to
+ * keep in step for no gain.
+ */
+fun Context.calendarStrings(): CalendarStrings = CalendarStrings(
+    title = getString(DesignR.string.calendar_title),
+    notPermitted = getString(DesignR.string.error_forbidden),
+    retry = getString(DesignR.string.common_retry),
+    previousMonth = getString(DesignR.string.calendar_previous_month),
+    nextMonth = getString(DesignR.string.calendar_next_month),
+    nothingThatDay = getString(DesignR.string.calendar_nothing_that_day),
+    hasRequest = getString(DesignR.string.calendar_has_request),
+    appointmentCount = { count -> getString(DesignR.string.calendar_appointment_count, count) },
+    minutes = { minutes -> getString(DesignR.string.calendar_minutes, minutes) },
+    monthName = { month ->
+        val locale = resources.configuration.locales[0]
+        "${month.month.getDisplayName(java.time.format.TextStyle.FULL, locale)} ${month.year}"
+    },
+    weekdayInitial = { day ->
+        java.time.DayOfWeek.of(day)
+            .getDisplayName(java.time.format.TextStyle.NARROW, resources.configuration.locales[0])
+    },
+    dayLabel = { date ->
+        java.time.format.DateTimeFormatter
+            .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+            .withLocale(resources.configuration.locales[0])
+            .format(date)
+    },
+    typeName = { appointment -> stringForKey(appointment.type.stringKey) },
+    statusName = { appointment -> stringForKey(appointment.status.stringKey) },
+    message = { text -> resolve(text) },
 )

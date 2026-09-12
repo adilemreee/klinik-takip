@@ -36,6 +36,8 @@ import xyz.klinik.feature.analytics.AnalyticsModel
 import xyz.klinik.feature.analytics.ui.AnalyticsScreen
 import xyz.klinik.feature.appointments.AppointmentsModel
 import xyz.klinik.feature.appointments.AvailabilityModel
+import xyz.klinik.feature.appointments.CalendarModel
+import xyz.klinik.feature.appointments.ui.CalendarScreen
 import xyz.klinik.feature.appointments.ui.AvailabilityScreen
 import xyz.klinik.feature.audit.AuditModel
 import xyz.klinik.feature.audit.ui.AuditScreen
@@ -350,6 +352,30 @@ fun StaffDestinationScreen(
                 },
                 onRetire = { protocol ->
                     scope.launch { model.retire(protocol.document.id) }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
+        }
+
+        StaffDestination.Calendar -> {
+            val zone = remember { java.time.ZoneId.systemDefault() }
+            val model = remember { CalendarModel(environment.appointments, zone) }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) { model.load() }
+
+            CalendarScreen(
+                state = state,
+                strings = context.calendarStrings(),
+                zone = zone,
+                onShowMonth = { month -> scope.launch { model.show(month) } },
+                onSelectDay = { day -> model.select(day) },
+                // Into the patient's own appointments, where confirming and
+                // rescheduling live: a calendar cell is a way to find the
+                // record, not a place to edit it.
+                onOpenAppointment = { appointment ->
+                    onOpen(StaffDestination.Appointments(appointment.patientId))
                 },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,

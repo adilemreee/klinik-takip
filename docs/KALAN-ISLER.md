@@ -1,6 +1,6 @@
 # Kalan İşler
 
-2026-09-11'de koddan çıkarıldı, aynı gün A bloğu (A7 hariç) yapıldı.
+2026-09-11'de koddan çıkarıldı; A bloğunun tamamı 2026-09-11/12'de yapıldı.
 "Şu an ne eksik" sorusunun cevabı; tahmin değil, her madde bir dosya ya da bir
 uç noktayla eşleşiyor.
 
@@ -15,7 +15,7 @@ sizin, üçüncüsü ikimizin de dokunmaması gereken.
 
 ---
 
-## A — Kod yazarak biter · **A7 dışında yapıldı**
+## A — Kod yazarak biter · **tamamlandı**
 
 ### [x] A1. Hasta uygulamadan hesap açamıyor — **yapıldı**
 
@@ -84,59 +84,55 @@ bağlantı gelince gidecek, tekrar çekmenize gerek yok".
   olmayan rapor için **düğme hiç gösterilmiyor**. Baytları kaybolmuş gerçek
   bir belge için de doğru davranış.
 
-### [~] A7. Android — personel tarafı açıldı, kalanı listelendi
+### [x] A7. Android — **yapıldı**
 
-2026-09-11/12'de yapıldı. **30 ekran, 54 modül** (13 ekrandan çıkıldı).
+2026-09-11/12'de yapıldı. **44 ekran, 55 modül, 600 test** (13 ekrandan çıkıldı;
+iOS'ta 46 ekran dosyası var).
 
-**Bu turda eklenenler.** Personel kabuğu iOS'taki üç sekmeye hizalandı —
-gündem (brifing), hastalar, acil kuyruğu — her biri kendi geri yığınıyla.
-Üstüne klinik geneli taşma menüsü: onay bekleyen yapay zekâ yorumları,
-şikayet kuyruğu, istatistik, finans, dışa aktarım, AI sağlayıcısı, asistan
-kaynakları, denetim günlüğü, hesap, bildirim tercihleri. Hasta tarafına
-asistan, anketler, paylaşılan tahlil yorumları, seyahat planı ve hesap
-ekranı eklendi. Seyahat ayrıca hasta dosyasının bir bölümü.
+**Personel kabuğu** iOS'taki üç sekmeye hizalandı — gündem (brifing), hastalar,
+acil kuyruğu — her biri kendi geri yığınıyla. Üstüne klinik geneli taşma menüsü:
+gelen kutusu, şikayet kuyruğu, işaretli fotoğraflar, onay bekleyen yapay zekâ
+yorumları, takvim, çalışma saatleri, istatistik, finans, aracı kurumlar, dışa
+aktarım, AI sağlayıcısı, asistan kaynakları, denetim günlüğü, yeni hasta, hesap,
+bekleyen değişiklikler, bildirim tercihleri.
 
-**Sunucuda olup Android'de hiç istemcisi olmayan üç uç nokta yazıldı:**
-denetim günlüğü (`/audit`, `/audit/anomalies`), seyahat planı
-(`/patients/{id}/travel` + `cleared-to-fly`), protokol kitaplığı
-(`/protocols`). Beşi de hesap tarafında: `/auth/password`,
-`/auth/2fa/disable`, `/auth/sessions`, `/auth/logout-all`,
-`/auth/invitations`. `FinanceApi.records` para birimi parametresini
-almıyordu ve `/finance/rates`'in istemcisi yoktu.
+**Hasta dosyası** bölümleri: ölçümler, belgeler, belge kontrol listesi, tahlil
+doğrulama, tahlil eğilimi, tahlil panelleri, fotoğraflar, kontrol takvimi,
+randevular, sohbet, seyahat, **reçete yazma**, onamlar, anket eğilimi. Dosyadan
+hastayı uygulamaya davet edilebiliyor.
 
-**Bu turda bulunan ve düzeltilen gizli hata:** modellerdeki 23 anahtar
-özelliği Android kaynak adı üretiyordu (`triage_level_urgent`), oysa
-arama katalog anahtarıyla yapılıyor (`triage.level.URGENT`). Hiçbiri
-henüz bir ekranda kullanılmadığı için görünmüyordu; ilk kullanan
-klinisyene ham anahtar gösterecekti. `StringCatalogueTest` artık 32
-`stringKey`'in hepsini ve modellerdeki her `…Key`/`…Keys` sabitini
-tarıyor — dizüstünde, cihazda değil.
+**Hasta tarafı:** asistan, anketler, paylaşılan tahlil yorumları, tahlil
+panelleri, belge kontrol listesi, seyahat planı, hesap, bekleyen değişiklikler,
+**davetle hesap açma** ve **onam metnini okuyup parmakla imzalama**.
 
-**Hâlâ yok (13 personel ekranı):**
+**Sunucuda olup Android'de hiç istemcisi olmayan 14 uç nokta yazıldı:** denetim
+günlüğü (`/audit`, `/audit/anomalies`), seyahat planı, protokol kitaplığı,
+`/auth/password`, `/auth/2fa/disable`, `/auth/sessions`, `/auth/logout-all`,
+`/auth/invitations`, `/me/data-export`, `/documents/checklist`,
+`/lab-results/panels`, `/me/consents/form`, `/finance/agencies`,
+`/appointments/availability`, reçete yazma/onaylama/kesme, `POST /patients`.
+Ayrıca `FinanceApi.records` para birimi almıyordu ve `/finance/rates`'in
+istemcisi yoktu.
 
-| Ekran | Uç nokta | Neden gerekiyor |
-| --- | --- | --- |
-| Tahlil panelleri tablosu | `lab-results/panels` | iOS'ta M16'da eklendi |
-| Reçete yazma (personel) | `patients/{id}/medications` | hasta tarafı var, personel yok |
-| Hastayı davet et | `auth/invitations` | istemci yazıldı, ekran yok |
-| Randevu takvimi | `appointments` | liste var, takvim yok |
-| Çalışma saatleri | `appointments/availability` | istemci yok |
-| Aracı kurumlar | `finance/agencies` | istemci yok |
-| İşaretli fotoğraflar | `photos?flagged` | iOS gündeminde var |
-| Personel gelen kutusu | `conversations` | hasta sohbeti var, klinik kutusu yok |
-| Anket eğilimi (personel) | `patients/{id}/surveys` | hasta tarafı yapıldı |
-| Belge kontrol listesi | `documents/checklist` | istemci yok |
-| Onam görüntüleme (personel) | `patients/{id}/consents` | hasta tarafı var |
-| Yeni hasta | `patients` POST | istemci yok |
-| Bekleyen değişiklikler | yerel kuyruk | kuyruk var, ekranı yok |
+**Bu turda bulunan ve düzeltilen sessiz hatalar:**
 
-Hasta tarafında kalanlar: davet kabul ekranı (istemci yazıldı), parmakla
-imza, fotoğraf bindirmesi (`photos/overlay`), acil yönlendirme metni
-(`emergency/guidance`), takvim aboneliği (`calendar.ics`).
+| Hata | Sonucu ne olurdu |
+| --- | --- |
+| Modellerde 25 anahtar Android kaynak adı üretiyordu (`triage_level_urgent`), arama katalog anahtarıyla yapılıyor (`triage.level.URGENT`) | İlk kullanan klinisyene ham anahtar |
+| `acceptInvitation` `requiresAuthentication = false` almıyordu | Davet kodunu giren hastaya "oturumunuzun süresi doldu" |
+| `MessagingApi.inbox()` yanıtı `Conversation` olarak çözüyordu | Gelen kutusu: hasta adı, son mesaj ve okunmamış sayısı düşüyordu |
+| `/photos/flagged` hastayı taşımıyordu (iki istemcide de) | İncelenecek yara fotoğrafı var, kimin olduğu yok |
+| `PATCH /finance/agencies/{id}` gövdesi sözleşmede yoktu | `isActive` hiçbir şemada değil; aracı kurum kapatılamaz |
+| Her fotoğraf ekranı `imageFor = { null }` geçiyordu | Yara galerisinde hiç görsel yok |
 
-Bildirimler burada değil — **B1**'de, ve sizin kararınızı bekliyor.
+`StringCatalogueTest` artık 32 `stringKey`'in hepsini, modellerdeki her
+`…Key`/`…Keys` sabitini (özellik ve fonksiyon) ve feature modüllerini tarıyor.
+`StaffDestinationTest` mühürlü hiyerarşiyi yürüyor: kapısı olmayan klinik geneli
+bir ekran dizüstünde düşüyor.
 
-iOS'ta 46 ekran dosyası var; Android'de 30.
+**Hâlâ yok:** takvim aboneliği (`calendar.ics`) ve fotoğraf bindirmesi
+(`photos/overlay`) — ikisi de istemci düzeyinde var, ekranı yok. Bildirimler
+burada değil; **B1**'de ve sizin kararınızı bekliyor.
 
 ---
 
@@ -219,14 +215,20 @@ Gerçek hastaya açmadan önce sırayla:
 5. **A5** — yara fotoğrafının kaybolmaması.
 6. **B2, B3, B4** — klinik onayları; paralel yürüyebilir.
 
-A6 ve A7 bundan sonra.
+A bloğu kapandı. Geriye kalan sıralama **B**'nin kendisi.
 
 ---
 
 ## 2026-09-12 notu
 
-A1–A6 kapalı. A7'nin personel yarısı açıldı; yukarıdaki tablo kalanı
-madde madde veriyor.
+**A bloğunun tamamı kapandı.** Android 13 ekrandan 44'e çıktı; iOS'ta 46 ekran
+dosyası var ve aradaki fark takvim aboneliği ile fotoğraf bindirmesi.
+
+Sunucuda hazır olup hiçbir istemcisi olmayan 14 uç nokta bu turda bağlandı ve
+altı sessiz hata çıktı — hepsi de "uç nokta cevap veriyor, test yeşil, kimse
+açmamış" türünden. En pahalısı davet kabulüydü: kodu giren hastaya
+"oturumunuzun süresi doldu" diyordu, çünkü istemci hiç var olmamış bir oturumu
+yenilemeye çalışıyordu.
 
 Bu turda ayrıca CI'da bir kararsızlık giderildi: backend işi MinIO
 imajını Docker Hub'dan anonim çekiyordu ve koşucunun paylaşılan IP

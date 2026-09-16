@@ -1,4 +1,4 @@
-package xyz.klinik.feature.photos.ui
+package xyz.klinik.design
 
 import androidx.compose.ui.graphics.ImageBitmap
 

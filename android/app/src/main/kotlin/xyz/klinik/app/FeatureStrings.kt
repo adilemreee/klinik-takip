@@ -141,6 +141,7 @@ fun Context.complicationStrings(): ComplicationStrings = ComplicationStrings(
     minutesShort = getString(DesignR.string.common_minutes_short),
     overdueCount = { count -> getString(DesignR.string.complication_overdue_count, count) },
     overdue = getString(DesignR.string.complication_overdue),
+    loadFailed = getString(DesignR.string.photo_load_failed),
     noBodyArea = getString(DesignR.string.complication_no_body_area),
     photoCount = { count -> getString(DesignR.string.complication_photo_count, count) },
     answered = getString(DesignR.string.complication_answered),
@@ -316,6 +317,7 @@ fun Context.consentStrings(): ConsentStrings = ConsentStrings(
 fun Context.stringForSection(section: FileSection): String = when (section) {
     FileSection.MEASUREMENTS -> getString(DesignR.string.measurement_chart_title)
     FileSection.DOCUMENTS -> getString(DesignR.string.document_title)
+    FileSection.EXPORTS -> getString(DesignR.string.export_for_patient)
     FileSection.LAB_REVIEW -> getString(DesignR.string.lab_review_title)
     FileSection.LAB_TREND -> getString(DesignR.string.lab_trend_title)
     FileSection.PHOTOS -> getString(DesignR.string.menu_photos)
@@ -523,6 +525,7 @@ fun Context.stringForStaffDestination(destination: StaffDestination): String = w
     StaffDestination.Calendar -> getString(DesignR.string.calendar_title)
     StaffDestination.Availability -> getString(DesignR.string.availability_title)
     StaffDestination.Exports -> getString(DesignR.string.export_title)
+    is StaffDestination.PatientExports -> getString(DesignR.string.export_for_patient)
     StaffDestination.AiSettings -> getString(DesignR.string.ai_settings_title)
     StaffDestination.Audit -> getString(DesignR.string.audit_title)
     StaffDestination.Account -> getString(DesignR.string.account_title)

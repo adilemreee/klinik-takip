@@ -40,6 +40,16 @@ import xyz.klinik.design.Badge
 import xyz.klinik.design.FlowRow
 import xyz.klinik.design.KlinikCard
 import xyz.klinik.design.Tone
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import xyz.klinik.design.PhotoImage
 
 /** Text the screens need, resolved by the caller from string resources. */
 data class ComplicationStrings(
@@ -54,6 +64,7 @@ data class ComplicationStrings(
     val minutesShort: String,
     val overdueCount: (Int) -> String,
     val overdue: String,
+    val loadFailed: String,
     val noBodyArea: String,
     val photoCount: (Int) -> String,
     val answered: String,
@@ -76,6 +87,18 @@ fun ComplicationQueueScreen(
     onAnswer: (ComplicationView) -> Unit,
     onResolve: (ComplicationView) -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Decoded thumbnails for the attached photographs, supplied by the caller
+     * so this module carries no image-loading dependency. Null leaves the
+     * count as it was.
+     */
+    imageFor: ((String) -> PhotoImage)? = null,
+    /**
+     * Opening the report's photographs. The whole report rather than the one
+     * photo: this client has no full-screen viewer, so the honest destination
+     * is that patient's gallery.
+     */
+    onOpenPhotos: ((ComplicationView) -> Unit)? = null,
 ) {
     Surface(color = klinikColor("background"), modifier = modifier.fillMaxSize()) {
         when (val phase = state.phase) {
@@ -99,7 +122,8 @@ fun ComplicationQueueScreen(
                 }
             }
 
-            ComplicationsPhase.Loaded -> Queue(state, strings, onAnswer, onResolve)
+            ComplicationsPhase.Loaded ->
+                Queue(state, strings, imageFor, onOpenPhotos, onAnswer, onResolve)
         }
     }
 }
@@ -108,6 +132,8 @@ fun ComplicationQueueScreen(
 private fun Queue(
     state: ComplicationsState,
     strings: ComplicationStrings,
+    imageFor: ((String) -> PhotoImage)?,
+    onOpenPhotos: ((ComplicationView) -> Unit)?,
     onAnswer: (ComplicationView) -> Unit,
     onResolve: (ComplicationView) -> Unit,
 ) {
@@ -148,6 +174,8 @@ private fun Queue(
                 QueueRow(
                     item = item,
                     strings = strings,
+                    imageFor = imageFor,
+                    onOpenPhotos = onOpenPhotos,
                     isWorking = state.working == item.complication.id,
                     onAnswer = { onAnswer(item) },
                     onResolve = { onResolve(item) },
@@ -161,6 +189,8 @@ private fun Queue(
 private fun QueueRow(
     item: ComplicationView,
     strings: ComplicationStrings,
+    imageFor: ((String) -> PhotoImage)?,
+    onOpenPhotos: ((ComplicationView) -> Unit)?,
     isWorking: Boolean,
     onAnswer: () -> Unit,
     onResolve: () -> Unit,
@@ -216,11 +246,30 @@ private fun QueueRow(
             }
         }
 
+        // The photographs, not a count of them. A patient reporting that a
+        // wound is leaking attaches pictures of it; the queue used to say
+        // "2 fotoğraf" in grey text and stop there.
         if (item.photos.isNotEmpty()) {
-            Text(
-                strings.photoCount(item.photos.size),
-                color = klinikColor("textSecondary"),
-            )
+            if (imageFor == null) {
+                Text(
+                    strings.photoCount(item.photos.size),
+                    color = klinikColor("textSecondary"),
+                )
+            } else {
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.sm),
+                ) {
+                    for (photo in item.photos) {
+                        Thumbnail(
+                            image = imageFor(photo.id),
+                            label = strings.photoCount(item.photos.size),
+                            loadFailed = strings.loadFailed,
+                            onClick = { onOpenPhotos?.invoke(item) },
+                        )
+                    }
+                }
+            }
         }
 
         item.complication.firstResponse?.let { response ->
@@ -361,4 +410,38 @@ private fun toneFor(item: ComplicationView): Tone = when {
     item.overdue -> Tone.Warning
     item.complication.status == ComplicationStatus.RESOLVED -> Tone.Success
     else -> Tone.Neutral
+}
+
+/** One attached photograph, small and openable. */
+@Composable
+private fun Thumbnail(
+    image: PhotoImage,
+    label: String,
+    loadFailed: String,
+    onClick: () -> Unit,
+) {
+    val frame = Modifier
+        .size(88.dp)
+        .background(klinikColor("surface"), RoundedCornerShape(Tokens.Radius.md))
+        .clickable(onClick = onClick)
+
+    when (image) {
+        is PhotoImage.Ready -> Image(
+            bitmap = image.bitmap,
+            contentDescription = label,
+            contentScale = ContentScale.Crop,
+            modifier = frame,
+        )
+
+        PhotoImage.Loading -> Box(modifier = frame)
+
+        PhotoImage.Unavailable -> Box(modifier = frame, contentAlignment = Alignment.Center) {
+            Text(
+                loadFailed,
+                color = klinikColor("textSecondary"),
+                fontSize = Tokens.Typography.footnote.size,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }

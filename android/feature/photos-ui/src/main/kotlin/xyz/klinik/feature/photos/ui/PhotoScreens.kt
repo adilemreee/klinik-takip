@@ -46,6 +46,7 @@ import xyz.klinik.feature.photos.GalleryState
 import xyz.klinik.network.ClinicalPhoto
 import xyz.klinik.network.PhotoCategory
 import xyz.klinik.network.UiText
+import xyz.klinik.design.PhotoImage
 
 /** Text the screen needs, resolved by the caller from string resources. */
 data class PhotoStrings(

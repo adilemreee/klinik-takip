@@ -148,6 +148,9 @@ sealed interface StaffDestination {
     data class Consents(override val patientId: String) : StaffDestination
     data class Surveys(override val patientId: String) : StaffDestination
 
+    /** One patient's exports, read from their own file. */
+    data class PatientExports(override val patientId: String) : StaffDestination
+
     /** Inviting this patient into the app (spec T7.3). */
     data class Invite(override val patientId: String, val name: String) : StaffDestination
 }
@@ -186,6 +189,15 @@ enum class FileSection {
 
     /** How their own answers have moved (spec M18). */
     SURVEYS,
+
+    /**
+     * What has been taken out of this file, and by whom.
+     *
+     * Read from the record rather than from the clinic-wide list: a doctor
+     * asking "what has left this patient's file" should not have to scroll
+     * past every other export the clinic has ever made.
+     */
+    EXPORTS,
 }
 
 fun destinationFor(section: FileSection, patientId: String): StaffDestination = when (section) {
@@ -198,6 +210,7 @@ fun destinationFor(section: FileSection, patientId: String): StaffDestination = 
     FileSection.APPOINTMENTS -> StaffDestination.Appointments(patientId)
     FileSection.CONVERSATION -> StaffDestination.Conversation(patientId)
     FileSection.TRAVEL -> StaffDestination.Travel(patientId)
+    FileSection.EXPORTS -> StaffDestination.PatientExports(patientId)
     FileSection.MEDICATIONS -> StaffDestination.Medications(patientId)
     FileSection.LAB_PANELS -> StaffDestination.LabPanels(patientId)
     FileSection.CHECKLIST -> StaffDestination.Checklist(patientId)

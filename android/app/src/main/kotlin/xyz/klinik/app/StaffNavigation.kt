@@ -170,11 +170,21 @@ fun StaffDestinationScreen(
             // reply the patient would read as being ignored.
             var replying by remember { mutableStateOf<ComplicationReply?>(null) }
 
+            // The wound the report is about. A queue that counts the
+            // photographs and will not show them sends a clinician to look for
+            // the patient's gallery instead.
+            val imageFor = rememberPhotoImages(
+                environment.photos,
+                state.items.flatMap { item -> item.photos.map { it.id } },
+            )
+
             LaunchedEffect(Unit) { model.load() }
 
             ComplicationQueueScreen(
                 state = state,
                 strings = context.complicationStrings(),
+                imageFor = imageFor,
+                onOpenPhotos = { item -> onOpen(StaffDestination.Photos(item.patient.id)) },
                 onRetry = { scope.launch { model.load() } },
                 onAnswer = { view ->
                     replying = ComplicationReply(view.complication.id, resolve = false)
@@ -264,6 +274,47 @@ fun StaffDestinationScreen(
                     },
                 )
             }
+        }
+
+        /**
+         * One patient's exports, read from their own record.
+         *
+         * The same screen scoped to a file: a doctor asking what has left this
+         * patient's record should not have to scroll past every export the
+         * clinic has ever made.
+         */
+        is StaffDestination.PatientExports -> {
+            val model = remember(destination.patientId) {
+                ExportsModel(environment.exports, destination.patientId)
+            }
+            val state by model.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(destination.patientId) { model.load() }
+
+            LaunchedEffect(state.hasUnfinished) {
+                while (state.hasUnfinished) {
+                    delay(3_000)
+                    model.refreshUnfinished()
+                }
+            }
+
+            ExportsScreen(
+                state = state,
+                strings = context.exportsStrings(),
+                nowIso = nowIso(),
+                onToggleColumn = { key -> model.toggle(key) },
+                onChooseFormat = { format -> model.choose(format) },
+                onRequest = { country ->
+                    scope.launch { model.requestPatientList(null, null, country) }
+                },
+                onDownload = { request ->
+                    scope.launch {
+                        model.download(request.id)?.let { url -> context.openLink(url) }
+                    }
+                },
+                onRetry = { scope.launch { model.load() } },
+                modifier = modifier,
+            )
         }
 
         StaffDestination.Exports -> {

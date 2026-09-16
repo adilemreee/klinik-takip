@@ -32,6 +32,7 @@ import xyz.klinik.feature.photos.FlaggedPhotosState
 import xyz.klinik.network.FlaggedPhoto
 import xyz.klinik.network.UiText
 import androidx.compose.foundation.background
+import xyz.klinik.design.PhotoImage
 
 /** Text the screen needs, resolved by the caller from string resources. */
 data class FlaggedPhotosStrings(

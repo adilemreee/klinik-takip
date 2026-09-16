@@ -13,7 +13,7 @@ import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.klinik.network.PhotosApi
-import xyz.klinik.feature.photos.ui.PhotoImage
+import xyz.klinik.design.PhotoImage
 
 /**
  * Decoded clinical photographs, fetched once per screen.

@@ -217,6 +217,38 @@ describe('authentication', () => {
       return setup.secret;
     };
 
+    /**
+     * The clients call `beginTotpEnrolment` on every sign-in that answers
+     * MFA_SETUP_REQUIRED, which is every sign-in until enrolment completes. A
+     * fresh secret each time invalidates the one the authenticator was given,
+     * so every code afterwards is refused and the setup screen returns after
+     * each attempt.
+     */
+    it('resumes an enrolment already begun instead of replacing it', async () => {
+      const user = await makeUser(Role.DOCTOR);
+
+      const first = await auth.beginTotpEnrolment(user.id);
+      const second = await auth.beginTotpEnrolment(user.id);
+
+      expect(second.secret).toBe(first.secret);
+      expect(second.uri).toBe(first.uri);
+
+      // And the secret handed out first still completes enrolment.
+      await auth.confirmTotpEnrolment(user.id, generateSync({ secret: first.secret }));
+
+      const row = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+      expect(row.totpEnabledAt).not.toBeNull();
+    });
+
+    it('refuses to start again once enrolment is complete', async () => {
+      const user = await makeUser(Role.DOCTOR);
+      await enrol(user.id);
+
+      await expect(auth.beginTotpEnrolment(user.id)).rejects.toThrow(
+        'Two-factor authentication is already enabled',
+      );
+    });
+
     it('stores the secret encrypted, not in the clear', async () => {
       const user = await makeUser(Role.DOCTOR);
       const secret = await enrol(user.id);

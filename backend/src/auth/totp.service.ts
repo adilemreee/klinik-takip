@@ -81,7 +81,24 @@ export class TotpService {
     }
   }
 
+  /**
+   * The otpauth URI for a secret that already exists.
+   *
+   * `generate` mints a new secret; this renders the QR for one that was minted
+   * earlier, so an enrolment already in progress can be shown again instead of
+   * being started over.
+   */
+  uriFor(accountLabel: string, secret: string): string {
+    const issuer = this.config.get('TOTP_ISSUER', { infer: true });
+
+    return generateURI({ issuer, label: accountLabel, secret });
+  }
+
   encryptSecret(secret: string): string {
     return this.encryption.encrypt(secret);
+  }
+
+  decryptSecret(encryptedSecret: string): string {
+    return this.encryption.decrypt(encryptedSecret);
   }
 }

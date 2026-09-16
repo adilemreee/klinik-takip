@@ -164,7 +164,34 @@ export class AuthService {
       throw new BadRequestException('Two-factor authentication is already enabled');
     }
 
-    const setup = this.totp.generate(user.email ?? user.phone ?? user.id);
+    const label = user.email ?? user.phone ?? user.id;
+
+    /*
+     * An enrolment already begun is resumed, not replaced.
+     *
+     * The clients call this on every sign-in that answers
+     * MFA_SETUP_REQUIRED, which is every sign-in until enrolment completes.
+     * Minting a fresh secret each time silently invalidates the one the
+     * authenticator was given a minute earlier, so every code from then on is
+     * refused and the setup screen comes back after each attempt — a loop with
+     * no way out, and nothing on screen explaining it.
+     *
+     * Returning the pending secret costs nothing: it is not usable until a
+     * code from it has been confirmed, and this is reached only with a
+     * setup-scoped token minted from the password.
+     */
+    if (user.totpSecret) {
+      try {
+        const secret = this.totp.decryptSecret(user.totpSecret);
+
+        return { secret, uri: this.totp.uriFor(label, secret) };
+      } catch {
+        // Stored under a key this process cannot read. Nothing was ever
+        // confirmed against it, so replacing it is the only way forward.
+      }
+    }
+
+    const setup = this.totp.generate(label);
 
     await this.prisma.user.update({
       where: { id: userId },

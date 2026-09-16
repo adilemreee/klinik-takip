@@ -28,6 +28,8 @@ import { notificationDelivery } from './notifications/notifications.processor';
 import { NotificationsService } from './notifications/notifications.service';
 import { MessagingService } from './messaging/messaging.service';
 import { documentOcr } from './ocr/ocr.processor';
+import { photoAssess } from './photos/photo-assess.processor';
+import { PhotoAssessmentService } from './photos/assessment.service';
 import { TesseractEngine } from './ocr/tesseract.engine';
 import { FileService } from './files/file.service';
 import { CareTeamService } from './authz/care-team.service';
@@ -86,6 +88,7 @@ async function bootstrap(): Promise<void> {
     handlers: {
       [JOBS.documentIntake]: documentIntake(prisma, files, queues),
       [JOBS.uploadSweep]: uploadSweep(uploads),
+      [JOBS.photoAssess]: photoAssess(app.get(PhotoAssessmentService)),
       [JOBS.documentOcr]: documentOcr({
         prisma,
         files,

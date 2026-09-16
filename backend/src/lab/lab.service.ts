@@ -5,7 +5,7 @@ import type { AuthenticatedUser } from '../auth/decorators/current-user.decorato
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
 import type { LabCandidate } from '../ocr/lab-parser';
-import { REVIEW_CONFIDENCE, classify } from './lab-flag';
+import { REVIEW_CONFIDENCE, autoVerified, classify } from './lab-flag';
 
 export interface ReviewItem {
   result: LabResult;
@@ -86,11 +86,21 @@ export class LabService {
   ) {}
 
   /**
-   * Files what OCR read, unverified.
+   * Files what OCR read, and files it as a result rather than as a question.
    *
-   * Nothing written here is clinical. Every row lands with `verifiedAt` null
-   * and stays out of trends and alerts until a human confirms it (spec M16:
-   * OCR output is never approved automatically).
+   * Every row used to land with `verifiedAt` null and stay out of trends,
+   * charts and the critical-value alert until somebody confirmed it one row at
+   * a time. For a panel of a dozen analytes that is a dozen taps before the
+   * patient's own screen shows anything, and the clinic asked for the opposite:
+   * a report arrives, it is read, the values are in the record.
+   *
+   * So a row the engine was sure about is filed as verified. `verifiedById`
+   * stays null, which is the honest record of what happened — a machine read
+   * it and no clinician has looked. Anything the engine was unsure about, or
+   * could not name, still waits in the review queue, because a value nobody
+   * can read is not a result.
+   *
+   * Overrides spec M16, deliberately and at the clinic's instruction.
    */
   async recordCandidates(
     patientId: string,
@@ -120,6 +130,11 @@ export class LabService {
         flag: classify(candidate.value, candidate.reference),
         measuredAt,
         ocrConfidence: candidate.confidence,
+        // Confident and named: a result. Doubtful or unnamed: a question, and
+        // questions stay in the queue.
+        verifiedAt: autoVerified(candidate.confidence, mapping?.analyteCode ?? null)
+          ? new Date()
+          : null,
       };
     });
 

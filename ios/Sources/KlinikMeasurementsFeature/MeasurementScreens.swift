@@ -23,6 +23,27 @@ public enum ChartSeries: String, CaseIterable, Sendable, Identifiable {
     /// weight and plotting both would make neither legible.
     var isBodyChart: Bool { self == .weight || self == .bmi }
 
+    /**
+     * What the picker offers before anything has been measured.
+     *
+     * All eight used to be listed, and six of them opened an empty chart:
+     * this clinic records weight and pulse, and asks Apple Health for those
+     * two. A menu where most of the entries lead nowhere is a menu people stop
+     * reading, so the rest appear only once there is something to plot — see
+     * `available(given:)`.
+     */
+    static let core: [ChartSeries] = [.weight, .bmi, .bloodPressure, .pulse]
+
+    /// The core four, plus any other reading this patient actually has.
+    static func available(given withReadings: Set<MeasurementType>) -> [ChartSeries] {
+        allCases.filter { series in
+            if core.contains(series) { return true }
+            guard let type = series.measurementType else { return false }
+
+            return withReadings.contains(type)
+        }
+    }
+
     var measurementType: MeasurementType? {
         switch self {
         case .weight: return .weight
@@ -57,6 +78,9 @@ public struct BodyChartView: View {
 
     @State private var state = MeasurementsState()
     @State private var series: ChartSeries = .weight
+    /// Which readings this patient has at all, so the picker can leave out the
+    /// ones that would open an empty chart.
+    @State private var recorded: Set<MeasurementType> = []
     /// Fetched per kind, because only weight and BMI arrive with the composed
     /// body chart.
     @State private var otherSeries: [MeasurementPoint] = []
@@ -130,7 +154,10 @@ public struct BodyChartView: View {
             }
         }
         .background(Tokens.Palette.background.resolve(for: scheme))
-        .task { await refresh { await model.load() } }
+        .task {
+            await refresh { await model.load() }
+            recorded = await model.recordedTypes()
+        }
         .refreshable { await refresh { await model.load() } }
         .onChange(of: queueRevision) { _, _ in
             Task { await refresh { await model.load() } }
@@ -181,7 +208,7 @@ public struct BodyChartView: View {
             // fit across a phone, and the two that squeeze in would be the two
             // somebody happened to put first.
             Picker(L10n.string("measurement.series"), selection: $series) {
-                ForEach(ChartSeries.allCases) { option in
+                ForEach(ChartSeries.available(given: recorded)) { option in
                     Text(L10n.string(option.titleKey)).tag(option)
                 }
             }

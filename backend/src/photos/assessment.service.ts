@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiJobType, AuditAction, Photo } from '@prisma/client';
+import { AiJobType, AuditAction, Photo, Role } from '@prisma/client';
 import { AIService } from '../ai/ai.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -64,6 +64,27 @@ export class PhotoAssessmentService {
    * asked for, and a word outside the vocabulary has nowhere to go.
    */
   async assess(user: AuthenticatedUser, photoId: string): Promise<AssessmentResult> {
+    return this.run(photoId, { id: user.id, role: user.role });
+  }
+
+  /**
+   * The same assessment, run by the upload that produced the photograph.
+   *
+   * No `AuthenticatedUser`, because there is nobody holding the phone by the
+   * time this runs — the upload has returned and the worker picked the job up.
+   * The scope check the signed-in path does is skipped rather than faked: the
+   * photograph was accepted through an endpoint that already made it, and a
+   * worker inventing a caller to check against is a check that proves nothing.
+   * The audit entry records the actor as absent for the same reason.
+   */
+  async assessInBackground(photoId: string): Promise<AssessmentResult> {
+    return this.run(photoId, null);
+  }
+
+  private async run(
+    photoId: string,
+    actor: { id: string; role: Role } | null,
+  ): Promise<AssessmentResult> {
     const photo = await this.prisma.photo.findUnique({
       where: { id: photoId },
       include: {
@@ -84,7 +105,9 @@ export class PhotoAssessmentService {
       throw new NotFoundException('Photo not found');
     }
 
-    await this.access.assertCanAccess(user, photo.patientId);
+    if (actor) {
+      await this.access.assertCanAccess({ id: actor.id, role: actor.role } as AuthenticatedUser, photo.patientId);
+    }
 
     /**
      * The clinic has to switch this on deliberately.
@@ -184,8 +207,8 @@ export class PhotoAssessmentService {
       });
 
       await this.audit.recordInTransaction(tx, {
-        actorId: user.id,
-        actorRole: user.role,
+        actorId: actor?.id,
+        actorRole: actor?.role,
         action: AuditAction.UPDATE,
         entityType: 'photos',
         entityId: photoId,

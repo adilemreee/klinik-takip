@@ -102,6 +102,19 @@ public actor MeasurementsModel {
         (try? await api.series(for: subject, type: type)) ?? []
     }
 
+    /**
+     * Which kinds of reading this patient has at all.
+     *
+     * So the chart picker can leave out the ones that would open on an empty
+     * plot. Failure is an empty set rather than an error: the picker falls
+     * back to its core entries, which is a shorter menu, not a broken screen.
+     */
+    public func recordedTypes() async -> Set<MeasurementType> {
+        guard let latest = try? await api.latest(for: subject) else { return [] }
+
+        return Set(latest.keys.compactMap(MeasurementType.init(rawValue:)))
+    }
+
     public func load() async {
         state.phase = .loading
         await reload()

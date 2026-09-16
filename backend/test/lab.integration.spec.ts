@@ -181,8 +181,11 @@ describe('lab result review', () => {
   };
 
   describe('what OCR files', () => {
-    /** The single rule this module exists for. */
-    it('files everything unverified', async () => {
+    /**
+     * A name the clinic has never mapped is a row whose meaning is still a
+     * guess, so it waits however sure the engine was of the characters.
+     */
+    it('leaves an unmapped analyte waiting', async () => {
       const patientId = await makePatient();
       await fileCandidates(patientId, [candidate('Hemoglobin', 13.5, 0.95, { low: 12, high: 16 })]);
 
@@ -191,6 +194,26 @@ describe('lab result review', () => {
       expect(rows).toHaveLength(1);
       expect(rows[0]!.verifiedAt).toBeNull();
       expect(rows[0]!.verifiedById).toBeNull();
+    });
+
+    /**
+     * And one the engine was unsure of waits too, mapped or not: a value
+     * nobody can read is not a result.
+     */
+    it('leaves a doubtful reading waiting even when the analyte is known', async () => {
+      const patientId = await makePatient();
+      const rawName = `Dogrulanmis ${Date.now()}`;
+      mappedNames.push(normalise(rawName));
+
+      await prisma.analyteMapping.create({
+        data: { rawName: normalise(rawName), analyteCode: '718-7', analyteName: 'Hemoglobin' },
+      });
+
+      await fileCandidates(patientId, [candidate(rawName, 13.5, 0.4)]);
+
+      const rows = await prisma.labResult.findMany({ where: { patientId } });
+
+      expect(rows[0]!.verifiedAt).toBeNull();
     });
 
     /** An unverified value must not reach the chart a doctor reads. */
@@ -376,15 +399,21 @@ describe('lab result review', () => {
         .send({ analyteCode: '718-7', analyteName: 'Hemoglobin' })
         .expect(200);
 
-      // The same printed name arrives on a later report.
+      // The same printed name arrives on a later report. Named and read
+      // confidently, so it is filed rather than queued — nobody is asked to
+      // confirm the same analyte twice.
       const second = await makePatient();
       await fileCandidates(second, [candidate(rawName, 14.1)]);
 
-      const rows = await pending(second);
+      const rows = await prisma.labResult.findMany({ where: { patientId: second } });
 
-      expect(rows[0]!.result.analyteCode).toBe('718-7');
-      expect(rows[0]!.result.analyteName).toBe('Hemoglobin');
-      expect(rows[0]!.awaitingMapping).toBe(false);
+      expect(rows[0]!.analyteCode).toBe('718-7');
+      expect(rows[0]!.analyteName).toBe('Hemoglobin');
+      expect(rows[0]!.verifiedAt).not.toBeNull();
+      // Filed by the machine, and the record says so rather than naming a
+      // clinician who never looked.
+      expect(rows[0]!.verifiedById).toBeNull();
+      expect(await pending(second)).toHaveLength(0);
     });
 
     /** Spacing and case vary between laboratories printing the same analyte. */
@@ -405,9 +434,9 @@ describe('lab result review', () => {
       const second = await makePatient();
       await fileCandidates(second, [candidate(rawName.toUpperCase().replace(/\s+/g, '  '), 28)]);
 
-      const rows = await pending(second);
+      const rows = await prisma.labResult.findMany({ where: { patientId: second } });
 
-      expect(rows[0]!.result.analyteCode).toBe('14635-7');
+      expect(rows[0]!.analyteCode).toBe('14635-7');
     });
 
     /**
@@ -432,9 +461,9 @@ describe('lab result review', () => {
       const second = await makePatient();
       await fileCandidates(second, [candidate(rawName.toUpperCase(), 0.9)]);
 
-      const rows = await pending(second);
+      const rows = await prisma.labResult.findMany({ where: { patientId: second } });
 
-      expect(rows[0]!.result.analyteCode).toBe('1975-2');
+      expect(rows[0]!.analyteCode).toBe('1975-2');
     });
 
     it('refuses to confirm the same result twice', async () => {

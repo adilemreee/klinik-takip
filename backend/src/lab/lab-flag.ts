@@ -62,3 +62,20 @@ export function classify(
  * nothing here is ever auto-approved.
  */
 export const REVIEW_CONFIDENCE = 0.8;
+
+/**
+ * Whether a row OCR produced can be filed as a result rather than a question.
+ *
+ * Two conditions, and both are about whether anybody can say what the row
+ * says. The engine has to have been sure of the characters, and the analyte
+ * has to be one the clinic has already named — an unmapped name is a row whose
+ * meaning is still a guess, and a guess does not belong in a trend line.
+ *
+ * A critical value is filed like any other. It is not hidden: it goes straight
+ * to the critical list, which is the point of that list.
+ */
+export function autoVerified(confidence: number | null | undefined, analyteCode: string | null): boolean {
+  if (analyteCode === null) return false;
+
+  return (confidence ?? 0) >= REVIEW_CONFIDENCE;
+}

@@ -33,6 +33,15 @@ export const JOBS = {
   documentIntake: 'document-intake',
 
   /**
+   * Looks at a photograph as soon as it arrives.
+   *
+   * On the documents queue rather than its own: it is the same shape of work —
+   * something was uploaded, read it — and a queue per job kind is a queue
+   * nobody is watching.
+   */
+  photoAssess: 'photo-assess',
+
+  /**
    * Releases the parts of uploads nobody came back to. On a bad connection —
    * which is the connection resumable upload exists for — most attempts are
    * abandoned, so without this the bucket grows by every one of them.

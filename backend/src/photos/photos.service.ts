@@ -14,6 +14,8 @@ import { Env } from '../config/env.schema';
 import { detectType, SNIFF_LENGTH } from '../files/file-type';
 import { FileService } from '../files/file.service';
 import { PrismaService } from '../infra/prisma.service';
+import { JOBS, QUEUES } from '../queue/queue.constants';
+import { QueueService } from '../queue/queue.service';
 import { photoView, type PhotoView } from './photo-view';
 import { readBounded } from './read-bounded';
 import { stripMetadata } from './strip-metadata';
@@ -59,6 +61,7 @@ export class PhotosService {
     private readonly audit: AuditService,
     private readonly files: FileService,
     private readonly config: ConfigService<Env, true>,
+    private readonly queue: QueueService,
   ) {}
 
   async upload(
@@ -105,7 +108,7 @@ export class PhotosService {
     });
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const view = await this.prisma.$transaction(async (tx) => {
         const photo = await tx.photo.create({
           data: {
             patientId,
@@ -135,6 +138,33 @@ export class PhotosService {
 
         return photoView(photo);
       });
+
+      /*
+       * Looked at on arrival, not when somebody remembers to ask.
+       *
+       * Outside the transaction and deliberately not awaited for its result:
+       * the upload has done its job once the row and the object are there, and
+       * a patient watching a spinner should not also be waiting on a model.
+       * A queue that cannot be reached is logged and dropped — an assessment
+       * that did not happen is a photograph nobody flagged, which is the state
+       * every photograph was in before this.
+       */
+      try {
+        await this.queue.enqueue(
+          {
+            queue: QUEUES.documents,
+            name: JOBS.photoAssess,
+            data: { photoId: view.id },
+            entityType: 'photos',
+            patientId,
+          },
+          () => Promise.resolve(view),
+        );
+      } catch (error) {
+        this.logger.error(`Photo ${view.id} uploaded but not queued for assessment: ${String(error)}`);
+      }
+
+      return view;
     } catch (error) {
       await this.files
         .remove('photos', stored.key)

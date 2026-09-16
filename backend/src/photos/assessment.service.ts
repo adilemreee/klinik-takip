@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AiJobType, AuditAction, Photo, Role } from '@prisma/client';
+import { AiJobType, AuditAction, Photo } from '@prisma/client';
 import { AIService } from '../ai/ai.service';
 import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -64,7 +64,7 @@ export class PhotoAssessmentService {
    * asked for, and a word outside the vocabulary has nowhere to go.
    */
   async assess(user: AuthenticatedUser, photoId: string): Promise<AssessmentResult> {
-    return this.run(photoId, { id: user.id, role: user.role });
+    return this.run(photoId, user);
   }
 
   /**
@@ -83,7 +83,7 @@ export class PhotoAssessmentService {
 
   private async run(
     photoId: string,
-    actor: { id: string; role: Role } | null,
+    actor: AuthenticatedUser | null,
   ): Promise<AssessmentResult> {
     const photo = await this.prisma.photo.findUnique({
       where: { id: photoId },
@@ -106,7 +106,7 @@ export class PhotoAssessmentService {
     }
 
     if (actor) {
-      await this.access.assertCanAccess({ id: actor.id, role: actor.role } as AuthenticatedUser, photo.patientId);
+      await this.access.assertCanAccess(actor, photo.patientId);
     }
 
     /**

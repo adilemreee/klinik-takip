@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Logger } from '@nestjs/common';
@@ -10,6 +10,7 @@ import { StorageService } from '../infra/storage.service';
 import { LabService } from '../lab/lab.service';
 import type { JobHandler } from '../queue/job-runner';
 import { parseLabLines, type LabCandidate } from './lab-parser';
+import type { LabReader, ReportPage } from '../lab/lab-reader.service';
 import type { OcrEngine } from './ocr-engine';
 import { rasterisePdf } from './pdf-raster';
 
@@ -21,6 +22,7 @@ export interface OcrDependencies {
   files: FileService;
   storage: StorageService;
   lab: LabService;
+  reader: LabReader;
   engine: OcrEngine;
   bucket: string;
 }
@@ -70,21 +72,49 @@ export function documentOcr(deps: OcrDependencies): JobHandler {
     const workspace = await mkdtemp(join(tmpdir(), 'klinik-ocr-'));
 
     try {
-      const candidates = await readDocument(deps, document.fileKey, document.mime, workspace);
+      const pages = await pagesOf(deps, document.fileKey, document.mime, workspace);
 
-      const filed = await deps.lab.recordCandidates(
-        document.patientId,
-        document.id,
-        candidates,
-        document.createdAt,
-      );
+      /*
+       * The model looks at the page first, and OCR is what happens when it
+       * cannot.
+       *
+       * This order is the whole point. Tesseract transcribes a printed lab
+       * table well enough to prove a number is there and badly enough that
+       * nothing can be filed on its word, so everything it produced waited for
+       * somebody to retype it — and nobody did. A model that can see the page
+       * reads the columns, and what it reports is filed.
+       */
+      const read = await deps.reader.read(pages, document.patientId);
+
+      let filed: number;
+
+      if (read !== null && read.length > 0) {
+        filed = await deps.lab.recordRead(
+          document.patientId,
+          document.id,
+          read,
+          document.createdAt,
+        );
+        logger.log(`Model read ${filed} result(s) from document ${document.id}`);
+      } else {
+        const candidates = await transcribe(deps, pages);
+
+        filed = await deps.lab.recordCandidates(
+          document.patientId,
+          document.id,
+          candidates,
+          document.createdAt,
+        );
+        logger.log(
+          `Model unavailable for document ${document.id}; OCR filed ${filed} candidate(s) for review`,
+        );
+      }
 
       await deps.prisma.document.update({
         where: { id: document.id },
         data: { ocrStatus: ProcessingStatus.DONE },
       });
 
-      logger.log(`Read ${filed} candidate result(s) from document ${document.id}`);
     } catch (error) {
       await deps.prisma.document.update({
         where: { id: document.id },
@@ -99,22 +129,40 @@ export function documentOcr(deps: OcrDependencies): JobHandler {
   };
 }
 
-async function readDocument(
+/** A page, with the file it was written to so the engine can reread it. */
+interface LocalPage extends ReportPage {
+  path: string;
+}
+
+/** The document as page images, whatever it arrived as. */
+async function pagesOf(
   deps: OcrDependencies,
   fileKey: string,
   mime: string,
   workspace: string,
-): Promise<LabCandidate[]> {
+): Promise<LocalPage[]> {
   const local = join(workspace, 'source');
   await writeFile(local, await download(deps, fileKey));
 
-  const images = mime === 'application/pdf' ? await rasterisePdf(local, workspace) : [local];
+  const paths = mime === 'application/pdf' ? await rasterisePdf(local, workspace) : [local];
 
+  return Promise.all(
+    paths.map(async (path) => ({
+      // A rasterised page is a PNG; anything else arrived as its own image.
+      mediaType: mime === 'application/pdf' ? 'image/png' : mime,
+      bytes: await readFile(path),
+      path,
+    })),
+  );
+}
+
+/** What the engine makes of the same pages, when the model could not read them. */
+async function transcribe(deps: OcrDependencies, pages: LocalPage[]): Promise<LabCandidate[]> {
   const candidates: LabCandidate[] = [];
 
-  for (const image of images) {
-    const page = await deps.engine.recognise(image);
-    candidates.push(...parseLabLines(page.lines));
+  for (const page of pages) {
+    const recognised = await deps.engine.recognise(page.path);
+    candidates.push(...parseLabLines(recognised.lines));
   }
 
   return candidates;

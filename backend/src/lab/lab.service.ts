@@ -6,6 +6,7 @@ import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
 import type { LabCandidate } from '../ocr/lab-parser';
 import { REVIEW_CONFIDENCE, autoVerified, classify } from './lab-flag';
+import type { ReadAnalyte } from './lab-reader.service';
 
 export interface ReviewItem {
   result: LabResult;
@@ -130,8 +131,10 @@ export class LabService {
         flag: classify(candidate.value, candidate.reference),
         measuredAt,
         ocrConfidence: candidate.confidence,
-        // Confident and named: a result. Doubtful or unnamed: a question, and
-        // questions stay in the queue.
+        // Confident and already named: a result. Anything else is a question,
+        // and questions wait. The engine reads lab names badly enough that
+        // this is rarely true on a real report — which is why the model reads
+        // the page instead, and this path is only the fallback.
         verifiedAt: autoVerified(candidate.confidence, mapping?.analyteCode ?? null)
           ? new Date()
           : null,
@@ -141,6 +144,50 @@ export class LabService {
     await this.prisma.labResult.createMany({ data: rows });
 
     return rows.length;
+  }
+
+  /**
+   * Files what the model read off the report, as results.
+   *
+   * These do not wait. The model looked at the page — the table, the headers,
+   * the reference column — and reported what is printed on it, which is the
+   * job a human reviewer was being asked to do by retyping twelve rows from a
+   * transcription full of stray characters. Nobody did that, so the values
+   * never arrived anywhere.
+   *
+   * `verifiedById` stays null, because no clinician has seen these. That is
+   * the record being honest about who read the page, and it is what keeps the
+   * distinction visible if the clinic ever wants it back.
+   */
+  async recordRead(
+    patientId: string,
+    documentId: string,
+    analytes: ReadAnalyte[],
+    measuredAt: Date,
+  ): Promise<number> {
+    if (analytes.length === 0) return 0;
+
+    const now = new Date();
+
+    await this.prisma.labResult.createMany({
+      data: analytes.map((analyte) => ({
+        patientId,
+        documentId,
+        analyteCode: analyte.analyteCode,
+        analyteName: analyte.analyteName,
+        value: analyte.value,
+        unit: analyte.unit,
+        refLow: analyte.refLow,
+        refHigh: analyte.refHigh,
+        flag: classify(analyte.value, { low: analyte.refLow, high: analyte.refHigh }),
+        measuredAt,
+        // Not an OCR reading, so there is no engine confidence to record.
+        ocrConfidence: null,
+        verifiedAt: now,
+      })),
+    });
+
+    return analytes.length;
   }
 
   /**

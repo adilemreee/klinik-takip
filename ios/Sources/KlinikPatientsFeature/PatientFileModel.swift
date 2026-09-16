@@ -25,6 +25,23 @@ public enum FileSection: String, Sendable, Equatable, CaseIterable {
      * clinic's history.
      */
     case exports
+
+    /**
+     * The rows a clinician opening a file actually goes to.
+     *
+     * All eleven were listed flat, and a list of eleven is one somebody reads
+     * top to bottom every time they open a patient. These five are the ones
+     * with something on them most days; the rest are a tap further down and
+     * have lost nothing.
+     */
+    public static let primary: [FileSection] = [
+        .messages, .labTrend, .photos, .medications, .appointments,
+    ]
+
+    /// Everything else, in the order it was declared.
+    public static var secondary: [FileSection] {
+        allCases.filter { !primary.contains($0) }
+    }
 }
 
 public enum PatientFilePhase: Sendable, Equatable {

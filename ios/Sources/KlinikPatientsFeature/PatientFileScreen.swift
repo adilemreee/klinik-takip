@@ -33,6 +33,8 @@ public struct PatientFileScreen: View {
     @State private var exporting = false
     @State private var exportWithPhotos = false
     @State private var exportQueued = false
+    /// The sections below the first five, collapsed until asked for.
+    @State private var showingMore = false
     /// The finished summary, handed straight to the share sheet.
     @State private var exportedFile: URL?
 
@@ -661,21 +663,37 @@ public struct PatientFileScreen: View {
 
             Card {
                 VStack(spacing: 0) {
-                    ForEach(Array(FileSection.allCases.enumerated()), id: \.element) { index, section in
-                        if index > 0 { Divider() }
+                    rows(FileSection.primary, file: file)
+                }
+            }
 
-                        let badge = file.badge(for: section)
-
-                        NavigationRow(
-                            symbol: PatientFileScreen.symbol(for: section),
-                            title: L10n.string(section.titleKey),
-                            badge: badge?.text,
-                            badgeTone: badge?.urgent == true ? .warning : .neutral
-                        ) {
-                            onSection(section)
-                        }
+            DisclosureGroup(L10n.string("menu.more"), isExpanded: $showingMore) {
+                Card {
+                    VStack(spacing: 0) {
+                        rows(FileSection.secondary, file: file)
                     }
                 }
+            }
+            .font(Tokens.Typography.calloutRelative)
+            .frame(minHeight: Tokens.minimumTouchTarget)
+            .accessibilityLabel(L10n.string("menu.more"))
+        }
+    }
+
+    @ViewBuilder
+    private func rows(_ sections: [FileSection], file: PatientFile) -> some View {
+        ForEach(Array(sections.enumerated()), id: \.element) { index, section in
+            if index > 0 { Divider() }
+
+            let badge = file.badge(for: section)
+
+            NavigationRow(
+                symbol: PatientFileScreen.symbol(for: section),
+                title: L10n.string(section.titleKey),
+                badge: badge?.text,
+                badgeTone: badge?.urgent == true ? .warning : .neutral
+            ) {
+                onSection(section)
             }
         }
     }

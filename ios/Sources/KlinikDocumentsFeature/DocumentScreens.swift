@@ -182,13 +182,21 @@ public struct DocumentListView: View {
 
             if canUpload {
                 VStack(spacing: Tokens.Spacing.sm) {
-                    Picker(L10n.string("document.type"), selection: $chosenType) {
-                        ForEach(DocumentType.allCases, id: \.self) { type in
-                            Text(type.localizedName).tag(type)
-                        }
-                    }
-                    .accessibilityLabel(L10n.string("document.type"))
-
+                    /*
+                     * No "what is this?" before the upload.
+                     *
+                     * The list of eight kinds was asked of whoever was holding
+                     * the phone, and the person least able to answer it —
+                     * a patient photographing a page out of a folder — was
+                     * usually the one being asked. The answer was not a label
+                     * either: the kind decides which pipeline reads the file,
+                     * so a lab report filed as OTHER is a lab report whose
+                     * values are never read.
+                     *
+                     * The model reads the first page and says what it is. What
+                     * `chosenType` still carries is the caller's hint, used
+                     * only when the model is off or unsure.
+                     */
                     if let progress = state.uploadProgress {
                         // A 20 MB scan on mobile data takes long enough that a
                         // spinner alone reads as a hang.

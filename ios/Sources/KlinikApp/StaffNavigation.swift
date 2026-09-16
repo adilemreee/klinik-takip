@@ -222,26 +222,19 @@ struct StaffPatientsView: View {
 
     private func menu(_ path: Binding<[StaffDestination]>) -> some View {
         Menu {
-            Button(L10n.string("patient.new")) { path.wrappedValue.append(.newPatient) }
-
-            Divider()
-
-            Button(L10n.string("menu.inbox")) { path.wrappedValue.append(.inbox) }
-            Button(L10n.string("menu.calendar")) { path.wrappedValue.append(.calendar) }
-            Button(L10n.string("menu.availability")) { path.wrappedValue.append(.availability) }
-            Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
-            Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
-            Button(L10n.string("menu.exports")) { path.wrappedValue.append(.exports) }
-            Button(L10n.string("menu.audit")) { path.wrappedValue.append(.audit) }
-            Button(L10n.string("menu.protocols")) { path.wrappedValue.append(.protocols) }
-            Button(L10n.string("menu.aiSettings")) { path.wrappedValue.append(.aiSettings) }
-            Button(L10n.string("menu.complicationQueue")) {
-                path.wrappedValue.append(.complicationQueue)
-            }
+            /*
+             * What is not on the agenda.
+             *
+             * Ten of the eleven tiles on the agenda's grid were repeated here,
+             * so every one of them had two ways in and nothing said which was
+             * meant for what. The grid is the way in — it is on screen, it
+             * carries counts, and it is what a clinician is already looking at.
+             * Left here is what the grid has no tile for.
+             */
+            Button(L10n.string("menu.account")) { path.wrappedValue.append(.account) }
             Button(L10n.string("notification.settingsTitle")) {
                 path.wrappedValue.append(.notificationSettings)
             }
-            Button(L10n.string("menu.account")) { path.wrappedValue.append(.account) }
             Button(L10n.string("menu.pendingChanges")) {
                 path.wrappedValue.append(.pendingChanges)
             }

@@ -211,6 +211,7 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "auth.sessionExpired" to R.string.auth_session_expired,
     "auth.signIn" to R.string.auth_sign_in,
     "auth.signOut" to R.string.auth_sign_out,
+    "auth.startOver" to R.string.auth_start_over,
     "auth.twoFactorHint" to R.string.auth_two_factor_hint,
     "auth.twoFactorSetupHint" to R.string.auth_two_factor_setup_hint,
     "auth.twoFactorSetupTitle" to R.string.auth_two_factor_setup_title,

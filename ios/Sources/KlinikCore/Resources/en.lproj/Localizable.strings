@@ -618,6 +618,7 @@
 "app.staffTitle" = "Patients";
 "app.storageUnavailable" = "Offline storage could not be opened on this device. What you enter may be lost when the app closes.";
 "auth.sessionExpired" = "Your session expired. Please sign in again.";
+"auth.startOver" = "Sign-in was restarted. Enter your e-mail and password again.";
 "auth.signOut" = "Sign out";
 
 /* Clinician agenda (M2, M5) */

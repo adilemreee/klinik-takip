@@ -201,6 +201,7 @@
     <string name="auth_session_expired">Your session expired. Please sign in again.</string>
     <string name="auth_sign_in">Sign in</string>
     <string name="auth_sign_out">Sign out</string>
+    <string name="auth_start_over">Sign-in was restarted. Enter your e-mail and password again.</string>
     <string name="auth_two_factor_hint">Enter the 6-digit code from your app.</string>
     <string name="auth_two_factor_setup_hint">Connect an authenticator app to protect your account.</string>
     <string name="auth_two_factor_setup_title">Two-step verification</string>

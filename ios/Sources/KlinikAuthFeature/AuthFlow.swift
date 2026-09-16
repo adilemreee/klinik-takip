@@ -94,9 +94,11 @@ public actor AuthFlowModel {
     public func submitTwoFactorCode(_ code: String) async {
         guard !state.isSubmitting else { return }
         guard let identifier = pendingIdentifier, let password = pendingPassword else {
-            // Reaching here without credentials means the flow was restarted;
-            // sending the user back is better than a silent failure.
-            reset()
+            // Reaching here without credentials means the flow was restarted.
+            // Sending the user back is right; doing it silently is not — from
+            // the other side it is a correct code answered by the login form,
+            // which reads as the code having been refused.
+            startOver()
             return
         }
 
@@ -123,7 +125,7 @@ public actor AuthFlowModel {
     public func confirmTwoFactorSetup(code: String) async {
         guard !state.isSubmitting else { return }
         guard let token = setupToken else {
-            reset()
+            startOver()
             return
         }
 
@@ -198,6 +200,15 @@ public actor AuthFlowModel {
             password: password,
             deviceName: deviceName
         )
+    }
+
+    /// Back to the login form, saying so.
+    ///
+    /// `reset` on its own leaves the person looking at a form they had already
+    /// filled in, with nothing on screen accounting for it.
+    private func startOver() {
+        reset()
+        state.errorMessage = L10n.string("auth.startOver")
     }
 
     public func reset() {

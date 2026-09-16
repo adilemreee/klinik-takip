@@ -618,6 +618,7 @@
 "app.staffTitle" = "Hastalar";
 "app.storageUnavailable" = "Bu cihazda çevrimdışı kayıt açılamadı. Girdikleriniz uygulama kapanınca kaybolabilir.";
 "auth.sessionExpired" = "Oturumunuzun süresi doldu, tekrar giriş yapın.";
+"auth.startOver" = "Giriş yeniden başlatıldı. E-postanızı ve parolanızı tekrar girin.";
 "auth.signOut" = "Çıkış yap";
 
 /* Doktor gündemi (M2, M5) */

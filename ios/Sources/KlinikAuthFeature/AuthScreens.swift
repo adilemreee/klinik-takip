@@ -260,6 +260,24 @@ struct PasswordRuleList: View {
 }
 
 /// Step two when the account already has a second factor.
+/**
+ * A binding that keeps only what a one-time code can be: six digits.
+ *
+ * The field accepted anything, so one stray keypress made it seven characters
+ * long — and the button, which enables at exactly six, disabled itself with
+ * nothing on screen accounting for it. Trimming as it is typed keeps the
+ * button's state explainable by what the person can see.
+ *
+ * Not used for the invitation code, which is neither six characters nor
+ * necessarily digits.
+ */
+private func sixDigits(_ code: Binding<String>) -> Binding<String> {
+    Binding(
+        get: { code.wrappedValue },
+        set: { code.wrappedValue = String($0.filter(\.isNumber).prefix(6)) }
+    )
+}
+
 struct TwoFactorCodeView: View {
     let state: AuthState
     let submit: (String) async -> Void
@@ -273,7 +291,7 @@ struct TwoFactorCodeView: View {
         ) {
             LabelledField(
                 label: L10n.string("auth.twoFactorTitle"),
-                text: $code,
+                text: sixDigits($code),
                 isSecure: false,
                 contentType: .oneTimeCode,
                 keyboard: .numberPad
@@ -332,7 +350,7 @@ struct TwoFactorSetupView: View {
 
             LabelledField(
                 label: L10n.string("auth.twoFactorTitle"),
-                text: $code,
+                text: sixDigits($code),
                 isSecure: false,
                 contentType: .oneTimeCode,
                 keyboard: .numberPad

@@ -201,6 +201,7 @@
     <string name="auth_session_expired">Oturumunuzun süresi doldu, tekrar giriş yapın.</string>
     <string name="auth_sign_in">Giriş yap</string>
     <string name="auth_sign_out">Çıkış yap</string>
+    <string name="auth_start_over">Giriş yeniden başlatıldı. E-postanızı ve parolanızı tekrar girin.</string>
     <string name="auth_two_factor_hint">Uygulamanızdaki 6 haneli kodu girin.</string>
     <string name="auth_two_factor_setup_hint">Hesabınızı korumak için bir doğrulama uygulaması bağlayın.</string>
     <string name="auth_two_factor_setup_title">İki adımlı doğrulama</string>

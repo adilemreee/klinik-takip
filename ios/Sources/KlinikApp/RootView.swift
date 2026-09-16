@@ -25,11 +25,29 @@ public struct RootView: View {
     @State private var push: PushRegistrar?
     /// True while iOS is showing a prompt this app asked for. See the cover.
     @State private var askingPermission = false
+    /**
+     * Held here, not built in `body`.
+     *
+     * It used to be constructed inside the view builder, which makes a new one
+     * on every evaluation of this view's body — and this body is re-evaluated
+     * whenever any of the state above changes, including when the app goes
+     * inactive and comes back. A new model has no setup token and no pending
+     * credentials, and its step is `.credentials`, so signing in appeared to
+     * throw the person back to the login form.
+     *
+     * Two-factor enrolment is exactly where that lands hardest: reading a code
+     * means leaving for an authenticator app and coming back, which is the
+     * round trip that discarded the enrolment in progress.
+     */
+    @State private var authModel: AuthFlowModel
 
     @Environment(\.scenePhase) private var scenePhase
 
     public init(environment: AppEnvironment) {
         self.environment = environment
+        _authModel = State(
+            initialValue: AuthFlowModel(auth: environment.auth, session: environment.session)
+        )
     }
 
     public var body: some View {
@@ -129,7 +147,7 @@ public struct RootView: View {
 
     private func authFlow(message: String?) -> some View {
         AuthFlowView(
-            model: AuthFlowModel(auth: environment.auth, session: environment.session),
+            model: authModel,
             onSignedIn: { Task { await refresh() } }
         )
         .overlay(alignment: .top) {
@@ -256,6 +274,9 @@ public struct RootView: View {
         // valid credential.
         await endSideEffects()
 
+        // The model is no longer rebuilt per render, so it would otherwise keep
+        // the credentials of whoever just signed out.
+        await authModel.reset()
         await environment.session.signOut()
         // The cache holds one person's clinical record. Left behind, the next
         // account on this device would be shown it the first time the network

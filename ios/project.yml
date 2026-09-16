@@ -41,7 +41,7 @@ targets:
           - tr
           - en
         CFBundleShortVersionString: "0.1.0"
-        CFBundleVersion: "1"
+        CFBundleVersion: "2"
         # Declared here so every upload does not stop to ask. The app uses TLS
         # and the platform's own Keychain and Data Protection, and implements
         # no cryptography of its own — which is exactly the exemption in

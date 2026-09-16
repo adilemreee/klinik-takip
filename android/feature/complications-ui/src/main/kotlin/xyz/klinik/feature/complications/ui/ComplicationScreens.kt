@@ -35,6 +35,11 @@ import xyz.klinik.feature.complications.ComplicationsState
 import xyz.klinik.network.ComplicationStatus
 import xyz.klinik.network.ComplicationView
 import xyz.klinik.network.UiText
+import androidx.compose.foundation.layout.PaddingValues
+import xyz.klinik.design.Badge
+import xyz.klinik.design.FlowRow
+import xyz.klinik.design.KlinikCard
+import xyz.klinik.design.Tone
 
 /** Text the screens need, resolved by the caller from string resources. */
 data class ComplicationStrings(
@@ -48,6 +53,7 @@ data class ComplicationStrings(
     val respondedIn: (Int) -> String,
     val minutesShort: String,
     val overdueCount: (Int) -> String,
+    val overdue: String,
     val noBodyArea: String,
     val photoCount: (Int) -> String,
     val answered: String,
@@ -130,7 +136,14 @@ private fun Queue(
             )
         }
 
-        LazyColumn(modifier = Modifier.weight(1f)) {
+        // Cards, like every other clinical list here. A plain list gave an
+        // unanswered six-hour-old report exactly the presence of a
+        // forty-minute one.
+        LazyColumn(
+            modifier = Modifier.weight(1f).padding(horizontal = Tokens.Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.md),
+            contentPadding = PaddingValues(vertical = Tokens.Spacing.md),
+        ) {
             items(state.items, key = { it.complication.id }) { item ->
                 QueueRow(
                     item = item,
@@ -162,12 +175,7 @@ private fun QueueRow(
         "${item.complication.bodyArea ?: strings.noBodyArea}, " +
         "${item.complication.note}, $waiting"
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(Tokens.Spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xs),
-    ) {
+    KlinikCard(tone = toneFor(item)) {
         Column(
             modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
             verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xxs),
@@ -198,6 +206,14 @@ private fun QueueRow(
                 color = klinikColor("textPrimary"),
                 modifier = Modifier.clearAndSetSemantics {},
             )
+        }
+
+        FlowRow {
+            Badge(strings.statusName(item.complication.status), tone = toneFor(item))
+
+            if (item.overdue) {
+                Badge(strings.overdue, tone = Tone.Warning)
+            }
         }
 
         if (item.photos.isNotEmpty()) {
@@ -335,4 +351,14 @@ private fun MyReportRow(item: ComplicationView, strings: ComplicationStrings) {
 @Composable
 private fun Centered(content: @Composable () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { content() }
+}
+
+/**
+ * Unanswered past the clinic threshold shouts; a closed report recedes; the
+ * rest is ordinary.
+ */
+private fun toneFor(item: ComplicationView): Tone = when {
+    item.overdue -> Tone.Warning
+    item.complication.status == ComplicationStatus.RESOLVED -> Tone.Success
+    else -> Tone.Neutral
 }

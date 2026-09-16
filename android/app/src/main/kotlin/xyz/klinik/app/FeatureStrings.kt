@@ -132,6 +132,7 @@ fun Context.complicationStrings(): ComplicationStrings = ComplicationStrings(
     },
     minutesShort = getString(DesignR.string.common_minutes_short),
     overdueCount = { count -> getString(DesignR.string.complication_overdue_count, count) },
+    overdue = getString(DesignR.string.complication_overdue),
     noBodyArea = getString(DesignR.string.complication_no_body_area),
     photoCount = { count -> getString(DesignR.string.complication_photo_count, count) },
     answered = getString(DesignR.string.complication_answered),
@@ -221,7 +222,7 @@ fun Context.medicationStrings(): MedicationStrings = MedicationStrings(
     awaitingApproval = getString(DesignR.string.medication_awaiting_approval),
     stopped = getString(DesignR.string.medication_stopped),
     statusName = { status -> stringForKey("medication.status.${status.name}") },
-    badgeName = { badge -> stringForKey("medication.badge.$badge") },
+    badgeName = { badge -> stringForServerKey("medication.badge.$badge") },
     message = { key -> stringForKey(key) },
 )
 
@@ -554,6 +555,8 @@ fun Context.myReportsStrings(): MyReportsStrings = MyReportsStrings(
 fun Context.analyticsStrings(): AnalyticsStrings = AnalyticsStrings(
     title = getString(DesignR.string.analytics_title),
     notPermitted = getString(DesignR.string.analytics_not_permitted),
+    retry = getString(DesignR.string.common_retry),
+    message = { text -> resolve(text) },
     nothingInRange = getString(DesignR.string.analytics_nothing_in_range),
     range = getString(DesignR.string.analytics_range),
     rangeName = { range -> stringForKey(range.stringKey) },
@@ -584,6 +587,7 @@ fun Context.analyticsStrings(): AnalyticsStrings = AnalyticsStrings(
 fun Context.financeStrings(): FinanceStrings = FinanceStrings(
     title = getString(DesignR.string.finance_title),
     notPermitted = getString(DesignR.string.finance_not_permitted),
+    retry = getString(DesignR.string.common_retry),
     noRecords = getString(DesignR.string.finance_no_records),
     loadMore = getString(DesignR.string.finance_load_more),
     currency = getString(DesignR.string.finance_currency),
@@ -595,7 +599,7 @@ fun Context.financeStrings(): FinanceStrings = FinanceStrings(
     ratesTitle = getString(DesignR.string.finance_rates_title),
     ratesNone = getString(DesignR.string.finance_rates_none),
     recordsTitle = getString(DesignR.string.finance_records),
-    ageingName = { key -> stringForKey(key) },
+    ageingName = { key -> stringForServerKey(key) },
     net = getString(DesignR.string.finance_net),
     paid = getString(DesignR.string.finance_paid),
     balance = getString(DesignR.string.finance_balance),
@@ -631,6 +635,7 @@ fun Context.openLink(url: String) {
 fun Context.exportsStrings(): ExportsStrings = ExportsStrings(
     title = getString(DesignR.string.export_title),
     notPermitted = getString(DesignR.string.export_not_permitted),
+    retry = getString(DesignR.string.common_retry),
     newTitle = getString(DesignR.string.export_new_title),
     history = getString(DesignR.string.export_history),
     noHistory = getString(DesignR.string.export_no_history),
@@ -648,7 +653,7 @@ fun Context.exportsStrings(): ExportsStrings = ExportsStrings(
     linkShortLived = getString(DesignR.string.export_link_short_lived),
     omitted = getString(DesignR.string.export_omitted),
     statusName = { request -> stringForKey(request.status.stringKey) },
-    omission = { key, count -> stringForKey(key).replace("{count}", count.toString()) },
+    omission = { key, count -> stringForServerKey(key).replace("{count}", count.toString()) },
     truncation = { key, matched, rows ->
         stringForKey(key)
             .replace("{matched}", matched.toString())
@@ -694,7 +699,7 @@ fun Context.aiSettingsStrings(): AiSettingsStrings = AiSettingsStrings(
     },
     testFailed = getString(DesignR.string.ai_settings_test_failed),
     clear = getString(DesignR.string.ai_settings_clear),
-    missingName = { key -> stringForKey(key) },
+    missingName = { key -> stringForServerKey(key) },
     message = { text -> resolve(text) },
 )
 
@@ -716,8 +721,8 @@ fun Context.auditStrings(): AuditStrings = AuditStrings(
     anonymous = getString(DesignR.string.audit_anonymous),
     allActions = getString(DesignR.string.audit_all_actions),
     actionName = { action -> stringForKey(action.stringKey) },
-    anomalyName = { anomaly -> stringForKey(anomaly.stringKey) },
-    roleName = { key -> stringForKey(key) },
+    anomalyName = { anomaly -> stringForServerKey(anomaly.stringKey) },
+    roleName = { key -> stringForServerKey(key) },
     entityName = { entry -> stringForKey(entry.entityKey, entry.entityType) },
     loadMore = getString(DesignR.string.finance_load_more),
     message = { text -> resolve(text) },
@@ -752,6 +757,8 @@ fun Context.travelStrings(): TravelStrings = TravelStrings(
     interpreterPhone = getString(DesignR.string.travel_interpreter_phone),
     clearanceToggle = getString(DesignR.string.travel_clearance_toggle),
     clearedToFly = getString(DesignR.string.travel_cleared_to_fly),
+    clearedToFlyForStaff = getString(DesignR.string.travel_cleared_to_fly_staff),
+    notClearedToFlyForStaff = getString(DesignR.string.travel_not_cleared_to_fly_staff),
     notClearedToFly = getString(DesignR.string.travel_not_cleared_to_fly),
     clearedBy = { who, at -> getString(DesignR.string.travel_cleared_by, who, at) },
     message = { text -> resolve(text) },
@@ -887,8 +894,13 @@ fun Context.prescribingStrings(): PrescribingStrings = PrescribingStrings(
 )
 
 /** Confirmed results, as the laboratory printed them (spec M16). */
-fun Context.labPanelsStrings(): LabPanelsStrings = LabPanelsStrings(
-    title = getString(DesignR.string.lab_title),
+/**
+ * @param isMine whose reports these are. "Tahlil sonuçlarım" over somebody
+ * else's bloods tells a doctor the wrong thing about whose results they are
+ * reading.
+ */
+fun Context.labPanelsStrings(isMine: Boolean = true): LabPanelsStrings = LabPanelsStrings(
+    title = getString(if (isMine) DesignR.string.lab_title else DesignR.string.lab_staff_title),
     empty = getString(DesignR.string.lab_no_results),
     retry = getString(DesignR.string.common_retry),
     reference = getString(DesignR.string.lab_reference),
@@ -1075,7 +1087,7 @@ fun Context.flaggedPhotosStrings(): FlaggedPhotosStrings = FlaggedPhotosStrings(
     assessAgain = getString(DesignR.string.photo_assess_again),
     openFile = getString(DesignR.string.patient_file_number),
     noBodyArea = getString(DesignR.string.photo_no_body_area),
-    findingName = { key -> stringForKey(key) },
+    findingName = { key -> stringForServerKey(key) },
     imageLabel = getString(DesignR.string.photo_image),
     message = { text -> resolve(text) },
 )

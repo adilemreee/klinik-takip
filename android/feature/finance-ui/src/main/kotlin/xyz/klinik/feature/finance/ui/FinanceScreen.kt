@@ -39,6 +39,7 @@ import xyz.klinik.network.UiText
 data class FinanceStrings(
     val title: String,
     val notPermitted: String,
+    val retry: String,
     val noRecords: String,
     val loadMore: String,
     val currency: String,
@@ -81,6 +82,7 @@ fun FinanceScreen(
     onLoadMore: () -> Unit,
     onRecordPayment: (FinanceRecord) -> Unit,
     onReverse: (FinanceRecord) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(color = klinikColor("background"), modifier = modifier.fillMaxSize()) {
@@ -95,6 +97,22 @@ fun FinanceScreen(
                     color = klinikColor("textSecondary"),
                     textAlign = TextAlign.Center,
                 )
+            }
+
+            is FinancePhase.Failed -> Centered {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        strings.message((state.phase as FinancePhase.Failed).message),
+                        color = klinikColor("critical"),
+                        textAlign = TextAlign.Center,
+                    )
+                    TextButton(
+                        onClick = onRetry,
+                        modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+                    ) {
+                        Text(strings.retry)
+                    }
+                }
             }
 
             FinancePhase.Loaded -> Column(

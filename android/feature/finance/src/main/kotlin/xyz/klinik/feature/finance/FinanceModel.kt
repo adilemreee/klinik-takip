@@ -17,7 +17,9 @@ import xyz.klinik.network.FinanceRecord
 import xyz.klinik.network.OutstandingReport
 import xyz.klinik.network.PaymentMethod
 import xyz.klinik.network.PaymentStatus
+import xyz.klinik.network.ReadOutcome
 import xyz.klinik.network.UiText
+import xyz.klinik.network.attempt
 import xyz.klinik.network.uiText
 
 sealed interface FinancePhase {
@@ -26,6 +28,15 @@ sealed interface FinancePhase {
 
     /** Not a failure: an account without `finance.read` has no screen here. */
     data object NotPermitted : FinancePhase
+
+    /**
+     * A failure, which is a different thing.
+     *
+     * Every failure used to land on `NotPermitted`, so an unreachable clinic
+     * told a finance officer their account had no access — and offered no way
+     * to try again.
+     */
+    data class Failed(val message: UiText) : FinancePhase
 }
 
 data class FinanceState(
@@ -79,26 +90,35 @@ class FinanceModel(
 
         val (from, to) = thisMonth()
 
-        val page = async { optional { api.records(current.status, current.currency) } }
-        val outstanding = async { optional { api.outstanding(current.currency) } }
-        val collections = async { optional { api.collections(from, to, current.currency) } }
-        val rates = async { optional { api.rates(from, to) } }
+        val page = async { attempt { api.records(current.status, current.currency) } }
+        val outstanding = async { attempt { api.outstanding(current.currency) } }
+        val collections = async { attempt { api.collections(from, to, current.currency) } }
+        val rates = async { attempt { api.rates(from, to) } }
 
         val ledger = page.await()
         val owed = outstanding.await()
         val taken = collections.await()
 
+        // Nothing at all came back. That is a refusal only when the server
+        // refused: a clinic nobody can reach, a 500, or a response the app
+        // cannot parse would all have told a finance officer they have no
+        // access — and the screen offered no way to try again.
+        val phase = if (ledger.value == null && owed.value == null && taken.value == null) {
+            when (val outcome = ReadOutcome.of(listOfNotNull(ledger.error, owed.error, taken.error))) {
+                is ReadOutcome.Refused -> FinancePhase.NotPermitted
+                is ReadOutcome.Failed -> FinancePhase.Failed(outcome.message)
+            }
+        } else {
+            FinancePhase.Loaded
+        }
+
         _state.value = current.copy(
-            phase = if (ledger == null && owed == null && taken == null) {
-                FinancePhase.NotPermitted
-            } else {
-                FinancePhase.Loaded
-            },
-            records = ledger?.items.orEmpty(),
-            nextCursor = ledger?.nextCursor,
-            outstanding = owed,
-            collections = taken,
-            rates = rates.await().orEmpty(),
+            phase = phase,
+            records = ledger.value?.items.orEmpty(),
+            nextCursor = ledger.value?.nextCursor,
+            outstanding = owed.value,
+            collections = taken.value,
+            rates = rates.await().value.orEmpty(),
         )
     }
 

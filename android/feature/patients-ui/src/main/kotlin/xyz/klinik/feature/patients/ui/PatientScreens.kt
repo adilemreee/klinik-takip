@@ -30,6 +30,13 @@ import xyz.klinik.feature.patients.DetailPhase
 import xyz.klinik.feature.patients.ListPhase
 import xyz.klinik.feature.patients.PatientListState
 import xyz.klinik.network.Patient
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import xyz.klinik.design.Badge
+import xyz.klinik.design.InitialsAvatar
+import xyz.klinik.design.Tone
+import androidx.compose.foundation.layout.Row
 
 /** Text the screens need, resolved by the caller from string resources. */
 data class PatientStrings(
@@ -41,6 +48,12 @@ data class PatientStrings(
     val notFound: String,
     val country: String,
     val city: String,
+    /**
+     * The treatment stage, as a word. A stage carried by hue alone is no
+     * signal at all to a reader who cannot tell the hues apart (spec 7), and
+     * a status the catalogue has no word for is shown as the server spells it.
+     */
+    val statusName: (String) -> String,
 )
 
 /**
@@ -104,27 +117,75 @@ fun PatientListScreen(
     }
 }
 
+/**
+ * One name in a list of names.
+ *
+ * The initials are a shape to fix the eye on while moving down a page; the
+ * second line says which file and where they came from, so two patients from
+ * the same country are told apart by the line below; and the badge says how
+ * far along the treatment is — in a word as well as a colour.
+ *
+ * At the accessibility font scales the badge goes under the text rather than
+ * beside it: a name, a file number and a pill cannot share a line when each is
+ * three lines tall, and Compose's answer is to break the name in half.
+ */
 @Composable
 private fun PatientRow(patient: Patient, strings: PatientStrings, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
+    val isLarge = LocalDensity.current.fontScale >= 1.6f
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .heightIn(min = Tokens.minimumTouchTarget)
-            .padding(horizontal = Tokens.Spacing.lg, vertical = Tokens.Spacing.xs),
+            .padding(horizontal = Tokens.Spacing.lg, vertical = Tokens.Spacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.md),
+        verticalAlignment = Alignment.Top,
     ) {
+        if (!isLarge) {
+            InitialsAvatar(patient.fullName, diameter = 40.dp)
+        }
+
         Column(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xxs),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f),
         ) {
-            Text(patient.fullName, fontSize = Tokens.Typography.subheading.size)
             Text(
-                "${strings.fileNumber} ${patient.mrn} · ${patient.country}",
+                patient.fullName,
+                color = klinikColor("textPrimary"),
+                fontSize = Tokens.Typography.subheading.size,
+                fontWeight = Tokens.Typography.subheading.weight,
+            )
+            Text(
+                listOfNotNull(patient.mrn, listOfNotNull(patient.city, patient.country).joinToString(", "))
+                    .joinToString(" · "),
+                color = klinikColor("textSecondary"),
                 fontSize = Tokens.Typography.caption.size,
             )
+
+            if (isLarge) {
+                Badge(strings.statusName(patient.status), tone = toneFor(patient.status))
+            }
+        }
+
+        if (!isLarge) {
+            Badge(strings.statusName(patient.status), tone = toneFor(patient.status))
         }
     }
+}
+
+/**
+ * Colour by where the treatment stands, not by severity.
+ *
+ * The two that matter are the ones somebody is looking for: a patient about to
+ * be operated on, and one who has been and is being followed.
+ */
+private fun toneFor(status: String): Tone = when (status) {
+    "PRE_OP", "SCHEDULED" -> Tone.Warning
+    "POST_OP", "FOLLOW_UP" -> Tone.Info
+    "DISCHARGED" -> Tone.Success
+    else -> Tone.Neutral
 }
 
 /** One patient's file. */

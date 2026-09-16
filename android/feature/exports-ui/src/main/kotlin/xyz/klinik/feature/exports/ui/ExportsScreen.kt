@@ -43,6 +43,7 @@ import xyz.klinik.network.UiText
 data class ExportsStrings(
     val title: String,
     val notPermitted: String,
+    val retry: String,
     val newTitle: String,
     val history: String,
     val noHistory: String,
@@ -86,6 +87,7 @@ fun ExportsScreen(
     onChooseFormat: (ExportFormat) -> Unit,
     onRequest: (country: String) -> Unit,
     onDownload: (ExportRequest) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var country by remember { mutableStateOf("") }
@@ -100,6 +102,22 @@ fun ExportsScreen(
                     color = klinikColor("textSecondary"),
                     textAlign = TextAlign.Center,
                 )
+            }
+
+            is ExportsPhase.Failed -> Centered {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        strings.message((state.phase as ExportsPhase.Failed).message),
+                        color = klinikColor("critical"),
+                        textAlign = TextAlign.Center,
+                    )
+                    TextButton(
+                        onClick = onRetry,
+                        modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+                    ) {
+                        Text(strings.retry)
+                    }
+                }
             }
 
             ExportsPhase.Loaded -> Column(

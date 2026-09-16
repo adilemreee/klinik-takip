@@ -11,6 +11,8 @@ import xyz.klinik.network.ExportStatus
 import xyz.klinik.network.ExportsApi
 import xyz.klinik.network.UiText
 import xyz.klinik.network.uiText
+import xyz.klinik.network.ReadOutcome
+import xyz.klinik.network.attempt
 
 sealed interface ExportsPhase {
     data object Loading : ExportsPhase
@@ -18,6 +20,9 @@ sealed interface ExportsPhase {
 
     /** Not a failure: an account without `export.create` has no screen here. */
     data object NotPermitted : ExportsPhase
+
+    /** A failure, which is a different thing — and one worth retrying. */
+    data class Failed(val message: UiText) : ExportsPhase
 }
 
 data class ExportsState(
@@ -106,26 +111,31 @@ class ExportsModel(
     val state: StateFlow<ExportsState> = _state.asStateFlow()
 
     suspend fun load() {
-        val requests = optional { api.mine(patientId) }
+        val requests = attempt { api.mine(patientId) }
         // The column catalogue drives the patient-list picker, which a
         // patient's own page does not show; asking for it there would fetch
         // something nothing on screen uses.
-        val columns = if (patientId == null) optional { api.columns() } else emptyList()
+        val columns = attempt { if (patientId == null) api.columns() else emptyList() }
 
         val current = _state.value
 
         _state.value = current.copy(
-            phase = if (requests == null && columns == null) {
-                ExportsPhase.NotPermitted
+            // A refusal is a refusal; anything else is a failure worth saying
+            // and worth retrying, rather than a permission the reader has.
+            phase = if (requests.value == null && columns.value == null) {
+                when (val outcome = ReadOutcome.of(listOfNotNull(requests.error, columns.error))) {
+                    is ReadOutcome.Refused -> ExportsPhase.NotPermitted
+                    is ReadOutcome.Failed -> ExportsPhase.Failed(outcome.message)
+                }
             } else {
                 ExportsPhase.Loaded
             },
-            requests = requests.orEmpty().sortedByDescending { it.createdAt.orEmpty() },
-            columns = columns.orEmpty(),
+            requests = requests.value.orEmpty().sortedByDescending { it.createdAt.orEmpty() },
+            columns = columns.value.orEmpty(),
             // A first visit starts with everything the viewer may take, which
             // is the common case; unticking is faster than ticking forty boxes.
             chosen = if (current.chosen.isEmpty()) {
-                columns.orEmpty().filter { it.available }.map { it.key }.toSet()
+                columns.value.orEmpty().filter { it.available }.map { it.key }.toSet()
             } else {
                 current.chosen
             },

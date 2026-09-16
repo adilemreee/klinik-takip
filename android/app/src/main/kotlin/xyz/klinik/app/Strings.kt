@@ -48,6 +48,22 @@ fun Context.stringForKey(key: String, fallback: String = key): String {
 
 fun Context.stringForRole(role: UserRole): String = stringForKey(role.stringKey, role.name)
 
+/**
+ * A word for a key the *server's* vocabulary built, not ours.
+ *
+ * `photo.finding.seroma`, `ai.missing.apiKey`, `audit.anomaly.bulk-open`: the
+ * value is free text the server chose, and the catalogue is written against
+ * the values it sends today. An AI finding it has never heard of would reach a
+ * clinician as the key itself, dots and all. The key was built as
+ * `prefix.value`, so its last segment is the value — not a translation, but a
+ * word rather than an identifier.
+ *
+ * Only for those. A key built from a Kotlin enum cannot arrive unknown, and
+ * `check-strings` proves every one of them has text behind it.
+ */
+fun Context.stringForServerKey(key: String): String =
+    stringForKey(key, key.substringAfterLast('.'))
+
 @Composable
 fun authStrings(errorKey: String?): AuthStrings {
     val context = LocalContext.current
@@ -112,7 +128,22 @@ fun patientStrings(): PatientStrings = PatientStrings(
     notFound = str(DesignR.string.patient_not_found),
     country = str(DesignR.string.patient_country),
     city = str(DesignR.string.patient_city),
+    statusName = statusNamer(),
 )
+
+/**
+ * The stage a patient's treatment is at, as a word.
+ *
+ * Read through the generated map rather than a `when`, so a stage the server
+ * adds shows as the server spells it instead of as a blank badge — which would
+ * read as a patient with no stage at all.
+ */
+@Composable
+private fun statusNamer(): (String) -> String {
+    val context = LocalContext.current
+
+    return { status -> context.stringForServerKey("patient.status.${'$'}status") }
+}
 
 @Composable
 private fun str(@StringRes id: Int): String = stringResource(id)

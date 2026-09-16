@@ -61,6 +61,10 @@ data class TravelStrings(
     val interpreterPhone: String,
     val clearanceToggle: String,
     val clearedToFly: String,
+    /// The same fact told to the clinic rather than to the patient: a doctor
+    /// opening a file was reading "your doctor has confirmed you may fly".
+    val clearedToFlyForStaff: String,
+    val notClearedToFlyForStaff: String,
     val notClearedToFly: String,
     /** "Onaylayan: %1$s · %2$s" — who signed it off, and when. */
     val clearedBy: (who: String, at: String) -> String,
@@ -176,7 +180,7 @@ private fun Details(
 
         state.error?.let { Text(strings.message(it), color = klinikColor("critical")) }
 
-        Clearance(state, strings, canClearToFly, onSetClearedToFly)
+        Clearance(state, strings, canEdit, canClearToFly, onSetClearedToFly)
 
         Section(strings.flights) {
             Field(strings.arrivalFlight, plan.arrivalFlight)
@@ -228,6 +232,7 @@ private fun Details(
 private fun Clearance(
     state: TravelState,
     strings: TravelStrings,
+    canEdit: Boolean,
     canClearToFly: Boolean,
     onSetClearedToFly: (Boolean) -> Unit,
 ) {
@@ -244,7 +249,12 @@ private fun Clearance(
             verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xs),
         ) {
             Text(
-                if (state.isClearedToFly) strings.clearedToFly else strings.notClearedToFly,
+                when {
+                    canEdit && state.isClearedToFly -> strings.clearedToFlyForStaff
+                    canEdit -> strings.notClearedToFlyForStaff
+                    state.isClearedToFly -> strings.clearedToFly
+                    else -> strings.notClearedToFly
+                },
                 color = if (state.isClearedToFly) {
                     klinikColor("success")
                 } else {

@@ -31,11 +31,15 @@ import xyz.klinik.network.Currency
 import xyz.klinik.network.NamedCount
 import xyz.klinik.network.Proportion
 import xyz.klinik.network.Totals
+import androidx.compose.material3.TextButton
+import xyz.klinik.network.UiText
 
 /** Text the screen needs, resolved by the caller from string resources. */
 data class AnalyticsStrings(
     val title: String,
     val notPermitted: String,
+    val retry: String,
+    val message: (UiText) -> String,
     val nothingInRange: String,
     val range: String,
     val rangeName: (ReportRange) -> String,
@@ -70,6 +74,7 @@ fun AnalyticsScreen(
     strings: AnalyticsStrings,
     onChooseRange: (ReportRange) -> Unit,
     onChooseCurrency: (Currency) -> Unit,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(color = klinikColor("background"), modifier = modifier.fillMaxSize()) {
@@ -84,6 +89,22 @@ fun AnalyticsScreen(
                     color = klinikColor("textSecondary"),
                     textAlign = TextAlign.Center,
                 )
+            }
+
+            is AnalyticsPhase.Failed -> Centered {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        strings.message((state.phase as AnalyticsPhase.Failed).message),
+                        color = klinikColor("critical"),
+                        textAlign = TextAlign.Center,
+                    )
+                    TextButton(
+                        onClick = onRetry,
+                        modifier = Modifier.heightIn(min = Tokens.minimumTouchTarget),
+                    ) {
+                        Text(strings.retry)
+                    }
+                }
             }
 
             AnalyticsPhase.Loaded -> Column(

@@ -214,6 +214,7 @@ fun StaffDestinationScreen(
                 strings = context.analyticsStrings(),
                 onChooseRange = { range -> scope.launch { model.choose(range) } },
                 onChooseCurrency = { currency -> scope.launch { model.choose(currency) } },
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
         }
@@ -234,6 +235,7 @@ fun StaffDestinationScreen(
                 onLoadMore = { scope.launch { model.loadMore() } },
                 onRecordPayment = { record -> paying = record },
                 onReverse = { record -> reversing = record },
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
 
@@ -297,6 +299,7 @@ fun StaffDestinationScreen(
                         model.download(request.id)?.let { url -> context.openLink(url) }
                     }
                 },
+                onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )
         }
@@ -596,7 +599,7 @@ fun StaffDestinationScreen(
 
             LabPanelsScreen(
                 state = state,
-                strings = context.labPanelsStrings(),
+                strings = context.labPanelsStrings(isMine = false),
                 onToggle = { panel -> model.toggle(panel) },
                 onOpenReport = { panel ->
                     panel.documentId?.let { id ->

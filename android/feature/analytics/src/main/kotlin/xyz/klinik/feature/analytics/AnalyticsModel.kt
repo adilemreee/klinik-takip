@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import xyz.klinik.network.AnalyticsApi
+import xyz.klinik.network.ReadOutcome
+import xyz.klinik.network.UiText
+import xyz.klinik.network.attempt
 import xyz.klinik.network.ChannelReport
 import xyz.klinik.network.Currency
 import xyz.klinik.network.GeographyReport
@@ -66,6 +69,12 @@ sealed interface AnalyticsPhase {
 
     /** Not a failure: an account without `analytics.read` simply has no panel. */
     data object NotPermitted : AnalyticsPhase
+
+    /**
+     * A failure, which is a different thing — and one worth retrying. Every
+     * failure used to land on `NotPermitted`.
+     */
+    data class Failed(val message: UiText) : AnalyticsPhase
 }
 
 data class AnalyticsState(
@@ -115,28 +124,32 @@ class AnalyticsModel(
 
         val (from, to) = current.range.bounds(clock(), zone)
 
-        val procedures = async { optional { api.procedures(from, to) } }
-        val geography = async { optional { api.geography(from, to) } }
-        val revenue = async { optional { api.revenue(from, to, current.currency) } }
-        val channels = async { optional { api.channels(from, to, current.currency) } }
-        val occupancy = async { optional { api.occupancy(from, to) } }
+        val procedures = async { attempt { api.procedures(from, to) } }
+        val geography = async { attempt { api.geography(from, to) } }
+        val revenue = async { attempt { api.revenue(from, to, current.currency) } }
+        val channels = async { attempt { api.channels(from, to, current.currency) } }
+        val occupancy = async { attempt { api.occupancy(from, to) } }
 
         val loaded = listOf(procedures, geography, revenue, channels, occupancy).map { it.await() }
 
         _state.value = current.copy(
-            // Nothing at all came back: this account cannot see the panel,
-            // which is a different thing from an empty clinic and reads
-            // differently.
-            phase = if (loaded.all { it == null }) {
-                AnalyticsPhase.NotPermitted
+            // Nothing at all came back. That means this account cannot see the
+            // panel only when the server said so: a clinic nobody can reach is
+            // not a permission problem, and telling somebody it is sends them
+            // to ask for access they already have.
+            phase = if (loaded.all { it.value == null }) {
+                when (val outcome = ReadOutcome.of(loaded.mapNotNull { it.error })) {
+                    is ReadOutcome.Refused -> AnalyticsPhase.NotPermitted
+                    is ReadOutcome.Failed -> AnalyticsPhase.Failed(outcome.message)
+                }
             } else {
                 AnalyticsPhase.Loaded
             },
-            procedures = loaded[0] as ProcedureReport?,
-            geography = loaded[1] as GeographyReport?,
-            revenue = loaded[2] as RevenueReport?,
-            channels = loaded[3] as ChannelReport?,
-            occupancy = loaded[4] as OccupancyReport?,
+            procedures = loaded[0].value as ProcedureReport?,
+            geography = loaded[1].value as GeographyReport?,
+            revenue = loaded[2].value as RevenueReport?,
+            channels = loaded[3].value as ChannelReport?,
+            occupancy = loaded[4].value as OccupancyReport?,
         )
     }
 

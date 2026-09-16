@@ -33,6 +33,8 @@ public struct PatientFileScreen: View {
     @State private var exporting = false
     @State private var exportWithPhotos = false
     @State private var exportQueued = false
+    /// The finished summary, handed straight to the share sheet.
+    @State private var exportedFile: URL?
 
     public init(
         model: PatientFileModel,
@@ -202,7 +204,13 @@ public struct PatientFileScreen: View {
                 // uses the app does not need an invitation, and offering one
                 // would issue a code nobody has a use for.
                 if model.canExportSummary {
-                    if exportQueued {
+                    if let exportedFile {
+                        ShareLink(item: exportedFile) {
+                            Label(L10n.string("file.exportReady"), systemImage: "square.and.arrow.up")
+                        }
+                        .font(Tokens.Typography.calloutRelative)
+                        .frame(maxWidth: .infinity, minHeight: Tokens.minimumTouchTarget)
+                    } else if exportQueued {
                         Label(L10n.string("file.exportQueued"), systemImage: "checkmark.circle")
                             .font(Tokens.Typography.captionRelative)
                             .foregroundStyle(Tokens.Palette.success.resolve(for: scheme))
@@ -218,9 +226,10 @@ public struct PatientFileScreen: View {
                         Button(L10n.string("file.exportSummary")) {
                             Task {
                                 exporting = true
-                                exportQueued = await model.requestSummary(
+                                exportedFile = await model.requestSummary(
                                     includePhotos: exportWithPhotos
                                 )
+                                exportQueued = exportedFile != nil
                                 state = model.currentState()
                                 exporting = false
                             }
@@ -694,14 +703,11 @@ public struct PatientFileScreen: View {
         case .measurements: return "chart.xyaxis.line"
         case .medications: return "pills"
         case .documents: return "doc.text"
-        case .labReview: return "checkmark.seal"
         case .labTrend: return "testtube.2"
         case .photos: return "photo.on.rectangle"
         case .followUp: return "calendar.badge.checkmark"
         case .appointments: return "calendar"
         case .surveys: return "checklist"
-        case .travel: return "airplane"
-        case .checklist: return "list.bullet.clipboard"
         case .consents: return "signature"
         case .exports: return "square.and.arrow.up.on.square"
         }
@@ -729,14 +735,11 @@ extension FileSection {
         case .measurements: return "measurement.chartTitle"
         case .medications: return "menu.medications"
         case .documents: return "document.title"
-        case .labReview: return "menu.labReview"
         case .labTrend: return "lab.staffTitle"
         case .photos: return "menu.photos"
         case .followUp: return "menu.followUp"
         case .appointments: return "menu.appointments"
         case .surveys: return "menu.surveyTrend"
-        case .travel: return "menu.travel"
-        case .checklist: return "menu.checklist"
         case .consents: return "menu.consents"
         case .exports: return "export.forPatient"
         }

@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { AIModule } from '../ai/ai.module';
+import { DocumentClassifier } from './document-classifier.service';
 import {
   DocumentsController,
   MyDocumentsController,
@@ -15,7 +17,7 @@ import {
 } from './uploads.controller';
 
 @Module({
-  imports: [MeasurementsModule],
+  imports: [AIModule, MeasurementsModule],
   // The upload controllers come first so `/documents/uploads/...` is matched
   // before any `/documents/:documentId` route can claim it.
   controllers: [
@@ -26,7 +28,7 @@ import {
     PatientDocumentsController,
     DocumentsController,
   ],
-  providers: [DocumentsService, ResumableUploadService, DocumentChecklistService],
-  exports: [DocumentsService, ResumableUploadService, DocumentChecklistService],
+  providers: [DocumentClassifier, DocumentsService, ResumableUploadService, DocumentChecklistService],
+  exports: [DocumentClassifier, DocumentsService, ResumableUploadService, DocumentChecklistService],
 })
 export class DocumentsModule {}

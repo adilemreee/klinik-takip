@@ -41,7 +41,6 @@ public enum StaffDestination: Hashable, Sendable {
     /// checklist that names what is missing and then makes somebody pick it
     /// again from a list of eight has asked the same question twice.
     case documents(patientId: String, startWith: DocumentType = .lab)
-    case labReview(patientId: String)
     case labTrend(patientId: String)
     /// The reports as they were printed (spec M16).
     case labPanels(patientId: String)
@@ -61,14 +60,11 @@ public enum StaffDestination: Hashable, Sendable {
     case exports
     case audit
     case protocols
-    case agencies
     case flaggedPhotos
     case inbox
     case aiSettings
     case surveys(patientId: String)
-    case travel(patientId: String)
     /// The pre-operative document checklist (spec M17).
-    case checklist(patientId: String)
     /// One patient's exports, read from their own file.
     case patientExports(patientId: String)
     /// What the patient consented to, and the signature they drew (M17).
@@ -120,7 +116,6 @@ struct StaffPatientsView: View {
     @State private var emergencyPath: [StaffDestination] = []
     /// Bumped when a stack lands back on the checklist, most likely from the
     /// upload screen it sent the reader to. What it is showing is out of date.
-    @State private var checklistRefresh = 0
     /// A photograph attached to a complication report, open full screen.
     @State private var viewingPhoto: ClinicalPhoto?
 
@@ -158,7 +153,6 @@ struct StaffPatientsView: View {
                 screen(for: destination) { agendaPath.append($0) }
             }
             .onChange(of: agendaPath) { _, now in
-                if case .checklist = now.last { checklistRefresh += 1 }
             }
             .toolbar { ToolbarItem(placement: .primaryAction) { menu($agendaPath) } }
         }
@@ -207,7 +201,6 @@ struct StaffPatientsView: View {
                 screen(for: destination) { patientsPath.append($0) }
             }
             .onChange(of: patientsPath) { _, now in
-                if case .checklist = now.last { checklistRefresh += 1 }
             }
             .toolbar { ToolbarItem(placement: .primaryAction) { menu($patientsPath) } }
         }
@@ -223,7 +216,6 @@ struct StaffPatientsView: View {
                 screen(for: destination) { emergencyPath.append($0) }
             }
             .onChange(of: emergencyPath) { _, now in
-                if case .checklist = now.last { checklistRefresh += 1 }
             }
         }
     }
@@ -239,7 +231,6 @@ struct StaffPatientsView: View {
             Button(L10n.string("menu.availability")) { path.wrappedValue.append(.availability) }
             Button(L10n.string("menu.analytics")) { path.wrappedValue.append(.analytics) }
             Button(L10n.string("menu.finance")) { path.wrappedValue.append(.finance) }
-            Button(L10n.string("menu.agencies")) { path.wrappedValue.append(.agencies) }
             Button(L10n.string("menu.exports")) { path.wrappedValue.append(.exports) }
             Button(L10n.string("menu.audit")) { path.wrappedValue.append(.audit) }
             Button(L10n.string("menu.protocols")) { path.wrappedValue.append(.protocols) }
@@ -324,9 +315,6 @@ struct StaffPatientsView: View {
         case .protocols:
             ProtocolsScreen(model: ProtocolsModel(api: environment.protocols))
 
-        case .agencies:
-            AgenciesScreen(model: AgenciesModel(api: environment.finance))
-
         case .aiSettings:
             AISettingsScreen(model: AISettingsModel(api: environment.aiSettings))
 
@@ -357,16 +345,6 @@ struct StaffPatientsView: View {
         case .surveys(let patientId):
             SurveyTrendScreen(
                 model: SurveyTrendModel(api: environment.surveys, patientId: patientId)
-            )
-
-        case .travel(let patientId):
-            // Both switches are offered; the server refuses whichever this
-            // account may not use, and the screen says which rather than
-            // hiding a control somebody was told to look for.
-            TravelScreen(
-                model: TravelModel(api: environment.travel, patientId: patientId),
-                canEdit: true,
-                canClear: true
             )
 
         case .finance:
@@ -417,9 +395,6 @@ struct StaffPatientsView: View {
                 watching: patientId,
                 startWith: startWith
             )
-
-        case .labReview(let patientId):
-            LabReviewScreen(model: LabReviewModel(api: environment.lab, patientId: patientId))
 
         case .labPanels(let patientId):
             LabPanelsScreen(
@@ -520,22 +495,6 @@ struct StaffPatientsView: View {
         case .pendingChanges:
             PendingChangesScreen(sync: environment.sync)
 
-        case .checklist(let patientId):
-            // With the upload button. It used to be left off, on the grounds
-            // that a clinician is not the person who sends their own passport
-            // — but a coordinator is exactly the person who receives it by
-            // message and files it, and the documents screen one case above
-            // has let them do that all along. A checklist that names what is
-            // missing and cannot be acted on is a list of complaints.
-            ChecklistScreen(
-                model: ChecklistModel(
-                    api: environment.documents,
-                    subject: .patient(id: patientId)
-                ),
-                upload: { type in push(.documents(patientId: patientId, startWith: type)) },
-                refreshToken: checklistRefresh
-            )
-
         case .consents(let patientId):
             PatientConsentsView(
                 model: ConsentsModel(api: environment.consents, patientId: patientId),
@@ -556,14 +515,11 @@ private extension StaffDestination {
         case .measurements: self = .measurements(patientId: patientId)
         case .medications: self = .medications(patientId: patientId)
         case .documents: self = .documents(patientId: patientId)
-        case .labReview: self = .labReview(patientId: patientId)
         case .labTrend: self = .labPanels(patientId: patientId)
         case .photos: self = .photos(patientId: patientId)
         case .followUp: self = .followUp(patientId: patientId)
         case .appointments: self = .appointments(patientId: patientId)
         case .surveys: self = .surveys(patientId: patientId)
-        case .travel: self = .travel(patientId: patientId)
-        case .checklist: self = .checklist(patientId: patientId)
         case .consents: self = .consents(patientId: patientId)
         case .exports: self = .patientExports(patientId: patientId)
         }
@@ -589,7 +545,6 @@ private func destination(for tool: StaffTool) -> StaffDestination {
     case .availability: return .availability
     case .protocols: return .protocols
     case .aiSettings: return .aiSettings
-    case .agencies: return .agencies
     case .audit: return .audit
     }
 }

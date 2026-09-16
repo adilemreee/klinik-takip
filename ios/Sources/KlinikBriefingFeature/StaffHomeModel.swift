@@ -36,7 +36,6 @@ public enum StaffTool: String, Sendable, Equatable, CaseIterable, Identifiable {
     case availability
     case protocols
     case aiSettings
-    case agencies
     case audit
 
     public var id: String { rawValue }
@@ -59,7 +58,6 @@ public enum StaffTool: String, Sendable, Equatable, CaseIterable, Identifiable {
         case .availability: return "clock.badge.checkmark"
         case .protocols: return "books.vertical"
         case .aiSettings: return "sparkles"
-        case .agencies: return "building.2"
         case .audit: return "lock.doc"
         }
     }

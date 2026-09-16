@@ -28,6 +28,7 @@ import { notificationDelivery } from './notifications/notifications.processor';
 import { NotificationsService } from './notifications/notifications.service';
 import { MessagingService } from './messaging/messaging.service';
 import { documentOcr } from './ocr/ocr.processor';
+import { DocumentClassifier } from './documents/document-classifier.service';
 import { LabReader } from './lab/lab-reader.service';
 import { photoAssess } from './photos/photo-assess.processor';
 import { PhotoAssessmentService } from './photos/assessment.service';
@@ -96,6 +97,7 @@ async function bootstrap(): Promise<void> {
         storage,
         lab,
         reader: app.get(LabReader),
+        classifier: app.get(DocumentClassifier),
         engine,
         bucket: config.get<string>('S3_BUCKET_DOCUMENTS')!,
       }),

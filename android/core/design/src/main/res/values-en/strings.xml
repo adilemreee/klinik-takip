@@ -504,6 +504,7 @@
     <string name="export_status_failed">Failed</string>
     <string name="export_status_processing">Preparing</string>
     <string name="export_status_queued">Queued</string>
+    <string name="export_still_working">The summary is still being prepared. You can download it from the exports screen.</string>
     <string name="export_summary_title">Patient summary</string>
     <string name="export_title">Exports</string>
     <string name="export_to">To</string>
@@ -525,6 +526,7 @@
     <string name="file_edit_patient">Edit details</string>
     <string name="file_email">E-mail</string>
     <string name="file_export_queued">The report is queued. It will appear on the Exports screen when it is ready.</string>
+    <string name="file_export_ready">Summary ready — open or share</string>
     <string name="file_export_summary">Request a summary report</string>
     <string name="file_export_with_photos">Include consented photographs</string>
     <string name="file_fill_medical_profile">Fill in the medical details</string>
@@ -719,6 +721,9 @@
     <string name="lab_trends">Trend</string>
     <string name="measurement_add">Add a reading</string>
     <string name="measurement_bmi">BMI</string>
+    <string name="measurement_bmi_from">Height %s cm · Weight %s kg</string>
+    <string name="measurement_bmi_needs_height">A body mass index needs a height and a weight. Add them with the button below.</string>
+    <string name="measurement_bmi_target">Target: %s</string>
     <string name="measurement_chart_title">Measurements</string>
     <string name="measurement_date">Date</string>
     <string name="measurement_diastolic">Diastolic</string>
@@ -802,6 +807,7 @@
     <string name="menu_measurements">My measurements</string>
     <string name="menu_medications">Medication</string>
     <string name="menu_messages">Messages</string>
+    <string name="menu_more">More</string>
     <string name="menu_patients">Patients</string>
     <string name="menu_pending_changes">Waiting to be sent</string>
     <string name="menu_photos">Photos</string>

@@ -57,6 +57,7 @@
 "file.pickFailed" = "Dosya seçilemedi.";
 "common.more" = "Daha fazla";
 "menu.measurements" = "Ölçümlerim";
+"menu.more" = "Diğer";
 "menu.followUp" = "Kontrol takvimi";
 "menu.labResults" = "Tahlil sonuçlarım";
 "menu.complications" = "Şikayetlerim";
@@ -140,6 +141,9 @@
 "measurement.series" = "Gösterilen eğri";
 "measurement.weight" = "Kilo";
 "measurement.bmi" = "VKİ";
+"measurement.bmiFrom" = "Boy %@ cm · Kilo %@ kg";
+"measurement.bmiTarget" = "Hedef: %@";
+"measurement.bmiNeedsHeight" = "Vücut kitle endeksi için boy ve kilo gerekiyor. Ekle düğmesiyle girebilirsiniz.";
 "measurement.target" = "Hedef";
 "measurement.latest" = "Son ölçüm";
 "measurement.date" = "Tarih";
@@ -552,6 +556,7 @@
 "export.summary.title" = "Hasta özet raporu";
 "export.patientLists" = "Hasta listeleri";
 "export.forPatient" = "Bu hastanın dışa aktarımları";
+"export.stillWorking" = "Özet hâlâ hazırlanıyor. Dışa aktarmalar ekranından indirebilirsiniz.";
 "export.noneForPatient" = "Bu hasta için dışa aktarım yapılmadı.";
 "export.includePhotos" = "Fotoğrafları ekle";
 "export.photoWarning" = "Fotoğraflar yalnız geçerli fotoğraf onamı olanlar için eklenir.";
@@ -1023,6 +1028,7 @@
 "file.exportSummary" = "Özet rapor iste";
 "file.exportWithPhotos" = "Onaylı fotoğrafları da ekle";
 "file.exportQueued" = "Rapor sıraya alındı. Hazır olunca Dışa aktarımlar ekranında görünecek.";
+"file.exportReady" = "Özet hazır — aç veya paylaş";
 "inbox.title" = "Gelen kutusu";
 "inbox.empty" = "Açık konuşma yok.";
 "menu.inbox" = "Gelen kutusu";

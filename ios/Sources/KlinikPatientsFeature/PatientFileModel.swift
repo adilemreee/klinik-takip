@@ -9,15 +9,11 @@ public enum FileSection: String, Sendable, Equatable, CaseIterable {
     case measurements
     case medications
     case documents
-    case labReview
     case labTrend
     case photos
     case followUp
     case appointments
     case surveys
-    case travel
-    /// Documents the clinic needs before the operation (spec M17).
-    case checklist
     /// What the patient has consented to, and the signature they drew (M17).
     case consents
     /**
@@ -90,25 +86,50 @@ public final class PatientFileModel {
      * on a spinner is how a request times out on a slow connection. The export
      * screen is where it lands.
      */
-    public func requestSummary(includePhotos: Bool) async -> Bool {
-        guard let exports else { return false }
+    /**
+     * Asks for the summary and waits for the file.
+     *
+     * It used to hand the request to the export screen and say "it will turn
+     * up there" — so somebody who wanted a PDF got a sentence, went to another
+     * screen, waited for a badge to change and pressed download. The rendering
+     * still takes a moment and the signed link is still recorded separately,
+     * because that record is the audit trail; what has gone is being made to
+     * follow the stages.
+     *
+     * Nil when it failed or is taking longer than a minute, and then it is
+     * still on the export screen where it always was.
+     */
+    public func requestSummary(includePhotos: Bool) async -> URL? {
+        guard let exports else { return nil }
 
         state.savingError = nil
 
         do {
-            _ = try await exports.requestSummary(
+            let created = try await exports.requestSummary(
                 patientId: patientId,
                 includePhotos: includePhotos
             )
 
-            return true
+            var latest = created
+
+            for _ in 0..<30 {
+                if latest.status == .done {
+                    return URL(string: try await exports.download(latest.id).url)
+                }
+                if latest.status == .failed { break }
+
+                try await Task.sleep(for: .seconds(2))
+                latest = try await exports.status(latest.id)
+            }
+
+            state.savingError = L10n.string("export.stillWorking")
         } catch let error as APIError {
             state.savingError = L10n.message(for: error)
         } catch {
             state.savingError = L10n.string("error.server")
         }
 
-        return false
+        return nil
     }
 
     public func currentState() -> PatientFileState { state }
@@ -169,10 +190,6 @@ public extension PatientFile {
             guard unreadMessages > 0 else { return nil }
             return ("\(unreadMessages)", true)
 
-        case .labReview:
-            guard alerts.labsAwaitingReview > 0 else { return nil }
-            return ("\(alerts.labsAwaitingReview)", true)
-
         case .labTrend:
             guard alerts.criticalLabs > 0 else { return nil }
             return ("\(alerts.criticalLabs)", true)
@@ -204,7 +221,7 @@ public extension PatientFile {
             guard nextFollowUp != nil else { return nil }
             return (L10n.string("file.nextFollowUp"), false)
 
-        case .surveys, .travel, .checklist, .consents, .exports:
+        case .surveys, .consents, .exports:
             // The count would need a second read; the row is worth having
             // without one, and an empty badge is better than a wrong number.
             return nil

@@ -47,11 +47,9 @@ public enum PatientDestination: Hashable, Sendable {
     case assistant
     case account
     case surveys
-    case travel
     /// What the app is holding and has not delivered (spec M15).
     case pendingChanges
     /// Documents the clinic needs before the operation (spec M17).
-    case checklist
     /// Reading and signing the treatment consent (spec M17).
     case signConsent
 }
@@ -80,8 +78,6 @@ struct PatientHomeView: View {
     @State private var health: HealthSync
     @State private var voiceRecorder = VoiceRecorder()
     /// Bumped when the checklist is returned to, so it re-reads what the
-    /// clinic has now. See `ChecklistScreen.refreshToken`.
-    @State private var checklistRefresh = 0
 
     init(
         environment: AppEnvironment,
@@ -133,7 +129,6 @@ struct PatientHomeView: View {
             .onChange(of: path) { _, now in
                 // Back on the checklist, most likely from the upload screen it
                 // sent the reader to. What it is showing is out of date.
-                if now.last == .checklist { checklistRefresh += 1 }
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) { menu }
@@ -170,22 +165,31 @@ struct PatientHomeView: View {
         }
     }
 
+    /**
+     * Five entries, and everything else behind one more tap.
+     *
+     * There were fourteen. A menu that long is not a menu, it is a list
+     * somebody has to read every time, and a patient three weeks out of
+     * surgery opens this to do one of about five things. The five are here;
+     * the rest are still reachable and no longer in the way.
+     */
     private var menu: some View {
         Menu {
-            Button(L10n.string("menu.assistant")) { path.append(.assistant) }
-            Button(L10n.string("menu.surveys")) { path.append(.surveys) }
-            Button(L10n.string("menu.travel")) { path.append(.travel) }
+            Button(L10n.string("menu.labResults")) { path.append(.labResults) }
             Button(L10n.string("menu.photos")) { path.append(.photos) }
             Button(L10n.string("menu.measurements")) { path.append(.measurements) }
-            Button(L10n.string("menu.followUp")) { path.append(.followUp) }
-            Button(L10n.string("menu.labResults")) { path.append(.labResults) }
-            Button(L10n.string("menu.complications")) { path.append(.complications) }
             Button(L10n.string("menu.appointments")) { path.append(.appointments) }
-            Button(L10n.string("consent.title")) { path.append(.consents) }
-            Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
             Button(L10n.string("menu.account")) { path.append(.account) }
-            Button(L10n.string("menu.checklist")) { path.append(.checklist) }
-            Button(L10n.string("menu.pendingChanges")) { path.append(.pendingChanges) }
+
+            Menu(L10n.string("menu.more")) {
+                Button(L10n.string("menu.complications")) { path.append(.complications) }
+                Button(L10n.string("menu.surveys")) { path.append(.surveys) }
+                Button(L10n.string("menu.followUp")) { path.append(.followUp) }
+                Button(L10n.string("menu.assistant")) { path.append(.assistant) }
+                Button(L10n.string("consent.title")) { path.append(.consents) }
+                Button(L10n.string("notification.settingsTitle")) { path.append(.notificationSettings) }
+                Button(L10n.string("menu.pendingChanges")) { path.append(.pendingChanges) }
+            }
 
             Divider()
 
@@ -390,24 +394,8 @@ struct PatientHomeView: View {
         case .surveys:
             SurveyScreen(model: SurveyModel(api: environment.surveys))
 
-        case .travel:
-            // Read-only: the patient sees the trip the clinic booked, and the
-            // model reads `me/travel`, which needs no `patients.read`.
-            TravelScreen(model: TravelModel(api: environment.travel))
-
         case .pendingChanges:
             PendingChangesScreen(sync: environment.sync)
-
-        case .checklist:
-            ChecklistScreen(
-                model: ChecklistModel(api: environment.documents, subject: .me),
-                // Straight to the upload screen, with the type already
-                // chosen. A checklist that names what is missing and then
-                // makes you pick it again from a list of eight has asked the
-                // same question twice.
-                upload: { type in path.append(.documents(startWith: type)) },
-                refreshToken: checklistRefresh
-            )
 
         case .signConsent:
             SignConsentScreen(model: SignConsentModel(consents: environment.consents))

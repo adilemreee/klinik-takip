@@ -8,7 +8,7 @@ import KlinikDesign
  *
  * Deliberately not styled as a chat with a personality. It answers from the
  * clinic's own documents and nothing else, and the screen says so under every
- * answer: the sources it used, the warning that this is not a diagnosis, and a
+ * answer: the warning that this is not a diagnosis, and a
  * button that takes the question to a person. The spec requires that button
  * under every bot answer, and it is the reason this screen is safe to offer at
  * all — nobody is ever left with only a machine's reply.
@@ -125,19 +125,6 @@ public struct AssistantScreen: View {
                     .font(Tokens.Typography.bodyRelative)
                     .foregroundStyle(Tokens.Palette.textPrimary.resolve(for: scheme))
                     .fixedSize(horizontal: false, vertical: true)
-
-                if !result.sources.isEmpty {
-                    VStack(alignment: .leading, spacing: Tokens.Spacing.xs) {
-                        ForEach(result.sources, id: \.self) { source in
-                            Label(
-                                "\(L10n.string("assistant.sourcePrefix")): \(source)",
-                                systemImage: "doc.text"
-                            )
-                            .font(Tokens.Typography.footnoteRelative)
-                            .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
-                        }
-                    }
-                }
 
                 if result.answered {
                     // Required under every bot answer (spec M4).

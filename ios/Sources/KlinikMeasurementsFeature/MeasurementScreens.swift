@@ -201,38 +201,56 @@ public struct BodyChartView: View {
         }
     }
 
+    /**
+     * Height, weight, and the number they make.
+     *
+     * There were eight curves behind a picker, six of which opened on an empty
+     * plot. What the clinic charts is the body, what a patient wants to know is
+     * whether it is going the right way, and the answer to that is one number —
+     * so the screen is that number, the two readings it comes from, and a
+     * button to add today's weight. No chart, no series, nothing to choose.
+     */
     @ViewBuilder
     private func loaded(_ chart: BodyChart) -> some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
-            // A menu rather than a segmented control: eight readings do not
-            // fit across a phone, and the two that squeeze in would be the two
-            // somebody happened to put first.
-            Picker(L10n.string("measurement.series"), selection: $series) {
-                ForEach(ChartSeries.available(given: recorded)) { option in
-                    Text(L10n.string(option.titleKey)).tag(option)
+            if let latest = chart.bmi.last {
+                VStack(alignment: .leading, spacing: Tokens.Spacing.md) {
+                    Text(L10n.string("measurement.bmi"))
+                        .font(Tokens.Typography.calloutRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    BmiCategoryBadge(category: latest.category, value: latest.bmi)
+
+                    // The two numbers it was worked out from, so a wrong BMI
+                    // can be traced to the reading that is wrong.
+                    Text(
+                        String(
+                            format: L10n.string("measurement.bmiFrom"),
+                            String(format: "%.1f", latest.heightCm),
+                            String(format: "%.1f", latest.weightKg)
+                        )
+                    )
+                    .font(Tokens.Typography.footnoteRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+
+                    if let target = chart.targetBmi {
+                        Text(
+                            String(
+                                format: L10n.string("measurement.bmiTarget"),
+                                String(format: "%.1f", target)
+                            )
+                        )
+                        .font(Tokens.Typography.footnoteRelative)
+                        .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    }
                 }
-            }
-            .pickerStyle(.menu)
-            .frame(minHeight: Tokens.minimumTouchTarget)
-            .accessibilityLabel(L10n.string("measurement.series"))
-            .onChange(of: series) { _, chosen in
-                Task { await loadSeries(chosen) }
-            }
-
-            if series.isBodyChart {
-                curve(for: chart)
-                    .frame(height: 240)
             } else {
-                otherCurve
-                    .frame(height: 240)
-            }
-
-            if series == .bmi, let latest = chart.bmi.last {
-                BmiCategoryBadge(category: latest.category, value: latest.bmi)
-            }
-
-            if series.isBodyChart {
-                LatestReadingSummary(chart: chart, series: series)
+                // A weight with no height behind it cannot become a BMI, and
+                // saying so is more use than an empty panel.
+                Text(L10n.string("measurement.bmiNeedsHeight"))
+                    .font(Tokens.Typography.bodyRelative)
+                    .foregroundStyle(Tokens.Palette.textSecondary.resolve(for: scheme))
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer()

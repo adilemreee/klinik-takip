@@ -11,6 +11,7 @@ import { LabService } from '../lab/lab.service';
 import type { JobHandler } from '../queue/job-runner';
 import { parseLabLines, type LabCandidate } from './lab-parser';
 import type { LabReader, ReportPage } from '../lab/lab-reader.service';
+import type { DocumentClassifier } from '../documents/document-classifier.service';
 import type { OcrEngine } from './ocr-engine';
 import { rasterisePdf } from './pdf-raster';
 
@@ -23,6 +24,7 @@ export interface OcrDependencies {
   storage: StorageService;
   lab: LabService;
   reader: LabReader;
+  classifier: DocumentClassifier;
   engine: OcrEngine;
   bucket: string;
 }
@@ -54,25 +56,57 @@ export function documentOcr(deps: OcrDependencies): JobHandler {
       return;
     }
 
-    if (!OCR_TYPES.has(document.type)) {
-      // A passport has no lab values on it. Skipped is the honest state — not
-      // done, which would suggest something was read.
-      await deps.prisma.document.update({
-        where: { id: document.id },
-        data: { ocrStatus: ProcessingStatus.SKIPPED },
-      });
-      return;
-    }
-
-    await deps.prisma.document.update({
-      where: { id: document.id },
-      data: { ocrStatus: ProcessingStatus.PROCESSING },
-    });
-
+    // One rasterisation for both questions: what this document is, and what
+    // it says. A PDF at 300dpi is expensive enough that doing it twice is
+    // worth avoiding.
     const workspace = await mkdtemp(join(tmpdir(), 'klinik-ocr-'));
 
     try {
       const pages = await pagesOf(deps, document.fileKey, document.mime, workspace);
+
+      /*
+       * What kind of document this is, decided by looking at it.
+       *
+       * Before the type check, because the type is what the check reads. Every
+       * upload screen used to begin by asking which of eight kinds the file
+       * was, and a lab report filed as OTHER is a lab report whose values are
+       * never read — the answer decided the pipeline, and the person least
+       * able to give it was the patient holding the phone.
+       *
+       * Null when the model is off or unsure, and then whatever the uploader
+       * said stands.
+       */
+      let type = document.type;
+
+      try {
+        const detected = await deps.classifier.classify(pages, document.patientId);
+
+        if (detected !== null && detected !== document.type) {
+          await deps.prisma.document.update({
+            where: { id: document.id },
+            data: { type: detected },
+          });
+          logger.log(`Document ${document.id} filed as ${detected} (was ${document.type})`);
+          type = detected;
+        }
+      } catch (error) {
+        logger.warn(`Could not classify document ${document.id}: ${String(error)}`);
+      }
+
+      if (!OCR_TYPES.has(type)) {
+        // A passport has no lab values on it. Skipped is the honest state —
+        // not done, which would suggest something was read.
+        await deps.prisma.document.update({
+          where: { id: document.id },
+          data: { ocrStatus: ProcessingStatus.SKIPPED },
+        });
+        return;
+      }
+
+      await deps.prisma.document.update({
+        where: { id: document.id },
+        data: { ocrStatus: ProcessingStatus.PROCESSING },
+      });
 
       /*
        * The model looks at the page first, and OCR is what happens when it

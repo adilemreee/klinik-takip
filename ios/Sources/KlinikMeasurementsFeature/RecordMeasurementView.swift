@@ -28,8 +28,15 @@ public struct RecordMeasurementView: View {
     public var body: some View {
         FormScaffold(title: L10n.string("measurement.add")) {
             VStack(alignment: .leading, spacing: Tokens.Spacing.lg) {
+                // Weight and height, and nothing else.
+                //
+                // All eight were offered, and six of them were readings this
+                // clinic does not chart — a patient opening this to type
+                // today's weight had to find it in a list that also contained
+                // blood glucose. The other kinds are still accepted by the
+                // server; they are simply not something to ask a patient for.
                 Picker(L10n.string("measurement.type"), selection: $type) {
-                    ForEach(MeasurementType.allCases, id: \.self) { option in
+                    ForEach([MeasurementType.weight, .height], id: \.self) { option in
                         Text(option.localizedName).tag(option)
                     }
                 }

@@ -67,16 +67,14 @@ final class PatientFileTests: XCTestCase {
         let file = try file()
 
         XCTAssertNil(file.badge(for: .messages))
-        XCTAssertNil(file.badge(for: .labReview))
         XCTAssertNil(file.badge(for: .photos))
     }
 
     func testWaitingWorkIsMarkedUrgent() throws {
-        let file = try file(unread: 3, awaitingLabs: 2, criticalLabs: 1)
+        let file = try file(unread: 3, criticalLabs: 1)
 
         XCTAssertEqual(file.badge(for: .messages)?.text, "3")
         XCTAssertEqual(file.badge(for: .messages)?.urgent, true)
-        XCTAssertEqual(file.badge(for: .labReview)?.text, "2")
         XCTAssertEqual(file.badge(for: .labTrend)?.urgent, true)
     }
 

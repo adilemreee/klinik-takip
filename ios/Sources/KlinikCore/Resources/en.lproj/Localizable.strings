@@ -57,6 +57,7 @@
 "file.pickFailed" = "The file could not be selected.";
 "common.more" = "More";
 "menu.measurements" = "My measurements";
+"menu.more" = "More";
 "menu.followUp" = "Check-up calendar";
 "menu.labResults" = "My lab results";
 "menu.complications" = "My complaints";
@@ -140,6 +141,9 @@
 "measurement.series" = "Curve shown";
 "measurement.weight" = "Weight";
 "measurement.bmi" = "BMI";
+"measurement.bmiFrom" = "Height %@ cm · Weight %@ kg";
+"measurement.bmiTarget" = "Target: %@";
+"measurement.bmiNeedsHeight" = "A body mass index needs a height and a weight. Add them with the button below.";
 "measurement.target" = "Goal";
 "measurement.latest" = "Latest";
 "measurement.date" = "Date";
@@ -552,6 +556,7 @@
 "export.summary.title" = "Patient summary";
 "export.patientLists" = "Patient lists";
 "export.forPatient" = "Exports for this patient";
+"export.stillWorking" = "The summary is still being prepared. You can download it from the exports screen.";
 "export.noneForPatient" = "Nothing has been exported for this patient.";
 "export.includePhotos" = "Include photographs";
 "export.photoWarning" = "Photographs are included only where a live photo consent exists.";
@@ -1023,6 +1028,7 @@
 "file.exportSummary" = "Request a summary report";
 "file.exportWithPhotos" = "Include consented photographs";
 "file.exportQueued" = "The report is queued. It will appear on the Exports screen when it is ready.";
+"file.exportReady" = "Summary ready — open or share";
 "inbox.title" = "Inbox";
 "inbox.empty" = "No open conversations.";
 "menu.inbox" = "Inbox";

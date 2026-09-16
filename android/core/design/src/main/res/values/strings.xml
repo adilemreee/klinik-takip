@@ -504,6 +504,7 @@
     <string name="export_status_failed">Başarısız</string>
     <string name="export_status_processing">Hazırlanıyor</string>
     <string name="export_status_queued">Sırada</string>
+    <string name="export_still_working">Özet hâlâ hazırlanıyor. Dışa aktarmalar ekranından indirebilirsiniz.</string>
     <string name="export_summary_title">Hasta özet raporu</string>
     <string name="export_title">Dışa aktarımlar</string>
     <string name="export_to">Bitiş</string>
@@ -525,6 +526,7 @@
     <string name="file_edit_patient">Bilgileri düzenle</string>
     <string name="file_email">E-posta</string>
     <string name="file_export_queued">Rapor sıraya alındı. Hazır olunca Dışa aktarımlar ekranında görünecek.</string>
+    <string name="file_export_ready">Özet hazır — aç veya paylaş</string>
     <string name="file_export_summary">Özet rapor iste</string>
     <string name="file_export_with_photos">Onaylı fotoğrafları da ekle</string>
     <string name="file_fill_medical_profile">Tıbbi bilgileri doldur</string>
@@ -719,6 +721,9 @@
     <string name="lab_trends">Eğri</string>
     <string name="measurement_add">Ölçüm ekle</string>
     <string name="measurement_bmi">VKİ</string>
+    <string name="measurement_bmi_from">Boy %s cm · Kilo %s kg</string>
+    <string name="measurement_bmi_needs_height">Vücut kitle endeksi için boy ve kilo gerekiyor. Ekle düğmesiyle girebilirsiniz.</string>
+    <string name="measurement_bmi_target">Hedef: %s</string>
     <string name="measurement_chart_title">Ölçümler</string>
     <string name="measurement_date">Tarih</string>
     <string name="measurement_diastolic">Küçük tansiyon</string>
@@ -802,6 +807,7 @@
     <string name="menu_measurements">Ölçümlerim</string>
     <string name="menu_medications">İlaçlar</string>
     <string name="menu_messages">Mesajlar</string>
+    <string name="menu_more">Diğer</string>
     <string name="menu_patients">Hastalar</string>
     <string name="menu_pending_changes">Bekleyen değişiklikler</string>
     <string name="menu_photos">Fotoğraflar</string>

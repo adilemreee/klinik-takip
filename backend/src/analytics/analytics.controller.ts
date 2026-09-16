@@ -83,7 +83,7 @@ export class AnalyticsController {
   ): Promise<ChannelReport> {
     this.assertRange(query.from, query.to);
 
-    const maySeeMoney = await this.permissions.has(user.id, user.role, 'finance.report');
+    const maySeeMoney = this.permissions.has(user.role, 'finance.report');
 
     return this.analytics.channels(
       query.from,

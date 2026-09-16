@@ -155,7 +155,7 @@ async function renderPatientList(
     select: { id: true, role: true, staffProfile: { select: { firstName: true, lastName: true } } },
   });
 
-  const held = await deps.permissions.getEffectivePermissions(requester.id, requester.role);
+  const held = deps.permissions.getEffectivePermissions(requester.role);
   const columns = resolveColumns(params.columns, held, PATIENT_COLUMNS);
 
   const filter = parseFilter(params.filter ?? {});

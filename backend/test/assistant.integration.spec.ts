@@ -516,11 +516,11 @@ describe('the FAQ assistant', () => {
      * alarming must not sit in the ordinary queue.
      */
     it('triages a handed-over question, so an urgent one still escalates', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const { assistant } = services(AI_ON, modelSaying('{}'));
@@ -540,11 +540,11 @@ describe('the FAQ assistant', () => {
 
     it('hands an answered question to a person when the patient asks', async () => {
       await uploadWoundCare();
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const { assistant } = services(

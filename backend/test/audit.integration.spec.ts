@@ -185,7 +185,7 @@ describe('audit trail', () => {
     };
 
     it('flags one actor reading an unusual number of distinct files', async () => {
-      const actor = await makeUser(Role.NURSE);
+      const actor = await makeUser(Role.COORDINATOR);
       const patients: string[] = [];
 
       for (let i = 0; i < 12; i += 1) {
@@ -204,7 +204,7 @@ describe('audit trail', () => {
       }
 
       const at = new Date(Date.now() - 60_000);
-      await seedReads(actor.id, Role.NURSE, patients, at);
+      await seedReads(actor.id, Role.COORDINATOR, patients, at);
 
       const found = await anomalies.detect(new Date(Date.now() - 3_600_000), new Date(), {
         bulkAccessPatients: 10,
@@ -213,11 +213,11 @@ describe('audit trail', () => {
 
       expect(mine).toHaveLength(1);
       expect(mine[0]?.count).toBe(12);
-      expect(mine[0]?.actorRole).toBe(Role.NURSE);
+      expect(mine[0]?.actorRole).toBe(Role.COORDINATOR);
     });
 
     it('does not flag an actor below the threshold', async () => {
-      const actor = await makeUser(Role.NURSE);
+      const actor = await makeUser(Role.COORDINATOR);
       const patient = await prisma.patient.create({
         data: {
           mrn: `MRN-B-${Date.now()}`,
@@ -230,7 +230,7 @@ describe('audit trail', () => {
       });
       patientIds.push(patient.id);
 
-      await seedReads(actor.id, Role.NURSE, [patient.id], new Date(Date.now() - 60_000));
+      await seedReads(actor.id, Role.COORDINATOR, [patient.id], new Date(Date.now() - 60_000));
 
       const found = await anomalies.detect(new Date(Date.now() - 3_600_000), new Date(), {
         bulkAccessPatients: 10,
@@ -258,7 +258,7 @@ describe('audit trail', () => {
     });
 
     it('ignores activity outside the requested window', async () => {
-      const actor = await makeUser(Role.NURSE);
+      const actor = await makeUser(Role.COORDINATOR);
       const patients: string[] = [];
 
       for (let i = 0; i < 12; i += 1) {
@@ -277,7 +277,7 @@ describe('audit trail', () => {
       }
 
       // Two days ago, well outside the one-hour window queried below.
-      await seedReads(actor.id, Role.NURSE, patients, new Date(Date.now() - 48 * 3_600_000));
+      await seedReads(actor.id, Role.COORDINATOR, patients, new Date(Date.now() - 48 * 3_600_000));
 
       const found = await anomalies.detect(new Date(Date.now() - 3_600_000), new Date(), {
         bulkAccessPatients: 10,

@@ -185,42 +185,6 @@ describe('patient home summary', () => {
     });
   });
 
-  describe('caregivers', () => {
-    it('serves the linked patient while consent stands', async () => {
-      const caregiver = await makeUser(Role.CAREGIVER);
-      const patientId = await makePatient();
-
-      await prisma.caregiverLink.create({
-        data: { patientId, caregiverUserId: caregiver.id, consentedAt: new Date() },
-      });
-
-      const summary = await summaryFor(caregiver.token);
-
-      expect(summary.patient.id).toBe(patientId);
-    });
-
-    /** Consent is revocable, and revoking it has to close the door. */
-    it('stops serving it once consent is revoked', async () => {
-      const caregiver = await makeUser(Role.CAREGIVER);
-      const patientId = await makePatient();
-
-      const link = await prisma.caregiverLink.create({
-        data: { patientId, caregiverUserId: caregiver.id, consentedAt: new Date() },
-      });
-      await summaryFor(caregiver.token);
-
-      await prisma.caregiverLink.update({
-        where: { id: link.id },
-        data: { revokedAt: new Date() },
-      });
-
-      await request(server)
-        .get('/me/summary')
-        .set('Authorization', `Bearer ${caregiver.token}`)
-        .expect(404);
-    });
-  });
-
   describe('what it summarises', () => {
     it('reports the next appointment and ignores past ones', async () => {
       const user = await makeUser(Role.PATIENT);

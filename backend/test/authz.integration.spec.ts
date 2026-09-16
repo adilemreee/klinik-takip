@@ -110,115 +110,87 @@ describe('authorisation', () => {
     await prisma.caregiverLink.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.patientAssignment.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.patient.deleteMany({ where: { id: { in: patientIds } } });
-    await prisma.userPermission.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.staffProfile.deleteMany({ where: { id: { in: staffIds } } });
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     await prisma.$disconnect();
   });
 
   describe('the role matrix', () => {
-    it.each([
-      [Role.NURSE, 'finance.read'],
-      [Role.NURSE, 'finance.write'],
-      [Role.NURSE, 'finance.report'],
-      [Role.NURSE, 'staff.manage'],
-      [Role.NURSE, 'permissions.manage'],
-      [Role.NURSE, 'audit.read'],
-    ])('refuses %s the permission %s', async (role, permission) => {
-      const user = await makeUser(role);
-
-      expect(await permissions.has(user.id, role, permission)).toBe(false);
-    });
-
-    it.each([
-      [Role.FINANCE, 'medical.read'],
-      [Role.FINANCE, 'medical.write'],
-      [Role.FINANCE, 'patients.read'],
-      [Role.FINANCE, 'labs.verify'],
-      [Role.FINANCE, 'photos.read'],
-      [Role.FINANCE, 'messages.read'],
-    ])('refuses %s the permission %s', async (role, permission) => {
-      const user = await makeUser(role);
-
-      expect(await permissions.has(user.id, role, permission)).toBe(false);
-    });
-
-    it.each([
-      [Role.COORDINATOR, 'medical.decide'],
-      [Role.COORDINATOR, 'finance.read'],
-      [Role.COORDINATOR, 'medications.prescribe'],
-      [Role.PATIENT, 'patients.read'],
-      [Role.PATIENT, 'medical.read'],
-      [Role.PATIENT, 'finance.read'],
-      [Role.CAREGIVER, 'medical.read'],
-      [Role.CAREGIVER, 'documents.read'],
-    ])('refuses %s the permission %s', async (role, permission) => {
-      const user = await makeUser(role);
-
-      expect(await permissions.has(user.id, role, permission)).toBe(false);
-    });
-
+    /**
+     * Three roles, and the map in `role-permissions.ts` is the whole of it.
+     *
+     * These used to be read from `role_permissions`, with a per-user override
+     * table on top and a Redis cache in front — so the tests also covered
+     * granting, revoking, invalidating and surviving a cache outage. None of
+     * that exists now: the answer is a lookup in a constant, and what is left
+     * to check is that the constant says what it should.
+     */
     it.each([
       [Role.DOCTOR, 'medical.decide'],
+      [Role.DOCTOR, 'labs.verify'],
       [Role.DOCTOR, 'finance.read'],
-      [Role.NURSE, 'medical.write'],
+      [Role.DOCTOR, 'audit.read'],
+      [Role.DOCTOR, 'staff.manage'],
+      [Role.DOCTOR, 'permissions.manage'],
       [Role.COORDINATOR, 'appointments.write'],
-      [Role.FINANCE, 'finance.report'],
+      [Role.COORDINATOR, 'documents.write'],
+      [Role.COORDINATOR, 'consents.collect'],
+      [Role.COORDINATOR, 'messages.read'],
+      [Role.COORDINATOR, 'patients.read'],
+      [Role.COORDINATOR, 'analytics.read'],
       [Role.PATIENT, 'self.read'],
-    ])('grants %s the permission %s', async (role, permission) => {
-      const user = await makeUser(role);
-
-      expect(await permissions.has(user.id, role, permission)).toBe(true);
+      [Role.PATIENT, 'self.write'],
+      [Role.PATIENT, 'self.message'],
+      [Role.PATIENT, 'self.emergency'],
+    ])('grants %s the permission %s', (role, permission) => {
+      expect(permissions.has(role, permission)).toBe(true);
     });
 
-    it('gives the doctor everything except the permission matrix itself', async () => {
-      const user = await makeUser(Role.DOCTOR);
-
-      expect(await permissions.has(user.id, Role.DOCTOR, 'permissions.manage')).toBe(false);
-    });
-  });
-
-  describe('per-user overrides', () => {
-    it('can grant something the role does not carry', async () => {
-      const user = await makeUser(Role.NURSE);
-      await prisma.userPermission.create({
-        data: { userId: user.id, permissionCode: 'finance.read', granted: true },
-      });
-
-      expect(await permissions.has(user.id, Role.NURSE, 'finance.read')).toBe(true);
-    });
-
-    /** The direction that matters: taking access away has to work. */
-    it('can revoke something the role does carry', async () => {
-      const user = await makeUser(Role.NURSE);
-      await prisma.userPermission.create({
-        data: { userId: user.id, permissionCode: 'patients.read', granted: false },
-      });
-
-      expect(await permissions.has(user.id, Role.NURSE, 'patients.read')).toBe(false);
+    /**
+     * The line the second role exists to draw: a coordinator arranges the
+     * treatment and does not write in the record.
+     */
+    it.each([
+      [Role.COORDINATOR, 'medical.read'],
+      [Role.COORDINATOR, 'medical.write'],
+      [Role.COORDINATOR, 'medical.decide'],
+      [Role.COORDINATOR, 'medications.prescribe'],
+      [Role.COORDINATOR, 'labs.verify'],
+      [Role.COORDINATOR, 'photos.read'],
+      [Role.COORDINATOR, 'photos.write'],
+      [Role.COORDINATOR, 'finance.read'],
+      [Role.COORDINATOR, 'finance.report'],
+      [Role.COORDINATOR, 'audit.read'],
+      [Role.COORDINATOR, 'staff.manage'],
+      [Role.COORDINATOR, 'permissions.manage'],
+      [Role.PATIENT, 'patients.read'],
+      [Role.PATIENT, 'medical.read'],
+      [Role.PATIENT, 'documents.read'],
+      [Role.PATIENT, 'finance.read'],
+    ])('refuses %s the permission %s', (role, permission) => {
+      expect(permissions.has(role, permission)).toBe(false);
     });
 
-    it('takes effect immediately once the cache is invalidated', async () => {
-      const user = await makeUser(Role.NURSE);
+    /**
+     * `self.*` is how a patient reaches their own record through `/me`. A
+     * clinician has no patient record, so holding it would mean nothing —
+     * and a staff account that answers `/me/...` is a way for clinic data to
+     * arrive on a patient endpoint.
+     */
+    it.each(['self.read', 'self.write', 'self.message', 'self.emergency'])(
+      'keeps %s away from staff',
+      (permission) => {
+        expect(permissions.has(Role.DOCTOR, permission)).toBe(false);
+        expect(permissions.has(Role.COORDINATOR, permission)).toBe(false);
+      },
+    );
 
-      expect(await permissions.has(user.id, Role.NURSE, 'patients.read')).toBe(true);
-
-      await prisma.userPermission.create({
-        data: { userId: user.id, permissionCode: 'patients.read', granted: false },
-      });
-      await permissions.invalidate(user.id);
-
-      expect(await permissions.has(user.id, Role.NURSE, 'patients.read')).toBe(false);
+    /** Every permission an endpoint asks for has to be held by somebody. */
+    it('leaves no permission unreachable', () => {
+      for (const role of [Role.DOCTOR, Role.COORDINATOR, Role.PATIENT]) {
+        expect(permissions.getEffectivePermissions(role).size).toBeGreaterThan(0);
+      }
     });
-
-    it('falls back to the database when the cache is unavailable', async () => {
-      const user = await makeUser(Role.NURSE);
-      redisStub.client.get.mockRejectedValueOnce(new Error('redis down'));
-
-      // Redis being down must not lock everyone out.
-      expect(await permissions.has(user.id, Role.NURSE, 'patients.read')).toBe(true);
-    });
-
   });
 
   describe('patient scoping', () => {
@@ -230,12 +202,12 @@ describe('authorisation', () => {
     });
 
     it('shows a nurse only the patients assigned to her', async () => {
-      const { user, staffId } = await makeStaff(Role.NURSE);
+      const { user, staffId } = await makeStaff(Role.COORDINATOR);
       const assigned = await makePatient();
       const other = await makePatient();
 
       await prisma.patientAssignment.create({
-        data: { patientId: assigned, staffId, role: Role.NURSE },
+        data: { patientId: assigned, staffId, role: Role.COORDINATOR },
       });
 
       const seen = await visible(user);
@@ -244,11 +216,11 @@ describe('authorisation', () => {
     });
 
     it('stops showing a patient once the assignment ends', async () => {
-      const { user, staffId } = await makeStaff(Role.NURSE);
+      const { user, staffId } = await makeStaff(Role.COORDINATOR);
       const patient = await makePatient();
 
       const assignment = await prisma.patientAssignment.create({
-        data: { patientId: patient, staffId, role: Role.NURSE },
+        data: { patientId: patient, staffId, role: Role.COORDINATOR },
       });
       expect(await visible(user)).toContain(patient);
 
@@ -261,7 +233,7 @@ describe('authorisation', () => {
     });
 
     it('shows a nurse everything when the doctor lifts the restriction', async () => {
-      const { user } = await makeStaff(Role.NURSE, true);
+      const { user } = await makeStaff(Role.COORDINATOR, true);
       const unassigned = await makePatient();
 
       expect(await visible(user)).toContain(unassigned);
@@ -284,45 +256,9 @@ describe('authorisation', () => {
       expect(seen).not.toContain(other);
     });
 
-    it('shows a caregiver the linked patient while consent stands', async () => {
-      const user = await makeUser(Role.CAREGIVER);
-      const patient = await makePatient();
-
-      await prisma.caregiverLink.create({
-        data: { patientId: patient, caregiverUserId: user.id, consentedAt: new Date() },
-      });
-
-      expect(await visible(user)).toContain(patient);
-    });
-
-    /** Consent is revocable, and revoking it has to actually close the door. */
-    it('stops showing a caregiver the patient once consent is revoked', async () => {
-      const user = await makeUser(Role.CAREGIVER);
-      const patient = await makePatient();
-
-      const link = await prisma.caregiverLink.create({
-        data: { patientId: patient, caregiverUserId: user.id, consentedAt: new Date() },
-      });
-      expect(await visible(user)).toContain(patient);
-
-      await prisma.caregiverLink.update({
-        where: { id: link.id },
-        data: { revokedAt: new Date() },
-      });
-
-      expect(await visible(user)).not.toContain(patient);
-    });
-
-    it('shows finance no patient files at all', async () => {
-      const user = await makeUser(Role.FINANCE);
-      await makePatient();
-
-      expect(await visible(user)).toEqual([]);
-    });
-
     it('shows a nurse with no staff profile nothing, rather than everything', async () => {
       // A missing profile is a broken account; it must fail closed.
-      const user = await makeUser(Role.NURSE);
+      const user = await makeUser(Role.COORDINATOR);
       await makePatient();
 
       expect(await visible(user)).toEqual([]);
@@ -349,14 +285,14 @@ describe('authorisation', () => {
      * account probe whether a given person is a patient here.
      */
     it('reports out-of-scope patients as not found, not as forbidden', async () => {
-      const user = await makeUser(Role.FINANCE);
+      const user = await makeUser(Role.COORDINATOR);
       const patient = await makePatient();
 
       await expect(access.assertCanAccess(user, patient)).rejects.toThrow('Patient not found');
     });
 
     it('gives the same answer for a patient that does not exist', async () => {
-      const user = await makeUser(Role.FINANCE);
+      const user = await makeUser(Role.COORDINATOR);
       const real = await makePatient();
 
       const forExisting = await access

@@ -114,7 +114,9 @@ describe('patient endpoints', () => {
   });
 
   describe('creating requires patients.write', () => {
-    it.each([Role.NURSE, Role.FINANCE, Role.PATIENT, Role.CAREGIVER])(
+    // Only the patient. A coordinator holds `patients.write` — registering
+    // somebody who is arriving is exactly their job.
+    it.each([Role.PATIENT])(
       'refuses %s',
       async (role) => {
         const actor = await actorFor(role);
@@ -141,7 +143,7 @@ describe('patient endpoints', () => {
   });
 
   describe('assignment requires patients.assign', () => {
-    it.each([Role.NURSE, Role.COORDINATOR])('refuses %s', async (role) => {
+    it.each([Role.COORDINATOR, Role.COORDINATOR])('refuses %s', async (role) => {
       const actor = await actorFor(role);
       const patientId = await createPatient();
 
@@ -153,13 +155,13 @@ describe('patient endpoints', () => {
     });
 
     it('allows a doctor', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await createPatient();
 
       await request(server)
         .post(`/patients/${patientId}/assignments`)
         .set('Authorization', `Bearer ${doctor.token}`)
-        .send({ staffId: nurse.staffId, role: Role.NURSE })
+        .send({ staffId: nurse.staffId, role: Role.COORDINATOR })
         .expect(204);
     });
   });
@@ -197,27 +199,33 @@ describe('patient endpoints', () => {
         .expect(403);
     });
 
-    it('allows a nurse once she is assigned', async () => {
-      const nurse = await actorFor(Role.NURSE);
+    /**
+     * The medical profile needs `medical.write`, which the coordinator does
+     * not hold — that is the line between the two staff roles. An assignment
+     * does not move it: being on the case decides *which* patients you reach,
+     * not what you may do to them.
+     */
+    it('refuses a coordinator even once she is assigned', async () => {
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await createPatient();
 
       await request(server)
         .post(`/patients/${patientId}/assignments`)
         .set('Authorization', `Bearer ${doctor.token}`)
-        .send({ staffId: nurse.staffId, role: Role.NURSE })
+        .send({ staffId: nurse.staffId, role: Role.COORDINATOR })
         .expect(204);
 
       await request(server)
         .put(`/patients/${patientId}/medical-profile`)
         .set('Authorization', `Bearer ${nurse.token}`)
         .send({ bloodType: 'A Rh+', smoking: false })
-        .expect(204);
+        .expect(403);
     });
   });
 
   describe('reading', () => {
-    it('refuses finance entirely', async () => {
-      const finance = await actorFor(Role.FINANCE);
+    it('refuses a patient the clinic-wide list', async () => {
+      const finance = await actorFor(Role.PATIENT);
 
       await request(server)
         .get('/patients')
@@ -230,7 +238,7 @@ describe('patient endpoints', () => {
      * patients.read, so she gets a 200 with an empty page, not a 403.
      */
     it('gives an unassigned nurse an empty page rather than a refusal', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       await createPatient();
 
       const response = await request(server)
@@ -243,7 +251,7 @@ describe('patient endpoints', () => {
 
     /** Out of scope and non-existent must be indistinguishable over HTTP too. */
     it('answers 404 for a patient outside the caller’s scope', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await createPatient();
 
       await request(server)
@@ -274,7 +282,7 @@ describe('patient endpoints', () => {
     });
 
     it('does not record a read that was refused', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await createPatient();
 
       await request(server)

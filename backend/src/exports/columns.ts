@@ -84,7 +84,7 @@ export class ColumnError extends Error {
  */
 export function resolveColumns(
   requested: string[] | undefined,
-  held: Set<string>,
+  held: ReadonlySet<string>,
   catalogue: ColumnDefinition[] = PATIENT_COLUMNS,
 ): ColumnDefinition[] {
   const byKey = new Map(catalogue.map((column) => [column.key, column]));

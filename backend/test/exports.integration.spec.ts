@@ -75,7 +75,6 @@ describe('exports', () => {
 
   const actorFor = async (
     role: Role,
-    grants: string[] = [],
   ): Promise<{ token: string; userId: string }> => {
     const email = `exp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
     const user = await prisma.user.create({
@@ -87,13 +86,6 @@ describe('exports', () => {
       },
     });
     userIds.push(user.id);
-
-    for (const code of grants) {
-      await prisma.userPermission.create({
-        data: { userId: user.id, permissionCode: code, granted: true },
-      });
-    }
-    await app.get(PermissionsService).invalidate(user.id);
 
     if (isStaffRole(role)) {
       const profile = await prisma.staffProfile.create({
@@ -176,7 +168,6 @@ describe('exports', () => {
       await files.remove('documents', key).catch(() => undefined);
     }
     await prisma.export.deleteMany({ where: { requestedById: { in: userIds } } });
-    await prisma.userPermission.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.photo.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.consent.deleteMany({ where: { patientId: { in: patientIds } } });
     await prisma.labResult.deleteMany({ where: { patientId: { in: patientIds } } });
@@ -208,7 +199,7 @@ describe('exports', () => {
     it('refuses a patient the caller cannot see', async () => {
       // The finance desk holds export.create and no patient scope at all, so
       // it gets the same 404 as for a patient who does not exist.
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
 
       await requestSummary(finance.token, patientId).expect(404);
@@ -646,7 +637,7 @@ describe('exports', () => {
     it('refuses a column the caller may not export, while they can still fix it', async () => {
       // Somebody who may export and may not see money: a coordinator the
       // doctor has granted export rights to (spec section 2).
-      const coordinator = await actorFor(Role.COORDINATOR, ['export.create']);
+      const coordinator = await actorFor(Role.COORDINATOR);
 
       const response = await requestList(coordinator.token, {
         columns: ['mrn', 'balance'],
@@ -699,7 +690,7 @@ describe('exports', () => {
     it('exports only the patients the caller can see', async () => {
       // A coordinator with no assignment sees nobody, and the file says the
       // rows are scoped rather than pretending to be the whole clinic.
-      const coordinator = await actorFor(Role.COORDINATOR, ['export.create']);
+      const coordinator = await actorFor(Role.COORDINATOR);
       await makePatient();
 
       const requested = (
@@ -734,7 +725,7 @@ describe('exports', () => {
     });
 
     it('offers the column catalogue with what this caller may have', async () => {
-      const coordinator = await actorFor(Role.COORDINATOR, ['export.create']);
+      const coordinator = await actorFor(Role.COORDINATOR);
 
       const columns = (
         await request(server)

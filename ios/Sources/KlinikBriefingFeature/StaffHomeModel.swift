@@ -30,13 +30,6 @@ public enum StaffTool: String, Sendable, Equatable, CaseIterable, Identifiable {
     case inbox
     case complicationQueue
     case newPatient
-    case analytics
-    case finance
-    case exports
-    case availability
-    case protocols
-    case aiSettings
-    case audit
 
     public var id: String { rawValue }
 
@@ -52,13 +45,6 @@ public enum StaffTool: String, Sendable, Equatable, CaseIterable, Identifiable {
         case .inbox: return "tray.full"
         case .complicationQueue: return "bandage"
         case .newPatient: return "person.badge.plus"
-        case .analytics: return "chart.bar.xaxis"
-        case .finance: return "turkishlirasign.circle"
-        case .exports: return "square.and.arrow.up.on.square"
-        case .availability: return "clock.badge.checkmark"
-        case .protocols: return "books.vertical"
-        case .aiSettings: return "sparkles"
-        case .audit: return "lock.doc"
         }
     }
 }

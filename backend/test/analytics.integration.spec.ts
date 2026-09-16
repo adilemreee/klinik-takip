@@ -16,7 +16,6 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { isStaffRole } from '../src/auth/auth.errors';
 import { AuthService } from '../src/auth/auth.service';
-import { PermissionsService } from '../src/authz/permissions.service';
 import { configureApp } from '../src/bootstrap';
 import { Env } from '../src/config/env.schema';
 import { hashPassword } from '../src/crypto/hashing';
@@ -53,7 +52,6 @@ describe('analytics', () => {
   let app: INestApplication;
   let server: Server;
   let auth: AuthService;
-  let permissions: PermissionsService;
 
   const PASSWORD = 'correct-horse-battery-9';
   const FROM = '2040-01-01T00:00:00.000Z';
@@ -63,7 +61,6 @@ describe('analytics', () => {
 
   const actorFor = async (
     role: Role,
-    grants: string[] = [],
   ): Promise<{ token: string; userId: string; staffId?: string }> => {
     const email = `anl-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
     const user = await prisma.user.create({
@@ -75,13 +72,6 @@ describe('analytics', () => {
       },
     });
     userIds.push(user.id);
-
-    for (const code of grants) {
-      await prisma.userPermission.create({
-        data: { userId: user.id, permissionCode: code, granted: true },
-      });
-    }
-    await permissions.invalidate(user.id);
 
     if (isStaffRole(role)) {
       const profile = await prisma.staffProfile.create({
@@ -143,7 +133,6 @@ describe('analytics', () => {
 
     server = app.getHttpServer() as Server;
     auth = app.get(AuthService);
-    permissions = app.get(PermissionsService);
 
     const redis = app.get(RedisService);
     await redis.waitUntilReady();
@@ -162,7 +151,6 @@ describe('analytics', () => {
     });
     await prisma.patient.deleteMany({ where: { id: { in: patientIds } } });
     await prisma.availabilityWindow.deleteMany({ where: { staffId: { in: staffProfiles } } });
-    await prisma.userPermission.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.deviceSession.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.staffProfile.deleteMany({ where: { id: { in: staffProfiles } } });
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
@@ -171,19 +159,25 @@ describe('analytics', () => {
   });
 
   describe('who may see what', () => {
-    it('keeps the dashboard away from the finance desk', async () => {
-      // FINANCE holds finance.report and no analytics.read: money, not
-      // clinical volumes.
-      const finance = await actorFor(Role.FINANCE);
+    /**
+     * The split is the other way round now.
+     *
+     * It used to be a FINANCE desk with `finance.report` and no
+     * `analytics.read`: money, not clinical volumes. Three roles put the money
+     * with the doctor, so what is left to check is the coordinator — who plans
+     * capacity from the counts and has no business with the revenue.
+     */
+    it('gives a coordinator the counts and not the money', async () => {
+      const finance = await actorFor(Role.COORDINATOR);
 
-      await get(finance.token, 'procedures').expect(403);
-      await get(finance.token, 'geography').expect(403);
-      await get(finance.token, 'occupancy').expect(403);
-      await get(finance.token, 'revenue').expect(200);
+      await get(finance.token, 'procedures').expect(200);
+      await get(finance.token, 'geography').expect(200);
+      await get(finance.token, 'occupancy').expect(200);
+      await get(finance.token, 'revenue').expect(403);
     });
 
     it('keeps revenue away from a dashboard user who may not see money', async () => {
-      const coordinator = await actorFor(Role.COORDINATOR, ['analytics.read']);
+      const coordinator = await actorFor(Role.COORDINATOR);
 
       await get(coordinator.token, 'procedures').expect(200);
       await get(coordinator.token, 'revenue').expect(403);
@@ -192,7 +186,7 @@ describe('analytics', () => {
     it('says the revenue columns were withheld rather than leaving them out', async () => {
       // An absent revenue column reads as "this channel earned nothing", which
       // is a different and much worse claim than "you may not see this".
-      const coordinator = await actorFor(Role.COORDINATOR, ['analytics.read']);
+      const coordinator = await actorFor(Role.COORDINATOR);
 
       const withheld = (await get(coordinator.token, 'channels').expect(200)).body as {
         revenueWithheld: boolean;

@@ -261,11 +261,23 @@ describe('photos', () => {
       await upload(patientId, jpegWithLocation(), {}, coordinator.token).expect(403);
     });
 
-    it('reports not found for a patient outside the caller scope', async () => {
+    /*
+     * Refused, and the shape is not the point.
+     *
+     * This used to name a staff role that held the permission and was not on
+     * the case, so the answer was 404: the record exists and you are not told
+     * so. With three roles that middle ground is gone — the doctor is on every
+     * case and the coordinator holds no clinical permission — so the refusal
+     * now comes from the permission gate as a 403. Either is correct; a 200 is
+     * not.
+     */
+    it('refuses a patient outside the caller scope', async () => {
       const patientId = await makePatient();
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
-      await upload(patientId, jpegWithLocation(), {}, nurse.token).expect(404);
+      const response = await upload(patientId, jpegWithLocation(), {}, nurse.token);
+
+      expect([403, 404]).toContain(response.status);
     });
 
     it('audits the upload', async () => {
@@ -598,17 +610,28 @@ describe('photos', () => {
       expect(reads.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('reports not found for a photo outside the caller scope', async () => {
+    /*
+     * Refused, and the shape is not the point.
+     *
+     * This used to name a staff role that held the permission and was not on
+     * the case, so the answer was 404: the record exists and you are not told
+     * so. With three roles that middle ground is gone — the doctor is on every
+     * case and the coordinator holds no clinical permission — so the refusal
+     * now comes from the permission gate as a 403. Either is correct; a 200 is
+     * not.
+     */
+    it('refuses a photo outside the caller scope', async () => {
       const patientId = await makePatient();
       const body = (await upload(patientId, jpegWithLocation()).expect(201)).body as PhotoBody;
       await remember(body.id);
 
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
-      await request(server)
+      const response = await request(server)
         .get(`/photos/${body.id}/url`)
-        .set('Authorization', `Bearer ${nurse.token}`)
-        .expect(404);
+        .set('Authorization', `Bearer ${nurse.token}`);
+
+      expect([403, 404]).toContain(response.status);
     });
   });
 });

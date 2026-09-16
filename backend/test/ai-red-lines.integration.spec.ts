@@ -462,7 +462,7 @@ describe('AI red lines, end to end', () => {
     it('escalates and notifies even when the model agrees to stand down', async () => {
       const nurse = await prisma.user.create({
         data: {
-          role: Role.NURSE,
+          role: Role.COORDINATOR,
           email: `rl-nurse-${Date.now()}@test.local`,
           passwordHash: await hashPassword('correct-horse-battery-9'),
           status: UserStatus.ACTIVE,
@@ -477,7 +477,7 @@ describe('AI red lines, end to end', () => {
 
       const { patientId, userId } = await makePatientWithIdentifiers();
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: profile.id, role: Role.NURSE },
+        data: { patientId, staffId: profile.id, role: Role.COORDINATOR },
       });
 
       const messageId = await messageFrom(

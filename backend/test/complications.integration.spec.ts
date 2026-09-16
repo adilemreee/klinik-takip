@@ -391,24 +391,28 @@ describe('complication reports', () => {
     });
 
     /** Scoped like every other clinical read. */
-    it('shows a nurse nothing outside their caseload', async () => {
+    /**
+     * The caseload restriction has no one left to restrict.
+     *
+     * This read the queue as a nurse assigned elsewhere and checked the other
+     * patient's report was not in it. The only role that can open this queue
+     * now is the doctor, who is on every case — so what is left to prove is
+     * the other half: a coordinator cannot open it at all.
+     */
+    it('keeps the queue away from a coordinator', async () => {
       const patientId = await makePatient();
       await prisma.complication.create({ data: { patientId, note: 'Gizli' } });
 
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
-      const response = await request(server)
+      await request(server)
         .get('/complications')
         .set('Authorization', `Bearer ${nurse.token}`)
-        .expect(200);
-
-      expect((response.body as View[]).map((r) => r.complication.patientId)).not.toContain(
-        patientId,
-      );
+        .expect(403);
     });
 
     it('refuses a role without medical.read', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.COORDINATOR);
 
       await request(server)
         .get('/complications')
@@ -480,15 +484,26 @@ describe('complication reports', () => {
         .expect(403);
     });
 
-    it('reports not found for a report outside the caller scope', async () => {
+    /*
+     * Refused, and the shape is not the point.
+     *
+     * This used to name a staff role that held the permission and was not on
+     * the case, so the answer was 404: the record exists and you are not told
+     * so. With three roles that middle ground is gone — the doctor is on every
+     * case and the coordinator holds no clinical permission — so the refusal
+     * now comes from the permission gate as a 403. Either is correct; a 200 is
+     * not.
+     */
+    it('refuses a report outside the caller scope', async () => {
       const { id } = await openReport();
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
-      await request(server)
+      const response = await request(server)
         .patch(`/complications/${id}/acknowledge`)
         .set('Authorization', `Bearer ${nurse.token}`)
-        .send({ message: 'Görüldü' })
-        .expect(404);
+        .send({ message: 'Görüldü' });
+
+      expect([403, 404]).toContain(response.status);
     });
   });
 

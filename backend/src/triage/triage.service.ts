@@ -86,7 +86,7 @@ export class TriageService {
         })
       : null;
 
-    if (sender?.role !== Role.PATIENT && sender?.role !== Role.CAREGIVER) return null;
+    if (sender?.role !== Role.PATIENT) return null;
 
     const patient = message.conversation.patient;
     const screening = screen(message.body);

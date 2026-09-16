@@ -29,14 +29,20 @@ datasource db {
 // Identity, roles and access  (spec section 2, M1)
 // ===========================================================================
 
+/// Three, down from seven.
+///
+/// The matrix that said what each of the seven could do was three tables and
+/// 113 rows, seeded from a constant and never edited. It lives in
+/// `src/authz/role-permissions.ts` now, where it can be read in one sitting.
+///
+/// The collapse is not lossless. SUPER_ADMIN and NURSE fold into DOCTOR,
+/// FINANCE into COORDINATOR, CAREGIVER into PATIENT — so there is no clinical
+/// role below DOCTOR any more, and a nurse who writes in the record is given
+/// DOCTOR, which carries more than NURSE did.
 enum Role {
-  SUPER_ADMIN
   DOCTOR
-  NURSE
   COORDINATOR
-  FINANCE
   PATIENT
-  CAREGIVER
 }
 
 enum UserStatus {
@@ -77,7 +83,6 @@ model User {
   staffProfile    StaffProfile?
   patient         Patient?
   sessions        DeviceSession[]
-  permissions     UserPermission[]
   sentInvitations Invitation[]     @relation("InvitedBy")
   notifications   Notification[]
   caregiverLinks  CaregiverLink[]  @relation("CaregiverUser")
@@ -143,45 +148,6 @@ model Invitation {
   @@index([phone])
   @@index([expiresAt, acceptedAt])
   @@map("invitations")
-}
-
-/// Permissions live in the database, not in code (spec section 2), so the
-/// doctor can adjust the matrix without a deploy.
-model Permission {
-  code        String @id
-  description String
-  category    String
-
-  roles RolePermission[]
-  users UserPermission[]
-
-  @@map("permissions")
-}
-
-model RolePermission {
-  role           Role
-  permissionCode String @map("permission_code")
-
-  permission Permission @relation(fields: [permissionCode], references: [code], onDelete: Cascade)
-
-  @@id([role, permissionCode])
-  @@map("role_permissions")
-}
-
-/// Per-user override on top of the role matrix. `granted = false` revokes a
-/// permission the role would otherwise carry.
-model UserPermission {
-  userId         String   @map("user_id") @db.Uuid
-  permissionCode String   @map("permission_code")
-  granted        Boolean  @default(true)
-  grantedById    String?  @map("granted_by_id") @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionCode], references: [code], onDelete: Cascade)
-
-  @@id([userId, permissionCode])
-  @@map("user_permissions")
 }
 
 model StaffProfile {
@@ -1917,7 +1883,15 @@ enum AuditAction {
 model AuditLog {
   id         String      @default(uuid(7)) @db.Uuid
   actorId    String?     @map("actor_id") @db.Uuid
-  actorRole  Role?       @map("actor_role")
+  /// Text, not `Role`, because this is history.
+  ///
+  /// It records the role somebody held when they did the thing. When seven
+  /// roles became three, rewriting these to the surviving three would have
+  /// falsified the record — a nurse who read a file in August read it as a
+  /// nurse, and the log is the one place that has to keep saying so. As text
+  /// it keeps every value it ever held, including the four that no longer
+  /// exist.
+  actorRole  String?     @map("actor_role")
   action     AuditAction
   entityType String      @map("entity_type")
   entityId   String?     @map("entity_id")

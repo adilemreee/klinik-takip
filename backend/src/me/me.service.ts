@@ -95,7 +95,7 @@ export class MeService {
       // a screen that looks broken.
       displayName: staffName || patientName || row.email || row.phone || 'Kullanıcı',
       patientId: row.patient?.id ?? null,
-      isStaff: row.role !== Role.PATIENT && row.role !== Role.CAREGIVER,
+      isStaff: row.role !== Role.PATIENT,
     };
   }
 

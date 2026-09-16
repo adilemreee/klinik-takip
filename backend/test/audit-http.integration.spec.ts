@@ -90,7 +90,7 @@ describe('audit endpoint', () => {
   });
 
   describe('access control', () => {
-    it.each([Role.NURSE, Role.COORDINATOR, Role.FINANCE, Role.PATIENT])(
+    it.each([Role.COORDINATOR, Role.COORDINATOR, Role.COORDINATOR, Role.PATIENT])(
       'refuses %s',
       async (role) => {
         const { token } = await tokenFor(role);
@@ -102,7 +102,7 @@ describe('audit endpoint', () => {
       },
     );
 
-    it.each([Role.DOCTOR, Role.SUPER_ADMIN])('allows %s', async (role) => {
+    it.each([Role.DOCTOR, Role.DOCTOR])('allows %s', async (role) => {
       const { token } = await tokenFor(role);
 
       await request(server).get('/audit').set('Authorization', `Bearer ${token}`).expect(200);
@@ -202,7 +202,7 @@ describe('audit endpoint', () => {
   });
 
   it('serves anomaly detection to the same audience', async () => {
-    const nurse = await tokenFor(Role.NURSE);
+    const nurse = await tokenFor(Role.COORDINATOR);
     const doctor = await tokenFor(Role.DOCTOR);
 
     await request(server)

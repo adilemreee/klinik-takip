@@ -438,7 +438,7 @@ describe('photo pre-assessment', () => {
 
     /** Asking for an assessment sends a photograph to a third party. */
     it('does not let a nurse ask for one', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const { photoId } = await makePhoto();
 
       await request(server)

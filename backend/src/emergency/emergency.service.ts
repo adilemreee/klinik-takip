@@ -229,7 +229,7 @@ export class EmergencyService {
    * Scoped by `emergency.receive` rather than by assignment — see `detail`.
    */
   async queue(user: AuthenticatedUser, includeClosed = false): Promise<StaffEmergencyView[]> {
-    const canReceive = await this.permissions.has(user.id, user.role, RECEIVE);
+    const canReceive = this.permissions.has(user.role, RECEIVE);
 
     if (!canReceive) {
       throw new ForbiddenException('You are not on the emergency rota');
@@ -262,7 +262,7 @@ export class EmergencyService {
    *     they were not assigned to" is a query rather than an archaeology dig.
    */
   async detail(user: AuthenticatedUser, eventId: string): Promise<StaffEmergencyView> {
-    const canReceive = await this.permissions.has(user.id, user.role, RECEIVE);
+    const canReceive = this.permissions.has(user.role, RECEIVE);
 
     if (!canReceive) {
       throw new ForbiddenException('You are not on the emergency rota');
@@ -309,7 +309,7 @@ export class EmergencyService {
    * anyone saw it.
    */
   async acknowledge(user: AuthenticatedUser, eventId: string): Promise<StaffEmergencyView> {
-    const canReceive = await this.permissions.has(user.id, user.role, RECEIVE);
+    const canReceive = this.permissions.has(user.role, RECEIVE);
 
     if (!canReceive) {
       throw new ForbiddenException('You are not on the emergency rota');
@@ -370,7 +370,7 @@ export class EmergencyService {
     resolution: string,
     falseAlarm = false,
   ): Promise<StaffEmergencyView> {
-    const canResolve = await this.permissions.has(user.id, user.role, 'emergency.resolve');
+    const canResolve = this.permissions.has(user.role, 'emergency.resolve');
 
     if (!canResolve) {
       throw new ForbiddenException('You may not close emergencies');

@@ -452,7 +452,7 @@ describe('surveys', () => {
     });
 
     it('is refused to somebody with no clinical access', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
 
       const response = await request(server)

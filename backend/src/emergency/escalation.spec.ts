@@ -10,7 +10,6 @@ const trigger = new Date('2026-03-04T10:00:00.000Z');
 const at = (seconds: number): Date => new Date(trigger.getTime() + seconds * 1000);
 
 const team = (overrides: Partial<CareTeam> = {}): CareTeam => ({
-  nurses: [],
   coordinators: [],
   doctorUserId: null,
   receivers: [],
@@ -67,29 +66,30 @@ describe('escalation timing', () => {
 });
 
 describe('who each rung is', () => {
-  it('goes nurse, then coordinator, then doctor', () => {
+  it('goes coordinator, then doctor', () => {
     expect(
       escalationChain(
-        team({ nurses: ['n1'], coordinators: ['c1'], doctorUserId: 'd1', receivers: ['n1', 'c1', 'd1'] }),
+        team({ coordinators: ['c1'], doctorUserId: 'd1', receivers: ['c1', 'd1'] }),
       ),
-    ).toEqual([['n1'], ['c1'], ['d1']]);
+    ).toEqual([['c1'], ['d1']]);
   });
 
-  it('alerts every nurse on the first rung, not just one of them', () => {
-    const chain = escalationChain(team({ nurses: ['n1', 'n2'], doctorUserId: 'd1' }));
+  it('alerts every coordinator on the first rung, not just one of them', () => {
+    const chain = escalationChain(team({ coordinators: ['n1', 'n2'], doctorUserId: 'd1' }));
 
     expect(chain[0]).toEqual(['n1', 'n2']);
   });
 
   /**
-   * The case this whole collapse rule exists for: a patient with no nurse
-   * assigned. Left uncollapsed the first alarm goes to an empty rung, and the
-   * first two minutes — most of the time this feature has — pass in silence.
+   * The case this whole collapse rule exists for: a patient with no
+   * coordinator assigned. Left uncollapsed the first alarm goes to an empty
+   * rung, and the first two minutes — most of the time this feature has —
+   * pass in silence.
    */
-  it('gives the first alarm to the coordinator when no nurse is assigned', () => {
+  it('gives the first alarm to the doctor when no coordinator is assigned', () => {
     expect(
-      escalationChain(team({ coordinators: ['c1'], doctorUserId: 'd1', receivers: ['x'] })),
-    ).toEqual([['c1'], ['d1'], ['x']]);
+      escalationChain(team({ doctorUserId: 'd1', receivers: ['x'] })),
+    ).toEqual([['d1'], ['x']]);
   });
 
   it('gives the first alarm to the doctor when nobody else is assigned', () => {
@@ -109,19 +109,18 @@ describe('who each rung is', () => {
 
   it('never puts the same person on two rungs', () => {
     const chain = escalationChain(
-      team({ nurses: ['same'], coordinators: ['same'], doctorUserId: 'same', receivers: ['same', 'other'] }),
+      team({ coordinators: ['same'], doctorUserId: 'same', receivers: ['same', 'other'] }),
     );
 
     expect(chain).toEqual([['same'], ['other']]);
   });
 
-  it('stops at three rungs even when a fourth group exists', () => {
+  it('stops once everybody assigned has been reached', () => {
     const chain = escalationChain(
-      team({ nurses: ['n'], coordinators: ['c'], doctorUserId: 'd', receivers: ['r'] }),
+      team({ coordinators: ['c'], doctorUserId: 'd', receivers: ['c', 'd'] }),
     );
 
-    expect(chain).toHaveLength(3);
-    expect(chain.flat()).not.toContain('r');
+    expect(chain).toEqual([['c'], ['d']]);
   });
 
   /**

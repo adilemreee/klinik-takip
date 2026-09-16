@@ -76,13 +76,6 @@ public enum Root {
                 // handles that; the router does not pretend it is staff.
                 return .patientHome(patientId: identity.patientId)
 
-            case .caregiver:
-                // Spec section 2 gives a caregiver limited access to somebody
-                // else's file, and this app has no screen for that yet.
-                // Refusing to route is honest; routing them to a patient home
-                // that is not theirs would not be.
-                return .unsupported(role: .caregiver)
-
             default:
                 return .unsupported(role: identity.role)
             }

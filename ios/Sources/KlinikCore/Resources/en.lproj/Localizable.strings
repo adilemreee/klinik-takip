@@ -608,13 +608,9 @@
 "ai.missing.inputPricePerMTok" = "No input price entered";
 "ai.missing.outputPricePerMTok" = "No output price entered";
 
-"role.SUPER_ADMIN" = "System owner";
 "role.DOCTOR" = "Doctor";
-"role.NURSE" = "Nurse";
 "role.COORDINATOR" = "Coordinator";
-"role.FINANCE" = "Finance";
 "role.PATIENT" = "Patient";
-"role.CAREGIVER" = "Caregiver";
 
 "app.identityFailed" = "Could not load who you are. Check your connection and try again.";
 "app.retry" = "Try again";

@@ -204,7 +204,7 @@ describe('patient records', () => {
 
     it('hides an unassigned patient from a nurse', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { user: nurse } = await makeStaff(Role.NURSE);
+      const { user: nurse } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
       await expect(patients.findOne(nurse, patient.id)).rejects.toThrow('Patient not found');
@@ -212,20 +212,20 @@ describe('patient records', () => {
 
     it('opens the file to a nurse once she is assigned', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { user: nurse, staffId } = await makeStaff(Role.NURSE);
+      const { user: nurse, staffId } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
-      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.NURSE });
+      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.COORDINATOR });
 
       expect((await patients.findOne(nurse, patient.id)).id).toBe(patient.id);
     });
 
     it('closes it again when the assignment ends', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { user: nurse, staffId } = await makeStaff(Role.NURSE);
+      const { user: nurse, staffId } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
-      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.NURSE });
+      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.COORDINATOR });
       await patients.unassignStaff(doctor, patient.id, staffId);
 
       await expect(patients.findOne(nurse, patient.id)).rejects.toThrow('Patient not found');
@@ -233,7 +233,7 @@ describe('patient records', () => {
 
     it('shows finance nothing', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const finance = await makeUser(Role.FINANCE);
+      const finance = await makeUser(Role.COORDINATOR);
       const patient = await create(doctor);
 
       await expect(patients.findOne(finance, patient.id)).rejects.toThrow('Patient not found');
@@ -245,7 +245,7 @@ describe('patient records', () => {
      */
     it('answers identically for a hidden patient and a missing one', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { user: nurse } = await makeStaff(Role.NURSE);
+      const { user: nurse } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
       const hidden = await patients.findOne(nurse, patient.id).catch((e: Error) => e.message);
@@ -326,12 +326,12 @@ describe('patient records', () => {
     /** A nurse searching must not reach outside her assignments. */
     it('confines a nurse to her own patients', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { user: nurse, staffId } = await makeStaff(Role.NURSE);
+      const { user: nurse, staffId } = await makeStaff(Role.COORDINATOR);
       const unique = `Scoped${Date.now()}`;
 
       const mine = await create(doctor, { lastName: unique });
       const theirs = await create(doctor, { lastName: unique });
-      await patients.assignStaff(doctor, mine.id, { staffId, role: Role.NURSE });
+      await patients.assignStaff(doctor, mine.id, { staffId, role: Role.COORDINATOR });
 
       const page = await patients.search(nurse, { q: unique, limit: 100 });
       const ids = page.items.map((p) => p.id);
@@ -389,7 +389,7 @@ describe('patient records', () => {
 
     it('refuses to update a patient the caller cannot see', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { user: nurse } = await makeStaff(Role.NURSE);
+      const { user: nurse } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
       await expect(
@@ -422,10 +422,10 @@ describe('patient records', () => {
     /** Assignment decides who can see the file, so it is a permission change. */
     it('records an assignment as a permission change', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { staffId } = await makeStaff(Role.NURSE);
+      const { staffId } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
-      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.NURSE });
+      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.COORDINATOR });
 
       const entry = await prisma.auditLog.findFirst({
         where: { patientId: patient.id, action: AuditAction.PERMISSION_CHANGE },
@@ -436,11 +436,11 @@ describe('patient records', () => {
 
     it('is idempotent', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { staffId } = await makeStaff(Role.NURSE);
+      const { staffId } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
-      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.NURSE });
-      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.NURSE });
+      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.COORDINATOR });
+      await patients.assignStaff(doctor, patient.id, { staffId, role: Role.COORDINATOR });
 
       const active = await prisma.patientAssignment.count({
         where: { patientId: patient.id, staffId, unassignedAt: null },
@@ -450,7 +450,7 @@ describe('patient records', () => {
 
     it('reports an unassignment that has nothing to end', async () => {
       const doctor = await makeUser(Role.DOCTOR);
-      const { staffId } = await makeStaff(Role.NURSE);
+      const { staffId } = await makeStaff(Role.COORDINATOR);
       const patient = await create(doctor);
 
       await expect(patients.unassignStaff(doctor, patient.id, staffId)).rejects.toThrow(

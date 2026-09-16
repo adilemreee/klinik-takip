@@ -278,10 +278,10 @@ describe('the emergency button', () => {
 
   describe('who gets woken', () => {
     it('alerts the assigned nurse the moment the button is pressed', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
 
       await press(patient.token).expect(201);
 
@@ -292,31 +292,32 @@ describe('the emergency button', () => {
      * The rung the ladder exists for. Two minutes with no answer and the
      * coordinator's phone goes; five and the doctor's does.
      */
-    it('climbs to the coordinator at two minutes and the doctor at five', async () => {
-      const nurse = await actorFor(Role.NURSE);
+    /**
+     * Two rungs now, not three: the nurse rung went when the role did, so the
+     * coordinators are rung zero and the doctor is the one the alarm climbs
+     * to.
+     */
+    it('climbs to the doctor at two minutes', async () => {
       const coordinator = await actorFor(Role.COORDINATOR);
       const doctor = await actorFor(Role.DOCTOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId, { doctorStaffId: doctor.staffId });
-      await assign(patientId, nurse.staffId!, Role.NURSE);
       await assign(patientId, coordinator.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
 
-      await age(view.event.id, 2);
-      await emergency.escalateDue();
-
-      expect(await notificationsFor(coordinator.userId, NOTIFICATION_TYPES.emergencyEscalated)).toBe(1);
+      // Rung zero went out with the press itself.
+      expect(await notificationsFor(coordinator.userId, NOTIFICATION_TYPES.emergencyTriggered)).toBe(1);
       expect(await notificationsFor(doctor.userId, NOTIFICATION_TYPES.emergencyEscalated)).toBe(0);
 
-      await age(view.event.id, 5);
+      await age(view.event.id, 2);
       await emergency.escalateDue();
 
       expect(await notificationsFor(doctor.userId, NOTIFICATION_TYPES.emergencyEscalated)).toBe(1);
       expect(
         (await prisma.emergencyEvent.findUniqueOrThrow({ where: { id: view.event.id } }))
           .escalationLevel,
-      ).toBe(2);
+      ).toBe(1);
     });
 
     /**
@@ -325,19 +326,19 @@ describe('the emergency button', () => {
      * in reserve.
      */
     it('climbs one rung per sweep even when the sweep is very late', async () => {
-      const nurse = await actorFor(Role.NURSE);
       const coordinator = await actorFor(Role.COORDINATOR);
       const doctor = await actorFor(Role.DOCTOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId, { doctorStaffId: doctor.staffId });
-      await assign(patientId, nurse.staffId!, Role.NURSE);
       await assign(patientId, coordinator.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
       await age(view.event.id, 60);
       await emergency.escalateDue();
 
-      expect(await notificationsFor(doctor.userId, NOTIFICATION_TYPES.emergencyEscalated)).toBe(0);
+      // One rung, not the whole ladder: the doctor is rung one and the rota
+      // behind them is untouched, so there is still somebody in reserve.
+      expect(await notificationsFor(doctor.userId, NOTIFICATION_TYPES.emergencyEscalated)).toBe(1);
       expect(
         (await prisma.emergencyEvent.findUniqueOrThrow({ where: { id: view.event.id } }))
           .escalationLevel,
@@ -380,10 +381,10 @@ describe('the emergency button', () => {
      * share of the times a patient abroad presses this.
      */
     it('follows the alert onto SMS when the push does not land', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
 
       await press(patient.token).expect(201);
 
@@ -401,10 +402,10 @@ describe('the emergency button', () => {
      * matters, and the person who turned it off will not remember doing so.
      */
     it('ignores a notification preference that would silence it', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
 
       await prisma.notificationPreference.create({
         data: {
@@ -423,11 +424,11 @@ describe('the emergency button', () => {
 
   describe('answering it', () => {
     it('stops the ladder and tells the patient somebody has it', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const coordinator = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
       await assign(patientId, coordinator.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
@@ -448,15 +449,30 @@ describe('the emergency button', () => {
       await age(view.event.id, 30);
       await emergency.escalateDue();
 
-      expect(await notificationsFor(coordinator.userId, NOTIFICATION_TYPES.emergencyEscalated)).toBe(0);
+      /*
+       * Asked of the event, not of a person.
+       *
+       * It used to count escalations reaching the second coordinator, which
+       * worked while the rota was a handful of people. Coordinators hold
+       * `emergency.receive` now — they are the first rung — so the rota is
+       * every coordinator in the database, and an alarm from any other test
+       * in this file reaches this one. The claim was always about this event:
+       * once somebody picks it up, the ladder stops climbing.
+       */
+      const after = await prisma.emergencyEvent.findUniqueOrThrow({
+        where: { id: view.event.id },
+      });
+
+      expect(after.status).toBe(EmergencyStatus.ACKNOWLEDGED);
+      expect(after.escalationLevel).toBe(0);
     });
 
     it('refuses a second pick-up, so the response time stays the first one', async () => {
-      const nurse = await actorFor(Role.NURSE);
-      const other = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
+      const other = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
 
@@ -472,10 +488,10 @@ describe('the emergency button', () => {
     });
 
     it('puts blood type, allergies and the last operation on the clinician\'s screen', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
       await prisma.medicalProfile.create({
         data: { patientId, bloodType: '0 Rh-', allergies: ['penisilin'], chronicConditions: ['astım'] },
       });
@@ -503,10 +519,10 @@ describe('the emergency button', () => {
     });
 
     it('closes with a note, and refuses to close without one', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
 
@@ -557,10 +573,10 @@ describe('the emergency button', () => {
      * it looking at an event that says it never happened.
      */
     it('refuses to cancel once a clinician is handling it', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, nurse.staffId!, Role.NURSE);
+      await assign(patientId, nurse.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
 
@@ -594,11 +610,11 @@ describe('the emergency button', () => {
      * and waking someone who is then shown a 404 is worse than not waking them.
      */
     it('lets any nurse on the rota open an alarm that is still open', async () => {
-      const assigned = await actorFor(Role.NURSE);
-      const stranger = await actorFor(Role.NURSE);
+      const assigned = await actorFor(Role.COORDINATOR);
+      const stranger = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, assigned.staffId!, Role.NURSE);
+      await assign(patientId, assigned.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
 
@@ -627,11 +643,11 @@ describe('the emergency button', () => {
 
     /** A closed call is history, and history goes back to ordinary scoping. */
     it('closes the door again once the alarm is resolved', async () => {
-      const assigned = await actorFor(Role.NURSE);
-      const stranger = await actorFor(Role.NURSE);
+      const assigned = await actorFor(Role.COORDINATOR);
+      const stranger = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
-      await assign(patientId, assigned.staffId!, Role.NURSE);
+      await assign(patientId, assigned.staffId!, Role.COORDINATOR);
 
       const view = (await press(patient.token).expect(201)).body as PatientView;
 
@@ -647,8 +663,13 @@ describe('the emergency button', () => {
         .expect(404);
     });
 
+    /**
+     * The coordinator is on the rota now — they are the first rung — so the
+     * role that proves this is the patient, who may press the button and may
+     * not read somebody else's alarm.
+     */
     it('does not widen anything for someone who is not on the rota', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
       const patient = await actorFor(Role.PATIENT);
       await makePatient(patient.userId);
 

@@ -221,7 +221,7 @@ describe('follow-up schedules', () => {
 
     it('refuses a role without appointments.write', async () => {
       const patientId = await makePatient();
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
       await generate(patientId, { surgeryDate: '2026-03-02T09:00:00.000Z' }, finance.token)
         .expect(403);

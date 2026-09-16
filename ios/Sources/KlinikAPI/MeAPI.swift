@@ -11,13 +11,9 @@ import KlinikCore
  */
 
 public enum UserRole: String, Decodable, Sendable, Equatable, CaseIterable {
-    case superAdmin = "SUPER_ADMIN"
     case doctor = "DOCTOR"
-    case nurse = "NURSE"
     case coordinator = "COORDINATOR"
-    case finance = "FINANCE"
     case patient = "PATIENT"
-    case caregiver = "CAREGIVER"
 
     public var localizedName: String { L10n.string("role.\(rawValue)") }
 }

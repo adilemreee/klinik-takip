@@ -99,7 +99,7 @@ export class MessagingService {
     }
 
     const state = await this.clinicState();
-    const holds = user.role === Role.PATIENT || user.role === Role.CAREGIVER;
+    const holds = user.role === Role.PATIENT;
     const queued = holds && !state.open;
 
     const type = input.type ?? (input.mediaKey ? MessageType.FILE : MessageType.TEXT);
@@ -111,7 +111,7 @@ export class MessagingService {
      * would put clinic text into a model for no clinical gain.
      */
     const triage =
-      (user.role === Role.PATIENT || user.role === Role.CAREGIVER) &&
+      (user.role === Role.PATIENT) &&
       type === MessageType.TEXT &&
       Boolean(body);
 

@@ -21,7 +21,7 @@ export class PermissionsGuard implements CanActivate {
     private readonly permissions: PermissionsService,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const required = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -43,7 +43,7 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('Not authenticated');
     }
 
-    const held = await this.permissions.getEffectivePermissions(user.id, user.role);
+    const held = this.permissions.getEffectivePermissions(user.role);
 
     // Names the permission rather than the data: telling the caller which
     // record they were denied would itself leak that the record exists.

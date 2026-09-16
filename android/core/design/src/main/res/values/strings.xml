@@ -1014,13 +1014,9 @@
     <string name="report_risk_high">Yüksek</string>
     <string name="report_risk_low">Düşük</string>
     <string name="report_risk_medium">Orta</string>
-    <string name="role_caregiver">Refakatçi</string>
     <string name="role_coordinator">Koordinatör</string>
     <string name="role_doctor">Doktor</string>
-    <string name="role_finance">Finans</string>
-    <string name="role_nurse">Hemşire</string>
     <string name="role_patient">Hasta</string>
-    <string name="role_super_admin">Sistem sahibi</string>
     <string name="sessions_current">Bu cihaz</string>
     <string name="sessions_sign_out">Çıkış yap</string>
     <string name="sessions_sign_out_everywhere">Tüm cihazlardan çık</string>

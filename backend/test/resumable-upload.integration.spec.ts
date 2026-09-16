@@ -402,7 +402,7 @@ describe('resumable upload', () => {
   describe('who may upload', () => {
     it('refuses a role without documents.write', async () => {
       const patientId = await makePatient();
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
       await request(server)
         .post(`/patients/${patientId}/documents/uploads`)
@@ -414,7 +414,7 @@ describe('resumable upload', () => {
     /** Out of scope reads as absent, never as forbidden. */
     it('reports not found for a patient outside the caller scope', async () => {
       const patientId = await makePatient();
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
       await request(server)
         .post(`/patients/${patientId}/documents/uploads`)
@@ -427,7 +427,7 @@ describe('resumable upload', () => {
     it('refuses a chunk from someone outside the patient scope', async () => {
       const patientId = await makePatient();
       const session = await begin(patientId);
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
       await sendChunk(session.id, 0, pdf(4_096), nurse.token).expect(404);
     });

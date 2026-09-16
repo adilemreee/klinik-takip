@@ -227,11 +227,11 @@ describe('message triage', () => {
 
   describe('with no AI at all', () => {
     it('still catches a message that cannot wait', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const conversationId = await conversationWith(patientId);
@@ -246,11 +246,11 @@ describe('message triage', () => {
     });
 
     it('leaves an ordinary question to the normal queue', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const conversationId = await conversationWith(patientId);
@@ -306,7 +306,7 @@ describe('message triage', () => {
     });
 
     it('does not triage what a clinician wrote', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       const conversationId = await conversationWith(patientId);
@@ -325,11 +325,11 @@ describe('message triage', () => {
 
   describe('with the model answering', () => {
     it('lets the model raise a message the keywords did not catch', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const conversationId = await conversationWith(patientId);
@@ -362,11 +362,11 @@ describe('message triage', () => {
      * ağrıyor" and answers INFO.
      */
     it('ignores a model that tries to talk an emergency down', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const conversationId = await conversationWith(patientId);
@@ -462,12 +462,12 @@ describe('message triage', () => {
     });
 
     it('tells the whole care team at once rather than in rungs', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const coordinator = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
       await prisma.patientAssignment.create({
         data: { patientId, staffId: coordinator.staffId!, role: Role.COORDINATOR },

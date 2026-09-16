@@ -26,11 +26,9 @@ export class PatientAccessService {
     const notDeleted: Prisma.PatientWhereInput = { deletedAt: null };
 
     switch (user.role) {
-      case Role.SUPER_ADMIN:
       case Role.DOCTOR:
         return notDeleted;
 
-      case Role.NURSE:
       case Role.COORDINATOR: {
         const profile = await this.prisma.staffProfile.findUnique({
           where: { userId: user.id },
@@ -58,17 +56,10 @@ export class PatientAccessService {
       case Role.PATIENT:
         return { ...notDeleted, userId: user.id };
 
-      case Role.CAREGIVER:
-        // Only while the patient's consent stands (spec section 2).
-        return {
-          ...notDeleted,
-          caregivers: { some: { caregiverUserId: user.id, revokedAt: null } },
-        };
-
-      case Role.FINANCE:
       default:
-        // Finance has no clinical access at all. Their work goes through the
-        // finance module, which joins to patients on its own terms.
+        // A role this does not know about sees nothing. Failing closed is the
+        // only safe default here: the alternative is a role added later that
+        // quietly reads every record until somebody notices.
         return this.nothing();
     }
   }

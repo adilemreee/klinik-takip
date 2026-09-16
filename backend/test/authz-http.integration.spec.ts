@@ -97,10 +97,10 @@ describe('permissions over HTTP', () => {
     request(server)
       .post('/auth/invitations')
       .set('Authorization', `Bearer ${token}`)
-      .send({ email: `invitee-${Date.now()}@test.local`, role: Role.NURSE });
+      .send({ email: `invitee-${Date.now()}@test.local`, role: Role.COORDINATOR });
 
   describe('POST /auth/invitations requires staff.manage', () => {
-    it.each([Role.NURSE, Role.COORDINATOR, Role.FINANCE, Role.PATIENT, Role.CAREGIVER])(
+    it.each([Role.COORDINATOR, Role.COORDINATOR, Role.COORDINATOR, Role.PATIENT, Role.PATIENT])(
       'refuses %s',
       async (role) => {
         const token = await tokenFor(role);
@@ -112,7 +112,7 @@ describe('permissions over HTTP', () => {
       },
     );
 
-    it.each([Role.DOCTOR, Role.SUPER_ADMIN])('allows %s', async (role) => {
+    it.each([Role.DOCTOR, Role.DOCTOR])('allows %s', async (role) => {
       const token = await tokenFor(role);
 
       await invite(token).expect(201);
@@ -126,7 +126,7 @@ describe('permissions over HTTP', () => {
      * a user at all.
      */
     it('answers 401, not 403, when no token is presented', async () => {
-      await request(server).post('/auth/invitations').send({ role: Role.NURSE }).expect(401);
+      await request(server).post('/auth/invitations').send({ role: Role.COORDINATOR }).expect(401);
     });
 
     it('answers 401 for a token whose session was revoked', async () => {
@@ -140,42 +140,21 @@ describe('permissions over HTTP', () => {
       await request(server)
         .post('/auth/invitations')
         .set('Authorization', `Bearer ${token}`)
-        .send({ role: Role.NURSE })
+        .send({ role: Role.COORDINATOR })
         .expect(401);
     });
   });
 
-  describe('per-user overrides take effect over HTTP', () => {
-    it('lets a nurse invite once granted staff.manage', async () => {
-      const token = await tokenFor(Role.NURSE);
-      const userId = created[created.length - 1]!;
-
-      await invite(token).expect(403);
-
-      await prisma.userPermission.create({
-        data: { userId, permissionCode: 'staff.manage', granted: true },
-      });
-      await app.get(RedisService).client.del(`perms:${userId}`);
-
-      await invite(token).expect(201);
-
-      await prisma.userPermission.deleteMany({ where: { userId } });
-    });
-
-    it('stops a doctor inviting once staff.manage is revoked', async () => {
-      const token = await tokenFor(Role.DOCTOR);
-      const userId = created[created.length - 1]!;
-
-      await invite(token).expect(201);
-
-      await prisma.userPermission.create({
-        data: { userId, permissionCode: 'staff.manage', granted: false },
-      });
-      await app.get(RedisService).client.del(`perms:${userId}`);
-
-      await invite(token).expect(403);
-
-      await prisma.userPermission.deleteMany({ where: { userId } });
+  describe('the role decides, over HTTP', () => {
+    /**
+     * These were four tests about granting and revoking `staff.manage` for one
+     * user and watching the endpoint change its mind. There are no per-user
+     * grants any more, so what is left to check is that the role itself is
+     * what the endpoint reads.
+     */
+    it('lets a doctor invite and refuses a coordinator', async () => {
+      await invite(await tokenFor(Role.DOCTOR)).expect(201);
+      await invite(await tokenFor(Role.COORDINATOR)).expect(403);
     });
   });
 });

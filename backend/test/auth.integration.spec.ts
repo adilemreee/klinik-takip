@@ -188,7 +188,7 @@ describe('authentication', () => {
     });
 
     /** Spec section 2: staff accounts must carry a second factor. */
-    it.each([Role.DOCTOR, Role.NURSE, Role.COORDINATOR, Role.FINANCE, Role.SUPER_ADMIN])(
+    it.each([Role.DOCTOR, Role.COORDINATOR, Role.COORDINATOR, Role.COORDINATOR, Role.DOCTOR])(
       'issues no tokens to %s until 2FA is enrolled',
       async (role) => {
         const user = await makeUser(role);
@@ -298,7 +298,7 @@ describe('authentication', () => {
     });
 
     it('will not let staff turn 2FA off', async () => {
-      const user = await makeUser(Role.NURSE);
+      const user = await makeUser(Role.COORDINATOR);
       const secret = await enrol(user.id);
 
       await expect(auth.disableTotp(user.id, generateSync({ secret }))).rejects.toThrow(
@@ -422,12 +422,12 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}@test.local`;
 
-      const invite = await invitations.create(inviter.id, { email, role: Role.NURSE });
+      const invite = await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
       const { userId } = await invitations.accept(email, invite.code, 'invited-user-pass-1');
       created.push(userId);
 
       const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-      expect(user.role).toBe(Role.NURSE);
+      expect(user.role).toBe(Role.COORDINATOR);
       expect(user.status).toBe(UserStatus.ACTIVE);
     });
 
@@ -435,7 +435,7 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}-h@test.local`;
 
-      const invite = await invitations.create(inviter.id, { email, role: Role.NURSE });
+      const invite = await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
       const row = await prisma.invitation.findUniqueOrThrow({ where: { id: invite.id } });
 
       expect(row.codeHash).not.toBe(invite.code);
@@ -447,7 +447,7 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}-w@test.local`;
 
-      const invite = await invitations.create(inviter.id, { email, role: Role.NURSE });
+      const invite = await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
 
       await expect(
         invitations.accept('someone-else@test.local', invite.code, 'invited-user-pass-1'),
@@ -458,7 +458,7 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}-c@test.local`;
 
-      await invitations.create(inviter.id, { email, role: Role.NURSE });
+      await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
 
       await expect(invitations.accept(email, '000000', 'invited-user-pass-1')).rejects.toThrow(
         'INVITATION_INVALID',
@@ -469,7 +469,7 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}-e@test.local`;
 
-      const invite = await invitations.create(inviter.id, { email, role: Role.NURSE });
+      const invite = await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
       await prisma.invitation.update({
         where: { id: invite.id },
         data: { expiresAt: new Date(Date.now() - 1000) },
@@ -484,7 +484,7 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}-t@test.local`;
 
-      const invite = await invitations.create(inviter.id, { email, role: Role.NURSE });
+      const invite = await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
       const { userId } = await invitations.accept(email, invite.code, 'invited-user-pass-1');
       created.push(userId);
 
@@ -497,7 +497,7 @@ describe('authentication', () => {
       const inviter = await makeUser(Role.DOCTOR);
       const email = `inv-${Date.now()}-p@test.local`;
 
-      const invite = await invitations.create(inviter.id, { email, role: Role.NURSE });
+      const invite = await invitations.create(inviter.id, { email, role: Role.COORDINATOR });
 
       await expect(invitations.accept(email, invite.code, 'password')).rejects.toThrow();
     });
@@ -505,7 +505,7 @@ describe('authentication', () => {
     it('refuses an invitation with neither e-mail nor phone', async () => {
       const inviter = await makeUser(Role.DOCTOR);
 
-      await expect(invitations.create(inviter.id, { role: Role.NURSE })).rejects.toThrow();
+      await expect(invitations.create(inviter.id, { role: Role.COORDINATOR })).rejects.toThrow();
     });
   });
 });

@@ -20,11 +20,11 @@ async function main(): Promise<void> {
 
   try {
     const existing = await prisma.user.count({
-      where: { role: Role.SUPER_ADMIN, deletedAt: null },
+      where: { role: Role.DOCTOR, deletedAt: null },
     });
 
     if (existing > 0) {
-      console.error('A SUPER_ADMIN already exists; refusing to create another.');
+      console.error('A doctor account already exists; refusing to create another.');
       process.exitCode = 1;
       return;
     }
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
 
     const user = await prisma.user.create({
       data: {
-        role: Role.SUPER_ADMIN,
+        role: Role.DOCTOR,
         email,
         passwordHash: await hashPassword(password),
         status: UserStatus.ACTIVE,

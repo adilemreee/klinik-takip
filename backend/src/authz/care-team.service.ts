@@ -13,8 +13,6 @@ import { PermissionsService } from './permissions.service';
  * out until the night it matters.
  */
 export interface CareTeam {
-  /** User ids of nurses assigned to this patient. */
-  nurses: string[];
   /** User ids of coordinators assigned to this patient. */
   coordinators: string[];
   /** The patient's doctor of record, if they have one. */
@@ -50,7 +48,6 @@ export class CareTeamService {
     ]);
 
     return {
-      nurses: assignments.filter((a) => a.role === Role.NURSE).map((a) => a.staff.userId),
       coordinators: assignments
         .filter((a) => a.role === Role.COORDINATOR)
         .map((a) => a.staff.userId),
@@ -96,7 +93,6 @@ export class CareTeamService {
 
 function namedStaff(team: CareTeam): string[] {
   return [
-    ...team.nurses,
     ...team.coordinators,
     ...(team.doctorUserId ? [team.doctorUserId] : []),
   ];

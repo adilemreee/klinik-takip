@@ -140,7 +140,7 @@ export class ExportsService {
       format: ExportFormat;
     },
   ): Promise<Export> {
-    const held = await this.permissions.getEffectivePermissions(user.id, user.role);
+    const held = this.permissions.getEffectivePermissions(user.role);
 
     let columns;
     try {

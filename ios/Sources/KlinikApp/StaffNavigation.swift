@@ -55,11 +55,6 @@ public enum StaffDestination: Hashable, Sendable {
     case account
     /// Every patient the caller can see, a month at a time (spec M10).
     case calendar
-    case analytics
-    case finance
-    case exports
-    case audit
-    case protocols
     case flaggedPhotos
     case inbox
     case aiSettings
@@ -70,7 +65,6 @@ public enum StaffDestination: Hashable, Sendable {
     /// What the patient consented to, and the signature they drew (M17).
     case consents(patientId: String)
     /// The hours the caller is bookable in (spec M10).
-    case availability
     /// AI output nobody has signed off yet (spec M5).
     case pendingReports
     case notificationSettings
@@ -232,6 +226,16 @@ struct StaffPatientsView: View {
              * Left here is what the grid has no tile for.
              */
             Button(L10n.string("menu.account")) { path.wrappedValue.append(.account) }
+            /*
+             * The one piece of configuration that stays in the app.
+             *
+             * Everything else administrative left with it — analytics,
+             * finance, exports, audit, working hours, protocols — because
+             * none of it is read on a phone. This is here because it is the
+             * switch the whole AI layer is behind, and a clinic that cannot
+             * reach it cannot turn the app on.
+             */
+            Button(L10n.string("menu.aiSettings")) { path.wrappedValue.append(.aiSettings) }
             Button(L10n.string("notification.settingsTitle")) {
                 path.wrappedValue.append(.notificationSettings)
             }
@@ -291,22 +295,10 @@ struct StaffPatientsView: View {
                 openPatient: { id, name in push(.patient(id: id, name: name)) }
             )
 
-        case .analytics:
-            AnalyticsScreen(model: AnalyticsModel(api: environment.analytics))
-
-        case .exports:
-            ExportsScreen(model: ExportsModel(api: environment.exports))
-
         case .patientExports(let patientId):
             ExportsScreen(
                 model: ExportsModel(api: environment.exports, patientId: patientId)
             )
-
-        case .audit:
-            AuditScreen(model: AuditModel(api: environment.audit))
-
-        case .protocols:
-            ProtocolsScreen(model: ProtocolsModel(api: environment.protocols))
 
         case .aiSettings:
             AISettingsScreen(model: AISettingsModel(api: environment.aiSettings))
@@ -338,12 +330,6 @@ struct StaffPatientsView: View {
         case .surveys(let patientId):
             SurveyTrendScreen(
                 model: SurveyTrendModel(api: environment.surveys, patientId: patientId)
-            )
-
-        case .finance:
-            FinanceScreen(
-                model: FinanceModel(api: environment.finance),
-                openPatient: { id, name in push(.patient(id: id, name: name)) }
             )
 
         case .pendingReports:
@@ -494,8 +480,6 @@ struct StaffPatientsView: View {
                 openSignature: { openURL($0) }
             )
 
-        case .availability:
-            AvailabilityScreen(model: AvailabilityModel(api: environment.appointments))
         }
     }
 }
@@ -532,12 +516,5 @@ private func destination(for tool: StaffTool) -> StaffDestination {
     case .inbox: return .inbox
     case .complicationQueue: return .complicationQueue
     case .newPatient: return .newPatient
-    case .analytics: return .analytics
-    case .finance: return .finance
-    case .exports: return .exports
-    case .availability: return .availability
-    case .protocols: return .protocols
-    case .aiSettings: return .aiSettings
-    case .audit: return .audit
     }
 }

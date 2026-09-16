@@ -1,3 +1,4 @@
+import { ROLE_PERMISSIONS } from '../src/authz/role-permissions';
 import { PrismaClient, Role } from '@prisma/client';
 
 /**
@@ -184,58 +185,36 @@ describe('database schema', () => {
   });
 
   /**
-   * Spec section 2 states two separations explicitly. They are the reason the
-   * matrix exists at all, so they get their own tests rather than relying on a
-   * reviewer noticing a stray line in the seed.
+   * Spec section 2 states two separations explicitly, and they are the reason
+   * there is a second staff role at all.
+   *
+   * They used to be checked against `role_permissions`; the matrix is a
+   * constant now, so they are checked against that — the assertion is the
+   * same one, asked of the thing that answers it.
    */
   describe('role separation', () => {
-    it('gives NURSE no financial permission whatsoever', async () => {
-      const grants = await prisma.rolePermission.findMany({
-        where: { role: Role.NURSE, permissionCode: { startsWith: 'finance' } },
-      });
+    it('gives a coordinator no financial permission whatsoever', () => {
+      const held = [...ROLE_PERMISSIONS[Role.COORDINATOR]];
 
-      expect(grants).toEqual([]);
+      expect(held.filter((code) => code.startsWith('finance'))).toEqual([]);
     });
 
-    it('gives FINANCE no clinical permission whatsoever', async () => {
-      const grants = await prisma.rolePermission.findMany({
-        where: {
-          role: Role.FINANCE,
-          OR: [
-            { permissionCode: { startsWith: 'medical' } },
-            { permissionCode: { startsWith: 'labs' } },
-            { permissionCode: { startsWith: 'photos' } },
-            { permissionCode: { startsWith: 'messages' } },
-          ],
-        },
-      });
+    it('gives a coordinator no clinical permission whatsoever', () => {
+      const held = [...ROLE_PERMISSIONS[Role.COORDINATOR]];
+      const clinical = held.filter((code) =>
+        ['medical', 'labs', 'photos', 'medications'].some((prefix) => code.startsWith(prefix)),
+      );
 
-      expect(grants).toEqual([]);
+      expect(clinical).toEqual([]);
     });
 
-    it('limits PATIENT and CAREGIVER to their own file', async () => {
-      const grants = await prisma.rolePermission.findMany({
-        where: { role: { in: [Role.PATIENT, Role.CAREGIVER] } },
-      });
+    it('limits a patient to their own file', () => {
+      const held = [...ROLE_PERMISSIONS[Role.PATIENT]];
 
-      expect(grants.length).toBeGreaterThan(0);
-      for (const grant of grants) {
-        expect(grant.permissionCode).toMatch(/^self\./);
+      expect(held.length).toBeGreaterThan(0);
+      for (const code of held) {
+        expect(code).toMatch(/^self\./);
       }
-    });
-
-    it('gives SUPER_ADMIN every permission in the catalogue', async () => {
-      const [catalogue, granted] = await Promise.all([
-        prisma.permission.count(),
-        prisma.rolePermission.count({ where: { role: Role.SUPER_ADMIN } }),
-      ]);
-
-      expect(granted).toBe(catalogue);
-    });
-
-    it('keeps the permission matrix in the database, not in code', async () => {
-      // If this is ever zero, authorisation has silently moved back into code.
-      expect(await prisma.permission.count()).toBeGreaterThan(0);
     });
   });
 

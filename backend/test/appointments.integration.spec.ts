@@ -227,7 +227,7 @@ describe('appointments', () => {
      */
     it('refuses to book a staff member with no published hours', async () => {
       const patientId = await makePatient();
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
       await book(patientId, { scheduledAt: slotAt(0), staffId: nurse.staffId }).expect(409);
     });
@@ -243,7 +243,7 @@ describe('appointments', () => {
 
     it('refuses a role without appointments.write', async () => {
       const patientId = await makePatient();
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
       await book(patientId, { scheduledAt: slotAt(0) }, finance.token).expect(403);
     });

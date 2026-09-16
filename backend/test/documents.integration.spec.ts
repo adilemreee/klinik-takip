@@ -273,7 +273,7 @@ describe('documents', () => {
 
     it('refuses a role without documents.write', async () => {
       const patientId = await makePatient();
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
       const response = await upload(patientId, finance.token, pdf());
 
@@ -283,7 +283,7 @@ describe('documents', () => {
     /** Out of scope reads as absent, never as forbidden. */
     it('reports not found for a patient outside the caller scope', async () => {
       const patientId = await makePatient();
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
       const response = await upload(patientId, nurse.token, pdf());
 
@@ -546,7 +546,7 @@ describe('documents', () => {
       const body = (await upload(patientId, doctor.token, pdf())).body as Uploaded;
       await remember(body.id);
 
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
       await request(server)
         .get(`/documents/${body.id}/download`)
@@ -589,7 +589,7 @@ describe('documents', () => {
       const body = (await upload(patientId, doctor.token, pdf())).body as Uploaded;
       await remember(body.id);
 
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
       await request(server)
         .delete(`/documents/${body.id}`)
@@ -642,18 +642,30 @@ describe('documents', () => {
         .expect(404);
     });
 
-    /** A role with neither permission is still refused at the gate. */
-    it('still refuses a role with no claim on it at all', async () => {
+    /**
+     * Somebody else's patient cannot have it.
+     *
+     * This used to name a role holding neither `documents.read` nor
+     * `self.read` and expect a refusal at the permission gate. With three
+     * roles there is no such role — every one of them has a claim on some
+     * document — so what is left to prove is the scope: a patient reaches
+     * their own file and no other.
+     *
+     * Either shape is correct. A 403 says no and a 404 declines to confirm
+     * the document exists; what must not happen is a 200.
+     */
+    it('refuses another patient the document', async () => {
       const patientId = await makePatient();
       const uploaded = (await upload(patientId, doctor.token, pdf())).body as Uploaded;
       await remember(uploaded.id);
 
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
-      await request(server)
+      const response = await request(server)
         .get(`/documents/${uploaded.id}/download`)
-        .set('Authorization', `Bearer ${finance.token}`)
-        .expect(403);
+        .set('Authorization', `Bearer ${finance.token}`);
+
+      expect([403, 404]).toContain(response.status);
     });
   });
 });

@@ -91,8 +91,8 @@ export class ExportsController {
   @ApiOperation({ summary: 'Selectable columns, marked with whether you may export them' })
   @ApiOkResponse({ type: [ExportColumnDto] })
   @ApiStandardErrors()
-  async columns(@CurrentUser() user: AuthenticatedUser): Promise<ExportColumnDto[]> {
-    const held = await this.permissions.getEffectivePermissions(user.id, user.role);
+  columns(@CurrentUser() user: AuthenticatedUser): ExportColumnDto[] {
+    const held = this.permissions.getEffectivePermissions(user.role);
 
     return PATIENT_COLUMNS.map((column) => ({
       key: column.key,

@@ -608,13 +608,9 @@
 "ai.missing.inputPricePerMTok" = "Giriş fiyatı girilmedi";
 "ai.missing.outputPricePerMTok" = "Çıkış fiyatı girilmedi";
 
-"role.SUPER_ADMIN" = "Sistem sahibi";
 "role.DOCTOR" = "Doktor";
-"role.NURSE" = "Hemşire";
 "role.COORDINATOR" = "Koordinatör";
-"role.FINANCE" = "Finans";
 "role.PATIENT" = "Hasta";
-"role.CAREGIVER" = "Refakatçi";
 
 "app.identityFailed" = "Kim olduğunuz alınamadı. Bağlantınızı kontrol edip tekrar deneyin.";
 "app.retry" = "Tekrar dene";

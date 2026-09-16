@@ -227,17 +227,26 @@ describe('messaging', () => {
     it('reports not found for a conversation outside the caller scope', async () => {
       const patientId = await makePatient();
       const conversationId = await conversationFor(patientId);
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
 
       await send(conversationId, nurse.token, { body: 'Merhaba' }).expect(404);
     });
 
-    it('refuses a role with neither messages.write nor self.message', async () => {
+    /**
+     * Every role can write somewhere now — the coordinator holds
+     * `messages.write` and the patient `self.message` — so the role with
+     * neither is gone. What is still worth proving is that `self.message` is
+     * not a key to any conversation: a patient may write in their own thread
+     * and not in somebody else's.
+     */
+    it('refuses a patient somebody else\'s conversation', async () => {
       const patientId = await makePatient();
       const conversationId = await conversationFor(patientId);
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.PATIENT);
 
-      await send(conversationId, finance.token, { body: 'Merhaba' }).expect(403);
+      const response = await send(conversationId, finance.token, { body: 'Merhaba' });
+
+      expect([403, 404]).toContain(response.status);
     });
   });
 

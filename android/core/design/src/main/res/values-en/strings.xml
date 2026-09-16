@@ -1014,13 +1014,9 @@
     <string name="report_risk_high">High</string>
     <string name="report_risk_low">Low</string>
     <string name="report_risk_medium">Medium</string>
-    <string name="role_caregiver">Caregiver</string>
     <string name="role_coordinator">Coordinator</string>
     <string name="role_doctor">Doctor</string>
-    <string name="role_finance">Finance</string>
-    <string name="role_nurse">Nurse</string>
     <string name="role_patient">Patient</string>
-    <string name="role_super_admin">System owner</string>
     <string name="sessions_current">This device</string>
     <string name="sessions_sign_out">Sign out</string>
     <string name="sessions_sign_out_everywhere">Sign out everywhere</string>

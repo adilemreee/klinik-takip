@@ -21,8 +21,15 @@ export const AuthError = {
 
 export type AuthErrorCode = (typeof AuthError)[keyof typeof AuthError];
 
-/** Roles that must carry a second factor (spec section 2). */
-export const STAFF_ROLES = ['SUPER_ADMIN', 'DOCTOR', 'NURSE', 'COORDINATOR', 'FINANCE'] as const;
+/**
+ * Roles that must carry a second factor (spec section 2).
+ *
+ * Both of the staff roles, which is now all of them but the patient. Listed
+ * rather than derived as "not PATIENT" so that a role added later has to be
+ * classified deliberately: the failure of the other spelling is a new role
+ * that quietly needs no second factor.
+ */
+export const STAFF_ROLES = ['DOCTOR', 'COORDINATOR'] as const;
 
 export function isStaffRole(role: string): boolean {
   return (STAFF_ROLES as readonly string[]).includes(role);

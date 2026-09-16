@@ -211,7 +211,7 @@ describe('finance', () => {
 
   describe('the wall between money and medicine (spec section 2)', () => {
     it('gives the nurse no finance access of any kind', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
 
       for (const path of [
@@ -233,15 +233,28 @@ describe('finance', () => {
         .expect(403);
     });
 
-    it('gives the finance desk no clinical access of any kind', async () => {
-      const finance = await actorFor(Role.FINANCE);
+    /**
+     * The wall, as it stands after seven roles became three.
+     *
+     * It used to be a FINANCE role with no clinical access at all, and the
+     * test walked five clinical paths expecting to be turned away from every
+     * one. There is no finance-only role now: the money permissions sit with
+     * DOCTOR, who is also the clinician, so that version of the wall is gone
+     * and pretending otherwise would be a test that proves nothing.
+     *
+     * What survives is the line the second role draws. A coordinator arranges
+     * the treatment — patients, documents, appointments — and cannot open the
+     * record: no medications, no measurements, no photographs. Those three
+     * are what this walks, and the two it no longer walks are allowed on
+     * purpose.
+     */
+    it('gives a coordinator no clinical access of any kind', async () => {
+      const finance = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
 
       for (const path of [
-        `/patients/${patientId}`,
         `/patients/${patientId}/medications`,
         `/patients/${patientId}/measurements`,
-        `/patients/${patientId}/documents`,
         `/patients/${patientId}/photos`,
       ]) {
         const response = await request(server)
@@ -255,7 +268,7 @@ describe('finance', () => {
 
     it('lets the finance desk see whose bill it is, and nothing more', async () => {
       const doctor = await actorFor(Role.DOCTOR);
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const patientId = await makePatient();
       await bill(doctor.token, patientId);
 
@@ -284,7 +297,7 @@ describe('finance', () => {
       // The finance role has no patient scope at all — deliberately, since it
       // is not meant to browse patients. Its access comes from the permission.
       const doctor = await actorFor(Role.DOCTOR);
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const patientId = await makePatient();
       const created = await bill(doctor.token, patientId);
 
@@ -395,7 +408,7 @@ describe('finance', () => {
 
   describe('the payment ledger', () => {
     it('walks a bill from pending to paid across instalments', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
 
@@ -417,7 +430,7 @@ describe('finance', () => {
     });
 
     it('has no way for a client to set the payment status', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
 
@@ -442,7 +455,7 @@ describe('finance', () => {
     });
 
     it('keeps the derived status when an editable field changes', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
       await pay(finance.token, record.id, { amount: '1500.00' }).expect(201);
@@ -460,7 +473,7 @@ describe('finance', () => {
     });
 
     it('corrects a mistyped payment by reversing it, not deleting it', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
 
@@ -485,7 +498,7 @@ describe('finance', () => {
     });
 
     it('refuses to reverse the same payment twice', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
       const paid = (await pay(finance.token, record.id, { amount: '100.00' }).expect(201))
@@ -502,7 +515,7 @@ describe('finance', () => {
     });
 
     it('tells a refund apart from money that never arrived', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
 
@@ -520,7 +533,7 @@ describe('finance', () => {
 
     describe('a payment in another currency', () => {
       it('must say how much of the bill it settles', async () => {
-        const finance = await actorFor(Role.FINANCE);
+        const finance = await actorFor(Role.DOCTOR);
         const doctor = await actorFor(Role.DOCTOR);
         const record = await bill(doctor.token, await makePatient());
 
@@ -534,7 +547,7 @@ describe('finance', () => {
       });
 
       it('records the rate it worked out to', async () => {
-        const finance = await actorFor(Role.FINANCE);
+        const finance = await actorFor(Role.DOCTOR);
         const doctor = await actorFor(Role.DOCTOR);
         const record = await bill(doctor.token, await makePatient());
 
@@ -555,7 +568,7 @@ describe('finance', () => {
     });
 
     it('refuses a payment against a cancelled bill', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
 
@@ -569,7 +582,7 @@ describe('finance', () => {
     });
 
     it('keeps money already collected visible on a cancelled bill', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
       await pay(finance.token, record.id, { amount: '1000.00' }).expect(201);
@@ -589,7 +602,7 @@ describe('finance', () => {
     });
 
     it('re-settles the bill when a discount is applied afterwards', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient());
       await pay(finance.token, record.id, { amount: '3500.00' }).expect(201);
@@ -648,7 +661,7 @@ describe('finance', () => {
 
   describe('the collection report', () => {
     it('adds up money received in the period, at each payment\'s own rate', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
 
       await putRate(finance.token, Currency.EUR, Currency.TRY, '38.00', '2031-03-02');
@@ -682,7 +695,7 @@ describe('finance', () => {
     });
 
     it('says what it could not convert instead of leaving it out', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
 
       await putRate(finance.token, Currency.EUR, Currency.TRY, '38.00', '2032-05-04');
@@ -721,7 +734,7 @@ describe('finance', () => {
     });
 
     it('nets refunds off the money received', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient(), {
         currency: Currency.TRY,
@@ -755,7 +768,7 @@ describe('finance', () => {
     });
 
     it('leaves a reversed payment out of the money received', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const record = await bill(doctor.token, await makePatient(), {
         currency: Currency.TRY,
@@ -790,7 +803,7 @@ describe('finance', () => {
     });
 
     it('needs the report permission, not just read', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
 
       // FINANCE holds finance.report; a coordinator holds neither.
       const coordinator = await actorFor(Role.COORDINATOR);
@@ -811,7 +824,7 @@ describe('finance', () => {
 
   describe('what is still owed', () => {
     it('counts debts and not overpayments', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
 
       const report = (
         await request(server)
@@ -834,7 +847,7 @@ describe('finance', () => {
 
   describe('exchange rates', () => {
     it('refuses a rate of a currency against itself', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
 
       await request(server)
         .post('/finance/rates')
@@ -844,7 +857,7 @@ describe('finance', () => {
     });
 
     it('replaces a rate for a day rather than duplicating it', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
 
       await putRate(finance.token, Currency.USD, Currency.TRY, '35.00', '2035-01-06');
       await putRate(finance.token, Currency.USD, Currency.TRY, '36.00', '2035-01-06');
@@ -864,7 +877,7 @@ describe('finance', () => {
 
   describe('the audit trail', () => {
     it('records who looked at a bill and who moved money', async () => {
-      const finance = await actorFor(Role.FINANCE);
+      const finance = await actorFor(Role.DOCTOR);
       const doctor = await actorFor(Role.DOCTOR);
       const patientId = await makePatient();
       const record = await bill(doctor.token, patientId);

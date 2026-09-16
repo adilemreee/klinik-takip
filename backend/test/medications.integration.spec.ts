@@ -235,7 +235,7 @@ describe('medication and adherence', () => {
     });
 
     it('does not let a nurse prescribe', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
 
       await prescribe(patientId, nurse.token).expect(403);
@@ -700,11 +700,11 @@ describe('medication and adherence', () => {
      */
     it('tells the care team when a course is genuinely not being taken', async () => {
       const doctor = await actorFor(Role.DOCTOR);
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       const view = (await prescribe(patientId, doctor.token).expect(201)).body as View;
@@ -747,7 +747,7 @@ describe('medication and adherence', () => {
      */
     it('does not tell the whole clinic about a patient nobody is assigned to', async () => {
       const doctor = await actorFor(Role.DOCTOR);
-      const onRota = await actorFor(Role.NURSE);
+      const onRota = await actorFor(Role.COORDINATOR);
       const patient = await actorFor(Role.PATIENT);
       const patientId = await makePatient(patient.userId);
 

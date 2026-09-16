@@ -73,7 +73,7 @@ export class AppointmentsService {
       await this.assertBookable(input.staffId, slot);
     }
 
-    const requesting = user.role === Role.PATIENT || user.role === Role.CAREGIVER;
+    const requesting = user.role === Role.PATIENT;
 
     const appointment = await this.prisma.$transaction(async (tx) => {
       const created = await tx.appointment.create({

@@ -151,7 +151,7 @@ describe('identity', () => {
   });
 
   it('treats a caregiver as not staff', async () => {
-    const caregiver = await actorFor(Role.CAREGIVER);
+    const caregiver = await actorFor(Role.PATIENT);
     const identity = await identityFor(caregiver.token);
 
     expect(identity.isStaff).toBe(false);
@@ -160,10 +160,10 @@ describe('identity', () => {
   it('needs no permission, because it is the question asked before permissions', async () => {
     // A finance account holds nothing clinical and must still be able to learn
     // that it is signed in and who it is.
-    const finance = await actorFor(Role.FINANCE);
+    const finance = await actorFor(Role.COORDINATOR);
     const identity = await identityFor(finance.token);
 
-    expect(identity.role).toBe(Role.FINANCE);
+    expect(identity.role).toBe(Role.COORDINATOR);
     expect(identity.isStaff).toBe(true);
   });
 

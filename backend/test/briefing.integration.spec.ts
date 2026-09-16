@@ -420,12 +420,12 @@ describe('the morning briefing', () => {
      * the whole clinic would look like a feature.
      */
     it('shows a nurse only the patients she is responsible for', async () => {
-      const nurse = await staffFor(Role.NURSE);
+      const nurse = await staffFor(Role.COORDINATOR);
       const mine = await makePatient();
       const theirs = await makePatient();
 
       await prisma.patientAssignment.create({
-        data: { patientId: mine, staffId: nurse.staffId, role: Role.NURSE },
+        data: { patientId: mine, staffId: nurse.staffId, role: Role.COORDINATOR },
       });
 
       for (const patientId of [mine, theirs]) {
@@ -436,7 +436,7 @@ describe('the morning briefing', () => {
 
       const briefing = await briefingWith(AI_OFF, capturing(NARRATIVE).fetchImpl).forUser({
         id: nurse.userId,
-        role: Role.NURSE,
+        role: Role.COORDINATOR,
       } as never);
 
       const seen = briefing.facts.atRisk.map((risk) => risk.patientId);
@@ -524,10 +524,10 @@ describe('the morning briefing', () => {
 
       // A doctor's scope is the whole clinic, so this only holds for a nurse
       // with nothing assigned — which is the case the sweep actually skips.
-      const nurse = await staffFor(Role.NURSE);
+      const nurse = await staffFor(Role.COORDINATOR);
       const nurseBriefing = await briefing.forUser({
         id: nurse.userId,
-        role: Role.NURSE,
+        role: Role.COORDINATOR,
       } as never);
 
       expect(nurseBriefing.quiet).toBe(true);

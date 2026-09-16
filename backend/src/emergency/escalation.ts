@@ -53,8 +53,6 @@ export function isFinalLevel(level: number, chainLength: number): boolean {
 }
 
 export interface CareTeam {
-  /** User ids of nurses assigned to this patient. */
-  nurses: string[];
   /** User ids of coordinators assigned to this patient. */
   coordinators: string[];
   /** The patient's doctor of record, if they have one. */
@@ -88,7 +86,6 @@ export interface CareTeam {
  */
 export function escalationChain(team: CareTeam): string[][] {
   const groups: string[][] = [
-    team.nurses,
     team.coordinators,
     team.doctorUserId ? [team.doctorUserId] : [],
     team.receivers,

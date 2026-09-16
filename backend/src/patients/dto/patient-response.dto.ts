@@ -178,7 +178,7 @@ export class MeasurementViewDto {
   @ApiProperty({ type: String, format: 'date-time' })
   measuredAt!: Date;
 
-  @ApiProperty({ example: 'NURSE' })
+  @ApiProperty({ example: 'COORDINATOR' })
   source!: string;
 }
 

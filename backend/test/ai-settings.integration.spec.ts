@@ -114,7 +114,7 @@ describe('AI settings', () => {
 
   describe('the key', () => {
     it('goes in and never comes back out', async () => {
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'anthropic',
@@ -135,7 +135,7 @@ describe('AI settings', () => {
     });
 
     it('is encrypted in the database, not merely hidden by the endpoint', async () => {
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'openai',
@@ -153,7 +153,7 @@ describe('AI settings', () => {
 
     it('is left alone when a later update does not mention it', async () => {
       // Changing the price must not require re-typing the key.
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'anthropic',
@@ -172,7 +172,7 @@ describe('AI settings', () => {
 
     it('never reaches the audit log either', async () => {
       // An audit log is read by more people than a settings screen is.
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'gemini',
@@ -197,7 +197,7 @@ describe('AI settings', () => {
     it('is cleared when the provider changes', async () => {
       // The four services do not offer the same terms. A declaration made
       // about Anthropic says nothing about DeepSeek.
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'anthropic',
@@ -219,7 +219,7 @@ describe('AI settings', () => {
     });
 
     it('survives a change that is not a provider change', async () => {
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'anthropic',
@@ -239,7 +239,7 @@ describe('AI settings', () => {
 
   describe('what is missing', () => {
     it('says so rather than half-enabling the AI layer', async () => {
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       const partial = (
         await put(admin.token, { provider: 'anthropic', model: 'claude-sonnet-5' }).expect(200)
@@ -253,7 +253,7 @@ describe('AI settings', () => {
 
     it('is ready only when the price is there too', async () => {
       // Cost accounting is mandatory, so an unpriced model is not enabled.
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'anthropic',
@@ -272,10 +272,17 @@ describe('AI settings', () => {
   });
 
   describe('who may touch it', () => {
-    it('is refused to a doctor', async () => {
-      // This decides where patient-adjacent text is sent and what it costs;
-      // only `permissions.manage` holds it, which is SUPER_ADMIN by default.
-      const doctor = await actorFor(Role.DOCTOR);
+    /**
+     * This used to be refused to the doctor: it decides where
+     * patient-adjacent text is sent and what it costs, and `permissions.manage`
+     * was held only by SUPER_ADMIN.
+     *
+     * There is no SUPER_ADMIN any more. The doctor is the clinic, so this is
+     * theirs — and it had to be, because this screen is where the AI layer is
+     * switched on and nobody else can reach it. The coordinator still cannot.
+     */
+    it('is refused to a coordinator', async () => {
+      const doctor = await actorFor(Role.COORDINATOR);
 
       await get(doctor.token).expect(403);
       await put(doctor.token, { provider: 'openai' }).expect(403);
@@ -288,7 +295,7 @@ describe('AI settings', () => {
 
   describe('the provider catalogue', () => {
     it('offers the four, each with a key page and a retention warning', async () => {
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       const providers = (
         await request(server)
@@ -314,7 +321,7 @@ describe('AI settings', () => {
 
   describe('clearing it', () => {
     it('switches the AI layer off and forgets the key', async () => {
-      const admin = await actorFor(Role.SUPER_ADMIN);
+      const admin = await actorFor(Role.DOCTOR);
 
       await put(admin.token, {
         provider: 'anthropic',

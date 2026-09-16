@@ -180,7 +180,7 @@ describe('messaging over the socket', () => {
   it('refuses to join a conversation outside the caller scope', async () => {
     const patientId = await makePatient();
     const conversation = await prisma.conversation.create({ data: { patientId } });
-    const nurse = await actorFor(Role.NURSE);
+    const nurse = await actorFor(Role.COORDINATOR);
 
     const socket = await connect(nurse.token);
     const result = await ack(socket, 'join', { conversationId: conversation.id });

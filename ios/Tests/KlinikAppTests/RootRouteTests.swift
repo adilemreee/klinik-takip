@@ -65,7 +65,7 @@ final class RootRouteTests: XCTestCase {
     // MARK: - Staff
 
     func testEveryStaffRoleLandsOnTheStaffHome() {
-        for role in [UserRole.doctor, .nurse, .coordinator, .superAdmin, .finance] {
+        for role in [UserRole.doctor, .coordinator] {
             XCTAssertEqual(
                 route(.signedIn, identity(role: role, isStaff: true)),
                 .staffHome(role: role),
@@ -107,22 +107,14 @@ final class RootRouteTests: XCTestCase {
 
     // MARK: - The roles this app has no screen for
 
-    func testACaregiverIsRefusedRatherThanShownSomebodyElsesFile() {
-        // Section 2 gives a caregiver limited access to another person's file,
-        // and there is no screen for that yet. Routing them to a patient home
-        // that is not theirs would be worse than saying so.
-        XCTAssertEqual(
-            route(.signedIn, identity(role: .caregiver, isStaff: false)),
-            .unsupported(role: .caregiver)
-        )
-    }
-
     func testTheStaffFlagDecides_NotTheRoleName() {
         // If the server ever says a role is not staff, the shell believes the
-        // server rather than its own list.
-        let result = route(.signedIn, identity(role: .nurse, isStaff: false))
+        // server rather than its own list. There is no role left that this app
+        // has no screen for, so the case is made with a coordinator the server
+        // has declined to call staff.
+        let result = route(.signedIn, identity(role: .coordinator, isStaff: false))
 
-        XCTAssertEqual(result, .unsupported(role: .nurse))
+        XCTAssertEqual(result, .unsupported(role: .coordinator))
     }
 
     func testEveryRoleGetsSomeAnswer() {

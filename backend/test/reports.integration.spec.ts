@@ -306,10 +306,10 @@ describe('AI lab reports', () => {
     });
 
     it('tells the care team about an alarming panel', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
       await prisma.patientAssignment.create({
-        data: { patientId, staffId: nurse.staffId!, role: Role.NURSE },
+        data: { patientId, staffId: nurse.staffId!, role: Role.COORDINATOR },
       });
 
       await reportsWith(AI_ON, modelSaying(interpretation('CRITICAL'))).generate(
@@ -591,7 +591,7 @@ describe('AI lab reports', () => {
     });
 
     it('does not let a nurse ask for an interpretation', async () => {
-      const nurse = await actorFor(Role.NURSE);
+      const nurse = await actorFor(Role.COORDINATOR);
       const patientId = await makePatient();
 
       // ai.review is a doctor's permission: releasing AI text to a patient is a

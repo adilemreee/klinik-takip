@@ -1,5 +1,4 @@
-import { DocumentType, PrismaClient, Role } from '@prisma/client';
-import { PERMISSIONS, ROLE_PERMISSIONS } from './permissions';
+import { DocumentType, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -40,37 +39,16 @@ const DOCUMENT_REQUIREMENTS: {
 ];
 
 /**
- * Seeds the permission catalogue and the default role matrix.
+ * Seeds the reference data a deployment needs.
  *
- * Idempotent: safe to run on every deploy. Existing per-user overrides in
- * `user_permissions` are never touched — re-seeding must not silently restore
- * access the doctor deliberately revoked from someone.
+ * It used to seed the permission catalogue and the role matrix too — 42 rows
+ * and 113 grants, written on every deploy so the clinic could edit them
+ * afterwards. Nobody ever edited them, and they are a constant in
+ * `src/authz/role-permissions.ts` now, so there is nothing to write.
+ *
+ * Idempotent: safe to run on every deploy.
  */
 async function main(): Promise<void> {
-  for (const permission of PERMISSIONS) {
-    await prisma.permission.upsert({
-      where: { code: permission.code },
-      create: permission,
-      update: { description: permission.description, category: permission.category },
-    });
-  }
-
-  for (const [role, codes] of Object.entries(ROLE_PERMISSIONS)) {
-    for (const code of codes) {
-      await prisma.rolePermission.upsert({
-        where: { role_permissionCode: { role: role as Role, permissionCode: code } },
-        create: { role: role as Role, permissionCode: code },
-        update: {},
-      });
-    }
-
-    // Drop grants that are no longer in the matrix, so removing a permission
-    // from the catalogue actually removes it in a deployed environment.
-    await prisma.rolePermission.deleteMany({
-      where: { role: role as Role, permissionCode: { notIn: codes } },
-    });
-  }
-
   /*
    * The checklist rows.
    *
@@ -89,13 +67,8 @@ async function main(): Promise<void> {
     }
   }
 
-  const permissionCount = await prisma.permission.count();
-  const grantCount = await prisma.rolePermission.count();
   const requirementCount = await prisma.documentRequirement.count();
-  console.log(
-    `Seeded ${permissionCount} permissions, ${grantCount} role grants ` +
-      `and ${requirementCount} document requirements`,
-  );
+  console.log(`Seeded ${requirementCount} document requirements`);
 }
 
 main()

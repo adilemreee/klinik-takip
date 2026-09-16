@@ -47,6 +47,28 @@ data class Appointment(
     val remindersSent: List<String> = emptyList(),
 )
 
+/**
+ * One row on a cross-patient calendar: the appointment and whose it is.
+ *
+ * The name travels with the appointment because a day showing four rows of
+ * `patientId` is a day nobody can read — and because the endpoint has always
+ * sent it. This client was decoding the response as a bare list of
+ * appointments, which has none of the fields it was looking for, so every load
+ * of the clinic calendar failed.
+ */
+@Serializable
+data class CalendarEntry(
+    val appointment: Appointment,
+    val patient: CalendarPatient,
+)
+
+@Serializable
+data class CalendarPatient(
+    val id: String,
+    val mrn: String,
+    val fullName: String,
+)
+
 /** A clash the server refused, in a form the screen can explain. */
 sealed interface BookingRefusal {
     data object SlotTaken : BookingRefusal
@@ -116,7 +138,7 @@ class AppointmentsApi(
     suspend fun forPatient(patientId: String): List<Appointment> =
         decode(client.send(Endpoint(HttpMethod.GET, "patients/$patientId/appointments")))
 
-    suspend fun calendar(from: String, to: String): List<Appointment> =
+    suspend fun calendar(from: String, to: String): List<CalendarEntry> =
         decode(
             client.send(
                 Endpoint(

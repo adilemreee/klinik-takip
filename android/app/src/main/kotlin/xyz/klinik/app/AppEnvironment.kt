@@ -123,7 +123,8 @@ class AppEnvironment(context: Context, baseUrl: String = BuildConfig.API_BASE_UR
     val travel: TravelApi by lazy { TravelApi(client) }
 
     fun homeModel(): HomeModel = HomeModel(me)
-    fun briefingModel(): BriefingModel = BriefingModel(briefing)
+    fun briefingModel(): BriefingModel =
+        BriefingModel(briefing, emergency, reports, photos, appointments)
     fun patientListModel(): PatientListModel = PatientListModel(patients)
 
     /**

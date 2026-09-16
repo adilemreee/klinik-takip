@@ -68,6 +68,7 @@ import xyz.klinik.shell.staffMenuDestinations
 // that library rather than merged into every module that depends on it. Only
 // `app_name`, declared here, is in the app's own R.
 import xyz.klinik.design.R as DesignR
+import xyz.klinik.feature.briefing.StaffTool
 
 /**
  * The app's only navigation decision (T2.3–T2.5).
@@ -431,6 +432,10 @@ private fun AgendaTab(
             strings = context.briefingStrings(),
             onRetry = { scope.launch { briefing.refresh() } },
             onOpenPatient = { id, name -> onOpen(StaffDestination.File(id, name)) },
+            onOpenEmergencies = { onOpen(StaffDestination.EmergencyQueue) },
+            onOpenPendingReports = { onOpen(StaffDestination.PendingReports) },
+            onOpenFlaggedPhotos = { onOpen(StaffDestination.FlaggedPhotos) },
+            onOpenTool = { tool -> onOpen(destinationFor(tool)) },
         )
     }
 }
@@ -499,4 +504,25 @@ private fun Centred(content: @Composable () -> Unit) {
             content()
         }
     }
+}
+
+/**
+ * Where a shortcut on the agenda goes.
+ *
+ * Exhaustive on purpose: a tool added to the grid with nowhere to go would
+ * compile, draw a tile and do nothing when a clinician pressed it.
+ */
+private fun destinationFor(tool: StaffTool): StaffDestination = when (tool) {
+    StaffTool.CALENDAR -> StaffDestination.Calendar
+    StaffTool.INBOX -> StaffDestination.Inbox
+    StaffTool.COMPLICATION_QUEUE -> StaffDestination.ComplicationQueue
+    StaffTool.NEW_PATIENT -> StaffDestination.NewPatient
+    StaffTool.ANALYTICS -> StaffDestination.Analytics
+    StaffTool.FINANCE -> StaffDestination.Finance
+    StaffTool.EXPORTS -> StaffDestination.Exports
+    StaffTool.AVAILABILITY -> StaffDestination.Availability
+    StaffTool.PROTOCOLS -> StaffDestination.Protocols
+    StaffTool.AI_SETTINGS -> StaffDestination.AiSettings
+    StaffTool.AGENCIES -> StaffDestination.Agencies
+    StaffTool.AUDIT -> StaffDestination.Audit
 }

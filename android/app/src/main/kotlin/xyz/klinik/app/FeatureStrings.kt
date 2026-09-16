@@ -50,6 +50,13 @@ import xyz.klinik.shell.PasswordRules
 import xyz.klinik.sync.descriptionKey
 import xyz.klinik.shell.StaffDestination
 import xyz.klinik.design.R as DesignR
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
+import xyz.klinik.feature.briefing.StaffTool
 
 /**
  * The strings each feature screen needs, resolved once at the edge.
@@ -401,7 +408,7 @@ fun Context.dial(phone: String) {
  * Every string was already in the catalogue — what was missing was the screen,
  * not the words for it.
  */
-fun Context.briefingStrings(): BriefingStrings = BriefingStrings(
+fun Context.briefingStrings(now: Instant = Instant.now()): BriefingStrings = BriefingStrings(
     title = getString(DesignR.string.briefing_title),
     quiet = getString(DesignR.string.briefing_quiet),
     retry = getString(DesignR.string.common_retry),
@@ -420,8 +427,61 @@ fun Context.briefingStrings(): BriefingStrings = BriefingStrings(
     riskName = { kind -> stringForKey(kind.stringKey) },
     waitingMinutes = { minutes -> getString(DesignR.string.common_waiting_minutes, minutes) },
     waitingHours = { hours -> getString(DesignR.string.common_waiting_hours, hours) },
+    // Morning until noon, afternoon until six, evening after. A greeting that
+    // says "günaydın" at nine at night reads as a machine talking.
+    greeting = greetingFor(now),
+    date = DateTimeFormatter
+        .ofLocalizedDate(FormatStyle.FULL)
+        .withLocale(Locale.getDefault())
+        .format(ZonedDateTime.ofInstant(now, ZoneId.systemDefault())),
+    riskCount = { count -> getString(DesignR.string.briefing_risk_count, count) },
+    emergencyOpen = { count -> getString(DesignR.string.briefing_emergency_open, count) },
+    openQueue = getString(DesignR.string.briefing_open_queue),
+    unanswered = getString(DesignR.string.emergency_unanswered),
+    todayCount = { booked, controls ->
+        getString(DesignR.string.briefing_today_count, booked, controls)
+    },
+    nothingToday = getString(DesignR.string.briefing_nothing_today),
+    noAppointmentsToday = getString(DesignR.string.briefing_no_appointments_today),
+    next = getString(DesignR.string.briefing_next),
+    shortcuts = getString(DesignR.string.briefing_shortcuts),
+    pendingReports = getString(DesignR.string.briefing_pending_reports),
+    pendingReportsHint = getString(DesignR.string.briefing_pending_reports_hint),
+    flaggedPhotos = getString(DesignR.string.briefing_flagged_photos),
+    flaggedPhotosHint = getString(DesignR.string.briefing_flagged_photos_hint),
+    toolName = { tool -> stringForKey(tool.stringKey) },
+    appointmentType = { entry -> stringForKey(entry.appointment.type.stringKey) },
+    appointmentStatus = { entry -> stringForKey(entry.appointment.status.stringKey) },
+    timeOfDay = { at ->
+        DateTimeFormatter
+            .ofLocalizedTime(FormatStyle.SHORT)
+            .withLocale(Locale.getDefault())
+            .format(ZonedDateTime.parse(at).withZoneSameInstant(ZoneId.systemDefault()))
+    },
+    // Still expected: a cancelled slot is not next, and neither is one that
+    // has already happened.
+    isUpcoming = { entry ->
+        entry.appointment.status.isUpcoming &&
+            ZonedDateTime.parse(entry.appointment.scheduledAt)
+                .plusMinutes(entry.appointment.durationMinutes.toLong())
+                .toInstant()
+                .isAfter(now)
+    },
     message = { text -> resolve(text) },
 )
+
+/** Morning until noon, afternoon until six, evening after. */
+private fun Context.greetingFor(now: Instant): String {
+    val hour = ZonedDateTime.ofInstant(now, ZoneId.systemDefault()).hour
+
+    return getString(
+        when {
+            hour < 12 -> DesignR.string.briefing_greeting_morning
+            hour < 18 -> DesignR.string.briefing_greeting_afternoon
+            else -> DesignR.string.briefing_greeting_evening
+        },
+    )
+}
 
 
 /**

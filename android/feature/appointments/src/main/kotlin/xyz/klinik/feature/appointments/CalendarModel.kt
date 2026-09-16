@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import xyz.klinik.network.ApiError
 import xyz.klinik.network.Appointment
 import xyz.klinik.network.AppointmentStatus
+import xyz.klinik.network.CalendarEntry
 import xyz.klinik.network.AppointmentsApi
 import xyz.klinik.network.UiText
 import xyz.klinik.network.uiText
@@ -26,7 +27,7 @@ sealed interface CalendarPhase {
 data class CalendarState(
     val phase: CalendarPhase = CalendarPhase.Loading,
     val month: YearMonth = YearMonth.now(),
-    val appointments: List<Appointment> = emptyList(),
+    val appointments: List<CalendarEntry> = emptyList(),
     /** The day whose appointments are listed underneath the grid. */
     val selected: LocalDate? = null,
 ) {
@@ -37,18 +38,24 @@ data class CalendarState(
      * grid that still showed it would have a clinician reading a full day that
      * is not.
      */
-    fun byDay(zone: ZoneId): Map<LocalDate, List<Appointment>> =
+    fun byDay(zone: ZoneId): Map<LocalDate, List<CalendarEntry>> =
         appointments
-            .filterNot { it.status == AppointmentStatus.CANCELLED }
-            .groupBy { ZonedDateTime.parse(it.scheduledAt).withZoneSameInstant(zone).toLocalDate() }
+            .filterNot { it.appointment.status == AppointmentStatus.CANCELLED }
+            .groupBy {
+                ZonedDateTime.parse(it.appointment.scheduledAt)
+                    .withZoneSameInstant(zone)
+                    .toLocalDate()
+            }
 
-    fun forSelected(zone: ZoneId): List<Appointment> =
-        selected?.let { day -> byDay(zone)[day].orEmpty().sortedBy { it.scheduledAt } }.orEmpty()
+    fun forSelected(zone: ZoneId): List<CalendarEntry> =
+        selected
+            ?.let { day -> byDay(zone)[day].orEmpty().sortedBy { it.appointment.scheduledAt } }
+            .orEmpty()
 
     /** Days with something still waiting on the clinic to confirm it. */
     fun awaitingConfirmation(zone: ZoneId): Set<LocalDate> =
         byDay(zone)
-            .filterValues { day -> day.any { it.status == AppointmentStatus.REQUESTED } }
+            .filterValues { day -> day.any { it.appointment.status == AppointmentStatus.REQUESTED } }
             .keys
 }
 

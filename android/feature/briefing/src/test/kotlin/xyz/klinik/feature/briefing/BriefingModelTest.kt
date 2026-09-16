@@ -15,6 +15,11 @@ import xyz.klinik.network.RiskKind
 import xyz.klinik.network.SessionManager
 import xyz.klinik.network.SessionTokens
 import xyz.klinik.network.TokenRefresher
+import xyz.klinik.network.AppointmentsApi
+import xyz.klinik.network.EmergencyApi
+import xyz.klinik.network.PhotosApi
+import xyz.klinik.network.ReportsApi
+import kotlin.test.assertNotNull
 
 private object BriefingRefresher : TokenRefresher {
     override suspend fun refresh(refreshToken: String): SessionTokens =
@@ -55,14 +60,21 @@ class BriefingModelTest {
         val session = SessionManager(InMemoryTokenStore(), BriefingRefresher)
         session.signIn(SessionTokens("access", "refresh", System.currentTimeMillis() + 900_000))
 
+        // One transport for all five reads: the briefing is the only one whose
+        // body matters here, and the rest are allowed to come back unusable —
+        // which is the point of them being best-effort.
+        val client = ApiClient(
+            ApiConfiguration("https://api.test"),
+            BriefingTransport(status, body),
+            session,
+        )
+
         return BriefingModel(
-            BriefingApi(
-                ApiClient(
-                    ApiConfiguration("https://api.test"),
-                    BriefingTransport(status, body),
-                    session,
-                ),
-            ),
+            BriefingApi(client),
+            EmergencyApi(client),
+            ReportsApi(client),
+            PhotosApi(client),
+            AppointmentsApi(client),
         )
     }
 
@@ -94,15 +106,21 @@ class BriefingModelTest {
     }
 
     /**
-     * Nothing waiting is an answer, and a different one from an empty screen.
+     * Nothing waiting is an answer, and the screen still draws everything.
+     *
+     * It used to be a phase of its own, which drew one sentence on an
+     * otherwise blank page: no counts, no queues, nowhere to go. A clinician
+     * reading that has been told the app is empty rather than the morning is.
      */
     @Test
-    fun `a quiet morning is its own state`() = runTest {
+    fun `a quiet morning is still a whole screen`() = runTest {
         val subject = model(briefing(atRisk = "", quiet = true))
 
         subject.refresh()
 
-        assertEquals(BriefingPhase.Quiet, subject.state.value.phase)
+        assertEquals(BriefingPhase.Loaded, subject.state.value.phase)
+        assertTrue(subject.state.value.isQuiet)
+        assertNotNull(subject.state.value.briefing)
     }
 
     /**

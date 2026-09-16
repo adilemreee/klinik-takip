@@ -36,6 +36,7 @@ import xyz.klinik.design.klinikColor
 import xyz.klinik.feature.appointments.CalendarPhase
 import xyz.klinik.feature.appointments.CalendarState
 import xyz.klinik.network.Appointment
+import xyz.klinik.network.CalendarEntry
 import xyz.klinik.network.UiText
 
 /** Text the screen needs, resolved by the caller from string resources. */
@@ -286,13 +287,23 @@ private fun DayCell(
     }
 }
 
+/**
+ * One appointment on the clinic's day.
+ *
+ * The name leads. This calendar is clinic-wide, and a row that opened with
+ * "Muayene · Onaylandı" left a clinician reading the shape of a day with no
+ * idea whose it was — the endpoint has always sent the patient, and this
+ * client was throwing the whole response away trying to read it as a bare
+ * list of appointments.
+ */
 @Composable
 private fun AppointmentRow(
-    appointment: Appointment,
+    entry: CalendarEntry,
     strings: CalendarStrings,
     zone: ZoneId,
     onOpen: (Appointment) -> Unit,
 ) {
+    val appointment = entry.appointment
     val at = java.time.ZonedDateTime.parse(appointment.scheduledAt).withZoneSameInstant(zone)
 
     Row(
@@ -301,7 +312,7 @@ private fun AppointmentRow(
             .heightIn(min = Tokens.minimumTouchTarget)
             .clickable { onOpen(appointment) }
             .padding(vertical = Tokens.Spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
         Text(
             "%02d:%02d".format(at.hour, at.minute),
@@ -310,7 +321,17 @@ private fun AppointmentRow(
         )
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(strings.typeName(appointment), color = klinikColor("textPrimary"))
+            Text(
+                entry.patient.fullName,
+                color = klinikColor("textPrimary"),
+                fontSize = Tokens.Typography.subheading.size,
+                fontWeight = Tokens.Typography.subheading.weight,
+            )
+            Text(
+                "${entry.patient.mrn} · ${strings.typeName(appointment)}",
+                fontSize = Tokens.Typography.caption.size,
+                color = klinikColor("textSecondary"),
+            )
             Text(
                 "${strings.statusName(appointment)} · ${strings.minutes(appointment.durationMinutes)}",
                 fontSize = Tokens.Typography.caption.size,

@@ -33,10 +33,23 @@ private class CalendarTransport(private val status: Int, private val body: Strin
     }
 }
 
-private fun appointment(id: String, at: String, status: String = "CONFIRMED") = """
-    {"id":"$id","patientId":"p1","staffId":"s1","type":"CONTROL","status":"$status",
-     "scheduledAt":"$at","durationMinutes":30,"location":null,"note":null,
-     "cancelledAt":null,"cancelledReason":null,"remindersSent":[]}
+/**
+ * One row as the endpoint actually sends it.
+ *
+ * It sends `{appointment, patient}` and always has. This fixture used to send
+ * a bare appointment, which is what the client was written to decode — so the
+ * test passed and every real load of the clinic calendar failed.
+ */
+private fun appointment(
+    id: String,
+    at: String,
+    status: String = "CONFIRMED",
+    name: String = "Ayşe Yılmaz",
+) = """
+    {"appointment":{"id":"$id","patientId":"p1","staffId":"s1","type":"CONTROL",
+      "status":"$status","scheduledAt":"$at","durationMinutes":30,"location":null,
+      "note":null,"cancelledAt":null,"cancelledReason":null,"remindersSent":[]},
+     "patient":{"id":"p1","mrn":"2026-K7RMPX","fullName":"$name"}}
 """.trimIndent()
 
 /**
@@ -107,7 +120,7 @@ class CalendarModelTest {
 
         val day = LocalDate.of(2026, 9, 15)
 
-        assertEquals(listOf("a"), subject.state.value.byDay(istanbul)[day]?.map { it.id })
+        assertEquals(listOf("a"), subject.state.value.byDay(istanbul)[day]?.map { it.appointment.id })
     }
 
     /** Today is the day somebody is most likely to want. */
@@ -169,7 +182,7 @@ class CalendarModelTest {
 
         assertEquals(
             listOf("early", "late"),
-            subject.state.value.forSelected(istanbul).map { it.id },
+            subject.state.value.forSelected(istanbul).map { it.appointment.id },
         )
     }
 
@@ -180,5 +193,30 @@ class CalendarModelTest {
         subject.load(YearMonth.of(2026, 9))
 
         assertEquals(CalendarPhase.NotPermitted, subject.state.value.phase)
+    }
+
+    /**
+     * The row can name whose appointment it is.
+     *
+     * The regression this guards: the client decoded the calendar as a bare
+     * list of appointments, so a day of four rows arrived as nothing at all —
+     * and the fixture agreed with it.
+     */
+    @Test
+    fun `the calendar names the patient`() = runTest {
+        val subject = model(
+            CalendarTransport(
+                200,
+                "[" + appointment("a", "2026-09-15T09:00:00.000Z", name = "Zeynep Kaya") + "]",
+            ),
+        )
+
+        subject.load(YearMonth.of(2026, 9))
+        subject.select(LocalDate.of(2026, 9, 15))
+
+        assertEquals(
+            listOf("Zeynep Kaya"),
+            subject.state.value.forSelected(istanbul).map { it.patient.fullName },
+        )
     }
 }

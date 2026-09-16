@@ -4,3 +4,11 @@
 // treats `//` as the start of a comment — without the empty substitution the
 // rest of the line disappears.
 KLINIK_API_BASE_URL = https:/$()/klinikapi-staging.example.invalid
+
+// The Apple Developer team the app is signed with.
+//
+// Here rather than in project.yml because this repository is public. Without
+// it `xcodebuild archive` stops at "requires a development team", and signing
+// goes back to being something each machine sets in Xcode by hand — which is
+// how a Debug archive once reached TestFlight.
+DEVELOPMENT_TEAM = ABCDE12345

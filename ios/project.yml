@@ -94,12 +94,16 @@ targets:
     entitlements:
       path: App/Klinik.entitlements
       properties:
-        # Resolved per configuration, below. A build uploaded to TestFlight is
-        # signed with an App Store profile and talks to the *production* APNs
-        # host; one that carries `development` here registers a token the
-        # production gateway will not deliver to — and push that quietly does
-        # not arrive is the worst way to find that out, because nothing in the
-        # app reports it.
+        # Resolved per configuration, below — but only as a default. This is
+        # one of the entitlements the provisioning profile owns:
+        # `ProcessProductPackaging` takes `aps-environment` from the profile,
+        # so a Release archive signed with a development profile carries
+        # `development` however this is set. What decides the push environment
+        # is which profile signs the build — a development profile registers a
+        # token the production APNs gateway will not deliver to, and push that
+        # quietly does not arrive is the worst way to find that out. So check
+        # the archive, not this line:
+        #   codesign -d --entitlements :- Klinik.app
         aps-environment: $(KLINIK_APS_ENVIRONMENT)
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
@@ -126,6 +130,15 @@ targets:
         # has opened it there — one character, and the four orientations
         # above.
         TARGETED_DEVICE_FAMILY: "1"
+        # The identifier the app is registered under. Spelled out because
+        # `bundleIdPrefix` would derive `adilemre.klinik.Klinik`, and the app
+        # on App Store Connect is `adilemre.klinik` — so the identifier that
+        # ships was being corrected by hand in Xcode after every generate.
+        PRODUCT_BUNDLE_IDENTIFIER: adilemre.klinik
+        # Resolved from the untracked Config/Local.xcconfig, like the host is.
+        # Without it every archive begins by setting a team in Xcode by hand,
+        # and a setting nobody records is a setting that drifts.
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

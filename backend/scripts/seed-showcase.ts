@@ -50,6 +50,7 @@ import {
   PrismaClient,
   ProcessingStatus,
   Role,
+  SurveyAnswerType,
   SurveyStatus,
   TriageLevel,
   UserStatus,
@@ -651,10 +652,34 @@ async function survey(patientId: string, surgeryId: string): Promise<void> {
       title: 'Burun estetiği sonrası yaşam kalitesi',
       description: 'Son bir haftayı düşünerek yanıtlayın.',
       milestoneDays: [7, 30, 90],
+      // `type` is what parseQuestions reads; a question without it is rejected
+      // and takes the whole of GET /me/surveys down with it. `direction` says
+      // which end of the scale is the bad one, so an alarm threshold means
+      // something.
       questions: [
-        { id: 'breathing', text: 'Burnunuzdan nefes almakta zorlanıyor musunuz?', scale: 10 },
-        { id: 'pain', text: 'Ağrınız ne düzeyde?', scale: 10 },
-        { id: 'appearance', text: 'Görünümünüzden memnun musunuz?', scale: 10 },
+        {
+          id: 'breathing',
+          text: 'Burnunuzdan nefes almakta zorlanıyor musunuz?',
+          type: SurveyAnswerType.SCALE_0_10,
+          direction: 'higher-is-worse',
+          alarmAt: 8,
+          required: true,
+        },
+        {
+          id: 'pain',
+          text: 'Ağrınız ne düzeyde?',
+          type: SurveyAnswerType.SCALE_0_10,
+          direction: 'higher-is-worse',
+          alarmAt: 8,
+          required: true,
+        },
+        {
+          id: 'appearance',
+          text: 'Görünümünüzden memnun musunuz?',
+          type: SurveyAnswerType.SCALE_0_10,
+          direction: 'higher-is-better',
+        },
+        { id: 'note', text: 'Eklemek istediğiniz bir şey var mı?', type: SurveyAnswerType.TEXT },
       ],
     },
   });
@@ -680,7 +705,7 @@ async function survey(patientId: string, surgeryId: string): Promise<void> {
       answers: { breathing: 6, pain: 4, appearance: 7 },
       scores: { total: 17, average: 5.7 },
       answeredCount: 3,
-      questionCount: 3,
+      questionCount: 4,
       submittedAt: at(-16, 19),
     },
   });
@@ -691,7 +716,10 @@ async function survey(patientId: string, surgeryId: string): Promise<void> {
       templateId: template.id,
       surgeryId,
       milestoneDays: 30,
-      scheduledFor: at(6, 10),
+      // Yesterday, not the milestone's own date: `mine()` only lists what is
+      // already due, and a questionnaire scheduled for next week leaves the
+      // patient's survey card empty on a demo that exists to be looked at.
+      scheduledFor: at(-1, 10),
       status: SurveyStatus.PENDING,
     },
   });

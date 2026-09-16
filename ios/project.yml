@@ -48,6 +48,19 @@ targets:
         # category 5, part 2 of the US export regulations.
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
+        # Stated rather than inherited. xcodegen's default is these three, and
+        # a default is not a decision: what the app is allowed to do with the
+        # screen should be written down where somebody can argue with it.
+        #
+        # Portrait and both landscapes. Landscape earns its place on two
+        # screens — the lab table, which is a table, and the photograph viewer,
+        # where a wound is not always taller than it is wide. Upside-down is
+        # left out: a phone held upside-down puts the earpiece at the bottom,
+        # and nothing here is worth that.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         # Resolved from Config/Base.xcconfig, which includes an untracked
         # Local.xcconfig. This repository is public, so the clinic's hostnames
         # are not in it; a build that was never told where to talk points at a
@@ -95,7 +108,24 @@ targets:
       Release: Config/Base.xcconfig
     settings:
       base:
-        TARGETED_DEVICE_FAMILY: "1,2"
+        # iPhone only.
+        #
+        # The app declared iPad as well, which App Store Connect refuses
+        # unless the bundle also allows all four orientations — iPad
+        # multitasking may resize a window to any of them, so an app that
+        # forbids one cannot be a Split View tenant.
+        #
+        # Allowing all four would have satisfied the check and shipped an
+        # iPad layout nobody has ever looked at: every screen here was drawn
+        # and reviewed on a phone, and a clinical record laid out for a
+        # 6-inch column stretched across 13 inches is not a considered iPad
+        # app, it is a phone app on a big screen. Apple reviews on iPad when
+        # you claim iPad.
+        #
+        # So: claim what has been looked at. iPad goes back in when somebody
+        # has opened it there — one character, and the four orientations
+        # above.
+        TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "6.0"
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

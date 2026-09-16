@@ -101,6 +101,7 @@ fun Context.documentStrings(): DocumentStrings = DocumentStrings(
 )
 
 fun Context.photoStrings(): PhotoStrings = PhotoStrings(
+    loadFailed = getString(DesignR.string.photo_load_failed),
     empty = getString(DesignR.string.photo_empty),
     notFound = getString(DesignR.string.error_not_found),
     retry = getString(DesignR.string.common_retry),
@@ -1149,6 +1150,7 @@ fun Context.flaggedPhotosStrings(): FlaggedPhotosStrings = FlaggedPhotosStrings(
     noBodyArea = getString(DesignR.string.photo_no_body_area),
     findingName = { key -> stringForServerKey(key) },
     imageLabel = getString(DesignR.string.photo_image),
+    loadFailed = getString(DesignR.string.photo_load_failed),
     message = { text -> resolve(text) },
 )
 

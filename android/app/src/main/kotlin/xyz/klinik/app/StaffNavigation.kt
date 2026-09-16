@@ -543,11 +543,13 @@ fun StaffDestinationScreen(
             ChecklistScreen(
                 state = state,
                 strings = context.checklistStrings(),
-                // No upload button on the clinician's side: these are the
-                // patient's documents to send, and a clinic uploading a
-                // passport on somebody's behalf is a different feature with a
-                // different consent question behind it.
-                onUpload = null,
+                // With the upload button. It was left off on the grounds that
+                // these are the patient's documents to send — but a
+                // coordinator is exactly the person who receives a passport by
+                // message and files it, and the documents screen has let them
+                // do that all along. A checklist that names what is missing
+                // and cannot be acted on is a list of complaints.
+                onUpload = { onOpen(StaffDestination.Documents(destination.patientId)) },
                 onRetry = { scope.launch { model.load() } },
                 modifier = modifier,
             )

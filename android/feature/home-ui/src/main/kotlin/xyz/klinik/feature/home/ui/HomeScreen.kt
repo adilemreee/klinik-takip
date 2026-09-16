@@ -74,22 +74,35 @@ fun HomeScreen(
         ) {
             Header(state, strings, onRetry)
 
+            // Four tiles and the alarm. The emergency one is drawn below the
+            // grid at the full width rather than inside it: five tiles in two
+            // columns left it alone in the last row with a hole beside it, and
+            // the one control here that somebody may press in a hurry is not
+            // the one to make half-width and ragged.
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(Tokens.Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.md),
+                modifier = Modifier.heightIn(max = 400.dp),
             ) {
-                items(HomeAction.entries) { action ->
+                items(HomeAction.entries.filter { it != HomeAction.EMERGENCY }) { action ->
                     ActionTile(
                         action = action,
                         title = strings.actionTitle(action),
                         badge = state.badges[action],
                     ) {
-                        // The emergency tile only arms on the first tap (spec M8).
-                        if (action == HomeAction.EMERGENCY) onArmEmergency() else onSelect(action)
+                        onSelect(action)
                     }
                 }
             }
+
+            ActionTile(
+                action = HomeAction.EMERGENCY,
+                title = strings.actionTitle(HomeAction.EMERGENCY),
+                badge = state.badges[HomeAction.EMERGENCY],
+                // The first tap only arms it (spec M8).
+                onClick = onArmEmergency,
+            )
         }
 
         if (emergency !is EmergencyPhase.Idle) {

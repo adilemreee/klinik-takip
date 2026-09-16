@@ -13,6 +13,7 @@ import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.klinik.network.PhotosApi
+import xyz.klinik.feature.photos.ui.PhotoImage
 
 /**
  * Decoded clinical photographs, fetched once per screen.
@@ -29,8 +30,8 @@ import xyz.klinik.network.PhotosApi
  * clinical photographs is a second copy to protect.
  */
 @Composable
-fun rememberPhotoImages(api: PhotosApi, ids: List<String>): (String) -> ImageBitmap? {
-    val images: SnapshotStateMap<String, ImageBitmap> = remember(api) { mutableStateMapOf() }
+fun rememberPhotoImages(api: PhotosApi, ids: List<String>): (String) -> PhotoImage {
+    val images: SnapshotStateMap<String, PhotoImage> = remember(api) { mutableStateMapOf() }
 
     // Keyed on the joined ids so a changed list fetches what is new and a
     // recomposition with the same list fetches nothing.
@@ -53,9 +54,12 @@ fun rememberPhotoImages(api: PhotosApi, ids: List<String>): (String) -> ImageBit
                 }.getOrNull()
             }
 
-            if (bitmap != null) images[id] = bitmap
+            // Recorded either way. Leaving a failure unrecorded left the
+            // screen unable to tell "still coming" from "never coming", so it
+            // drew nothing at all — for the rest of the session.
+            images[id] = bitmap?.let { PhotoImage.Ready(it) } ?: PhotoImage.Unavailable
         }
     }
 
-    return { id -> images[id] }
+    return { id -> images[id] ?: PhotoImage.Loading }
 }

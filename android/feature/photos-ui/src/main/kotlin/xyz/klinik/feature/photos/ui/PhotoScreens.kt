@@ -59,6 +59,7 @@ data class PhotoStrings(
     val consentGiven: String,
     val clinicalUseOnly: String,
     val noBodyArea: String,
+    val loadFailed: String,
     val categoryName: (PhotoCategory) -> String,
     val message: (String) -> String,
 )
@@ -74,7 +75,7 @@ fun PhotoGalleryScreen(
      * never holds a signed URL longer than it draws it — those URLs are short
      * lived on purpose.
      */
-    imageFor: (String) -> ImageBitmap?,
+    imageFor: (String) -> PhotoImage,
     onRetry: () -> Unit,
     onSelectArea: (String) -> Unit,
     onCompare: () -> Unit,
@@ -112,7 +113,7 @@ fun PhotoGalleryScreen(
 private fun Gallery(
     state: GalleryState,
     strings: PhotoStrings,
-    imageFor: (String) -> ImageBitmap?,
+    imageFor: (String) -> PhotoImage,
     onSelectArea: (String) -> Unit,
     onCompare: () -> Unit,
 ) {
@@ -180,7 +181,7 @@ private fun Gallery(
 }
 
 @Composable
-private fun PhotoRow(photo: ClinicalPhoto, strings: PhotoStrings, image: ImageBitmap?) {
+private fun PhotoRow(photo: ClinicalPhoto, strings: PhotoStrings, image: PhotoImage) {
     val consentText = if (photo.hasUsageConsent) strings.consentGiven else strings.clinicalUseOnly
     val label = photo.phaseLabel ?: strings.categoryName(photo.category)
 
@@ -193,7 +194,7 @@ private fun PhotoRow(photo: ClinicalPhoto, strings: PhotoStrings, image: ImageBi
             },
         verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.xs),
     ) {
-        PhotoImage(image, Modifier.fillMaxWidth().height(200.dp))
+        PhotoFrame(image, strings, Modifier.fillMaxWidth().height(200.dp))
 
         Text(label, color = klinikColor("textPrimary"), modifier = Modifier.clearAndSetSemantics {})
 
@@ -212,7 +213,7 @@ private fun PhotoRow(photo: ClinicalPhoto, strings: PhotoStrings, image: ImageBi
 fun PhotoComparisonScreen(
     pair: ComparisonPair,
     strings: PhotoStrings,
-    imageFor: (String) -> ImageBitmap?,
+    imageFor: (String) -> PhotoImage,
     modifier: Modifier = Modifier,
 ) {
     var split by remember { mutableFloatStateOf(0.5f) }
@@ -238,14 +239,14 @@ fun PhotoComparisonScreen(
             ) {
                 val full = maxWidth
 
-                PhotoImage(imageFor(pair.after.id), Modifier.fillMaxSize())
+                PhotoFrame(imageFor(pair.after.id), strings, Modifier.fillMaxSize())
 
                 // The "before" image is drawn at full width inside a narrower
                 // box that clips it. Scaling it to the box instead would squash
                 // the picture as the divider moved, which is exactly the
                 // distortion a before/after comparison must not introduce.
                 Box(modifier = Modifier.width(full * split).fillMaxHeight().clipToBounds()) {
-                    PhotoImage(imageFor(pair.before.id), Modifier.width(full).fillMaxHeight())
+                    PhotoFrame(imageFor(pair.before.id), strings, Modifier.width(full).fillMaxHeight())
                 }
 
                 Box(
@@ -289,21 +290,31 @@ fun PhotoComparisonScreen(
 }
 
 @Composable
-private fun PhotoImage(image: ImageBitmap?, modifier: Modifier) {
-    if (image == null) {
+private fun PhotoFrame(image: PhotoImage, strings: PhotoStrings, modifier: Modifier) {
+    when (image) {
+        is PhotoImage.Ready -> Image(
+            bitmap = image.bitmap,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier,
+        )
+
         // A grey rectangle rather than an icon: the caller may still be minting
         // the signed URL, and a failure symbol for a photo that is merely late
         // reads as a photo that is gone.
-        Box(modifier = modifier.background(klinikColor("surface")))
-        return
-    }
+        PhotoImage.Loading -> Box(modifier = modifier.background(klinikColor("surface")))
 
-    Image(
-        bitmap = image,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = modifier,
-    )
+        PhotoImage.Unavailable -> Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier.background(klinikColor("surface")),
+        ) {
+            Text(
+                strings.loadFailed,
+                color = klinikColor("textSecondary"),
+                fontSize = Tokens.Typography.caption.size,
+            )
+        }
+    }
 }
 
 @Composable

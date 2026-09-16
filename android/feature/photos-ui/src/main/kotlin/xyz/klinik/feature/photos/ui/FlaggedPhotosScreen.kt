@@ -31,6 +31,7 @@ import xyz.klinik.feature.photos.FlaggedPhase
 import xyz.klinik.feature.photos.FlaggedPhotosState
 import xyz.klinik.network.FlaggedPhoto
 import xyz.klinik.network.UiText
+import androidx.compose.foundation.background
 
 /** Text the screen needs, resolved by the caller from string resources. */
 data class FlaggedPhotosStrings(
@@ -47,6 +48,7 @@ data class FlaggedPhotosStrings(
     val noBodyArea: String,
     val findingName: (String) -> String,
     val imageLabel: String,
+    val loadFailed: String,
     val message: (UiText) -> String,
 )
 
@@ -72,7 +74,7 @@ fun FlaggedPhotosScreen(
      * never holds a signed URL longer than it draws it — those are short-lived
      * on purpose.
      */
-    imageFor: (String) -> ImageBitmap?,
+    imageFor: (String) -> PhotoImage,
     onReassess: (FlaggedPhoto) -> Unit,
     onOpenFile: (FlaggedPhoto) -> Unit,
     onRetry: () -> Unit,
@@ -143,7 +145,7 @@ private fun PhotoCard(
     photo: FlaggedPhoto,
     state: FlaggedPhotosState,
     strings: FlaggedPhotosStrings,
-    imageFor: (String) -> ImageBitmap?,
+    imageFor: (String) -> PhotoImage,
     onReassess: (FlaggedPhoto) -> Unit,
     onOpenFile: (FlaggedPhoto) -> Unit,
 ) {
@@ -154,13 +156,33 @@ private fun PhotoCard(
             modifier = Modifier.padding(Tokens.Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Tokens.Spacing.sm),
         ) {
-            imageFor(photo.id)?.let { bitmap ->
-                Image(
-                    bitmap = bitmap,
+            when (val image = imageFor(photo.id)) {
+                is PhotoImage.Ready -> Image(
+                    bitmap = image.bitmap,
                     contentDescription = strings.imageLabel,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxWidth().height(220.dp),
                 )
+
+                PhotoImage.Loading -> Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxWidth().height(220.dp),
+                ) {
+                    CircularProgressIndicator()
+                }
+
+                // No stand-in picture, but a sentence: a card with 220 points
+                // of nothing in it cannot be told from a report with no
+                // photograph at all.
+                PhotoImage.Unavailable -> Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .background(klinikColor("surface")),
+                ) {
+                    Text(strings.loadFailed, color = klinikColor("textSecondary"))
+                }
             }
 
             Row(modifier = Modifier.fillMaxWidth()) {

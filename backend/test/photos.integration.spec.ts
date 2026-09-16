@@ -350,6 +350,65 @@ describe('photos', () => {
     });
   });
 
+  /**
+   * What the endpoint hands back, not what the service meant to hand back.
+   *
+   * `PhotoView` is a subset of Prisma's `Photo`, so a method that promises a
+   * `PhotoView` and returns the row typechecks cleanly and serialises the
+   * storage key to the client anyway. Only a test that reads the response
+   * body catches it, which is why these assert on JSON rather than on types.
+   */
+  describe('what leaves the building', () => {
+    const PRIVATE_FIELDS = [
+      'fileKey',
+      'thumbnailKey',
+      'uploadedById',
+      'aiModel',
+      'deletedAt',
+      'patientId',
+      'complicationId',
+    ];
+
+    it('never names the object-storage key on upload', async () => {
+      const patientId = await makePatient();
+
+      const response = await upload(patientId, jpegWithLocation(), {
+        category: 'WOUND',
+        bodyArea: 'abdomen',
+      }).expect(201);
+
+      const body = response.body as PhotoBody & Record<string, unknown>;
+      await remember(body.id);
+
+      for (const field of PRIVATE_FIELDS) expect(body).not.toHaveProperty(field);
+      // Still the photo, not an empty object.
+      expect(body.id).toBeTruthy();
+      expect(body.category).toBe(PhotoCategory.WOUND);
+    });
+
+    it('never names the object-storage key in the gallery', async () => {
+      const patientId = await makePatient();
+      const uploaded = (
+        await upload(patientId, jpegWithLocation(), {
+          category: 'BEFORE',
+          bodyArea: 'burun',
+        }).expect(201)
+      ).body as PhotoBody;
+      await remember(uploaded.id);
+
+      const response = await request(server)
+        .get(`/patients/${patientId}/photos`)
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      const groups = response.body as { photos: Record<string, unknown>[] }[];
+      const photos = groups.flatMap((group) => group.photos);
+
+      expect(photos).toHaveLength(1);
+      for (const field of PRIVATE_FIELDS) expect(photos[0]!).not.toHaveProperty(field);
+    });
+  });
+
   describe('the gallery', () => {
     it('groups by body area, oldest first inside each group', async () => {
       const patientId = await makePatient();

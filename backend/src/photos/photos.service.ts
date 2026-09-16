@@ -133,7 +133,7 @@ export class PhotosService {
           after: photo,
         });
 
-        return photo;
+        return photoView(photo);
       });
     } catch (error) {
       await this.files
@@ -174,7 +174,7 @@ export class PhotosService {
     for (const photo of photos) {
       const key = photo.bodyArea ?? '';
       const group = groups.get(key) ?? { bodyArea: photo.bodyArea, photos: [] };
-      group.photos.push(photo);
+      group.photos.push(photoView(photo));
       groups.set(key, group);
     }
 

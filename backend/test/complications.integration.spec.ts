@@ -260,6 +260,43 @@ describe('complication reports', () => {
   });
 
   describe('the clinician queue', () => {
+    /**
+     * `ComplicationDto` names ten fields. The Prisma row carries three internal
+     * user ids on top of them, and once it is loaded with its relations a
+     * second copy of the patient and of the photographs the view already holds
+     * beside it. A row returned where a view was promised typechecks, so only
+     * reading the response body catches the difference.
+     */
+    it('sends the documented fields and nothing else', async () => {
+      const patientId = await makePatient();
+
+      await prisma.complication.create({
+        data: { patientId, note: 'Kizariklik', reportedAt: new Date() },
+      });
+
+      const response = await request(server)
+        .get('/complications')
+        .set('Authorization', `Bearer ${doctor.token}`)
+        .expect(200);
+
+      const rows = response.body as { complication: Record<string, unknown> }[];
+      const row = rows.find((r) => r.complication.patientId === patientId);
+
+      expect(row).toBeDefined();
+      expect(Object.keys(row!.complication).sort()).toEqual([
+        'acknowledgedAt',
+        'bodyArea',
+        'firstResponse',
+        'id',
+        'note',
+        'patientId',
+        'reportedAt',
+        'resolution',
+        'resolvedAt',
+        'status',
+      ]);
+    });
+
     it('lists what is waiting, longest first', async () => {
       const older = await makePatient();
       const newer = await makePatient();

@@ -10,6 +10,7 @@ import type { AuthenticatedUser } from '../auth/decorators/current-user.decorato
 import { PatientAccessService } from '../authz/patient-access.service';
 import { PrismaService } from '../infra/prisma.service';
 import { photoView, type PhotoView } from '../photos/photo-view';
+import { complicationView, type ComplicationSummary } from './complication-view';
 
 /**
  * How long a report may wait before the queue calls it overdue.
@@ -36,7 +37,7 @@ export interface ComplicationPatient {
 }
 
 export interface ComplicationView {
-  complication: Complication;
+  complication: ComplicationSummary;
   patient: ComplicationPatient;
   photos: PhotoView[];
   /** Minutes from report to first answer, or to now while still waiting. */
@@ -358,7 +359,10 @@ export class ComplicationsService {
     const waitingMs = reference.getTime() - complication.reportedAt.getTime();
 
     return {
-      complication,
+      // Projected for the same reason the photographs are: the row carries
+      // three internal user ids and, once its relations are loaded, a second
+      // copy of the patient and the photographs sitting beside it.
+      complication: complicationView(complication),
       patient,
       // Projected, not passed through: the row carries the object-storage key
       // of a clinical photograph and the client has no use for it.

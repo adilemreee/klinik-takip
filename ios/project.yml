@@ -134,3 +134,29 @@ targets:
           KLINIK_APS_ENVIRONMENT: development
         Release:
           KLINIK_APS_ENVIRONMENT: production
+
+# The scheme is written here rather than left to Xcode.
+#
+# It was not, and the build that reached TestFlight carried
+# `aps-environment: development` and `get-task-allow: true` — the marks of an
+# archive built in Debug. Nothing in the repository said otherwise: with no
+# shared scheme, Xcode makes one per machine and its Archive action is whatever
+# that machine last had selected. What ships was a local setting.
+#
+# Pinned here, an archive is a Release archive wherever it is built: production
+# push, optimised, and no debugger entitlement.
+schemes:
+  Klinik:
+    build:
+      targets:
+        Klinik: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

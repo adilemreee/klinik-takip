@@ -475,6 +475,7 @@ public val klinikStringIds: Map<String, Int> = mapOf(
     "error.offline" to R.string.error_offline,
     "error.server" to R.string.error_server,
     "error.sessionExpired" to R.string.error_session_expired,
+    "error.sessionNotSaved" to R.string.error_session_not_saved,
     "error.timedOut" to R.string.error_timed_out,
     "export.auditNote" to R.string.export_audit_note,
     "export.chosenCount" to R.string.export_chosen_count,

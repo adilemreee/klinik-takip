@@ -465,6 +465,7 @@
     <string name="error_offline">No internet connection.</string>
     <string name="error_server">Something went wrong. Please try again shortly.</string>
     <string name="error_session_expired">Your session has ended. Please sign in again.</string>
+    <string name="error_session_not_saved">Signed in, but the session could not be stored on this device (code %d). Close the app and open it again.</string>
     <string name="error_timed_out">The server did not respond.</string>
     <string name="export_audit_note">Every export is written to the audit log: who took what, and when.</string>
     <string name="export_chosen_count">%d columns selected</string>

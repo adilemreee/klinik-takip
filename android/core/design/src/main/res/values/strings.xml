@@ -465,6 +465,7 @@
     <string name="error_offline">İnternet bağlantısı yok.</string>
     <string name="error_server">Bir sorun oluştu. Birazdan tekrar deneyin.</string>
     <string name="error_session_expired">Oturumunuz sona erdi. Lütfen tekrar giriş yapın.</string>
+    <string name="error_session_not_saved">Giriş yapıldı, ama oturum bu cihazda saklanamadı (kod %d). Uygulamayı kapatıp yeniden açın.</string>
     <string name="error_timed_out">Sunucu yanıt vermedi.</string>
     <string name="export_audit_note">Her dışa aktarım denetim günlüğüne yazılır: kim, ne zaman, hangi veriyi aldı.</string>
     <string name="export_chosen_count">%d kolon seçili</string>

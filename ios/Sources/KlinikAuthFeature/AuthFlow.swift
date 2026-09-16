@@ -236,6 +236,21 @@ public actor AuthFlowModel {
     }
 
     private func handle(_ error: Error) {
+        // A failure to keep the session is not a failure to sign in, and saying
+        // "something went wrong, try again shortly" about it sends somebody
+        // back to a form that has already done its job. The server issued the
+        // tokens; this device could not store them, and retrying the password
+        // will not change that. The status code goes in the message because it
+        // is the only thing that makes such a report diagnosable — a screenshot
+        // is usually all there is to go on.
+        if case KeychainError.unexpectedStatus(let status) = error {
+            state.errorMessage = String(
+                format: L10n.string("error.sessionNotSaved"),
+                Int(status)
+            )
+            return
+        }
+
         guard let apiError = error as? APIError else {
             state.errorMessage = L10n.string("error.server")
             return

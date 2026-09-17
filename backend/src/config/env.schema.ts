@@ -198,6 +198,34 @@ export const envSchema = z.object({
     z.coerce.boolean().default(false),
   ),
 
+  /*
+   * Push, over APNs.
+   *
+   * All four or none: a half-configured key is a push channel that reports
+   * failure on every notification, which is indistinguishable from not having
+   * one — so the sender is only registered when all of them are present.
+   *
+   * `APNS_KEY_BASE64` rather than the PEM itself because a private key has
+   * newlines in it and an env file does not.
+   */
+  APNS_KEY_ID: optional(z.string().min(1)),
+  APNS_TEAM_ID: optional(z.string().min(1)),
+  /** The bundle identifier the notification is addressed to. */
+  APNS_TOPIC: optional(z.string().min(1)),
+  APNS_KEY_BASE64: optional(z.string().min(1)),
+  /**
+   * Which APNs host.
+   *
+   * Must match what the build was signed with. A token from a build carrying
+   * `aps-environment: development` is refused by the production host with
+   * `BadDeviceToken` — the same answer as a token that was never valid, so
+   * the mismatch looks exactly like an app that never registered.
+   */
+  APNS_PRODUCTION: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.coerce.boolean().default(true),
+  ),
+
   /** An AI call with no deadline is a request handler that never returns. */
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(1_024),
